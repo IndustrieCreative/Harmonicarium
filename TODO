@@ -1,0 +1,71 @@
+If you want to give a hand, you are more than welcome :)
+
+------------------------------------------------------------
+TASK PRIORITY LEVEL
+1   2   3   4 < filename >
+------------------------------------------------------------
+            < GENERAL >
+@TODO: Transfer this list to the GitHub Issues section
+@TODO: ** Disconnect all voices before delete them (?)
+    @TODO: FT SETTING (harmonics/subharmonics & tuning files)
+        @TODO: LISSAJOUS, OSCILLOSCOPE, SPECTRUM, SPECTROGRAM.
+        @TODO: Integrate an overtone spiral view & UI (es. from https://github.com/sunyatasattva/overtones/ but maybe problem due to new CPAL license?)
+@TODO: ** SYNTH - Implement load reverb from Net
+            @TODO: ** Implement a duplicable HSTACK > MULTIPLE HSTACK, each one assigned (follows) to an FT (to compare)
+            @TODO: ** Implement polyrithm section
+            @TODO: Global Hz/MIDI.cents ACCURACY LIMIT for error-known scientific applications
+            @TODO: Load files with WORKER-SERVICE
+            @TODO: Virtual keyboard PC KEYS custom maps (bypass Qwerty Hancock)
+            @TODO: Implement dynamic FT_BASE table: SET RANGE (MAX) > REMOVE FT_BASE table
+            @TODO: Implement dynamic HT_TABLE: SET RANGE (MAX)
+            @TODO: Accuracy UP/DOWN arrows increase/decrease ZEROS (NOT +/- step)
+            @TODO: Piper's PIPE initialized with all HT6 (NOT EMPTY!!) or other?
+            @TODO: Different color for HT & ST
+            @TODO: Labels on QWERTY HANCOCK (FT# HT#)
+            @TODO: Check the change of the "PITCHBEND RANGE" parameter on UI (DHC Settings) during bending events via MIDI
+            @TODO: Implement "HOLD" on the virtual keyboard
+            @TODO: Responsive QWERTY HANCOCK keyboard (adapt to the display width)
+            @TODO: Change DEFAULT FONT
+            @TODO: Export/Store the DHC+Synth settings to JSON
+
+            ------------------------------------------------
+            < dhc.js >
+
+            @TODO: Enharmonic note naming: "sharp", "flat" or "relative"
+        @TODO: Tuning file formats
+            @TODO: remove ft_base table and compute all with this FOR cycle
+    @TODO: HARMONICS / SUBHARMONICS FT
+        @TODO: TUNING FILES FT
+            @TODO: implement custom H/S table lenght (16>32>64>128) to increase performances if needed
+            @TODO: BUILD THE INSTRUMENT TABLE {inst_table}
+
+            ------------------------------------------------
+            < midi-input.js >
+
+            @TODO: implement RUNNING STATUS (status byte not repeated on every message)
+            @TODO: implement TRANSMISSION ERRORS HANDLING
+            @TODO: implement RUNNING STATUS and interprete a message starting with a Data byte
+            @TODO: Implement the controller-key mapped both to an FT and HT
+        @TODO: SEND THE PITCH TO THE MIDI OUTPUT CONVERTER icNoteOUT
+            @TODO: remove this "for...in"
+
+            ------------------------------------------------
+            < synth.js >
+
+            @TODO: merge icVoices into icSYNTH
+            @TODO: finish the visualiser
+@TODO: Implement XMLHttpRequest() to get IR reverbs from URLs on the net
+        @TODO: Apply the normal envelope ADS to the updated voice (like the "new" "ft")
+            @TODO: implement the limit of polyphony
+            @TODO: ERROR WHEN CANCEL A FILE UPLOAD WINDOW
+
+            ------------------------------------------------
+            < midi-ports.js >
+
+            @TODO: isOpen NOT USED YET
+                - Use isOpen to check if the user selected an output port
+
+            ------------------------------------------------
+            < midi-ports.js >
+
+        @TODO: Implement MIDI OUT

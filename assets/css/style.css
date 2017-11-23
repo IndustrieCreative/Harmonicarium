@@ -1,0 +1,823 @@
+/***********************************************
+ * COMMONS
+ ***********************************************/
+
+@font-face {
+  font-family: 'IM Fell DW Pica';
+  font-style: normal;
+  font-weight: 400;
+  src: local('IM FELL DW Pica Roman'), local('IM_FELL_DW_Pica_Roman'), url(../font/IMfellDWpica.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Source Code Pro'), local('SourceCodePro-Regular'), url(../font/SourceCodePro.woff2) format('woff2');
+}
+
+/*Hide parts on development*/
+.TODO {
+    display: none!important;
+}
+
+/*Remove the blue border on focus (tested on osx)*/
+:focus {
+    outline: none;
+}
+
+body {
+    background-color: #575867;
+    color: #DDD; /*@DARK*/
+    display: unset;
+    /*font-family: 'Source Sans Pro', sans-serif;*/
+    font-family: 'IM Fell DW Pica';
+    vertical-align: middle;
+}
+
+summary {
+    padding-bottom: 5px;
+}
+
+h1 {
+    font-size: 1.5em;
+}
+
+h2 {
+    font-size: 1.25em;
+}
+
+input {
+    background-color: #503535; /*@DARK*/
+    background-image: linear-gradient( to top left, #8e4a4a, #2d1e1e);
+    border-radius: 7px;
+    border-style: inset;
+    border-width: 2px;
+    color: #DDD; /*@DARK*/
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.9em;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-indent: 5px; /*@DARK*/
+    vertical-align: middle;
+}
+
+/*FILE UPLOAD BUTTON AND LABLE*/
+input[type="file"] {
+    display: inline-flex;
+    font-size: 10px;
+    font-weight: normal;
+    width: 230px;
+}
+input::-webkit-file-upload-button {
+    background-color: rgb(53, 77, 80);
+    border-radius: 5px;
+    border-style: inset;
+    color: #DDD;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px;    
+    font-weight: bold;
+    vertical-align: super;
+}
+input::-webkit-file-upload-button:focus {
+    outline: none;
+}
+
+button {
+    background-color: rgb(53, 77, 80);
+    background-image: linear-gradient( to top left, rgb(92, 125, 130), rgb(34, 49, 51));
+    border-radius: 7px;
+    border-style: inset;
+    color: #DDD;
+    font-family: 'Source Code Pro', monospace;
+    font-weight: bold;
+    vertical-align: super;
+}
+
+select {
+    background-color: #503535; /*@DARK*/
+    background-image: linear-gradient( to top left, #8e4a4a, #2d1e1e);
+    border-color: #DDD;
+    border-style: inset;
+    border-width: 2px;
+    color: #DDD;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 12px;
+    font-weight: bold;
+
+}
+
+table {
+    border-collapse: collapse;
+    border-color: #999; /*@DARK*/
+    border-style: solid;
+    border-width: 2px;
+    text-align:center;
+}
+.unselectableText {
+   -khtml-user-select: none;
+   -moz-user-select: -moz-none;
+   -ms-user-select: none;
+   -webkit-user-select: none;
+   user-select: none;
+}
+.invisibleTable {
+    border: none;
+}
+.dataTable {
+    background-color: #383749;
+}
+.monitorTable td {
+    font-family: 'Source Code Pro', monospace;
+}
+.monitorTableTitle {
+    border: hidden;
+    height: unset;
+}
+
+th {
+    background-color: #BBB; /*@DARK*/
+    background-image: linear-gradient( to top left, #BBB, #a0a0a0);
+    border-color: #777; /*@DARK*/
+    color: #191919; /*@DARK*/
+    padding: 0;
+}
+.invisibleTable th {
+    background-color: transparent;
+    background-image: none;
+    color: #DDD;
+}
+
+td {
+    border-color: #AAA; /*@DARK*/
+    overflow: hidden;
+    padding: 1px;
+    white-space: nowrap;
+}
+
+th, td {
+    border-style: solid;
+    border-width: 1px;
+    height: 18px;
+}
+.invisibleTable td,
+.invisibleTable th {
+    border: none;
+}
+
+
+/***********************************************
+ * MODAL CONTENTS
+ ***********************************************/
+.modalOverlay {
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    display: none; /* Hidden by default */
+    height: 100%; /* Full height */
+    left: 0;
+    overflow: auto; /* Enable scroll if needed */
+    padding-top: 40px; /* Location of the box */
+    position: fixed; /* Stay in place */
+    top: 0;
+    width: 100%; /* Full width */
+    z-index: 3; /* Sit on top */
+}
+/* Modal Content */
+.modalOverlay_content {
+    background-color: #2a2838; /*@DARK*/
+    background-image : linear-gradient( to top left, rgba(124, 120, 150, 0.7), #2a2838);
+    border: 1px solid #888;
+    box-shadow: -0.2em -0.2em 0.8em rgb(5, 0, 33); /*@DARK*/
+    margin: auto;
+    padding: 0 20px 50px 20px;
+    width: 230px;
+}
+/* The Close Button */
+.modalOverlay_close {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+.modalOverlay_close:hover,
+.modalOverlay_close:focus {
+    color: #000;
+    cursor: pointer;
+    text-decoration: none;
+}
+.modalOverlay_content h1 {
+    margin-bottom: 10px;
+    margin-top: 15px;
+}
+/**table**/
+.modalOverlay_content table {
+    font-size: 12px;
+}
+.modalOverlay_content th,
+.modalOverlay_content td {
+    padding: 0 4px 0 4px;
+}
+
+
+/***********************************************
+ * CONTAINER BOXES
+ ***********************************************/
+.container.L1 {
+    display: unset;
+}
+.container.L2 {
+    display: unset;
+}
+.container.L3 {
+    display: unset;
+}
+
+.UIbox {
+    /*box-shadow: 0.2em 0.2em 0.8em rgb(5, 0, 33);*/ /*@DARK*/
+    background-color: #2a2838; /*@DARK*/
+    background-image : linear-gradient( to top left, rgba(124, 120, 150, 0.7), #2a2838);
+    box-shadow: -0.2em -0.2em 0.8em rgb(5, 0, 33); /*@DARK*/
+    display: table;
+    float: left;
+    font-size: 90%;
+    margin: 10px;
+    min-height: 132px;
+    min-width: 200px;
+    padding: 1px 15px 15px 15px;
+    text-align: left;
+    vertical-align: top;
+}
+.UIbox h1 {
+    margin-bottom: 5px;
+    margin-top: 0;
+    position: relative;
+    left: -8px;
+}
+.UIbox h2 {
+    margin-top: 5px;
+}
+
+
+
+
+/***********************************************
+ * LOGO
+ ***********************************************/
+.logo .UIbox {
+    min-height: unset;
+    padding: 12px 12px 7px 12px;
+}
+.logo img {
+    width: 205px;
+}
+
+.container.L3.logo {
+    float: right;
+}
+
+.container.L1.P2 {
+    float: left;
+
+}
+
+/***********************************************
+ * DHC SETTINGS
+ ***********************************************/
+.dhcSettings {
+    display: grid;
+}
+.dhcSettings label {
+    margin-right: 5px;
+}
+.dhcParam input {
+    float: right;
+    width: 70px;
+}
+.dhcParam {
+    float: left;
+    margin-top: 2px;
+}
+/*Middle C Label+Input hack*/
+#HTMLi_dhc_middleC {
+    border:none;
+    height: 15px;
+    outline:none;
+    padding-top: 0;
+    text-indent: 0;
+    width: 58px;
+    background-color: transparent;
+    background-image: none;
+}
+label[for="HTMLi_dhc_middleC"] {
+    background-color: #503535;
+    background-image: linear-gradient( to top left, #8e4a4a, #2d1e1e);
+    border-color: #DDD;
+    border-radius: 7px;
+    border-style: inset;
+    border-width: 2px;
+    float: right;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 1.0em;
+    font-weight: bold;
+    height: 16px;
+    margin-bottom: 5px;
+    margin-left: 5px;
+    margin-right: 0px;
+    padding: 0 0 0 5px;
+}
+
+
+/***********************************************
+ * REFERENCE SYNTH
+ ***********************************************/
+.synthColumn {
+    float: left;
+}
+.synthRxPanel {
+    float: right;
+}
+.synthParam input {
+    margin: auto;
+}
+.synthParam {
+    display: grid;
+    padding: 0 7px 0 7px;
+    text-align: center;
+}
+.synthTonePanel input,
+.synthTonePanel label {
+    display:block;
+}
+/**table**/
+.synthTonePanel td,
+.synthTonePanel th {
+    padding: 5px;
+}
+.synthTonePanel td + td,
+.synthTonePanel th + th {
+    border-left: 2px solid #999;
+}
+.synthReverbPanel {
+    display: grid;
+    text-align: center;
+}
+.synthReverbPanel input,
+.synthReverbPanel label {
+    margin: auto;
+    width: 230px;
+}
+
+.synthReverbPanel p {
+    margin: 3px;
+}
+
+#HTMLo_synth_meter {
+    margin: 8px 0 0 12px!important;
+}
+
+#HTMLi_synth_volume {
+    width: 210px;
+}
+
+.synthColumn.synthOut {
+    height: 250px;
+    width: 150px;
+}
+
+.synthColumn.synthOut .synthParam input {
+    margin: 0 auto 0 auto;
+}
+.synthOut .synthParam {
+    padding: 0;
+}
+
+.synthOut span.rotatedElement {
+    -webkit-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
+    transform: rotate(-90deg);
+    -webkit-transform-origin: 24% -113%;
+    -moz-transform-origin: 24% -113%;
+    -ms-transform-origin: 24% -113%;
+    -o-transform-origin: 24% -113%;
+    transform-origin: 24% -113%;
+    display: inline-grid;
+}
+.synthOut .rotatedElement label {
+    display: block;
+    text-align: center;
+}
+
+
+.synthVisualiser {
+    width: 220px;
+}
+.visualiser .UIbox {
+    min-height: unset;
+}
+
+/***********************************************
+ * FUNDAMENTAL MOTHER SETTINGS
+ ***********************************************/
+/*FM text input*/
+.fm input {
+    width: 60px;
+}
+/**table**/
+.fm button {
+    margin-right: 17px; 
+}
+.fm td {
+    padding-top: 5px;
+}
+
+/***********************************************
+ * FUNDAMENTAL TONES SETTINGS
+ ***********************************************/
+.ftSettings h2 {
+    margin-bottom: 0;
+}
+.ftSettings img {
+    float: right;
+    padding: 8px 22px 0 0;
+    width: 20%;
+}
+.ftSettings input {
+    width: 35px;
+}
+.ftNEDX_VarsTxt {
+    font-family: serif;
+    font-size: 16px;
+    font-style: italic;
+}
+/**table**/
+.ftSettings table {
+    width: 210px;
+}
+.ftSettings td,
+.ftSettings th {
+    padding: 6px 5px 0 5px;
+}
+.ftSettings tr {
+    margin-top: 5px;
+}
+
+#HTMLo_fm_mc {
+    font-family: 'Source Code Pro', monospace;
+}
+#HTMLo_fm_hz {
+    font-family: 'Source Code Pro', monospace;
+}
+#HTMLi_ftNEDX_ok {
+    position: relative;
+    left: 5px;
+}
+
+/***********************************************
+ * HARMONIC TONES SETTINGS
+ ***********************************************/
+.htSettings h2 {
+    margin-bottom: 0;
+    margin-top: 0px;
+    position: relative;
+    top: -3px;
+}
+.htSettings input {
+    text-align: center;
+    width: 35px;
+}
+.htSettings input::-webkit-inner-spin-button, 
+.htSettings input::-webkit-outer-spin-button { 
+    -moz-appearance:textfield !important;
+    -webkit-appearance: none; 
+    margin: 0;
+}
+/**table**/
+.htSettings td,
+.htSettings th {
+    width: 40px;
+}
+span.htSettingsLabel {
+    font-family: 'Source Code Pro', monospace;
+}
+
+/***********************************************
+ * MIDI MONITOR TABLE
+ ***********************************************/
+.midiMonitor .monitorTableTitle {
+    text-align: left;
+}
+/**table**/
+.midiMonitor table { 
+    margin-top: 8px;
+    width: 235px;
+}
+
+
+
+/***********************************************
+ * H STACK
+ ***********************************************/
+
+.hstack h1 {
+    float: left;
+}
+
+/**table**/
+.hstack td {
+    font-family: 'Source Code Pro', monospace;
+    padding: 1px 3px 1px 3px;
+}
+.hstackHT table {
+    margin-top: 0;
+    min-width: 265px;
+    padding-bottom: 10px;
+}
+
+.hstack_zoom {
+    display: grid;
+    float: left;
+    padding: 0 0 5px 20px;
+}
+
+.hstack_zoom input {
+    border-width: 0; 
+    margin: 0 0 5px 0;
+}
+/***********************************************
+ * HSTACK FT (MONITOR) TABLE
+ ***********************************************/
+/**table**/
+.hstackFT table { 
+    min-width: 265px;
+}
+
+th.hstackDivisor {
+    height: 5px;
+}
+
+/***********************************************
+ * VIRTUAL PIANO KEYBOARD MONITOR TABLE
+ ***********************************************/
+/**table**/
+.toneMonitor table { 
+    float: right;
+    margin-bottom: 10px;
+    margin-right:10px;
+    min-width: 250px;
+    width: 250px;
+}
+.toneMonitor .monitorTableTitle {
+    font-size: 10px;
+}
+
+
+
+/***********************************************
+ * VIRTUAL PIANO KEYBOARD
+ ***********************************************/
+/*QWERTY HANCOCK SETTINGS*/
+/*======================*/
+.pianoVelocity {
+    display: inline-grid;
+    float: right;
+    padding-right: 12px;
+}
+.pianoChannel {
+    display: grid;
+    float: right;
+    margin-right: 35px;
+}
+.pianoChannel input {
+    width: 35px;
+}
+/**table**/
+.pianoSettings td {
+    padding-left: 20px;
+    text-align: left;
+}
+
+/*QWERTY HANCOCK WRAPPER*/
+/*======================*/
+#HTMLo_pianoContainer {
+    background-color: transparent!important; /*@DARK*/
+    display: table;
+    margin-top: 10px!important;
+}
+#HTMLo_pianoContainer > ul {
+    background-color: transparent!important; /*@DARK*/
+}
+/*FT keys*/
+.FTwKey.releasedKey {
+    background-color: #ECA589!important;
+}
+.FTwKey.pressedKey {
+    background-color: #BF8066!important;
+}
+.FTbKey.releasedKey {
+    background-color: #B96363!important;
+}
+.FTbKey.pressedKey {
+    background-color: #944E4E!important;
+}
+/*HT keys*/
+.HTwKey.releasedKey {
+    background-color: #B0C4DE!important;
+}
+.HTwKey.pressedKey {
+    background-color: #688FC3!important;
+}
+.HTbKey.releasedKey {
+    background-color: #4682B4!important;
+}
+.HTbKey.pressedKey {
+    background-color: #2B506E!important;
+}
+/*NORMAL keys*/
+.wKey.releasedKey {
+    background-color: white!important;
+}
+.wKey.pressedKey {
+    background-color: yellow!important;
+}
+.bKey.releasedKey {
+    background-color: black!important;
+}
+.bKey.pressedKey {
+    background-color: gold!important;
+}
+
+
+/***********************************************
+ * MODAL CONTROLLER KEYMAP
+ ***********************************************/
+/*CONTROLLER KEYMAP TABLE*/
+.controllerKeymap button {
+    margin-top: 10px;
+}
+/*Keymap table*/
+.controllerKeymapTable {
+    display: flex;
+    justify-content: center;
+}
+
+
+/***********************************************
+ * OVERLAY LOG
+ ***********************************************/
+/*LOG PANEL*/
+/*=========*/
+/* The Overlay (background) */
+.log {
+    /*overflow-y: hidden;*/ /* Disable vertical scroll */
+    background-color: rgb(8, 3, 31); /* Black fallback color */
+    background-color: rgba(8, 3, 31, 0.9); /* Black w/opacity */
+    bottom: 0; 
+    height: 0;
+    left: 0;
+    position: fixed; /* Stay in place */
+    transition: 0.4s; /* 0.5 second transition effect to slide in or slide down the overlay (height or width, depending on reveal) */
+    width: 100%;
+    z-index: 3; /* Sit on top */
+}
+/* Position the content inside the overlay */
+.logContent {
+    color: #AAA;
+    height: 100%;
+    margin-top: 10px; /* 30px top margin to avoid conflict with the close button on smaller screens */
+    overflow-y: scroll;
+    width: 100%;  /* 100% width */
+}
+/*Customized scrollbar */
+.logContent::-webkit-scrollbar {
+    background-color: rgb(0,0,0); /* Black fallback color */
+    background-color: rgba(0,0,0, 0.9); /* Black w/opacity */
+    height: 8px;
+    width: 5px;
+}
+/* Add a thumb to the scrollbar*/
+.logContent::-webkit-scrollbar-thumb {
+    background: #AAA; 
+}
+/* The navigation links inside the overlay */
+.log a {
+    color: #818181;
+    display: block;  /* Display block instead of inline */
+    font-size: 36px;
+    padding: 8px;
+    text-decoration: none;
+    transition: 0.3s; ; /* Transition effects on hover (color) */
+}
+.logContent h1 {
+    margin-bottom: 5px;
+    margin-top: 0;
+    text-align: center;
+}
+/*LOG TEXTBOX*/
+/*===========*/
+.logText {
+    padding: 0 40px 10px 40px;
+}
+.logText p {
+    font-family: 'Source Code Pro', monospace;
+    margin: 0;
+    padding-left: 85px;
+    text-indent: -85px;
+    white-space: pre;
+}
+
+/* When the height of the screen is less than 450 pixels,
+change the font-size of the links and position the close button again,
+so they don't overlap */
+/*@media screen and (max-height: 450px) {
+  .LogOverlay {overflow-y: auto;}
+  .LogOverlay a {font-size: 20px}
+  .LogOverlay .LogBtnContainer {
+    font-size: 40px;
+    top: 15px;
+    right: 35px;
+  }
+}*/
+
+/*OVERLAY OPEN/CLOSE BUTTON*/
+.logBtnContainer {
+    bottom: 10px; /* Position the close button (top right corner) */
+    cursor: pointer;
+    display: inline-block;
+    font-size: 60px;
+    position: fixed;
+    right: 20px;
+}
+/*The three bars for the icon*/
+.panelBtnBar1, .panelBtnBar2, .panelBtnBar3 {
+    background-color: #888;
+    height: 5px;
+    margin: 6px 0;
+    transition: 0.4s;
+    width: 35px;
+}
+/* Rotate first bar */
+.logShown .panelBtnBar1 {
+    -webkit-transform: rotate(-45deg) translate(-9px, 6px) ;
+    transform: rotate(-45deg) translate(-9px, 6px) ;
+}
+/* Fade out the second bar */
+.logShown .panelBtnBar2 {opacity: 0;}
+/* Rotate last bar */
+.logShown .panelBtnBar3 {
+    -webkit-transform: rotate(45deg) translate(-8px, -8px) ;
+    transform: rotate(45deg) translate(-8px, -8px) ;
+}
+.logShown {
+    position: absolute;
+    top: 20px;
+}
+
+
+
+/***********************************************
+ * SLIDER TOOLTIP
+ * get from Chris Bracco https://codepen.io/cbracco/pen/qzukg
+ ***********************************************/
+/* Add this attribute to the element that needs a tooltip */
+input[data-tooltip] {
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+/* Hide the tooltip content by default */
+input[data-tooltip]:before {
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
+  filter: progid: DXImageTransform.Microsoft.Alpha(Opacity=0);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+/* Position tooltip above the element */
+input[data-tooltip]:before {
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  background-color: #000;
+  background-color: hsla(0, 0%, 20%, 0.9);
+  border-radius: 3px;
+  bottom: 70%;
+  color: #fff;
+  content: attr(data-tooltip);
+  font-size: 14px;
+  left: 70%;
+  line-height: 1.2;
+  margin-bottom: 5px;
+  margin-left: -80px;
+  padding: 4px;
+  position: absolute;
+  text-align: center;
+  width: 80px;
+}
+
+/* Show tooltip content on hover */
+input[data-tooltip]:hover:before {
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
+  filter: progid: DXImageTransform.Microsoft.Alpha(Opacity=100);
+  opacity: 1;
+  visibility: visible;
+}

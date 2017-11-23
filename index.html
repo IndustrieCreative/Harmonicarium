@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="A web app which allows users to play the Harmonic Series dynamically by changing its fundamental tone in real-time.">
+    <meta name="author" content="Walter Mantovani">
+    <meta name="google" value="notranslate">
+    <title>Harmonicarium, a Dynamyc Harmonics Calculator</title>
+</head>
+
+<body>
+    <div class="container L1 P1">
+        <div class="container L2 P2">
+            <div class="container L3 logo" id="HTML_logo">
+                <div class="UIbox">
+                    <img src="assets/img/logo.png">
+                </div>
+            </div>
+            <div class="container L3 hstack" id="HTML_hstack">
+                <div class="UIbox">
+                    <h1>H Stack</h1>
+                    <div class="hstack_zoom">
+                        <label for="HTMLi_hstack_fontsize">Zoom</label>
+                        <input type="range" min="14" max="30" step="0.1" id="HTMLf_hstack_zoom">
+                    </div>
+                    <button class="TODO" id="HTMLi_hstackDuplicate">Add another H Stack</button>
+                    <div id="HTMLo_hstack_fontsize">
+                        <div class="hstackHT" id="HTMLo_hstackHT"></div>
+                        <div class="hstackFT">
+                            <table class="dataTable">
+                                <tr>
+                                    <th class="hstackDivisor" colspan="4"></td>
+                                </tr>
+                                <tr>
+                                    <td width="12%"><span id="HTMLo_hstackFT_tone"></span></td>
+                                    <td width="20%"><span id="HTMLo_hstackFT_note"></span></td>
+                                    <td width="25%"><span id="HTMLo_hstackFT_cents"></span></td>
+                                    <td width="43%"><span id="HTMLo_hstackFT_hz"></span></td>
+                                </tr>
+                                <tr class="hstackHeader">
+                                    <th class="hstackFT_h">FT</th>
+                                    <th class="hstackFT_note">note</th>
+                                    <th class="hstackFT_cents">cents</th>
+                                    <th class="hstackFT_hz">Hz</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4">Fundamental</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container L2 P1">
+            <div class="container L3 synth" id="HTML_synth">
+                <div class="UIbox">
+                    <div class="synthColumn">
+                        <div class="synthRxPanel">
+                            <div class="synthParam">
+                                <label for="HTMLi_synth_attack">– &nbsp;&nbsp;Attack &nbsp;&nbsp;+</label>
+                                <!-- time (sec) -->
+                                <input type="range" min="0.02" max="5" step="0.01" id="HTMLi_synth_attack" data-tooltip="">
+                            </div>
+                            <div class="synthParam">
+                                <label for="HTMLi_synth_sustain">– &nbsp;&nbsp;Sustain &nbsp;&nbsp;+</label>
+                                <!-- gain value amount (0 > 1) -->
+                                <input type="range" min="0.018" max="1" step="0.001" id="HTMLi_synth_sustain">
+                            </div>
+                        </div>
+                        <h1>Built-in Synth</h1>
+                        <div class="synthSxPanel">
+                            <div class="synthParam">
+                                <label for="HTMLi_synth_power">ON/OFF</label>
+                                <input type="checkbox" name="synt" id="HTMLi_synth_power">
+                            </div>
+                            <div class="synthParam">
+                                <label for="HTMLi_synth_portamento">– &nbsp;&nbsp;Portamento &nbsp;&nbsp;+</label>
+                                <input type="range" min="0" max="0.20" step="0.01" id="HTMLi_synth_portamento">
+                            </div>
+                        </div>
+                        <div class="synthTonePanel">
+                            <table class="invisibleTable">
+                                <tr>
+                                    <th>Fundamental Tone</th>
+                                    <th>Harmonic Tones</th>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <label for="HTMLi_synth_volumeFT">– &nbsp;&nbsp;FT Volume &nbsp;&nbsp;+</label>
+                                        <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volumeFT">
+                                    </td>
+                                    <td>
+                                        <label for="HTMLi_synth_volumeHT">– &nbsp;&nbsp;HTs Volume &nbsp;&nbsp;+</label>
+                                        <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volumeHT">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <label for="HTMLi_synth_waveformFT">FT Waveform</label>
+                                        <select id="HTMLi_synth_waveformFT">
+                                            <option value="sine">Sine</option>
+                                            <option value="sawtooth">Sawtooth</option>
+                                            <option value="square">Square</option>
+                                            <option value="triangle">Triangle</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <label for="HTMLi_synth_waveformHT">HTs Waveform</label>
+                                        <select id="HTMLi_synth_waveformHT">
+                                            <option value="sine">Sine</option>
+                                            <option value="sawtooth">Sawtooth</option>
+                                            <option value="square">Square</option>
+                                            <option value="triangle">Triangle</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="synthReverbPanel">
+                            <label for="HTMLi_synth_reverb">DRY &nbsp;– &nbsp;Convolution Reverb &nbsp;– &nbsp;WET</label>
+                            <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_reverb">
+                            <p></p>
+                            <input type="file" id="HTMLi_synth_irFile" accept=".wav">
+                        </div>
+                    </div>
+                    <div class="synthColumn synthOut">
+                        <div class="synthParam">
+                            <label for="HTMLi_synth_decay">– &nbsp;&nbsp;Decay &nbsp;&nbsp;+</label>
+                            <!-- time (timeconstant) -->
+                            <input type="range" min="0.001" max="1" step="0.001" id="HTMLi_synth_decay">
+                        </div>
+                        <div class="synthParam">
+                            <label for="HTMLi_synth_release">– &nbsp;&nbsp;Release &nbsp;&nbsp;+</label>
+                            <!-- time (sec) -->
+                            <input type="range" min="0.02" max="5" step="0.01" id="HTMLi_synth_release">
+                        </div>
+                        <div id="HTMLo_synth_meter" style="width: 75px; height: 214px; margin: 1em 0;"></div>
+                        <span class="rotatedElement">
+                            <label for="HTMLi_synth_volume">– &nbsp;&nbsp;MASTER &nbsp;VOLUME &nbsp;&nbsp;+</label>
+                            <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volume">
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="container L3 io" id="HTML_io">
+                <div class="UIbox">
+                    <div class="midiPorts unselectableText">
+                        <h1>MIDI &nbsp;I/O</h1>
+                        <details>
+                            <summary>Input ports:</summary>
+                            <div id="HTMLo_inputPorts"></div>
+                        </details>
+                        <details class="TODO">
+                            <summary>Output ports:</summary>
+                            <div id="HTMLo_outputPorts"></div>
+                        </details>
+                    </div>
+                    <div class="midiMonitor">
+                        <table class="monitorTable">
+                            <tr>
+                                <td class="monitorTableTitle" colspan="3">MIDI-Input monitor</td>
+                            </tr>
+                            <tr>
+                                <th>Channel</th>
+                                <th>Note #</th>
+                                <th>Velocity</th>
+                            </tr>
+                            <tr>
+                                <td><span id="HTMLo_midiMonitor_channel"></span></td>
+                                <td><span id="HTMLo_midiMonitor_note"></span></td>
+                                <td><span id="HTMLo_midiMonitor_velocity"></span></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3"><span id="HTMLo_midiMonitor_port"></span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="controllerKeymap">
+                        <h1>Controller Keymap</h1>
+                        <input type="file" id="HTMLi_controllerKeymapFile" accept=".hcmap">
+                        <br/>
+                        <!-- Open the modal content-->
+                        <button id="HTMLf_controllerKeymapTableShow">Show Keymap</button>
+                        <!-- The Modal -->
+                        <div id="HTMLf_controllerKeymapModal" class="modalOverlay">
+                        <!-- Modal content -->
+                            <div class="modalOverlay_content">
+                                <span class="modalOverlay_close">&times;</span>
+                                <h1>Controller Keymap</h1>
+                                <div class="controllerKeymapTable" id="HTMLo_controllerKeymapTable"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container L3 visualiser TODO" id="HTML_visualiser">
+                <div class="UIbox">
+                    <div class="synthVisualiser">
+                        <select id="HTMLi_visualiser" name="visual">
+                          <option value="sinewave">Sinewave</option>
+                          <option value="frequencybars" selected>Frequency bars</option>
+                          <option value="off">Off</option>
+                        </select>
+                        <canvas class="visualizer" width="640" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container L1 P2">
+        <div class="container L2 P2">
+            <div class="container L3 fm" id="HTML_fm">
+                <div class="UIbox">
+                    <h1>Fundamental Mother</h1>
+                    <table class="invisibleTable">
+                        <tr>
+                            <td>MIDI Note 0-127
+                                <br/> (midi#.cents)</td>
+                            <td></td>
+                            <td>Frequency
+                                <br/>(Hz)</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span id="HTMLo_fm_mc"></span>
+                            </td>
+                            <td></td>
+                            <td>
+                                <span id="HTMLo_fm_hz"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="number" id="HTMLi_fm_mc">
+                            </td>
+                            <td>
+                                <!-- Fake button. Useless due to 'onchange' on input textboxes but user-friendl -->
+                                <button>Set</button>
+                            </td>
+                            <td>
+                                <input type="number" id="HTMLi_fm_hz">
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="container L3 ft" id="HTML_ft">
+                <div class="UIbox">
+                    <h1>Fundamental Tones</h1>
+                    <div class="ftSettings">
+                        <div class="ftNEDX">
+                            <span><img src="assets/img/n-edx.png"></span>
+                            <h2>n-EDx (ET)</h2>
+                            <table class="invisibleTable">
+                                <tr>
+                                    <td width="40%">Ratio Unit</td>
+                                    <td width="20%"></td>
+                                    <td width="40%">Equal Divisions</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span class="ftNEDX_VarsTxt"> x = </span><input type="number" id="HTMLi_ftNEDX_unit">
+                                    </td>
+                                    <td>
+                                        <button id="HTMLi_ftNEDX_ok">Set</button>
+                                    </td>
+                                    <td>
+                                        <span class="ftNEDX_VarsTxt"> n = </span><input type="number" id="HTMLi_ftNEDX_division">
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container L3 ht" id="HTML_ht">
+                <div class="UIbox">
+                    <h1>Harmonic Tones</h1>
+                    <div class="htSettings">
+                        <table class="invisibleTable">
+                            <tr>
+                                <td valign="top">
+                                    <h2>Transpose</h2>
+                                </td>
+                                <td>Octave
+                                    <br/><span class="htSettingsLabel">÷2</span></td>
+                                <td>Ratio
+                                    <br/><span class="htSettingsLabel">×r</span></td>
+                                <td>Octave
+                                    <br/><span class="htSettingsLabel">×2</span></td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: right;">Harmonics</td>
+                                <td>
+                                    <button id="HTMLi_htTranspose_h_minus">–</button>
+                                </td>
+                                <td>
+                                    <input type="number" min="0" id="HTMLi_htTranspose_h_ratio">
+                                </td>
+                                <td>
+                                    <button id="HTMLi_htTranspose_h_plus">+</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: right;">Subharmonics</td>
+                                <td>
+                                    <button id="HTMLi_htTranspose_s_minus">–</button>
+                                </td>
+                                <td>
+                                    <input type="number" min="0" id="HTMLi_htTranspose_s_ratio">
+                                </td>
+                                <td>
+                                    <button id="HTMLi_htTranspose_s_plus">+</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container L1 P3">
+        <div class="container L2 P1">
+            <div class="container L3 piano" id="HTML_piano">
+                <div class="UIbox">
+                    <div class="toneMonitor">
+                        <table class="monitorTable">
+                            <tr>
+                                <td class="monitorTableTitle" colspan="5">Last pressed keys</td>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                <th>#</th>
+                                <th>Note</th>
+                                <th>Hz</th>
+                                <th title="MIDI.cent">m.¢</th>
+                            </tr>
+                            <tr>
+                                <td>HT</td>
+                                <td><span id="HTMLo_toneMonitorHT_tone"></span></td>
+                                <td><span id="HTMLo_toneMonitorHT_notename"></span></td>
+                                <td><span id="HTMLo_toneMonitorHT_frequency"></span></td>
+                                <td><span id="HTMLo_toneMonitorHT_midicents"></span></td>
+                            </tr>
+                            <tr>
+                                <td>FT</td>
+                                <td><span id="HTMLo_toneMonitorFT_tone"></span></td>
+                                <td><span id="HTMLo_toneMonitorFT_notename"></span></td>
+                                <td><span id="HTMLo_toneMonitorFT_frequency"></span></td>
+                                <td><span id="HTMLo_toneMonitorFT_midicents"></span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <h1>Virtual MIDI Controller</h1>
+                    <div class="pianoVelocity">
+                        <label for="HTMLi_piano_velocity">Velocity</label>
+                        <input type="range" min="1" max="127" step="1" value="120" id="HTMLi_piano_velocity">
+                    </div>
+                    <div class="pianoChannel">
+                        <label for="HTMLi_piano_channel">Channel</label>
+                        <input type="number" min="1" max="16" step="1" value="1" id="HTMLi_piano_channel">
+                    </div>
+                    <details>
+                        <summary>Settings</summary>
+                        <div class="pianoSettings">
+                            <table class="invisibleTable">
+                                <tr>
+                                    <td>
+                                        <label for="HTMLi_piano_offset">Offset</label>
+                                        <!-- 119 (B9) is max startNote for Qwerty Hancock-->
+                                        <input type="range" min="0" max="119" step="1" value="41" id="HTMLi_piano_offset">
+                                    </td>
+                                    <td>
+                                        <label for="HTMLi_piano_width">Width</label>
+                                        <input type="range" min="300" max="1000" step="50" value="400" id="HTMLi_piano_width">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <label for="HTMLi_piano_range">Range</label>
+                                        <input type="range" min="1" max="10" step="1" value="4" id="HTMLi_piano_range">
+                                    </td>
+                                    <td>
+                                        <label for="HTMLi_piano_height">Height</label>
+                                        <input type="range" min="40" max="400" step="20" value="80" id="HTMLi_piano_height">
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </details>
+                    <div id="HTMLo_pianoContainer"></div>
+                </div>
+            </div>
+            <div class="container L3 dhc" id="HTML_dhc">
+                <div class="UIbox">
+                    <h1>DHC Settings</h1>
+                    <div class="dhcSettings">
+                        <div class="dhcParam">
+                            <label for="HTMLi_dhc_hzAccuracy" title="Decimal precision">UI Hz accuracy</label>
+                            <input type="number" id="HTMLi_dhc_hzAccuracy" title="Decimal precision">
+                        </div>
+                        <div class="dhcParam">
+                            <label for="HTMLi_dhc_mcAccuracy" title="Decimal precision">UI Cents accuracy</label>
+                            <input type="number" id="HTMLi_dhc_mcAccuracy" title="Decimal precision">
+                        </div>
+                        <div class="dhcParam">
+                            <label>Middle C octave</label>
+                            <label for="HTMLi_dhc_middleC">C
+                                <input type="number" id="HTMLi_dhc_middleC">
+                            </label>
+                        </div>
+                        <div class="dhcParam">
+                            <label for="HTMLi_dhc_pitchbendRange">Ctrl PitchBend range</label>
+                            <input type="number" id="HTMLi_dhc_pitchbendRange">
+                        </div>
+                        <div class="dhcParam">
+                            <label for="HTMLi_dhc_piperSteps">Piper (HT0) steps</label>
+                            <input type="number" id="HTMLi_dhc_piperSteps">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="HTML_log" class="log">
+        <div class="logBtnContainer" onclick="icToggleOpenLogBtn(this)">
+            <div class="panelBtnBar1"></div>
+            <div class="panelBtnBar2"></div>
+            <div class="panelBtnBar3"></div>
+        </div>
+        <div class="logContent">
+            <h1>Events Log</h1>
+            <button type="button" onclick="icTESTER()" style="margin-bottom: 10px; position: absolute; right: 20px; top: 80px;">TEST</button>
+            <div class="logText" id="HTMLo_logText"></div>
+        </div>
+    </div>
+    <link rel="stylesheet" type="text/css" href="assets/css/style.css">
+    <script type="text/javascript" src='assets/js/lib/qwerty-hancock-dist.js'></script>
+    <script type="text/javascript" src='assets/js/lib/web-audio-peak-meter.js'></script>
+    <!-- <script type="text/javascript" src='assets/js/lib/web-audio-peak-meter.min.js'></script> -->
+    <script type="text/javascript" src='assets/js/utils.js'></script>
+    <script type="text/javascript" src='assets/js/synth-ir-default.js'></script>
+    <script type="text/javascript" src='assets/js/midi-ports.js'></script>
+    <script type="text/javascript" src='assets/js/keymaps-reader.js'></script>
+    <script type="text/javascript" src='assets/js/dhc.js'></script>
+    <script type="text/javascript" src='assets/js/midi-input.js'></script>
+    <script type="text/javascript" src='assets/js/midi-output.js'></script>
+    <script type="text/javascript" src='assets/js/synth.js'></script>
+    <!-- <script type="text/javascript" src='assets/js/lib/visualizers.js'></script> -->
+    <script type="text/javascript" src='assets/js/keyboard.js'></script>
+</body>
+
+</html>
