@@ -11,9 +11,9 @@ The idea is to play a fundamental-variable harmonic series on electronic and ele
 It's based on the Pure Data prototype patch "**[Harmonync](https://github.com/IndustrieCreative/Harmonync)**", developed between 2013 and 2016.
 
 Harmonicarium is written in JavaScript (used ES6 features) and uses the Web MIDI API and Web AUDIO API.
-Actually it has been tested on Google Chrome v.61+ under macOS (10.11+) but it could run on other browsers supporting the Web MIDI and AUDIO API.
+Actually it has been tested on Google Chrome v.61+ under macOS (10.11+), Windows (v10) and Android (v5+) but it could run on other browsers supporting the Web MIDI and AUDIO API.
 
-**At the moment you need Google Chrome or Chromium – Partially untested on mobile devices**.
+Due to poor uniformity in the implementation of the Web Audio/MIDI API between different broswer, **at the moment you need Google Chrome or Chromium**.
 The sources are available [on GitHub](https://github.com/IndustrieCreative/Harmonicarium).
 
 ## Quick Start
