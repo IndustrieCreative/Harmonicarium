@@ -6,14 +6,15 @@ The Harmonicarium is a platform that allow the user/musician to play the Harmoni
 Just like the overtone singers do with the [polyphonic overtone singing technique](https://www.youtube.com/watch?v=haz6W7p8xjM).
 The idea is to play a fundamental-variable harmonic series on electronic and electro-acoustical instruments retuned via MIDI and in real-time.
 
+![Concept 1](http://harmonync.org/wp-content/uploads/slide003.jpg "Harmonicarium, a Dynamic Harmonics Calculator")
+
 It's based on the Pure Data prototype patch "**[Harmonync](https://github.com/IndustrieCreative/Harmonync)**", developed between 2013 and 2016.
 
 Harmonicarium is written in JavaScript (used ES6 features) and uses the Web MIDI API and Web AUDIO API.
 Actually it has been tested on Google Chrome v.61+ under macOS (10.11+) but it could run on other browsers supporting the Web MIDI and AUDIO API.
+
 **At the moment you need Google Chrome or Chromium – Partially untested on mobile devices**.
 The sources are available [on GitHub](https://github.com/IndustrieCreative/Harmonicarium).
-
-Though Harmonync has the MIDI-OUT-RETUNING feature (that is the main purpose of these software), the Harmonicarium is still under development and the MIDI-OUT is not ready at the moment. We must first create a better user&mobile-friendly GUI.
 
 ## Quick Start
   1. If you don't have Google Chrome on your system, download [here](https://www.google.com/chrome/browser/desktop/index.html) and install it.
@@ -25,6 +26,10 @@ Note: Of course, if you run the app locally, do not rename or move any other fil
 Visit [harmonicarium.org](http://harmonicarium.org/) for the **Tutorials**. There is no comprehensive guide at this moment, it is currently being drafted. A video-guide and a step-by-step tutorial will be released as soon as possible. For any questions, do not hesitate to contact Walter Mantovani at armonici.it[*at*]gmail[*dot*]com.
 
 Now (November 20, 2017) the **harmonicarium.org** site is under contruction. You can temporarily visit the old project site: **[harmonync.harmonicarium.org](https://harmonync.harmonicarium.org)**
+
+## MIDI I/O
+In order to make the most of the Harmonicarium you need a MIDI (input) controller like a master keyboard.
+The main purpose of this software is retuning a MIDI instrument. Though Harmonync has the MIDI-OUT-RETUNING feature, the Harmonicarium is still under development and the MIDI-OUT is not ready at the moment. We must first create a better user&mobile-friendly GUI.
 
 ## First public document about a DHC
 The document "**A first look at THE HARMONYNC: A Dynamic Harmonics Calculator – Draft of Specifications and User Guide**" is available [here](http://harmonync.harmonicarium.org/a_first_look_at_the_harmonync.pdf) and has the following DOI: [10.978.88940077/01](http://dx.doi.org/10.978.88940077/01)
