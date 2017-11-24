@@ -29,7 +29,7 @@ Harmonicarium's **source code** repository [is available on GitHub](https://gith
 Harmonicarium is written in **JavaScript** (used **ES6** features) and uses the **[Web MIDI](https://www.w3.org/TR/webmidi/)** and **[Web AUDIO](https://www.w3.org/TR/webaudio/) API**.
 Actually it has been tested on **Google Chrome** v61+ under macOS (v10.11+), Windows (v10) and Android (v5+) but it could run on other browsers supporting the Web MIDI and AUDIO API.
 
-**At the moment you need Google Chrome** or Chromium. It has been eveloped on a high performance desktop/laptop environment and actually, no optimization has been made in order to minimize the computational load. 
+**At the moment you need Google Chrome** or Chromium. It has been developed on a high performance desktop/laptop environment and actually, no optimization has been made in order to minimize the computational load. 
 
 **Partially untested on mobile devices**. On embedded Android devices I have experienced slow data processing (delay in output audio response). The [Qwerty Hancock](https://github.com/stuartmemo/qwerty-hancock) keyboard seems to support multitouch events. This means that on low performance system you could may experience slowdowns.
 
@@ -62,7 +62,7 @@ Actually there are two main issues:
 Having done these things, there are other two main milestones to reach:
   
   3. Implement **MIDI-Out** tuning
-  4. Implement **polyrythms** (nothing but the harmonics in the Infrasound domain).
+  4. Implement **polyrythms** (nothing but the harmonics in the infrasound domain).
   
 If you have any suggestions, you can write directly to the email in the license note or use the ["**Issues**" section](https://github.com/IndustrieCreative/Harmonicarium/issues) of the GitHub repository. And if you are a coder, ever help is welcome!
 
