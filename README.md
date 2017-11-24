@@ -1,4 +1,4 @@
-# ![Harmonicarium](http://harmonicarium.org/wp-content/uploads/harmonicarium_logo.png "Harmonicarium, a Dynamic Harmonics Calculator")
+# ![Harmonicarium](http://harmonicarium.org/harmonicarium_logo.png "Harmonicarium, a Dynamic Harmonics Calculator")
 a Dynamic Harmonics Calculator
 
 ## What is this?
