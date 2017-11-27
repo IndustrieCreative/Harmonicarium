@@ -14,7 +14,12 @@
         <div class="container L2 P2">
             <div class="container L3 logo" id="HTML_logo">
                 <div class="UIbox">
-                    <img src="assets/img/logo.png">
+                    <div>
+                        <img src="assets/img/logo.png">
+                    </div>
+                    <div class="menuContainer">
+                        <span class="menuElement" id="HTMLf_help">HELP</span> &nbsp;– &nbsp;<span class="menuElement" id="HTMLf_credits">Credits</span> &nbsp;– &nbsp;<span class="menuElement"><a href="https://github.com/IndustrieCreative/Harmonicarium" target="_blank">Source code</a></span>
+                    </div>
                 </div>
             </div>
             <div class="container L3 hstack" id="HTML_hstack">
@@ -424,16 +429,29 @@
             </div>
         </div>
     </div>
-    <div id="HTML_log" class="log">
-        <div class="logBtnContainer" onclick="icToggleOpenLogBtn(this)">
+    <div id="HTMLf_logPanel" class="panelOverlay bottomPanel">
+        <div class="panelBtnContainer" onclick="icToggleOpenLogBtn(this)">
             <div class="panelBtnBar1"></div>
             <div class="panelBtnBar2"></div>
             <div class="panelBtnBar3"></div>
         </div>
-        <div class="logContent">
+        <div class="panelOverlay_content">
             <h1>Events Log</h1>
             <button type="button" onclick="icTESTER()" style="margin-bottom: 10px; position: absolute; right: 20px; top: 80px;">TEST</button>
             <div class="logText" id="HTMLo_logText"></div>
+        </div>
+    </div>
+    <div id="HTMLf_helpPanel" class="panelOverlay rightPanel">
+        <div class="panelBtnContainer" onclick="icHelp(this)">
+            <div class="panelBtnBar1"></div>
+            <div class="panelBtnBar2"></div>
+            <div class="panelBtnBar3"></div>
+        </div>
+        <div class="panelOverlay_content">
+            <div class="helpText">
+                <object type="text/html" data="assets/html/help.html" id="HTML_helpObj"></object>
+                <object type="text/html" data="assets/html/credits.html" id="HTML_creditsObj"></object>
+            </div>
         </div>
     </div>
     <link rel="stylesheet" type="text/css" href="assets/css/style.css">
