@@ -1,0 +1,27 @@
+@font-face {
+  font-family: 'IM Fell DW Pica';
+  font-style: normal;
+  font-weight: 400;
+  src: local('IM FELL DW Pica Roman'), local('IM_FELL_DW_Pica_Roman'), url(../font/IMfellDWpica.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Source Code Pro'), local('SourceCodePro-Regular'), url(../font/SourceCodePro.woff2) format('woff2');
+}
+body {
+    color: #DDD; /*@DARK*/
+    font-family: 'IM Fell DW Pica';
+}
+h1 {
+}
+p {
+}
+a {
+  color: #DDA
+}
+.credits img {
+	float: right;
+	width: 35%;
+}
