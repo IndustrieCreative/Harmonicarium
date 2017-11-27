@@ -38,6 +38,55 @@
 
 "use strict";
 
+
+function icUTILSinit() {
+    // Get the button that opens the modal controller keymap table
+    document.getElementById("HTMLf_controllerKeymapTableShow").addEventListener("click", icCtrlMap2HTML);
+    
+    // Menu Help & Credits listeners
+    document.getElementById("HTMLf_help").addEventListener("click", function() { icHelp("help"); } );
+    document.getElementById("HTMLf_credits").addEventListener("click", function() { icHelp("credits"); } );
+    
+    // Init H Stack fontsize zoom
+    let hstack_zoom = document.getElementById("HTMLf_hstack_zoom");
+    let hstack_fontsize = document.getElementById("HTMLo_hstack_fontsize");
+    // Init Hstack zoom with defaul value
+    hstack_zoom.value = 22;
+    hstack_fontsize.style.fontSize = hstack_zoom.value + "px";
+    hstack_zoom.setAttribute("data-tooltip", hstack_zoom.value + "px" );
+    // Add an EventListener to the zoom slider
+    hstack_zoom.addEventListener("input", function(event) {
+        hstack_fontsize.style.fontSize = event.target.value + "px";
+        hstack_zoom.setAttribute("data-tooltip", event.target.value + "px");
+    });
+}
+
+/*==============================================================================*
+ * UI HELP/CREDITS
+ *==============================================================================*/
+// Open the Help/Credits panel from the right side
+// Toggle help/credits depending on the command pressed on the menu
+function icHelp(type) {
+    let element = document.getElementById("HTMLf_helpPanel");
+    let help = document.getElementById("HTML_helpObj");
+    let credits = document.getElementById("HTML_creditsObj");
+    if (type === "help") {
+        help.setAttribute("style", "display: inline;");
+        credits.setAttribute("style", "display: none;");
+    } else if (type === "credits") {
+        help.setAttribute("style", "display: none;");
+        credits.setAttribute("style", "display: inline;");
+    }
+    if (element.classList.contains("panelShown")) {
+        // Closed %
+       element.style.width = "0%";
+    } else {
+        // Open %
+        element.style.width = "50%";  
+    }
+    element.classList.toggle("panelShown");
+}
+
 /*==============================================================================*
  * UI EVENTS LOG
  *==============================================================================*/
@@ -59,37 +108,19 @@ function icEventLog(str) {
 // EVENTS LOG
 // Open the Event Log panel from the bottom and toggle the open/close button
 function icToggleOpenLogBtn(element) {
-    if (element.classList.contains("logShown")) {
+    if (element.classList.contains("panelShown")) {
         // Closed %
-        document.getElementById("HTML_log").style.height = "0%";
+        document.getElementById("HTMLf_logPanel").style.height = "0%";
     } else {
         // Open %
-        document.getElementById("HTML_log").style.height = "35%";  
+        document.getElementById("HTMLf_logPanel").style.height = "35%";  
     }
-    element.classList.toggle("logShown");
+    element.classList.toggle("panelShown");
 }
 
 /*==============================================================================*
  * UI CONTROLLER KEYMAP TABLE
  *==============================================================================*/
- function icUTILSinit() {
-    // Get the button that opens the modal controller keymap table
-    document.getElementById("HTMLf_controllerKeymapTableShow").addEventListener("click", icCtrlMap2HTML);
-
-    let hstack_zoom = document.getElementById("HTMLf_hstack_zoom");
-    let hstack_fontsize = document.getElementById("HTMLo_hstack_fontsize");
-    // Init Hstack zoom with defaul value
-    hstack_zoom.value = 22;
-    hstack_fontsize.style.fontSize = hstack_zoom.value + "px";
-    hstack_zoom.setAttribute("data-tooltip", hstack_zoom.value + "px" );
-    // Add an EventListener to the zoom slider
-    hstack_zoom.addEventListener("input", function(event) {
-        hstack_fontsize.style.fontSize = event.target.value + "px";
-        hstack_zoom.setAttribute("data-tooltip", event.target.value + "px");
-    });
-
- }
-
 // Create an HTML table from the controller keymap and write it to the UI under a modal element
 function icCtrlMap2HTML() {
     var txt = "";
@@ -282,6 +313,7 @@ function icHSTACKmonitor(ht, state) {
 // Button for test purposes
 function icTESTER() {
     // icEventLog(JSON.stringify(icDHC.tables.ft_table, null, 2).replace(/}|{|"|,/g, ''));
+    icEventLog("TEST: Full tables printed out. Look at the console of your browser.");
     console.log("ctrl_map:", icDHC.tables.ctrl_map);
     console.log("ft_base:", icDHC.tables.ft_base);
     console.log("ft_table:", icDHC.tables.ft_table);
