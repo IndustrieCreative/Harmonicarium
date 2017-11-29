@@ -63,7 +63,7 @@ input {
     vertical-align: middle;
 }
 
-/*FILE UPLOAD BUTTON AND LABLE*/
+/*FILE UPLOAD BUTTON AND LABEL*/
 input[type="file"] {
     display: inline-flex;
     font-size: 10px;
@@ -166,7 +166,6 @@ th, td {
     border: none;
 }
 
-
 /***********************************************
  * MODAL OVERLAY
  ***********************************************/
@@ -210,7 +209,6 @@ th, td {
     margin-bottom: 10px;
     margin-top: 15px;
 }
-/**table**/
 .modalOverlay_content table {
     font-size: 12px;
 }
@@ -240,10 +238,10 @@ th, td {
     /*overflow-y: hidden;*/ /* Disable vertical scroll */
     background-color: rgb(8, 3, 31); /* Black fallback color */
     background-color: rgba(8, 3, 31, 0.9); /* Black w/opacity */
-    top: 0; 
     height: 100%;
-    right: 0;
     position: fixed; /* Stay in place */
+    right: 0;
+    top: 0; 
     transition: 0.4s; /* 0.5 second transition effect to slide in or slide down the overlay (height or width, depending on reveal) */
     width: 0;
     z-index: 3; /* Sit on top */
@@ -300,7 +298,7 @@ th, td {
 }
 
 /***********************************************
- * MENU
+ * MENU (under the logo)
  ***********************************************/
 .menuContainer{
     text-align: center;
@@ -310,7 +308,7 @@ th, td {
 }
 
 /***********************************************
- * HELP PANEL CONTENT
+ * OVERLAY HELP PANEL CONTENT (RIGHT)
  ***********************************************/
 .helpText {
     height: 100%;
@@ -323,20 +321,22 @@ th, td {
     text-indent: -85px;
     white-space: pre;
 }
-
 .helpText object {
     height: 100%;
     width: 90%;
 }
-
-.bottomPanel .panelShown {
+.rightPanel .panelBtnContainer {
+    display: none;
+}
+.rightPanel.panelShown .panelBtnContainer {
+    display: inline-block;
+    left: 15px;
     position: absolute;
-    top: 20px;
+    top: 15px;
 }
 
-
 /***********************************************
- * LOG TEXTBOX
+ * OVERLAY LOG TEXTBOX (BOTTOM)
  ***********************************************/
 .logText p {
     font-family: 'Source Code Pro', monospace;
@@ -345,7 +345,6 @@ th, td {
     text-indent: -85px;
     white-space: pre;
 }
-
 /* When the height of the screen is less than 450 pixels,
 change the font-size of the links and position the close button again,
 so they don't overlap */
@@ -359,7 +358,9 @@ so they don't overlap */
   }
 }*/
 
-/*OVERLAY OPEN/CLOSE BUTTON*/
+/***********************************************
+ * OVERLAY OPEN/CLOSE BUTTON
+ ***********************************************/
 .bottomPanel .panelBtnContainer {
     bottom: 10px; /* Position the close button (top right corner) */
     cursor: pointer;
@@ -368,23 +369,15 @@ so they don't overlap */
     position: fixed;
     right: 20px;
 }
-
-.rightPanel .panelBtnContainer {
-    display: none;
-}
-
-.bottomPanel .panelBtnContainer.panelShown {
+.bottomPanel .panelShown {
     position: absolute;
     top: 20px;
+}
+.bottomPanel .panelBtnContainer.panelShown {
     height: 40px;
-}
-.rightPanel.panelShown .panelBtnContainer {
-    display: inline-block;
     position: absolute;
-    top: 15px;
-    left: 15px;
+    top: 20px;
 }
-
 /*The three bars for the icon*/
 .panelBtnBar1,
 .panelBtnBar2,
@@ -407,9 +400,6 @@ so they don't overlap */
     -webkit-transform: rotate(45deg) translate(-8px, -8px) ;
     transform: rotate(45deg) translate(-8px, -8px) ;
 }
-
-
-
 
 /***********************************************
  * CONTAINER BOXES
@@ -440,16 +430,14 @@ so they don't overlap */
     vertical-align: top;
 }
 .UIbox h1 {
+    left: -8px;
     margin-bottom: 5px;
     margin-top: 0;
     position: relative;
-    left: -8px;
 }
 .UIbox h2 {
     margin-top: 5px;
 }
-
-
 
 /***********************************************
  * LOGO
@@ -490,14 +478,14 @@ so they don't overlap */
 }
 /*Middle C Label+Input hack*/
 #HTMLi_dhc_middleC {
-    border:none;
+    background-color: transparent;
+    background-image: none;
+    border: none;
     height: 15px;
-    outline:none;
+    outline: none;
     padding-top: 0;
     text-indent: 0;
     width: 58px;
-    background-color: transparent;
-    background-image: none;
 }
 label[for="HTMLi_dhc_middleC"] {
     background-color: #503535;
@@ -513,10 +501,9 @@ label[for="HTMLi_dhc_middleC"] {
     height: 16px;
     margin-bottom: 5px;
     margin-left: 5px;
-    margin-right: 0px;
+    margin-right: 0;
     padding: 0 0 0 5px;
 }
-
 
 /***********************************************
  * REFERENCE SYNTH
@@ -539,7 +526,6 @@ label[for="HTMLi_dhc_middleC"] {
 .synthTonePanel label {
     display:block;
 }
-/**table**/
 .synthTonePanel td,
 .synthTonePanel th {
     padding: 5px;
@@ -600,13 +586,15 @@ label[for="HTMLi_dhc_middleC"] {
     text-align: center;
 }
 
-
-.synthVisualiser {
+/***********************************************
+ * VISUALIZER (@TODO)
+ ***********************************************/
+/*.synthVisualiser {
     width: 220px;
 }
 .visualiser .UIbox {
     min-height: unset;
-}
+}*/
 
 /***********************************************
  * FUNDAMENTAL MOTHER SETTINGS
@@ -615,7 +603,6 @@ label[for="HTMLi_dhc_middleC"] {
 .fm input {
     width: 60px;
 }
-/**table**/
 .fm button {
     margin-right: 17px; 
 }
@@ -642,7 +629,6 @@ label[for="HTMLi_dhc_middleC"] {
     font-size: 16px;
     font-style: italic;
 }
-/**table**/
 .ftSettings table {
     width: 210px;
 }
@@ -670,7 +656,7 @@ label[for="HTMLi_dhc_middleC"] {
  ***********************************************/
 .htSettings h2 {
     margin-bottom: 0;
-    margin-top: 0px;
+    margin-top: 0;
     position: relative;
     top: -3px;
 }
@@ -684,7 +670,6 @@ label[for="HTMLi_dhc_middleC"] {
     -webkit-appearance: none; 
     margin: 0;
 }
-/**table**/
 .htSettings td,
 .htSettings th {
     width: 40px;
@@ -699,13 +684,14 @@ span.htSettingsLabel {
 .midiMonitor .monitorTableTitle {
     text-align: left;
 }
-/**table**/
+.midiPorts label {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 12px;
+}
 .midiMonitor table { 
     margin-top: 8px;
     width: 235px;
 }
-
-
 
 /***********************************************
  * H STACK
@@ -714,8 +700,15 @@ span.htSettingsLabel {
 .hstack h1 {
     float: left;
 }
-
-/**table**/
+.hstack_zoom {
+    display: grid;
+    float: left;
+    padding: 0 0 5px 20px;
+}
+.hstack_zoom input {
+    border-width: 0; 
+    margin: 0 0 5px 0;
+}
 .hstack td {
     font-family: 'Source Code Pro', monospace;
     padding: 1px 3px 1px 3px;
@@ -725,21 +718,9 @@ span.htSettingsLabel {
     min-width: 265px;
     padding-bottom: 10px;
 }
-
-.hstack_zoom {
-    display: grid;
-    float: left;
-    padding: 0 0 5px 20px;
-}
-
-.hstack_zoom input {
-    border-width: 0; 
-    margin: 0 0 5px 0;
-}
 /***********************************************
  * HSTACK FT (MONITOR) TABLE
  ***********************************************/
-/**table**/
 .hstackFT table { 
     min-width: 100%;
 }
@@ -750,7 +731,6 @@ th.hstackDivisor {
 /***********************************************
  * VIRTUAL PIANO KEYBOARD MONITOR TABLE
  ***********************************************/
-/**table**/
 .toneMonitor table { 
     float: right;
     margin-bottom: 10px;
@@ -761,8 +741,6 @@ th.hstackDivisor {
 .toneMonitor .monitorTableTitle {
     font-size: 10px;
 }
-
-
 
 /***********************************************
  * VIRTUAL PIANO KEYBOARD
@@ -782,7 +760,6 @@ th.hstackDivisor {
 .pianoChannel input {
     width: 35px;
 }
-/**table**/
 .pianoSettings td {
     padding-left: 20px;
     text-align: left;
@@ -838,7 +815,6 @@ th.hstackDivisor {
     background-color: gold!important;
 }
 
-
 /***********************************************
  * SLIDER TOOLTIP
  * get from Chris Bracco https://codepen.io/cbracco/pen/qzukg
@@ -877,7 +853,6 @@ input[data-tooltip]:before {
   text-align: center;
   width: 80px;
 }
-
 /* Show tooltip content on hover */
 input[data-tooltip]:hover:before {
   -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
