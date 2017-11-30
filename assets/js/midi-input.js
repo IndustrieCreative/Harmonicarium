@@ -77,9 +77,9 @@ function icMidiMessageReceived(midievent) {
     // }
 
     // Check 'cmd' (the first 4 bits of the 1st byte of the message)
-    // If > 0x80 it's a Status byte
+    // If >= 0x80 it's a Status byte
     // Filter the Active Sensing messages (254 = 0xFE = 11111110)
-    if (cmd > 8 && midievent.data[0] !== 254) {
+    if (cmd > 7 && midievent.data[0] !== 254) {
 
         // @TODO: implement RUNNING STATUS (status byte not repeated on every message)
         // If the message has at least 3 bytes
