@@ -12,7 +12,7 @@
 }
 body {
     color: #DDD; /*@DARK*/
-    font-family: 'IM Fell DW Pica';
+    font-family: 'IM Fell DW Pica', serif;
 }
 h1 {
 }
@@ -24,4 +24,7 @@ a {
 .credits img {
 	float: right;
 	width: 35%;
+}
+.monospace {
+    font-family: 'Source Code Pro', monospace;
 }
