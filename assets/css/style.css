@@ -29,7 +29,7 @@ body {
     background-color: #575867;
     color: #DDD; /*@DARK*/
     display: unset;
-    font-family: 'IM Fell DW Pica';
+    font-family: 'IM Fell DW Pica', serif;
     vertical-align: middle;
 }
 
