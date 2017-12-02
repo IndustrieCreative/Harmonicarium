@@ -31,14 +31,15 @@ Harmonicarium's **source code** repository [is available on GitHub](https://gith
 Harmonicarium is written in **JavaScript** (used **ES6** features) and uses the **[Web MIDI](https://www.w3.org/TR/webmidi/)** and **[Web AUDIO](https://www.w3.org/TR/webaudio/) API**.
 Currently it has been tested on **Google Chrome** v61+ under macOS (v10.11+), Windows (v10) and Android (v5+) but it could run on other browsers supporting the Web MIDI and AUDIO API.
 
-**At the moment you need Google Chrome** or Chromium. It has been developed on a high performance desktop/laptop environment and currently, no optimization has been made in order to minimize the computational load. 
+**At the moment you need Google Chrome** or Chromium. The software has been developed on a high performance workstation environment and currently no optimization has been made in order to minimize the computational load. 
 
-**Partially untested on mobile devices**. On embedded Android devices I have experienced slow data processing (delay in output audio response). The [Qwerty Hancock](https://github.com/stuartmemo/qwerty-hancock) keyboard seems to support multitouch events. This means that on low performance system you could may experience slowdowns.
+**Partially untested on mobile devices**. On embedded Android devices I have experienced slow data processing (delay in output audio response). This means that on low performance system you could may experience slowdowns. The [Qwerty Hancock](https://github.com/stuartmemo/qwerty-hancock) keyboard seems to support multitouch events.
 
 Though Harmonync has the MIDI-OUT-RETUNING feature (that is the main purpose of these software), the Harmonicarium is still under development and the MIDI-OUT is not ready at the moment. We must first create a better user&mobile-friendly GUI.
 
 ## Quick Start
-This program is a web app. This means that it uses the HTML5 technology and you need a browser to use it. As I said at this moment you need Chrome.
+This program is a web-app. This means that it uses the HTML5 technology and you need a browser to use it. As I said at this moment you need Chrome.
+
 1. If you don't have Google **Chrome** on your system, download [here](https://www.google.com/chrome/browser/desktop/index.html) and install it.
 2. Run the app's URL in the browser. You can:
    * open the online version [harmonicarium.org/app](http://harmonicarium.org/app);
@@ -49,7 +50,7 @@ Note: Of course, if you run the app locally, do not rename or move any other fil
 ## How to use it?
 Visit [harmonicarium.org](http://harmonicarium.org/) for the **Tutorials**. There is no comprehensive guide at this moment, it is currently being drafted. A video-guide and a step-by-step tutorial will be released as soon as possible. For any questions, do not hesitate to contact Walter Mantovani at armonici.it[*at*]gmail[*dot*]com.
 
-Now (November 20, 2017) the **harmonicarium.org** site is under construction. You can temporarily visit the old project site: **[harmonync.harmonicarium.org](https://harmonync.harmonicarium.org)**
+Now (November 20, 2017) the **harmonicarium.org** site is under construction. You can temporarily visit the old project site: **[harmonync.harmonicarium.org](http://harmonync.harmonicarium.org)**
 
 ## A first public document about the DHC
 The document "**A first look at THE HARMONYNC: A Dynamic Harmonics Calculator – Draft of Specifications and User Guide**" is available [here](http://harmonync.harmonicarium.org/a_first_look_at_the_harmonync.pdf) and has the following DOI: [10.978.88940077/01](http://dx.doi.org/10.978.88940077/01)
@@ -58,6 +59,7 @@ The document "**A first look at THE HARMONYNC: A Dynamic Harmonics Calculator �
 The code is over-commented because I'm not a professional programmer and overnight coding does not help memory;) I apologize to the expert coders for this but I know that musicians will appreciate it!
 
 Currently there are two main issues:
+
   1. The current **UI** sucks. Help is needed to create an intuitive, responsive and touch-events-compliant UI.
   2. A DHC should be **modular** (imagine a chain of DHCs... –_–). So it is necessary to reduce the global objects/functions and put some order. Move the functions into the respective methods of few main objects. In this way the DHC engine could become a library.
 
