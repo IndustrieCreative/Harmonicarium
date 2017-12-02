@@ -9,6 +9,7 @@ TASK PRIORITY LEVEL
 @TODO: ** Disconnect all voices before delete them (?)
     @TODO: FT SETTING (harmonics/subharmonics & tuning files)
         @TODO: LISSAJOUS, OSCILLOSCOPE, SPECTRUM, SPECTROGRAM.
+        @TODO: 5-6 Default built-in keymaps loaded by dropdown.
         @TODO: Integrate an overtone spiral view & UI (es. from https://github.com/sunyatasattva/overtones/ but maybe problem due to new CPAL license?)
 @TODO: ** SYNTH - Implement load reverb from Net
             @TODO: ** Implement a duplicable HSTACK > MULTIPLE HSTACK, each one assigned (follows) to an FT (to compare)
