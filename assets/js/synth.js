@@ -264,7 +264,8 @@ ICvoice.prototype.noteOff = function() {
     // ...cancel the previous scheduled values (if there are)
     this.envelope.gain.cancelScheduledValues(0);
     // Read the actual gain value and make sure that it stay fixed (this clicks under Firefox)
-    this.envelope.gain.setValueAtTime(this.envelope.gain.value, 0);
+    const val = this.envelope.gain.value > 0 ? this.envelope.gain.value : 0.0001;
+    this.envelope.gain.setValueAtTime(val, 0);
     // **RELEASE**
     // Set the time when the Release must be completed
     let envReleaseEnd = icAudioContext.currentTime + icSYNTH.envelope.release;
