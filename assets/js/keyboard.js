@@ -155,53 +155,77 @@ function icFakeMidiNote(note, state) {
  * HANCOCK STYLE WRAPPER
  *==============================================================================*/
 // Bypass the Qwerty Hancock default key colors (released)
+// Write the key-numbers according to the keymap
 function icHancockKeymap() {
     for (var i = 0; i < 128; i++) {
-        var key = icMidiToHancock(i)[0];
-        if (document.getElementById(key)){
+        let note = icMidiToHancock(i)[0];
+        if (document.getElementById(note)) {
+            let key = document.getElementById(note);
             // If the input MIDI key is in the ctrl_map, proceed
             if (icDHC.tables.ctrl_map[i]) {
                 // Vars for a better reading
                 var ft = icDHC.tables.ctrl_map[i].ft;
                 var ht = icDHC.tables.ctrl_map[i].ht;
-                // If the key is in the DOM (..?)
-                    // **FT**
-                    // If the key is mapped to a Fundamental Tone only
-                    if (ft !== 129 && ht === 129) {
-                        // If is a sharp key
-                        if (key.match(/#/)) {
-                            // Use a darker color
-                            document.getElementById(key).classList.add("FTbKey", "releasedKey");
-                        // Else is a normal key
-                        } else {
-                            // Use a lighter color
-                            document.getElementById(key).classList.add("FTwKey", "releasedKey");
-                        }
+                // **FT**
+                // If the key is mapped to a Fundamental Tone only
+                if (ft !== 129 && ht === 129) {
+                    // If is a sharp key
+                    if (note.match(/#/)) {
+                        // Use a darker color
+                        key.classList.add("FTbKey", "releasedKey");
+                        // Write the key-number
+                        key.innerHTML = "<div class='FTbKeyFn unselectableText'>" + ft + "</div>";
+                    // Else is a normal key
+                    } else {
+                        // Use a lighter color
+                        key.classList.add("FTwKey", "releasedKey");
+                        // Write the key-number
+                        key.innerHTML = "<div class='FTwKeyFn unselectableText'>" + ft + "</div>";
                     }
-                    // **HT**
-                    // If the key is mapped to a Harmonic Tone only
-                    else if (ht !== 129 && ft === 129) {
-                        // If is a sharp key
-                        if (key.match(/#/)) {
-                            // Use a darker color
-                            document.getElementById(key).classList.add("HTbKey", "releasedKey");
-                        // Else is a normal key
-                        } else {
-                            // Use a lighter color
-                            document.getElementById(key).classList.add("HTwKey", "releasedKey");
-                        }
+                }
+                // **HT**
+                // If the key is mapped to a Harmonic Tone only
+                else if (ht !== 129 && ht !== 0 && ft === 129) {
+                    // If is a sharp key
+                    if (note.match(/#/)) {
+                        // Use a darker color
+                        key.classList.add("HTbKey", "releasedKey");
+                        // Write the key-number
+                        key.innerHTML = "<div class='FTbKeyFn unselectableText'>" + ht + "</div>";
+                    // Else is a normal key
+                    } else {
+                        // Use a lighter color
+                        key.classList.add("HTwKey", "releasedKey");
+                        // Write the key-number
+                        key.innerHTML = "<div class='FTwKeyFn unselectableText'>" + ht + "</div>";
                     }
+                // **HT0 (Piper)**
+                // If is HT0
+                } else if (ht === 0 && ft === 129) {                    
+                    // If is a sharp key
+                    if (note.match(/#/)) {
+                        // Use a darker color
+                        key.classList.add("HT0bKey", "releasedKey");
+                        // Write a "P"
+                        key.innerHTML = "<div class='FTbKeyFn unselectableText'>P</div>";
+                    } else {
+                        // Use a lighter color
+                        key.classList.add("HT0wKey", "releasedKey");
+                        // Write a "P"
+                        key.innerHTML = "<div class='FTwKeyFn unselectableText'>P</div>";
+                    }
+                }
             // **Normal Key**
             // If the key is not mapped
             } else {
                 // If is a sharp key
-                if (key.match(/#/)) {
+                if (note.match(/#/)) {
                     // Use a darker color
-                    document.getElementById(key).classList.add("bKey", "releasedKey");
+                    key.classList.add("bKey", "releasedKey");
                 // Else is a normal key
                 } else {
                     // Use a lighter color
-                    document.getElementById(key).classList.add("wKey", "releasedKey");
+                    key.classList.add("wKey", "releasedKey");
                 }
             }
         }
