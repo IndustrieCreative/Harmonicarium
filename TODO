@@ -5,6 +5,9 @@ TASK PRIORITY LEVEL
 1   2   3   4 < filename >
 ------------------------------------------------------------
             < GENERAL >
+@TODO: different key colors for ft-ht subharmonics / FT0 / Piper
+@TODO: fix deprecated node.value in synth.js
+
 @TODO: Transfer this list to the GitHub Issues section
 @TODO: ** Disconnect all voices before delete them (?)
     @TODO: FT SETTING (harmonics/subharmonics & tuning files)
@@ -26,7 +29,6 @@ TASK PRIORITY LEVEL
             @TODO: Check the change of the "PITCHBEND RANGE" parameter on UI (DHC Settings) during bending events via MIDI
             @TODO: Implement "HOLD" on the virtual keyboard
             @TODO: Responsive QWERTY HANCOCK keyboard (adapt to the display width)
-            @TODO: Change DEFAULT FONT
             @TODO: Export/Store the DHC+Synth settings to JSON
 
             ------------------------------------------------
