@@ -255,13 +255,12 @@
                 <div class="UIbox">
                     <h1>Fundamental Tones</h1>
                     <div class="ftSettings">
-                        <div class="ftNEDX">
-                            <span><img src="assets/img/n-edx.png"></span>
-                            <h2>n-EDx (ET)</h2>
+                        <h2><input type="radio" name="ftTuningSystem" value="n-edx" id="HTMLf_ftSys_NEDX">n-EDx (ET)</h2>
+                        <div class="ftNEDX" id="HTMLf_ftNEDX">
                             <table class="invisibleTable">
                                 <tr>
                                     <td width="40%">Ratio Unit</td>
-                                    <td width="20%"></td>
+                                    <td width="20%"><span class="ftNEDX"><img src="assets/img/n-edx.png"></span></td>
                                     <td width="40%">Equal Divisions</td>
                                 </tr>
                                 <tr>
@@ -273,6 +272,42 @@
                                     </td>
                                     <td>
                                         <span class="ftNEDX_VarsTxt"> n = </span><input type="number" id="HTMLi_ftNEDX_division">
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <h2><input type="radio" name="ftTuningSystem" value="h_s-nat" id="HTMLf_ftSys_HSnat">Harm./Sub. Natural</h2>
+                        <h2><input type="radio" name="ftTuningSystem" value="h_s-trans" id="HTMLf_ftSys_HStrans">Harm./Sub. Same Octave</h2>
+                        <div class="ftHS" id="HTMLf_ftHS">
+                            <table class="invisibleTable">
+                                <tr>
+                                    <td valign="top" width="50%" style="text-align: right;"><h2>Transpose</h2></td>
+                                    <td width="20%"><span class="htSettingsLabel">÷2</span></td>
+                                    <td width="10%">Octave</td>
+                                    <td width="20%"><span class="htSettingsLabel">×2</span></td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: right;">Harmonics</td>
+                                    <td>
+                                        <button id="HTMLi_ftHStranspose_h_minus">–</button>
+                                    </td>
+                                    <td>
+                                        <span id="HTMLo_ftHStranspose_h_ratio"></span>
+                                    </td>
+                                    <td>
+                                        <button id="HTMLi_ftHStranspose_h_plus">+</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: right;">Subharmonics</td>
+                                    <td>
+                                        <button id="HTMLi_ftHStranspose_s_minus">–</button>
+                                    </td>
+                                    <td>
+                                        <span id="HTMLo_ftHStranspose_s_ratio"></span>
+                                    </td>
+                                    <td>
+                                        <button id="HTMLi_ftHStranspose_s_plus">+</button>
                                     </td>
                                 </tr>
                             </table>
