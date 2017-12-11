@@ -195,11 +195,11 @@ function ICvoice(freq, velocity, type) {
     if (type === "ft" && icSYNTH.portamento.lastFreqFT) {
         // If it's an FT and it's not the first played tone:
         // Init the oscillator's start frequency to the last voiced FT
-        this.osc.frequency.value = icSYNTH.portamento.lastFreqFT;
+        this.osc.frequency.setValueAtTime(icSYNTH.portamento.lastFreqFT, 0);
     } else if (type === "ft" && !icSYNTH.portamento.lastFreqFT) {
         // If it's an FT and it's the first played tone:
         // Init the oscillator's start frequency to the FM (FT0)
-        this.osc.frequency.value = icDHC.settings.fm.hz;
+        this.osc.frequency.setValueAtTime(icDHC.settings.fm.hz, 0);
     } // If it's an HT, the frequency is set in "this.setFrequency"
     // Set the oscillator's waveform
     this.osc.type = icSYNTH.waveform[type];
@@ -208,7 +208,7 @@ function ICvoice(freq, velocity, type) {
     // Create a gain/volume to implement the velocity
     this.volume = icAudioContext.createGain();
     // Sensitivity scale for velocity
-    this.volume.gain.value = velocity / 127;
+    this.volume.gain.setValueAtTime((velocity / 127), 0);
     // The final voice volume is connected to the main FT or HT volume
     this.volume.connect( icSYNTH.volume[type] );
     // The envelope is connected to the volume
@@ -218,8 +218,10 @@ function ICvoice(freq, velocity, type) {
 
     // Set envelope parameters ADS (to avoid oscillator's start/stop clicks)
     // Initialize the envelope with 0 value
-    this.envelope.gain.value = 0.0; // @CHECK: Repeated ?!
-    this.envelope.gain.setValueAtTime(0.0, icAudioContext.currentTime); // @CHECK: Repeated ?!
+    // [Deprecation] .value setter smoothing is deprecated and will be removed in M64, around Jan 2018
+    // [Deprecation] .setValueAtTime only does clicks (why?) I leave .value untill clicks are fixed
+    this.envelope.gain.value = 0.0; // Repeated ?!
+    this.envelope.gain.setValueAtTime(0, icAudioContext.currentTime); // Repeated ?!
 
     // Call the method to tune the oscillator
     this.setFrequency("new", type);
@@ -247,7 +249,7 @@ ICvoice.prototype.setFrequency = function(operation, type) {
             this.osc.frequency.setTargetAtTime( this.initFrequency, 0, icSYNTH.portamento.amount);
             icSYNTH.portamento.lastFreqFT = this.initFrequency;
         } else if (type === "ht") {
-            this.osc.frequency.value = this.initFrequency;
+            this.osc.frequency.setValueAtTime(this.initFrequency, 0);
         }
     // UPDATE VOICE
     } else if (operation === "update") {
@@ -255,8 +257,7 @@ ICvoice.prototype.setFrequency = function(operation, type) {
         this.osc.frequency.setTargetAtTime( this.initFrequency, 0, icSYNTH.portamento.amount);
     }
     // APPLY CURRENT DETUNING (if present): "value" and "range" are in cents, "amount" is normalized to -1 > 0 > 0.99987792968750
-
-    this.osc.detune.value = icDHC.settings.controller.pitchbend.amount * icDHC.settings.controller.pitchbend.range;
+    this.osc.detune.setValueAtTime((icDHC.settings.controller.pitchbend.amount * icDHC.settings.controller.pitchbend.range), 0);
 };
 ICvoice.prototype.noteOff = function() {
     // Shutdown the envelope before stopping the oscillator (release)
@@ -381,8 +382,8 @@ function icUpdateWaveform(type) {
 // "value" is normalized to 0.0 > 1.0
 function icUpdateReverb(value) {
     // Wet/Dry equal-power crossfade
-    icSYNTH.reverb.dry.gain.value = Math.cos(value * 0.5 * Math.PI);
-    icSYNTH.reverb.wet.gain.value = Math.cos((1.0 - value) * 0.5 * Math.PI);
+    icSYNTH.reverb.dry.gain.setValueAtTime(Math.cos(value * 0.5 * Math.PI), 0);
+    icSYNTH.reverb.wet.gain.setValueAtTime(Math.cos((1.0 - value) * 0.5 * Math.PI), 0);
 }
 
 // PITCHBEND MANAGEMENT FOR EVERY ALREADY ACTIVE SYNTH VOICES
@@ -502,12 +503,16 @@ function icSynthUIinit() {
     document.getElementById("HTMLi_synth_waveformHT").value = icSYNTH.waveform.ht;
 
     // Set the default GAIN amounts on UI sliders
-    document.getElementById("HTMLi_synth_volumeFT").value = icSYNTH.volume.ft.gain.value = 0.8;
-    document.getElementById("HTMLi_synth_volumeFT").setAttribute("data-tooltip", Math.round(icSYNTH.volume.ft.gain.value * 100) / 100);
-    document.getElementById("HTMLi_synth_volumeHT").value = icSYNTH.volume.ht.gain.value = 0.8;
-    document.getElementById("HTMLi_synth_volumeHT").setAttribute("data-tooltip", Math.round(icSYNTH.volume.ht.gain.value * 100) / 100);
-    document.getElementById("HTMLi_synth_volume").value = icSYNTH.volume.master.gain.value = 0.8;
-    document.getElementById("HTMLi_synth_volume").setAttribute("data-tooltip", Math.round(icSYNTH.volume.master.gain.value * 100) / 100);
+    let defUIvolume = 0.8;
+    icSYNTH.volume.ft.gain.setValueAtTime(defUIvolume, 0);
+    document.getElementById("HTMLi_synth_volumeFT").value = defUIvolume;
+    document.getElementById("HTMLi_synth_volumeFT").setAttribute("data-tooltip", defUIvolume);
+    icSYNTH.volume.ht.gain.setValueAtTime(0.8, 0);
+    document.getElementById("HTMLi_synth_volumeHT").value = defUIvolume;
+    document.getElementById("HTMLi_synth_volumeHT").setAttribute("data-tooltip", defUIvolume);
+    icSYNTH.volume.master.gain.setValueAtTime(0.8, 0);
+    document.getElementById("HTMLi_synth_volume").value = defUIvolume;
+    document.getElementById("HTMLi_synth_volume").setAttribute("data-tooltip", defUIvolume);
     
     // Set the default reverb dry/wet mix amount on UI
     icUpdateReverb(0.5);
@@ -533,15 +538,15 @@ function icSynthUIinit() {
 
     // Change VOLUME from UI
     document.getElementById("HTMLi_synth_volumeFT").addEventListener("input", function(event) {
-        icSYNTH.volume.ft.gain.value = event.target.value;
+        icSYNTH.volume.ft.gain.setValueAtTime(event.target.value, 0);
         document.getElementById("HTMLi_synth_volumeFT").setAttribute("data-tooltip", event.target.value);
     });
     document.getElementById("HTMLi_synth_volumeHT").addEventListener("input", function(event) {
-        icSYNTH.volume.ht.gain.value = event.target.value;
+        icSYNTH.volume.ht.gain.setValueAtTime(event.target.value, 0);
         document.getElementById("HTMLi_synth_volumeHT").setAttribute("data-tooltip", event.target.value);
     });
     document.getElementById("HTMLi_synth_volume").addEventListener("input", function(event) {
-        icSYNTH.volume.master.gain.value = event.target.value;
+        icSYNTH.volume.master.gain.setValueAtTime(event.target.value, 0);
         document.getElementById("HTMLi_synth_volume").setAttribute("data-tooltip", event.target.value);
     });
     // Change PORTAMENTO from UI
@@ -575,4 +580,6 @@ function icSynthUIinit() {
         icUpdateReverb(event.target.value);
         document.getElementById("HTMLi_synth_reverb").setAttribute("data-tooltip", event.target.value);
     });
+    // When all the UI has been set-up, AUTO POWER ON the SYNTH
+    document.getElementById("HTMLi_synth_power").click();
 }
