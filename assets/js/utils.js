@@ -51,7 +51,7 @@ function icUTILSinit() {
     let hstack_zoom = document.getElementById("HTMLf_hstack_zoom");
     let hstack_fontsize = document.getElementById("HTMLo_hstack_fontsize");
     // Init Hstack zoom with defaul value
-    hstack_zoom.value = 22;
+    hstack_zoom.value = 20;
     hstack_fontsize.style.fontSize = hstack_zoom.value + "px";
     hstack_zoom.setAttribute("data-tooltip", hstack_zoom.value + "px" );
     // Add an EventListener to the zoom slider
