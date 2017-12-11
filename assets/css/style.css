@@ -617,9 +617,7 @@ label[for="HTMLi_dhc_middleC"] {
     margin-bottom: 0;
 }
 .ftSettings img {
-    float: right;
-    padding: 8px 22px 0 0;
-    width: 20%;
+    width: 95%;
 }
 .ftSettings input {
     width: 35px;
@@ -632,11 +630,14 @@ label[for="HTMLi_dhc_middleC"] {
 .ftSettings table {
     width: 210px;
 }
-.ftSettings td,
-.ftSettings th {
+.ftHS h2 {
+    margin-top: 0;
+}
+.ftNEDX td,
+.ftNEDX th {
     padding: 6px 5px 0 5px;
 }
-.ftSettings tr {
+.ftNEDX tr {
     margin-top: 5px;
 }
 
@@ -647,8 +648,8 @@ label[for="HTMLi_dhc_middleC"] {
     font-family: 'Source Code Pro', monospace;
 }
 #HTMLi_ftNEDX_ok {
-    position: relative;
     left: 5px;
+    position: relative;
 }
 
 /***********************************************
