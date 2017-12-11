@@ -296,6 +296,9 @@ th, td {
 .controllerKeymapTable td {
     font-family: 'Source Code Pro', monospace;
 }
+.controllerKeymap h1 {
+    margin-top: 6px!important;
+}
 
 /***********************************************
  * MENU (under the logo)
@@ -438,6 +441,12 @@ so they don't overlap */
 .UIbox h2 {
     margin-top: 5px;
 }
+.container.L1.P2 {
+    float: left;
+}
+.container.L2.P2 {
+    display: flex;
+}
 
 /***********************************************
  * LOGO
@@ -445,18 +454,20 @@ so they don't overlap */
 .logo .UIbox {
     min-height: unset;
     padding: 12px 12px 7px 12px;
+    width: 270px;
 }
 .logo img {
-    width: 205px;
+    display: block; 
+    margin-left: auto;
+    margin-right: auto;
+    width: 250px;
 }
-
 .container.L3.logo {
-    float: right;
-}
-
-.container.L1.P2 {
     float: left;
-
+}
+.container.L3.hstack {
+    clear: left;
+    float: left;
 }
 
 /***********************************************
@@ -736,8 +747,7 @@ th.hstackDivisor {
     float: right;
     margin-bottom: 10px;
     margin-right:10px;
-    min-width: 250px;
-    width: 250px;
+    width: 265px;
 }
 .toneMonitor .monitorTableTitle {
     font-size: 10px;
@@ -802,6 +812,19 @@ th.hstackDivisor {
 .HTbKey.pressedKey {
     background-color: #2B506E!important;
 }
+/*HT0 keys*/
+.HT0wKey.releasedKey {
+    background-color: olivedrab!important;
+}
+.HT0wKey.pressedKey {
+    background-color: darkolivegreen!important;
+}
+.HT0bKey.releasedKey {
+    background-color: olivedrab!important;
+}
+.HT0bKey.pressedKey {
+    background-color: darkolivegreen!important;
+}
 /*NORMAL keys*/
 .wKey.releasedKey {
     background-color: white!important;
@@ -814,6 +837,30 @@ th.hstackDivisor {
 }
 .bKey.pressedKey {
     background-color: gold!important;
+}
+
+/*Key-numbers (from the keymap)*/
+.FTbKeyFn {
+    background: none!important;
+    color: #000;
+    display: initial;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 8px;
+    font-weight: bold;
+    pointer-events: none;
+    position: absolute;
+    top: 70%;
+}
+.FTwKeyFn {
+    background: none!important;
+    color: #000;
+    display: initial;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 8px;
+    font-weight: bold;
+    pointer-events: none;
+    position: absolute;
+    top: 70%;
 }
 
 /***********************************************
