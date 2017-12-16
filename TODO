@@ -6,6 +6,7 @@ TASK PRIORITY LEVEL
 ------------------------------------------------------------
             < GENERAL >
 @TODO: Transfer this list to the GitHub Issues section
+@TODO: Move H Stak hard-coded styles into style.css
         @TODO: different key colors for ft-ht subharmonics / FT0 ??
 @TODO: Fix deprecated node.value in synth.js (before January 2018)
 @TODO: ** Disconnect all voices before delete them (?)
