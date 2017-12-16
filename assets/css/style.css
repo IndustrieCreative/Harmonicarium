@@ -786,25 +786,30 @@ th.hstackDivisor {
 #HTMLo_pianoContainer > ul {
     background-color: transparent!important; /*@DARK*/
 }
+/*Prevent double-tap zoom*/
+#HTMLo_pianoContainer {
+    touch-action: none;
+}
+
 /*FT keys*/
 .FTwKey.releasedKey {
     background-color: #ECA589!important;
 }
 .FTwKey.pressedKey {
-    background-color: #BF8066!important;
+    background-color: #793B3B!important;
 }
 .FTbKey.releasedKey {
     background-color: #B96363!important;
 }
 .FTbKey.pressedKey {
-    background-color: #944E4E!important;
+    background-color: #793B3B!important;
 }
 /*HT keys*/
 .HTwKey.releasedKey {
     background-color: #B0C4DE!important;
 }
 .HTwKey.pressedKey {
-    background-color: #688FC3!important;
+    background-color: #2B506E!important;
 }
 .HTbKey.releasedKey {
     background-color: #4682B4!important;
@@ -840,17 +845,7 @@ th.hstackDivisor {
 }
 
 /*Key-numbers (from the keymap)*/
-.FTbKeyFn {
-    background: none!important;
-    color: #000;
-    display: initial;
-    font-family: 'Source Code Pro', monospace;
-    font-size: 8px;
-    font-weight: bold;
-    pointer-events: none;
-    position: absolute;
-    top: 70%;
-}
+.FTbKeyFn,
 .FTwKeyFn {
     background: none!important;
     color: #000;
@@ -861,6 +856,10 @@ th.hstackDivisor {
     pointer-events: none;
     position: absolute;
     top: 70%;
+}
+.pressedKey .FTbKeyFn,
+.pressedKey .FTwKeyFn {
+    color: #DDD;
 }
 
 /***********************************************
