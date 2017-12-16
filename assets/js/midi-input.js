@@ -293,48 +293,93 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusbyte, timestamp) {
 
 /*==============================================================================*
  * PIPER HT0 FEATURE
+ * The Piper store the last N pressed HTs and repeat them when HT0 is pressed
+ * simulating a special fake MIDI message
  *==============================================================================*/
+// Piper's default settings
 var icPipe = {
-    maxLenght: 8,
-    queue: [],
-    currStep: 0,
-    currTone: []
+    maxLenght: 5,
+    // queue: [],
+    queue: [ [144, 66, 120], [144, 67, 120], [144, 65, 120], [144, 60, 120], [144, 62, 120] ],
+    pipe: [],
+    currStep: 5,
+    currTone: null
 };
 
 function icPiper(statusByte, ctrlNoteNumber, velocity, type) {
+    // Prepare the fake MIDI message
     let pack = [statusByte, ctrlNoteNumber, velocity];
+    // If the pipe is not full
     if (icPipe.queue.length < icPipe.maxLenght) {
+        // Insert the message at the beginning of the queue
         icPipe.queue.push(pack);
+    // Else, if the pipe is full
     } else {
+        // Remove the oldest message in the pipe
         icPipe.queue.shift();
+        // Insert in the pipe a new message
         icPipe.queue.push(pack);
     }
 }
 
+// When HT0 is pressed (or released)
 function icPiping(state) {
+    // Get the index (current step)
+    let i = icPipe.currStep;
+    // If there are notes in the queue
     if (icPipe.queue.length > 0) {
-        let i = icPipe.currStep;
-        // If count < max
-        if (icPipe.currStep < icPipe.maxLenght) {
+        // Inject the queue into the pipe at the current step position
+        icPipe.pipe.splice.apply(icPipe.pipe, [i, icPipe.queue.length].concat(icPipe.queue));
+        // If the final pipe is longer than the maxLenght
+        if (icPipe.pipe.length > icPipe.maxLenght) {
+            // Cut the pipe according to the maxLenght
+            icPipe.pipe.splice(0, (icPipe.pipe.length - icPipe.maxLenght));
+        }
+        // Increase current step and index in order to start playing
+        // after the notes that have just been inserted
+        icPipe.currStep += icPipe.queue.length;
+        i += icPipe.queue.length;
+        // Empty the queue
+        icPipe.queue = [];
+    }
+    // If there are notes in the pipe
+    if (icPipe.pipe.length > 0) {
+        // If step count is not at the end of the pipe
+        if (i < icPipe.maxLenght) {
             // Note ON
             if (state === 1) {
-                if (icPipe.queue[i]) {
+                // If there is some message at the current step in the pipe
+                if (icPipe.pipe[i]) {
+                    // Create the special-marked fake MIDI message
+                    // in order to not to be confused with a normal MIDI message
                     let midievent = {
-                        data: [icPipe.queue[i][0], icPipe.queue[i][1], icPipe.queue[i][2], "piper"]
+                        data: [icPipe.pipe[i][0], icPipe.pipe[i][1], icPipe.pipe[i][2], "piper"]
                     };
+                    // Send the fake MIDI message
                     icMidiMessageReceived(midievent);
+                    // Store the last sent MIDI message in 'currTone'
                     icPipe.currTone = midievent;
+                } else {
+                    icPipe.currTone = null;
                 }
             // Note OFF
             } else if (state === 0) {
-                icPipe.currTone.data[2] = 0;
-                icMidiMessageReceived(icPipe.currTone);
+                // If there is a stored MIDI message in 'currTone'
+                if (icPipe.currTone) {
+                    // Set the velocity to zero (Note OFF)
+                    icPipe.currTone.data[2] = 0;
+                    // Send the fake MIDI message
+                    icMidiMessageReceived(icPipe.currTone);
+                }
+                // Go to the next step in the pipe
                 icPipe.currStep++;
             }
-        // If count >= max
+        // If step count is at the end (or out) of the pipe
         } else {
-                icPipe.currStep = 0;
-                icPiping(state);
+            // Reset the step counter                
+            icPipe.currStep = 0;
+            // Retry to execute the icPiping (itself) again
+            icPiping(state);
         }
     }
 }
