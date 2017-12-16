@@ -6,8 +6,8 @@ TASK PRIORITY LEVEL
 ------------------------------------------------------------
             < GENERAL >
 @TODO: Transfer this list to the GitHub Issues section
-@TODO: different key colors for ft-ht subharmonics / FT0 / Piper
-@TODO: fix deprecated node.value in synth.js
+        @TODO: different key colors for ft-ht subharmonics / FT0 ??
+@TODO: Fix deprecated node.value in synth.js (before January 2018)
 @TODO: ** Disconnect all voices before delete them (?)
     @TODO: FT SETTING (tuning files)
         @TODO: LISSAJOUS, OSCILLOSCOPE, SPECTRUM, SPECTROGRAM.
