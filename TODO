@@ -5,12 +5,11 @@ TASK PRIORITY LEVEL
 1   2   3   4 < filename >
 ------------------------------------------------------------
             < GENERAL >
+@TODO: Transfer this list to the GitHub Issues section
 @TODO: different key colors for ft-ht subharmonics / FT0 / Piper
 @TODO: fix deprecated node.value in synth.js
-
-@TODO: Transfer this list to the GitHub Issues section
 @TODO: ** Disconnect all voices before delete them (?)
-    @TODO: FT SETTING (harmonics/subharmonics & tuning files)
+    @TODO: FT SETTING (tuning files)
         @TODO: LISSAJOUS, OSCILLOSCOPE, SPECTRUM, SPECTROGRAM.
         @TODO: 5-6 Default built-in keymaps loaded by dropdown.
         @TODO: Integrate an overtone spiral view & UI (es. from https://github.com/sunyatasattva/overtones/ but maybe problem due to new CPAL license?)
@@ -36,8 +35,6 @@ TASK PRIORITY LEVEL
 
             @TODO: Enharmonic note naming: "sharp", "flat" or "relative"
         @TODO: Tuning file formats
-            @TODO: remove ft_base table and compute all with this FOR cycle
-    @TODO: HARMONICS / SUBHARMONICS FT
         @TODO: TUNING FILES FT
             @TODO: implement custom H/S table lenght (16>32>64>128) to increase performances if needed
             @TODO: BUILD THE INSTRUMENT TABLE {inst_table}
