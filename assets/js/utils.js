@@ -175,7 +175,6 @@ function icDHCmonitor(tone, arr, type) {
         document.getElementById("HTMLo_toneMonitorFT_midicents").innerHTML = Math.round(arr.mc * icDHC.settings.global.midicents_accuracy) / icDHC.settings.global.midicents_accuracy;
         document.getElementById("HTMLo_toneMonitorFT_notename").innerHTML = notename[0] + " " + notename[2] + notename[1] + "¢";
         document.getElementById("HTMLo_toneMonitorFT_frequency").innerHTML = Math.round(arr.hz * icDHC.settings.global.hz_accuracy) / icDHC.settings.global.hz_accuracy;
-
         // Update the log on HSTACK FT info on the UI
         document.getElementById("HTMLo_hstackFT_tone").innerHTML = tone;
         document.getElementById("HTMLo_hstackFT_note").innerHTML = notename[0];
@@ -228,7 +227,7 @@ function icHSTACKcreate() {
     icUsedHT = icUniqArray(usedHT);
     for (let ht in icUsedHT) {
         let htn = icUsedHT[ht];
-        hstackHTML += '<tr id="HTMLo_hstackHTrow_h'+htn+'">';
+        hstackHTML += '<tr id="HTMLf_hstackHTrow_h'+htn+'">';
         hstackHTML += '<td class="hstackHT_h" id="HTMLo_hstackHT_h'+htn+'">'+htn+'</td>';
         hstackHTML += '<td class="hstackHT_note" id="HTMLo_hstackHT_note'+htn+'"></td>';
         hstackHTML += '<td class="hstackHT_cents" id="HTMLo_hstackHT_cents'+htn+'"></td>';
@@ -286,16 +285,36 @@ function icArrayPitchbender(arr) {
 }
 
 // HSTACK NOTE ON/OFF MONITOR
-function icHSTACKmonitor(ht, state) {
-    if (ht !== 0) {
+function icHSTACKmonitor(type, ht, state) {
+    if (type === "ht") {
+        // If is a normal HT (it's not HT0)
+        if (ht !== 0) {
+            // Note ON
+            if (state === 1) {
+                document.getElementById("HTMLf_hstackHTrow_h"+ht).style.backgroundColor = "#C9E2F7";
+                document.getElementById("HTMLf_hstackHTrow_h"+ht).style.color = "#2A2838";
+                document.getElementById("HTMLf_hstackHTrow_h"+ht).style.fontWeight = "bold";
+            // Note OFF
+            } else if (state === 0) {
+                document.getElementById("HTMLf_hstackHTrow_h"+ht).style.backgroundColor = "#383749";
+                document.getElementById("HTMLf_hstackHTrow_h"+ht).style.color = "#DDD";
+                document.getElementById("HTMLf_hstackHTrow_h"+ht).style.fontWeight = "normal";
+            }
+        }
+    } else if (type === "ft") {
+        // Note ON
         if (state === 1) {
-            document.getElementById("HTMLo_hstackHTrow_h"+ht).style.backgroundColor = "rgb(255, 249, 164)";
-            document.getElementById("HTMLo_hstackHTrow_h"+ht).style.color = "#2A2838";
-            document.getElementById("HTMLo_hstackHTrow_h"+ht).style.fontWeight = "bold";
+            document.getElementById("HTMLf_hstackFTrow").style.backgroundColor = "#FFC79D";
+            document.getElementById("HTMLf_hstackFTrow").style.color = "#2A2838";
+            document.getElementById("HTMLf_hstackFTrow").style.fontWeight = "bold";
+            document.getElementById("HTMLf_hstackFTrow").style.transition = "none";
+            document.getElementById("HTMLf_hstackFTrow").style.transition = "none";
+        // Note OFF
         } else if (state === 0) {
-            document.getElementById("HTMLo_hstackHTrow_h"+ht).style.backgroundColor = "#383749";
-            document.getElementById("HTMLo_hstackHTrow_h"+ht).style.color = "#DDD";
-            document.getElementById("HTMLo_hstackHTrow_h"+ht).style.fontWeight = "normal";
+            document.getElementById("HTMLf_hstackFTrow").style.backgroundColor = "#383749";
+            document.getElementById("HTMLf_hstackFTrow").style.color = "#DDD";
+            document.getElementById("HTMLf_hstackFTrow").style.fontWeight = "normal";
+            document.getElementById("HTMLf_hstackFTrow").style.transition = "all 400ms linear";
         }
     }
 }

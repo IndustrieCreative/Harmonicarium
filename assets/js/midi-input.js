@@ -176,6 +176,7 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
             // Update the UI
             icDHCmonitor(ft, ftArr, "ft");
             icHSTACKfillin();
+            icHSTACKmonitor("ft", ft, 1);
             // Add to the Key Queue the infos about the current pressed FT key (to manage monophony)
             icDHC.tables.ftKeyQueue.push( { [ft]: [ftArr.hz, ctrlNoteNumber, velocity] } );
         }
@@ -197,7 +198,7 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
                 }
                 // Update the UI
                 icDHCmonitor(ht, htArr, "ht");
-                icHSTACKmonitor(ht, 1);
+                icHSTACKmonitor("ht", ht, 1);
             // If HT0 is pressed, it's the Piper feature!
             } else if (ht === 0) {
                 // Note ON the next piped HT
@@ -243,6 +244,7 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusbyte, timestamp) {
             if (icDHC.tables.ftKeyQueue.length === 0) {
                 // Send VoiceOFF to the Synth
                 icVoiceOFF(ctrlNoteNumber, "ft");
+                icHSTACKmonitor("ft", ft, 0);
             // Else (if there are other notes) read and play the next note on the ftKeyQueue array
             } else {
                 let nextTone = [];
@@ -267,6 +269,7 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusbyte, timestamp) {
                     // Update the UI
                     icDHCmonitor(nextTone.ft, ftArr, "ft");
                     icHSTACKfillin();
+                    icHSTACKmonitor("ft", ft, 0);
                 }
             }
         }
@@ -279,7 +282,7 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusbyte, timestamp) {
                 // Send VoiceOFF to the Synth
                 icVoiceOFF(ctrlNoteNumber, "ht");
                 // Update the UI
-                icHSTACKmonitor(ht, 0);
+                icHSTACKmonitor("ht", ht, 0);
             // If HT0 is pressed, it's the Piper feature
             } else if (ht === 0) {
                 // Note OFF the active piped HT
