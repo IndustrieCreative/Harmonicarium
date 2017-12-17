@@ -269,7 +269,7 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusbyte, timestamp) {
                     // Update the UI
                     icDHCmonitor(nextTone.ft, ftArr, "ft");
                     icHSTACKfillin();
-                    icHSTACKmonitor("ft", ft, 0);
+                    icHSTACKmonitor("ft", ft, 1);
                 }
             }
         }

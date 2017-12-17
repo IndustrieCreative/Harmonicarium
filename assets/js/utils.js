@@ -227,7 +227,7 @@ function icHSTACKcreate() {
     icUsedHT = icUniqArray(usedHT);
     for (let ht in icUsedHT) {
         let htn = icUsedHT[ht];
-        hstackHTML += '<tr id="HTMLf_hstackHTrow_h'+htn+'">';
+        hstackHTML += '<tr id="HTMLf_hstackHTrow_h'+htn+'" class="HToff">';
         hstackHTML += '<td class="hstackHT_h" id="HTMLo_hstackHT_h'+htn+'">'+htn+'</td>';
         hstackHTML += '<td class="hstackHT_note" id="HTMLo_hstackHT_note'+htn+'"></td>';
         hstackHTML += '<td class="hstackHT_cents" id="HTMLo_hstackHT_cents'+htn+'"></td>';
@@ -291,30 +291,29 @@ function icHSTACKmonitor(type, ht, state) {
         if (ht !== 0) {
             // Note ON
             if (state === 1) {
-                document.getElementById("HTMLf_hstackHTrow_h"+ht).style.backgroundColor = "#C9E2F7";
-                document.getElementById("HTMLf_hstackHTrow_h"+ht).style.color = "#2A2838";
-                document.getElementById("HTMLf_hstackHTrow_h"+ht).style.fontWeight = "bold";
+                document.getElementById("HTMLf_hstackHTrow_h"+ht).classList.add("HTon");
+                document.getElementById("HTMLf_hstackHTrow_h"+ht).classList.remove("HToff");
             // Note OFF
             } else if (state === 0) {
-                document.getElementById("HTMLf_hstackHTrow_h"+ht).style.backgroundColor = "#383749";
-                document.getElementById("HTMLf_hstackHTrow_h"+ht).style.color = "#DDD";
-                document.getElementById("HTMLf_hstackHTrow_h"+ht).style.fontWeight = "normal";
+                document.getElementById("HTMLf_hstackHTrow_h"+ht).classList.add("HToff");
+                document.getElementById("HTMLf_hstackHTrow_h"+ht).classList.remove("HTon");
             }
         }
     } else if (type === "ft") {
         // Note ON
         if (state === 1) {
-            document.getElementById("HTMLf_hstackFTrow").style.backgroundColor = "#FFC79D";
-            document.getElementById("HTMLf_hstackFTrow").style.color = "#2A2838";
-            document.getElementById("HTMLf_hstackFTrow").style.fontWeight = "bold";
-            document.getElementById("HTMLf_hstackFTrow").style.transition = "none";
-            document.getElementById("HTMLf_hstackFTrow").style.transition = "none";
+            // Recreate the element to force the css animation
+            let old = document.getElementById("HTMLf_hstackFTrow");
+            let parent = old.parentNode;
+            let clone = old.cloneNode(true);
+            parent.insertBefore(clone, old);
+            old.remove();
+            document.getElementById("HTMLf_hstackFTrow").classList.add("FTon");
+            document.getElementById("HTMLf_hstackFTrow").classList.remove("FToff");
         // Note OFF
         } else if (state === 0) {
-            document.getElementById("HTMLf_hstackFTrow").style.backgroundColor = "#383749";
-            document.getElementById("HTMLf_hstackFTrow").style.color = "#DDD";
-            document.getElementById("HTMLf_hstackFTrow").style.fontWeight = "normal";
-            document.getElementById("HTMLf_hstackFTrow").style.transition = "all 400ms linear";
+            document.getElementById("HTMLf_hstackFTrow").classList.add("FToff");
+            document.getElementById("HTMLf_hstackFTrow").classList.remove("FTon");
         }
     }
 }

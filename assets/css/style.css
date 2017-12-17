@@ -708,7 +708,6 @@ span.htSettingsLabel {
 /***********************************************
  * H STACK
  ***********************************************/
-
 .hstack h1 {
     float: left;
 }
@@ -738,6 +737,46 @@ span.htSettingsLabel {
 }
 th.hstackDivisor {
     height: 5px;
+}
+/*H Stack HT & FT rows color on keypress events*/
+@keyframes FTpressedKey {
+    0% {
+        background-color: #FFF;
+        color: #FFFFBB
+    }
+    100% {
+        background-color: #FFC79D;
+        color: #2A2838;
+    }
+}
+@keyframes FTreleasedKey {
+    0%   {
+        background-color: #FFC79D;
+        color: #2A2838;
+    }
+    100% {
+        background-color: #383749;
+        color: #DDD;
+    }
+}
+.FTon {
+    animation: FTpressedKey 250ms forwards;
+    font-weight: bold;
+}
+.FToff {
+    animation: FTreleasedKey 250ms linear;
+    font-weight: normal;
+}
+.HTon {
+    background-color: #C9E2F7;
+    color: #2A2838;
+    font-weight: bold;
+}
+.HToff {
+    background-color: #383749;
+    color: #DDD;
+    font-weight: normal;
+    transition: all 125ms linear;
 }
 
 /***********************************************
