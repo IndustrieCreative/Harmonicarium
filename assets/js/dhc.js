@@ -479,6 +479,36 @@ function icFThsTranspose(ratio, type) {
     icTablesCreate();
 }
 
+// Handle keypress input codes for Hz and midicents accuracy
+function icDHCaccuracies(event) {
+    let onchange = new Event('input');
+    switch (event.keyCode) {
+        // Arrow UP
+        case 38:
+            event.target.value /= 10;
+            event.target.dispatchEvent(onchange);
+            break;
+        // Arrow DOWN
+        case 40:
+            event.target.value *= 10;
+            event.target.dispatchEvent(onchange);
+            break;
+        // 0, 1, (comma), dot, left, right, backspace, canc
+        // case 188:
+        case 190:
+        case 37:
+        case 39:
+        case 46:
+        case 48:
+        case 49:
+        case 8:
+            break;
+        // Avoid any other keypress
+        default:
+            event.preventDefault();
+    }
+}
+
 /*==============================================================================*
  * HT UI tools
  *==============================================================================*/
@@ -551,7 +581,10 @@ function icUIinit() {
     // UI GENERAL DHC settings
     //------------------------
     // Set the UI HZ DECIMAL PRECISION from UI HTML inputs
+    document.getElementById("HTMLi_dhc_hzAccuracy").addEventListener("keydown", icDHCaccuracies);
     document.getElementById("HTMLi_dhc_hzAccuracy").addEventListener("input", function(event) {
+        // Convert commas to dots
+        // event.target.value = event.target.value.replace(/,/g, '.');
         // Store the Hz accuracy in the global slot
         // Invert the number to get the multiplier factor and round it to avoid JS "0.999999..." shit
         icDHC.settings.global.hz_accuracy = Math.round(1/event.target.value);
@@ -559,7 +592,12 @@ function icUIinit() {
         icDHCinit();
     });
     // Set the UI MIDI.CENTS DECIMAL PRECISION from UI HTML inputs
+    document.getElementById("HTMLi_dhc_mcAccuracy").addEventListener("keydown", icDHCaccuracies);
     document.getElementById("HTMLi_dhc_mcAccuracy").addEventListener("input", function(event) {
+        // Convert commas to dots
+        // event.target.value = event.target.value.replace(/,/g, '.');
+        // Store the mc accuracy in the global slot
+        // Invert the number to get the multiplier factor and round it to avoid JS "0.999999..." shit
         icDHC.settings.global.midicents_accuracy = Math.round(1/event.target.value) * 100;
         // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
         icDHCinit();

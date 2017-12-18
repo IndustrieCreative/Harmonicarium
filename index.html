@@ -135,11 +135,11 @@
                     <div class="dhcSettings">
                         <div class="dhcParam">
                             <label for="HTMLi_dhc_hzAccuracy" title="Decimal precision">UI Hz accuracy</label>
-                            <input type="number" id="HTMLi_dhc_hzAccuracy" title="Decimal precision">
+                            <input id="HTMLi_dhc_hzAccuracy" title="Decimal precision">
                         </div>
                         <div class="dhcParam">
                             <label for="HTMLi_dhc_mcAccuracy" title="Decimal precision">UI Cents accuracy</label>
-                            <input type="number" id="HTMLi_dhc_mcAccuracy" title="Decimal precision">
+                            <input id="HTMLi_dhc_mcAccuracy" title="Decimal precision">
                         </div>
                         <div class="dhcParam">
                             <label>Middle C octave</label>
@@ -149,11 +149,11 @@
                         </div>
                         <div class="dhcParam">
                             <label for="HTMLi_dhc_pitchbendRange">Ctrl PitchBend range</label>
-                            <input type="number" id="HTMLi_dhc_pitchbendRange">
+                            <input type="number" min="0" step="100" id="HTMLi_dhc_pitchbendRange">
                         </div>
                         <div class="dhcParam">
                             <label for="HTMLi_dhc_piperSteps">Piper (HT0) steps</label>
-                            <input type="number" id="HTMLi_dhc_piperSteps">
+                            <input type="number" min="1" id="HTMLi_dhc_piperSteps">
                         </div>
                     </div>
                 </div>
@@ -339,14 +339,14 @@
                         </tr>
                         <tr>
                             <td>
-                                <input type="number" id="HTMLi_fm_mc">
+                                <input type="number" min="0" id="HTMLi_fm_mc">
                             </td>
                             <td>
                                 <!-- Fake button. Useless due to 'onchange' on input textboxes but user-friendl -->
                                 <button>Set</button>
                             </td>
                             <td>
-                                <input type="number" id="HTMLi_fm_hz">
+                                <input type="number" min="0" id="HTMLi_fm_hz">
                             </td>
                         </tr>
                     </table>
