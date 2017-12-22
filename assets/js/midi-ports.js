@@ -74,25 +74,16 @@ function icOnMidiInit(MidiAccess) {
     icMidi = MidiAccess;
     // UI INITIALIZATION
     // Create for the first time the HTML Input and Output ports selection boxes
-    createPortSelector(icMidi.inputs, icHTMLelementInputs);
-    createPortSelector(icMidi.outputs, icHTMLelementOutputs);
-    // The first creation is made by looping over the MIDI Input/Output Map
-    function createPortSelector(ports, htmlElement) {
-        // For any port of the Map
-        for (let [portID, midiPort] of ports) {
-            // Create a checkbox
-            icCreatePortCheckbox(midiPort, htmlElement);
-        }
-    }
-    // Operations on available ports (MIDIInput and MIDIOutput) on the console
-    // Iterate the MIDIInputMap (.inputs) array/map object        
-    for (let inputPort of icMidi.inputs) {
-        icPortLogger(inputPort[1]);
-    }
-    // Iterate the MIDIOutputMap (.outputs) array/map object
-    for (let outputPort of icMidi.outputs) {
-        icPortLogger(outputPort[1]);
-    }
+    // Log the available ports on the Event Log
+    icMidi.inputs.forEach((value) => {
+        icCreatePortCheckbox(value, icHTMLelementInputs);
+        icPortLogger(value);
+    });
+    icMidi.outputs.forEach((value) => {
+        icCreatePortCheckbox(value, icHTMLelementOutputs);
+        icPortLogger(value);
+    });
+
     // When the state or an attribute of any port changes
     // Execute the Midi State Refresh function with the Event as argument
     icMidi.onstatechange = icMidiStateRefresh;
