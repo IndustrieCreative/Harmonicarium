@@ -44,10 +44,6 @@ function icMidiMessageReceived(midievent) {
     var cmd = midievent.data[0] >> 4;
     // Set to zero the first 4 bits from left and get the channel
     var channel = midievent.data[0] & 0xf;
-    // Get the note number
-    var noteNumber = midievent.data[1];
-    // Initialize velocity to zero
-    var velocity = 0;
     // Set the timestamp
     var timestamp = midievent.timeStamp;
 
@@ -114,7 +110,7 @@ function icMidiMessageReceived(midievent) {
             // Store the pitchbend value into global slot: value normalized to [-1 > 0,99987792968750]
             icDHC.settings.controller.pitchbend.amount = pitchbendValue;
             // Update the Synth voices frequencies
-            icPitchBend();
+            icSynthPitchBend();
             // Update the UI Monitors
             icMONITORSinit();
         // Other type of MIDI message
@@ -152,8 +148,6 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
             var ftArr = icDHC.tables.ft_table[ft];
             // Recalculate the ht_table passing the frequency (Hz)
             icDHC.tables.ht_table = icHTtableCreate(ftArr.hz);
-            // Store the current FT into the global slot for future HT table recomputations and UI monitor updates
-            icDHC.settings.ht.curr_ft = ft;
             for (let t in icDHC.tables.ftKeyQueue) {
                 // If the key is already pressed
                 if (icDHC.tables.ftKeyQueue[t][ft]) {
@@ -163,6 +157,7 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
                     if (position !== -1) {
                         // Send VoiceOFF to the Synth
                         icVoiceOFF(icDHC.tables.ftKeyQueue[t][ft][1], "ft");
+                        icMIDIout(statusByte, ctrlNoteNumber, ft, ftArr, velocity, 0, "ft");
                         // Remove the FTn from the ftKeyQueue array
                         icDHC.tables.ftKeyQueue.splice(position, 1);
                     // If the FTn does not exist
@@ -173,12 +168,18 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
             }
             // Send VoiceON to the Synth
             icVoiceON(ftArr.hz, ctrlNoteNumber, velocity, "ft");
+            icMIDIout(statusByte, ctrlNoteNumber, ft, ftArr, velocity, 1, "ft");
+            if (icDHC.settings.ht.curr_ft !== ft) {
+                icUpdateMIDInoteON("ht");
+            }
+            // Store the current FT into the global slot for future HT table recomputations and UI monitor updates
+            icDHC.settings.ht.curr_ft = ft;
+            // Add to the Key Queue the infos about the current pressed FT key (to manage monophony)
+            icDHC.tables.ftKeyQueue.push( { [ft]: [ftArr.hz, ctrlNoteNumber, velocity] } );
             // Update the UI
             icDHCmonitor(ft, ftArr, "ft");
             icHSTACKfillin();
             icHSTACKmonitor("ft", ft, 1);
-            // Add to the Key Queue the infos about the current pressed FT key (to manage monophony)
-            icDHC.tables.ftKeyQueue.push( { [ft]: [ftArr.hz, ctrlNoteNumber, velocity] } );
         }
 
         // **HT**
@@ -191,6 +192,7 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
                 icDHC.settings.ht.last_ht = ht;
                 // Send VoiceON to the Synth
                 icVoiceON(htArr.hz, ctrlNoteNumber, velocity, "ht");
+                icMIDIout(statusByte, ctrlNoteNumber, ht, htArr, velocity, 1, "ht");
                 // If the Note ON is not a Piper's fake midievent (FT0)
                 if (piper === 0) {
                     // Add the HT to the Pipe
@@ -215,11 +217,9 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
     }
     // Turn on the key on the virtual piano
     icKeyON(ctrlNoteNumber);
-
-    // @TODO: SEND THE PITCH TO THE MIDI OUTPUT CONVERTER icNoteOUT
 }
 
-function icNoteOFF(ctrlNoteNumber, velocity, statusbyte, timestamp) {
+function icNoteOFF(ctrlNoteNumber, velocity, statusByte, timestamp) {
        // If the input MIDI key is in the ctrl_map, proceed
     if (icDHC.tables.ctrl_map[ctrlNoteNumber]) {
         
@@ -230,6 +230,8 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusbyte, timestamp) {
         // **FT**
         // If the key is mapped to a Fundamental Tone
         if (ft !== 129) {
+            // Get frequency and midi.cents for MIDI-Out polyphony handling
+            var ftArr = icDHC.tables.ft_table[ft];
             // Search the FT number in the ftKeyQueue array
             var position = icDHC.tables.ftKeyQueue.findIndex(p => p[ft]);
             // If the FTn exist
@@ -244,6 +246,7 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusbyte, timestamp) {
             if (icDHC.tables.ftKeyQueue.length === 0) {
                 // Send VoiceOFF to the Synth
                 icVoiceOFF(ctrlNoteNumber, "ft");
+                icMIDIout(statusByte, ctrlNoteNumber, ft, ftArr, velocity, 0, "ft");
                 icHSTACKmonitor("ft", ft, 0);
             // Else (if there are other notes) read and play the next note on the ftKeyQueue array
             } else {
@@ -258,14 +261,17 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusbyte, timestamp) {
                 if (nextTone.ft != icDHC.settings.ht.curr_ft) {
                     // Send VoiceOFF to the Synth
                     icVoiceOFF(ctrlNoteNumber, "ft");
-                    // Get its frequency and midi.cents 
-                    var ftArr = icDHC.tables.ft_table[nextTone.ft];
+                    icMIDIout(statusByte, ctrlNoteNumber, ft, ftArr, velocity, 0, "ft");
+                    // Get frequency and midi.cents for MIDI-Out polyphony handling
+                    var ftNextArr = icDHC.tables.ft_table[nextTone.ft];
                     // Recalculate the ht_table passing the frequency (Hz)
                     icDHC.tables.ht_table = icHTtableCreate(nextTone[0]);
                     // Store the current FT into the global slot for future HT table recomputations and UI monitor updates
                     icDHC.settings.ht.curr_ft = nextTone.ft;
                     // Send VoiceON to the Synth
                     icVoiceON(nextTone[0], nextTone[1], nextTone[2], "ft");
+                    icMIDIout(statusByte, nextTone[1], nextTone.ft, ftNextArr, nextTone[2], 1, "ft");
+                    console.log(statusByte, nextTone[1], nextTone.ft, ftNextArr, velocity, 1, "ft");
                     // Update the UI
                     icDHCmonitor(nextTone.ft, ftArr, "ft");
                     icHSTACKfillin();
@@ -279,8 +285,10 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusbyte, timestamp) {
         if (ht !== 129) {
             // If it's a normal HT
             if (ht !== 0) {
+                var htArr = icDHC.tables.ht_table[ht];
                 // Send VoiceOFF to the Synth
                 icVoiceOFF(ctrlNoteNumber, "ht");
+                icMIDIout(statusByte, ctrlNoteNumber, ht, htArr, velocity, 0, "ht");
                 // Update the UI
                 icHSTACKmonitor("ht", ht, 0);
             // If HT0 is pressed, it's the Piper feature

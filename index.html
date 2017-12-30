@@ -18,7 +18,7 @@
                         <img src="assets/img/logo.png">
                     </div>
                     <div class="menuContainer">
-                        <span class="menuElement" id="HTMLf_help">HELP</span> &nbsp;– &nbsp;<span class="menuElement" id="HTMLf_credits">Credits</span> &nbsp;– &nbsp;<span class="menuElement"><a href="https://github.com/IndustrieCreative/Harmonicarium" target="_blank">Source code</a></span>
+                        <span class="menuElement" id="HTMLf_help">HELP</span> &nbsp;&ndash; &nbsp;<span class="menuElement" id="HTMLf_credits">Credits</span> &nbsp;&ndash; &nbsp;<span class="menuElement"><a href="https://github.com/IndustrieCreative/Harmonicarium" target="_blank">Source code</a></span>
                     </div>
                 </div>
             </div>
@@ -71,7 +71,7 @@
                                 <th width="10%">#</th>
                                 <th width="30%">Note</th>
                                 <th width="30%">Hz</th>
-                                <th width="20%" title="MIDI.cent">m.¢</th>
+                                <th width="20%" title="MIDI.cent">m.&cent;</th>
                             </tr>
                             <tr>
                                 <td>HT</td>
@@ -165,12 +165,12 @@
                     <div class="synthColumn">
                         <div class="synthRxPanel">
                             <div class="synthParam">
-                                <label for="HTMLi_synth_attack">– &nbsp;&nbsp;Attack &nbsp;&nbsp;+</label>
+                                <label for="HTMLi_synth_attack">&minus; &nbsp;&nbsp;Attack &nbsp;&nbsp;&plus;</label>
                                 <!-- time (sec) -->
                                 <input type="range" min="0.02" max="5" step="0.01" id="HTMLi_synth_attack" data-tooltip="">
                             </div>
                             <div class="synthParam">
-                                <label for="HTMLi_synth_sustain">– &nbsp;&nbsp;Sustain &nbsp;&nbsp;+</label>
+                                <label for="HTMLi_synth_sustain">&minus; &nbsp;&nbsp;Sustain &nbsp;&nbsp;&plus;</label>
                                 <!-- gain value amount (0 > 1) -->
                                 <input type="range" min="0.018" max="1" step="0.001" id="HTMLi_synth_sustain">
                             </div>
@@ -182,7 +182,7 @@
                                 <input type="checkbox" name="synt" id="HTMLi_synth_power">
                             </div>
                             <div class="synthParam">
-                                <label for="HTMLi_synth_portamento">– &nbsp;&nbsp;Portamento &nbsp;&nbsp;+</label>
+                                <label for="HTMLi_synth_portamento">&minus; &nbsp;&nbsp;Portamento &nbsp;&nbsp;&plus;</label>
                                 <input type="range" min="0" max="0.20" step="0.01" id="HTMLi_synth_portamento">
                             </div>
                         </div>
@@ -194,11 +194,11 @@
                                 </tr>
                                 <tr>
                                     <td>
-                                        <label for="HTMLi_synth_volumeFT">– &nbsp;&nbsp;FT Volume &nbsp;&nbsp;+</label>
+                                        <label for="HTMLi_synth_volumeFT">&minus; &nbsp;&nbsp;FT Volume &nbsp;&nbsp;&plus;</label>
                                         <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volumeFT">
                                     </td>
                                     <td>
-                                        <label for="HTMLi_synth_volumeHT">– &nbsp;&nbsp;HTs Volume &nbsp;&nbsp;+</label>
+                                        <label for="HTMLi_synth_volumeHT">&minus; &nbsp;&nbsp;HTs Volume &nbsp;&nbsp;&plus;</label>
                                         <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volumeHT">
                                     </td>
                                 </tr>
@@ -225,7 +225,7 @@
                             </table>
                         </div>
                         <div class="synthReverbPanel">
-                            <label for="HTMLi_synth_reverb">DRY &nbsp;– &nbsp;Convolution Reverb &nbsp;– &nbsp;WET</label>
+                            <label for="HTMLi_synth_reverb">DRY &nbsp;&ndash; &nbsp;Convolution Reverb &nbsp;&ndash; &nbsp;WET</label>
                             <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_reverb">
                             <p></p>
                             <input type="file" id="HTMLi_synth_irFile" accept=".wav">
@@ -233,18 +233,18 @@
                     </div>
                     <div class="synthColumn synthOut">
                         <div class="synthParam">
-                            <label for="HTMLi_synth_decay">– &nbsp;&nbsp;Decay &nbsp;&nbsp;+</label>
+                            <label for="HTMLi_synth_decay">&minus; &nbsp;&nbsp;Decay &nbsp;&nbsp;&plus;</label>
                             <!-- time (timeconstant) -->
                             <input type="range" min="0.001" max="1" step="0.001" id="HTMLi_synth_decay">
                         </div>
                         <div class="synthParam">
-                            <label for="HTMLi_synth_release">– &nbsp;&nbsp;Release &nbsp;&nbsp;+</label>
+                            <label for="HTMLi_synth_release">&minus; &nbsp;&nbsp;Release &nbsp;&nbsp;&plus;</label>
                             <!-- time (sec) -->
                             <input type="range" min="0.02" max="5" step="0.01" id="HTMLi_synth_release">
                         </div>
                         <div id="HTMLo_synth_meter" style="width: 75px; height: 214px; margin: 1em 0;"></div>
                         <span class="rotatedElement">
-                            <label for="HTMLi_synth_volume">– &nbsp;&nbsp;MASTER &nbsp;VOLUME &nbsp;&nbsp;+</label>
+                            <label for="HTMLi_synth_volume">&minus; &nbsp;&nbsp;MASTER &nbsp;VOLUME &nbsp;&nbsp;&plus;</label>
                             <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volume">
                         </span>
                     </div>
@@ -254,14 +254,49 @@
                 <div class="UIbox">
                     <div class="midiPorts unselectableText">
                         <h1>MIDI &nbsp;I/O</h1>
-                        <details>
-                            <summary>Input ports:</summary>
-                            <div id="HTMLo_inputPorts"></div>
-                        </details>
-                        <details class="TODO">
-                            <summary>Output ports:</summary>
-                            <div id="HTMLo_outputPorts"></div>
-                        </details>
+                        <!-- Open the modal content-->
+                        <button id="HTMLf_motPanelModalShow">MIDI Settings...</button>
+                        <!-- The Modal -->
+                        <div id="HTMLf_motPanelModal" class="modalOverlay">
+                        <!-- Modal content -->
+                            <div class="modalOverlay_content">
+                                <span class="modalOverlay_close">&times;</span>
+                                <div class="midiContainer">
+                                    <div class="midiColumn midiContainerLeft">
+                                        <h1>MIDI &nbsp;I/O</h1>
+                                        <div class="midiMonitor">
+                                            <table class="monitorTable">
+                                                <tr>
+                                                    <td class="monitorTableTitle" colspan="3">MIDI-Input monitor</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Channel</th>
+                                                    <th>Note #</th>
+                                                    <th>Velocity</th>
+                                                </tr>
+                                                <tr>
+                                                    <td><span id="HTMLo_midiMonitor0_channel"></span></td>
+                                                    <td><span id="HTMLo_midiMonitor0_note"></span></td>
+                                                    <td><span id="HTMLo_midiMonitor0_velocity"></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="3"><span id="HTMLo_midiMonitor0_port"></span></td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <h2>Input ports:</h2>
+                                        <div id="HTMLo_inputPorts"></div>
+                                        <h2>Output ports:</h2>
+                                        <div id="HTMLo_outputPorts"></div>
+                                    </div>
+                                    <div class="midiColumn midiContainerRight">
+                                        <h1>MIDI-Out Tuning &nbsp;&ndash; &nbsp;PitchBend method</h1>
+                                        <div id="HTMLf_motPanelContent">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="midiMonitor">
                         <table class="monitorTable">
@@ -274,12 +309,12 @@
                                 <th>Velocity</th>
                             </tr>
                             <tr>
-                                <td><span id="HTMLo_midiMonitor_channel"></span></td>
-                                <td><span id="HTMLo_midiMonitor_note"></span></td>
-                                <td><span id="HTMLo_midiMonitor_velocity"></span></td>
+                                <td><span id="HTMLo_midiMonitor1_channel"></span></td>
+                                <td><span id="HTMLo_midiMonitor1_note"></span></td>
+                                <td><span id="HTMLo_midiMonitor1_velocity"></span></td>
                             </tr>
                             <tr>
-                                <td colspan="3"><span id="HTMLo_midiMonitor_port"></span></td>
+                                <td colspan="3"><span id="HTMLo_midiMonitor1_port"></span></td>
                             </tr>
                         </table>
                     </div>
@@ -383,32 +418,32 @@
                             <table class="invisibleTable">
                                 <tr>
                                     <td valign="top" width="50%" style="text-align: right;"><h2>Transpose</h2></td>
-                                    <td width="20%"><span class="htSettingsLabel">÷2</span></td>
+                                    <td width="20%"><span class="htSettingsLabel">&divide;2</span></td>
                                     <td width="10%">Octave</td>
-                                    <td width="20%"><span class="htSettingsLabel">×2</span></td>
+                                    <td width="20%"><span class="htSettingsLabel">&times;2</span></td>
                                 </tr>
                                 <tr>
                                     <td style="text-align: right;">Harmonics</td>
                                     <td>
-                                        <button id="HTMLi_ftHStranspose_h_minus">–</button>
+                                        <button id="HTMLi_ftHStranspose_h_minus">&minus;</button>
                                     </td>
                                     <td>
                                         <span id="HTMLo_ftHStranspose_h_ratio"></span>
                                     </td>
                                     <td>
-                                        <button id="HTMLi_ftHStranspose_h_plus">+</button>
+                                        <button id="HTMLi_ftHStranspose_h_plus">&plus;</button>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td style="text-align: right;">Subharmonics</td>
                                     <td>
-                                        <button id="HTMLi_ftHStranspose_s_minus">–</button>
+                                        <button id="HTMLi_ftHStranspose_s_minus">&minus;</button>
                                     </td>
                                     <td>
                                         <span id="HTMLo_ftHStranspose_s_ratio"></span>
                                     </td>
                                     <td>
-                                        <button id="HTMLi_ftHStranspose_s_plus">+</button>
+                                        <button id="HTMLi_ftHStranspose_s_plus">&plus;</button>
                                     </td>
                                 </tr>
                             </table>
@@ -426,34 +461,34 @@
                                     <h2>Transpose</h2>
                                 </td>
                                 <td>Octave
-                                    <br/><span class="htSettingsLabel">÷2</span></td>
+                                    <br/><span class="htSettingsLabel">&divide;2</span></td>
                                 <td>Ratio
-                                    <br/><span class="htSettingsLabel">×r</span></td>
+                                    <br/><span class="htSettingsLabel">&times;r</span></td>
                                 <td>Octave
-                                    <br/><span class="htSettingsLabel">×2</span></td>
+                                    <br/><span class="htSettingsLabel">&times;2</span></td>
                             </tr>
                             <tr>
                                 <td style="text-align: right;">Harmonics</td>
                                 <td>
-                                    <button id="HTMLi_htTranspose_h_minus">–</button>
+                                    <button id="HTMLi_htTranspose_h_minus">&minus;</button>
                                 </td>
                                 <td>
                                     <input type="number" min="0" id="HTMLi_htTranspose_h_ratio">
                                 </td>
                                 <td>
-                                    <button id="HTMLi_htTranspose_h_plus">+</button>
+                                    <button id="HTMLi_htTranspose_h_plus">&plus;</button>
                                 </td>
                             </tr>
                             <tr>
                                 <td style="text-align: right;">Subharmonics</td>
                                 <td>
-                                    <button id="HTMLi_htTranspose_s_minus">–</button>
+                                    <button id="HTMLi_htTranspose_s_minus">&minus;</button>
                                 </td>
                                 <td>
                                     <input type="number" min="0" id="HTMLi_htTranspose_s_ratio">
                                 </td>
                                 <td>
-                                    <button id="HTMLi_htTranspose_s_plus">+</button>
+                                    <button id="HTMLi_htTranspose_s_plus">&plus;</button>
                                 </td>
                             </tr>
                         </table>
@@ -475,7 +510,7 @@
         </div>
     </div>
     <div id="HTMLf_helpPanel" class="panelOverlay rightPanel">
-        <div class="panelBtnContainer" onclick="icHelp(this)">
+        <div class="panelBtnContainer" onclick="icHelp()">
             <div class="panelBtnBar1"></div>
             <div class="panelBtnBar2"></div>
             <div class="panelBtnBar3"></div>

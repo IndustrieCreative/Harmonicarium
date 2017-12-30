@@ -73,6 +73,8 @@ function icOnMidiInit(MidiAccess) {
     // Store in the global ??(in real usage, would probably keep in an object instance)??
     icMidi = MidiAccess;
     // UI INITIALIZATION
+    // Button to open the MIDI settings
+    document.getElementById("HTMLf_motPanelModalShow").addEventListener("click", icOpenMidiPanel);
     // Create for the first time the HTML Input and Output ports selection boxes
     // Log the available ports on the Event Log
     icMidi.inputs.forEach((value) => {
@@ -123,6 +125,8 @@ function icCreatePortCheckbox(midiPort, htmlElement) {
     portSelectorInput.value = midiPort.id;
     // <input> checkbox: set CLASS
     portSelectorInput.className = midiPort.type;
+    // <input> checkbox: set NAME (useful to avoid port loops in icPortSelect())
+    portSelectorInput.name = midiPort.name;
     // <input> checkbox: set the onclick function
     portSelectorInput.addEventListener("click", icPortSelect);
     // <input> checkbox: set ID
@@ -145,6 +149,7 @@ function icCreatePortCheckbox(midiPort, htmlElement) {
 // Listen for any MIDI input from the selected MIDI port on the HTML checkbox
 function icPortSelect(event) {
     let elem = event.target;
+    let alterPortType = elem.className === "input" ? "outputs" : "inputs";
     // If the port is selected
     if (elem.checked) {
         switch (elem.className) {
@@ -157,6 +162,7 @@ function icPortSelect(event) {
             case "output":
                 icSelectedOutputs.set(icMidi.outputs.get(elem.value).id, icMidi.outputs.get(elem.value));
                 icAtLeastOneMidi.openPort.output++;
+                icUpdateMOT();
                 break;
             // Debug
             default:
@@ -175,6 +181,7 @@ function icPortSelect(event) {
             case "output":
                 icSelectedOutputs.delete(icMidi.outputs.get(elem.value).id);
                 icAtLeastOneMidi.openPort.output--;
+                icUpdateMOT();
                 break;
             // Debug
             default:
@@ -182,6 +189,13 @@ function icPortSelect(event) {
                 break;
         }
     }
+    // Prevent set input<>output on the same port in order to avoid MIDI loops
+    icMidi[alterPortType].forEach((value, key, map) => {
+        if (value.name === elem.name) {
+            // Disable the other chackbox with same Port Name
+            document.getElementById(key).disabled = elem.checked;
+        }
+    });
 }
 
 // Midi State Refresh for hot (un)plugging - Event from MidiAccess.onstatechange
@@ -256,7 +270,7 @@ function icCheckAtLeastOneMidi(xPut, isOpen) {
                 if (icAtLeastOneMidi.availablePort.input === 0 && icAtLeastOneMidi.availablePort.output === 0) {
                     msg = "NO MIDI INPUT/OUTPUT PORTS AVAILABLE.\nTo best use this software, connect:\n– MIDI Controller >> incoming MIDI port\n– MIDI Instrument >> outgoing MIDI port";
                     icEventLog(msg);
-                    alert(msg);
+                    // alert(msg);
                     break;
                 }
                 // Fall through
@@ -264,7 +278,7 @@ function icCheckAtLeastOneMidi(xPut, isOpen) {
                 if (icAtLeastOneMidi.availablePort.input === 0) {
                     msg = "NO MIDI INPUT PORTS AVAILABLE!\nTo best use this software, an Input MIDI Controller is recommended.\nIn order to connect a MIDI Controller, at least one MIDI input port is required.";
                     icEventLog(msg);
-                    alert(msg);
+                    // alert(msg);
                     break;
                 }
                 // Fall through
@@ -272,7 +286,7 @@ function icCheckAtLeastOneMidi(xPut, isOpen) {
                 if (icAtLeastOneMidi.availablePort.output === 0) {
                     msg = "NO MIDI OUTPUT PORTS AVAILABLE!\nIn order to retune and play a MIDI Instrument, an Output MIDI Port is required.";
                     icEventLog(msg);
-                    alert(msg);
+                    // alert(msg);
                 }
                 break;
         }

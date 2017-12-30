@@ -62,6 +62,42 @@ var icDHC = {
             // @REMOVE: Cannot load a local default file? JSON?
             file: null
         },
+        // Default settings for MIDI-out tuning methods
+        instrument: {
+            // @TODO: MIDI Tuning Standard method
+            mts: {},
+            // Pitch Bend method
+            pb: {
+                channels: {
+                    ft: {
+                        used:[0, 1, 2],
+                        held: {},
+                        last: -1
+                    },
+                    ht: {
+                        used:[3, 4, 5, 6, 7],
+                        held: {},
+                        heldOrder: [],
+                        last: -1
+                    }
+                },
+                range: {
+                    ft: 2,
+                    ht: 2
+                },
+                delay: {
+                    ft: 5,
+                    ht: 5
+                },
+                // @TODO: Voice stealing management ON/OFF. Now stealing is always ON.
+                voicestealing: {
+                    ft: 1,
+                    ht: 1
+                },
+                gm: undefined
+            },
+            selected: "pb"
+        },
         // Fundamental Mother frequency (Hz)
         fm: {
             hz: 130.812782650299,
@@ -222,6 +258,9 @@ function icTablesCreate() {
     // Update the frequency on the internal reference Synth
     icUpdateSynthFTfrequency();
     icUpdateSynthHTfrequency();
+    // Resend (repress) all the MIDI Note-ON currently pending
+    icUpdateMIDInoteON("ft");
+    icUpdateMIDInoteON("ht");
     // Update the UI Monitors
     icMONITORSinit();
     return true;
@@ -248,17 +287,19 @@ function icMONITORSinit() {
 // Build the fundamental frequencies table {ff_table}
 // Called on Init and FM update
 function icFTtableCreate() {
+    // Temp object
     let fundamentalsTable = {};
+    // Select current FT Tuning Systems
     switch (icDHC.settings.ft.selected) {
         // n-EDx EQUAL TEMPERAMENT
         case "nEDx":
             for (let i = -icDHC.settings.ft.steps; i <= icDHC.settings.ft.steps; i++) {
                 let freq = icCompute_nEDx(i, icDHC.settings.ft.nEDx.unit, icDHC.settings.ft.nEDx.division, icDHC.settings.fm.hz);
                 let midicents = icFtoM(freq);
-                fundamentalsTable[i] = { hz: freq, mc: midicents } ;
+                fundamentalsTable[i] = { hz: freq, mc: midicents} ;
             }
             return fundamentalsTable;
-        // @TODO: HARMONICS / SUBHARMONICS FT
+        // HARMONICS / SUBHARMONICS FT
         case "h_s":
             if (icDHC.settings.ft.h_s.selected === "natural") {
                 // Compute the sub/harmonics (NOT transposed to the same octave)
@@ -336,8 +377,6 @@ function icHTtableCreate(fundamental) {
 //-----------------------------------------------
 // @TODO: BUILD THE INSTRUMENT TABLE {inst_table}
 // icDHC.tables.inst_table
-// function icINSTtableCreate(fundamental) {
-// }
 
 /*==============================================================================*
  * GENERAL DHC COMPUTING TOOLS
@@ -367,11 +406,11 @@ function icCompute_nEDx(relativeTone, unit, division, masterTuning) {
 function icGetNoteNameCents(midicents) {
     let notenumber = Math.trunc(midicents);
     let notecents = midicents - notenumber;
-    let centsign = "+";
+    let centsign = "&plus;";
     if (notecents > 0.5) {
         notenumber = notenumber + 1;
         notecents = 1 - notecents;
-        centsign = "–";
+        centsign = "&minus;";
     }
     notecents = Math.round(notecents * icDHC.settings.global.midicents_accuracy) / (icDHC.settings.global.midicents_accuracy / 100);
     return [icMidiToHancock(notenumber)[1], notecents, centsign];
@@ -419,7 +458,7 @@ function icPrintFundamentalMother(freq, midicents){
     // Print the FM infos on the UI
     var notename = icGetNoteNameCents(bentArray.mc);
     midicents = Math.round(bentArray.mc * icDHC.settings.global.midicents_accuracy) / icDHC.settings.global.midicents_accuracy;
-    document.getElementById("HTMLo_fm_mc").innerHTML = midicents + " = " + notename[0] + " " + notename[2] + notename[1] + "¢";
+    document.getElementById("HTMLo_fm_mc").innerHTML = midicents + " = " + notename[0] + " " + notename[2] + notename[1] + "&cent;";
     document.getElementById("HTMLo_fm_hz").innerHTML = Math.round(bentArray.hz * icDHC.settings.global.hz_accuracy) / icDHC.settings.global.hz_accuracy;
 }
 
@@ -536,6 +575,8 @@ function icHTtranspose(ratio, type, octave) {
     icDHC.tables.ht_table = icHTtableCreate(icDHC.tables.ft_table[icDHC.settings.ht.curr_ft].hz);
     // Update the current HTs osc frequncies on Synth
     let init = icUpdateSynthHTfrequency();
+    // Resend (repress) all the MIDI Note-ON currently pending
+    icUpdateMIDInoteON("ht");
     // Update the UI: Compile the HStack
     icHSTACKfillin();
 }
@@ -604,7 +645,7 @@ function icUIinit() {
     });
     // Set the MIDDLE C OCTAVE from UI HTML inputs
     document.getElementById("HTMLi_dhc_middleC").addEventListener("input", function(event) {
-        // Beginning octave = Middle C octave -5   (-1 = C4)
+        // Beginning octave = Middle C octave - 5   (-1 => C4)
         icDHC.settings.global.middle_c = event.target.value - 5;
         // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
         icDHCinit();

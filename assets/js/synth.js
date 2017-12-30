@@ -37,7 +37,7 @@
 /* exported icVoiceOFF */
 /* exported icUpdateSynthFTfrequency */
 /* exported icUpdateSynthHTfrequency */
-/* exported icPitchBend */
+/* exported icSynthPitchBend */
 
 "use strict";
 
@@ -387,7 +387,7 @@ function icUpdateReverb(value) {
 }
 
 // PITCHBEND MANAGEMENT FOR EVERY ALREADY ACTIVE SYNTH VOICES
-function icPitchBend() {
+function icSynthPitchBend() {
     // If the synth is turned-on
     if (icSYNTH.status === true) {
         for (var i=0; i<255; i++) {

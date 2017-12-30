@@ -38,7 +38,6 @@
 
 "use strict";
 
-
 function icUTILSinit() {
     // Get the button that opens the modal controller keymap table
     document.getElementById("HTMLf_controllerKeymapTableShow").addEventListener("click", icCtrlMap2HTML);
@@ -92,6 +91,7 @@ function icHelp(type) {
  *==============================================================================*/
 // Get the HTML Log element and store it to global
 var icEventLogText = document.getElementById("HTMLo_logText");
+icEventLogText.innerHTML = "<p>>>>>>>>> > Welcome to the Harmonicarium!</p><p>...</p><p>..</p><p>.</p>";
 // Log passed infos into the HTML Log element
 function icEventLog(str) {
     let time = new Date();
@@ -173,18 +173,18 @@ function icDHCmonitor(tone, arr, type) {
         // Update the log on MONITOR FT info on the UI
         document.getElementById("HTMLo_toneMonitorFT_tone").innerHTML = tone;
         document.getElementById("HTMLo_toneMonitorFT_midicents").innerHTML = Math.round(arr.mc * icDHC.settings.global.midicents_accuracy) / icDHC.settings.global.midicents_accuracy;
-        document.getElementById("HTMLo_toneMonitorFT_notename").innerHTML = notename[0] + " " + notename[2] + notename[1] + "¢";
+        document.getElementById("HTMLo_toneMonitorFT_notename").innerHTML = notename[0] + " " + notename[2] + notename[1] + "&cent;";
         document.getElementById("HTMLo_toneMonitorFT_frequency").innerHTML = Math.round(arr.hz * icDHC.settings.global.hz_accuracy) / icDHC.settings.global.hz_accuracy;
         // Update the log on HSTACK FT info on the UI
         document.getElementById("HTMLo_hstackFT_tone").innerHTML = tone;
         document.getElementById("HTMLo_hstackFT_note").innerHTML = notename[0];
-        document.getElementById("HTMLo_hstackFT_cents").innerHTML = notename[2] + notename[1] + "¢";
+        document.getElementById("HTMLo_hstackFT_cents").innerHTML = notename[2] + notename[1] + "&cent;";
         document.getElementById("HTMLo_hstackFT_hz").innerHTML = Math.round(arr.hz * icDHC.settings.global.hz_accuracy) / icDHC.settings.global.hz_accuracy;
     } else if (type === "ht") {
         // Update the log on MONITOR HT info on the UI
         document.getElementById("HTMLo_toneMonitorHT_tone").innerHTML = tone;
         document.getElementById("HTMLo_toneMonitorHT_midicents").innerHTML = Math.round(arr.mc * icDHC.settings.global.midicents_accuracy) / icDHC.settings.global.midicents_accuracy;
-        document.getElementById("HTMLo_toneMonitorHT_notename").innerHTML = notename[0] + " " + notename[2] + notename[1] + "¢";
+        document.getElementById("HTMLo_toneMonitorHT_notename").innerHTML = notename[0] + " " + notename[2] + notename[1] + "&cent;";
         document.getElementById("HTMLo_toneMonitorHT_frequency").innerHTML = Math.round(arr.hz * icDHC.settings.global.hz_accuracy) / icDHC.settings.global.hz_accuracy;
     }
 }
@@ -192,10 +192,12 @@ function icDHCmonitor(tone, arr, type) {
 // MIDI INPUT MONITOR
 function icMIDImonitor(number, velocity, channel, srcElement) {
     // Update the log on MIDI MONITOR on the UI
-    document.getElementById("HTMLo_midiMonitor_port").innerHTML = srcElement.name;
-    document.getElementById("HTMLo_midiMonitor_note").innerHTML = number;
-    document.getElementById("HTMLo_midiMonitor_velocity").innerHTML = velocity;
-    document.getElementById("HTMLo_midiMonitor_channel").innerHTML = channel + 1;
+    for (var x = 0; x < 2; x++) {
+        document.getElementById("HTMLo_midiMonitor"+x+"_port").innerHTML = srcElement.name;
+        document.getElementById("HTMLo_midiMonitor"+x+"_note").innerHTML = number;
+        document.getElementById("HTMLo_midiMonitor"+x+"_velocity").innerHTML = velocity;
+        document.getElementById("HTMLo_midiMonitor"+x+"_channel").innerHTML = channel + 1;
+    }
 }
 
 /*==============================================================================*
@@ -266,7 +268,7 @@ function icHSTACKfillin() {
             // Print the infos to the UI HStack
             document.getElementById("HTMLo_hstackHT_h"+htn).innerHTML = htn;
             document.getElementById("HTMLo_hstackHT_note"+htn).innerHTML = notename[0];
-            document.getElementById("HTMLo_hstackHT_cents"+htn).innerHTML = notename[2] + notename[1] + "¢";
+            document.getElementById("HTMLo_hstackHT_cents"+htn).innerHTML = notename[2] + notename[1] + "&cent;";
             document.getElementById("HTMLo_hstackHT_hz"+htn).innerHTML = Math.round(htArr.hz * icDHC.settings.global.hz_accuracy) / icDHC.settings.global.hz_accuracy;
         }
     }
@@ -333,7 +335,6 @@ function icTESTER() {
     // icEventLog(JSON.stringify(icDHC.tables.ft_table, null, 2).replace(/}|{|"|,/g, ''));
     icEventLog("TEST: Full tables printed out. Look at the console of your browser.");
     console.log("ctrl_map:", icDHC.tables.ctrl_map);
-    console.log("ft_base:", icDHC.tables.ft_base);
     console.log("ft_table:", icDHC.tables.ft_table);
     console.log("ht_table:", icDHC.tables.ht_table);
 }

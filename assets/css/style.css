@@ -189,8 +189,7 @@ th, td {
     border: 1px solid #888;
     box-shadow: -0.2em -0.2em 0.8em rgb(5, 0, 33); /*@DARK*/
     margin: auto;
-    padding: 0 20px 50px 20px;
-    width: 230px;
+    padding: 0 20px 0 20px;
 }
 /* The Close Button */
 .modalOverlay_close {
@@ -285,6 +284,10 @@ th, td {
  * MODAL CONTROLLER KEYMAP
  ***********************************************/
 /*CONTROLLER KEYMAP TABLE*/
+#HTMLf_controllerKeymapModal .modalOverlay_content {
+    padding: 0 20px 50px 20px;
+    width: 230px;
+}
 .controllerKeymap button {
     margin-top: 10px;
 }
@@ -300,6 +303,67 @@ th, td {
     margin-top: 6px!important;
 }
 
+/***********************************************
+ * MODAL MIDI-OUT TUNING METHODS
+ ***********************************************/
+
+#HTMLf_motPanelModal .modalOverlay_content {
+    min-width: 960px;
+    padding: 10px 20px 15px 20px;
+    width: fit-content;
+}
+#HTMLf_motPanelContent h2 {
+    font-family: 'Source Code Pro', monospace;
+}
+.mot-pb-settings button {
+    vertical-align: top;
+}
+.mot-pb-settings {
+    display: flex;
+}
+.mot-pb-row2 td,
+.mot-pb-row1 th[rowspan="2"] {
+    border-bottom: solid 1px;
+}
+td.mot-pb-portChannel_ft,
+td.mot-pb-portChannel_ht {
+    padding: 1px;
+}
+td.mot-pb-rangeHT,
+td.mot-pb-delayHT {
+    padding: 3px 15px 0 15px;
+}
+td.mot-pb-rangeFT,
+td.mot-pb-delayFT {
+    padding: 6px 15px 0 15px;
+}
+.mot-pb-typeHeader {
+    font-size: 20px;
+}
+.midiColumn {
+    display: table-cell;
+    /*margin-right: 15px;*/
+    padding: 0 15px 0 15px;
+}
+.midiColumn h1 {
+    margin-top: 6px!important;
+}
+.midiColumn h2 {
+    left: -8px;
+    margin: 16px 0 4px 0!important;
+    position: relative;
+}
+.midiColumn.midiContainerLeft {
+    border-right: solid 1px;
+}
+.midiColumn.midiContainerRight {
+    border-left: solid 1px;
+    padding-left: 25px;
+}
+.midiColumn .midiMonitor table {
+    margin-bottom: 8px;
+    /*width: 235px;*/
+}
 /***********************************************
  * MENU (under the logo)
  ***********************************************/
@@ -478,14 +542,11 @@ so they don't overlap */
 }
 .dhcSettings label {
     margin-right: 5px;
+    vertical-align: sub;
 }
 .dhcParam input {
     float: right;
     width: 70px;
-}
-.dhcParam {
-    float: left;
-    margin-top: 2px;
 }
 /*Middle C Label+Input hack*/
 #HTMLi_dhc_middleC {
@@ -519,6 +580,9 @@ label[for="HTMLi_dhc_middleC"] {
 /***********************************************
  * REFERENCE SYNTH
  ***********************************************/
+.synth .UIbox {
+    width: 450px;
+}
 .synthColumn {
     float: left;
 }
