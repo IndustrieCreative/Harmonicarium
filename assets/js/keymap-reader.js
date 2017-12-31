@@ -26,10 +26,56 @@
  * To open, parse and handle the Keymap tables.
  */
 
+/* exported icKeymapsUIinit */
+/* exported icUpdateKeymapPreset */
+
 "use strict";
 
-// Add an EventListener to the (on)change event of the Controller Keymap File <input> tag
-document.getElementById('HTMLi_controllerKeymapFile').addEventListener('change', icHandleKeymapFile , false);
+function icKeymapsUIinit() {
+    // Add an EventListener to the (on)change event of the Controller Keymap File <input> tag
+    document.getElementById('HTMLi_controllerKeymapFile').addEventListener('change', icHandleKeymapFile, false);
+    // Add an EventListener to the (on)change event of the Controller Keymap File <select> tag
+    document.getElementById('HTMLi_controllerKeymapPresets').addEventListener('change', icLoadKeymapPreset);
+}
+
+function icUpdateKeymapPreset() {
+    let htmlElem = document.getElementById('HTMLi_controllerKeymapPresets');
+    let lastValue = icCtrlKeymapPreset.current[icDHC.settings.ft.selected];
+    let event = {target: {value: lastValue}};
+    let keymaps = Object.entries(icCtrlKeymapPreset[icDHC.settings.ft.selected]);
+    let optionFile = document.createElement("option");
+    htmlElem.innerHTML = "";
+    for (const [key, value] of keymaps) {
+        let option = document.createElement("option");
+        option.value = key;
+        option.text = value.notes;
+        htmlElem.add(option);
+    }
+    optionFile.text = "Load from file...";
+    optionFile.value = 99;
+    htmlElem.add(optionFile);
+    htmlElem.value = lastValue;
+    icLoadKeymapPreset(event);
+}
+
+function icLoadKeymapPreset(event) {
+    if (event.target.value != 99) {
+        let keymap = icCtrlKeymapPreset[icDHC.settings.ft.selected][event.target.value].map;
+        // Store the current Keymap <option> value in a global slot
+        icCtrlKeymapPreset.current[icDHC.settings.ft.selected] = event.target.value;
+        // Write the Controller Keymap into the global object
+        icDHC.tables.ctrl_map = keymap;
+        // Update the HStack
+        icHSTACKcreate();
+        icHSTACKfillin();
+        // Update the offset of the Qwerty Hancock on UI
+        icHancockChangeOffset(Object.keys(icDHC.tables.ctrl_map)[0]);
+        document.getElementById('HTMLi_controllerKeymapFile').style.visibility = "hidden";
+    } else {
+        document.getElementById('HTMLi_controllerKeymapFile').style.visibility = "initial";
+    }
+
+}
 
 // On loading the Controller Keymap file
 function icHandleKeymapFile(changeEvent) {

@@ -281,8 +281,16 @@ th, td {
 }
 
 /***********************************************
- * MODAL CONTROLLER KEYMAP
+ * CONTROLLER IO & KEYMAP
  ***********************************************/
+ .io .UIbox {
+    height: 296px;
+}
+
+button#HTMLf_motPanelModalShow {
+    margin-top: 10px;
+}
+
 /*CONTROLLER KEYMAP TABLE*/
 #HTMLf_controllerKeymapModal .modalOverlay_content {
     padding: 0 20px 50px 20px;
@@ -300,13 +308,35 @@ th, td {
     font-family: 'Source Code Pro', monospace;
 }
 .controllerKeymap h1 {
-    margin-top: 6px!important;
+    margin-top: 20px!important;
 }
+
+#HTMLi_controllerKeymapPresets {
+    width: 230px;
+}
+#HTMLi_controllerKeymapFile {
+    margin: 10px 0 0 0;
+}
+
+/***********************************************
+ * MIDI MONITOR TABLE
+ ***********************************************/
+.midiMonitor .monitorTableTitle {
+    text-align: left;
+}
+.midiPorts label {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 12px;
+}
+.midiMonitor table { 
+    margin-top: 10px;
+    width: 235px;
+}
+
 
 /***********************************************
  * MODAL MIDI-OUT TUNING METHODS
  ***********************************************/
-
 #HTMLf_motPanelModal .modalOverlay_content {
     min-width: 960px;
     padding: 10px 20px 15px 20px;
@@ -491,7 +521,7 @@ so they don't overlap */
     font-size: 90%;
     margin: 10px;
     min-height: 132px;
-    min-width: 200px;
+    min-width: 205px;
     padding: 1px 15px 15px 15px;
     text-align: left;
     vertical-align: top;
@@ -581,7 +611,7 @@ label[for="HTMLi_dhc_middleC"] {
  * REFERENCE SYNTH
  ***********************************************/
 .synth .UIbox {
-    width: 450px;
+    display: flex;
 }
 .synthColumn {
     float: left;
@@ -674,6 +704,12 @@ label[for="HTMLi_dhc_middleC"] {
 /***********************************************
  * FUNDAMENTAL MOTHER SETTINGS
  ***********************************************/
+.fm .UIbox {
+    height: 185px;
+}
+.fm table {
+    margin-top: 20px;
+}
 /*FM text input*/
 .fm input {
     width: 60px;
@@ -730,6 +766,12 @@ label[for="HTMLi_dhc_middleC"] {
 /***********************************************
  * HARMONIC TONES SETTINGS
  ***********************************************/
+.ht .UIbox {
+    height: 185px;
+}
+.ht table {
+    margin-top: 20px;
+}
 .htSettings h2 {
     margin-bottom: 0;
     margin-top: 0;
@@ -752,21 +794,6 @@ label[for="HTMLi_dhc_middleC"] {
 }
 span.htSettingsLabel {
     font-family: 'Source Code Pro', monospace;
-}
-
-/***********************************************
- * MIDI MONITOR TABLE
- ***********************************************/
-.midiMonitor .monitorTableTitle {
-    text-align: left;
-}
-.midiPorts label {
-    font-family: 'Source Code Pro', monospace;
-    font-size: 12px;
-}
-.midiMonitor table { 
-    margin-top: 8px;
-    width: 235px;
 }
 
 /***********************************************

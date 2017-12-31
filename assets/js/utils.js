@@ -40,7 +40,7 @@
 
 function icUTILSinit() {
     // Get the button that opens the modal controller keymap table
-    document.getElementById("HTMLf_controllerKeymapTableShow").addEventListener("click", icCtrlMap2HTML);
+    document.getElementById("HTMLf_controllerKeymapTableShow").addEventListener("click", icCtrlKeymap2HTML);
     
     // Menu Help & Credits listeners
     document.getElementById("HTMLf_help").addEventListener("click", function() { icHelp("help"); } );
@@ -122,7 +122,7 @@ function icToggleOpenLogBtn(element) {
  * UI CONTROLLER KEYMAP TABLE
  *==============================================================================*/
 // Create an HTML table from the controller keymap and write it to the UI under a modal element
-function icCtrlMap2HTML() {
+function icCtrlKeymap2HTML() {
     var txt = "";
     var map = icDHC.tables.ctrl_map;
     txt += '<table class="dataTable"><tr><th>MIDI #</th><th>FT</th><th>HT</th></tr>';

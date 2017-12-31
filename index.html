@@ -35,7 +35,7 @@
                         <div class="hstackFT">
                             <table class="dataTable">
                                 <tr>
-                                    <th class="hstackDivisor" colspan="4"></td>
+                                    <th class="hstackDivisor" colspan="4"></th>
                                 </tr>
                                 <tr id="HTMLf_hstackFTrow" class="FToff">
                                     <td width="12%"><span id="HTMLo_hstackFT_tone"></span></td>
@@ -50,7 +50,7 @@
                                     <th class="hstackFT_hz">Hz</th>
                                 </tr>
                                 <tr>
-                                    <th colspan="4">Fundamental</td>
+                                    <th colspan="4">Fundamental</th>
                                 </tr>
                             </table>
                         </div>
@@ -320,8 +320,10 @@
                     </div>
                     <div class="controllerKeymap">
                         <h1>Controller Keymap</h1>
+                        <select id="HTMLi_controllerKeymapPresets"></select>
+                        <br>
                         <input type="file" id="HTMLi_controllerKeymapFile" accept=".hcmap">
-                        <br/>
+                        <br>
                         <!-- Open the modal content-->
                         <button id="HTMLf_controllerKeymapTableShow">Show Keymap</button>
                         <!-- The Modal -->
@@ -358,10 +360,10 @@
                     <table class="invisibleTable">
                         <tr>
                             <td>MIDI Note 0-127
-                                <br/> (midi#.cents)</td>
+                                <br> (midi#.cents)</td>
                             <td></td>
                             <td>Frequency
-                                <br/>(Hz)</td>
+                                <br>(Hz)</td>
                         </tr>
                         <tr>
                             <td>
@@ -461,11 +463,11 @@
                                     <h2>Transpose</h2>
                                 </td>
                                 <td>Octave
-                                    <br/><span class="htSettingsLabel">&divide;2</span></td>
+                                    <br><span class="htSettingsLabel">&divide;2</span></td>
                                 <td>Ratio
-                                    <br/><span class="htSettingsLabel">&times;r</span></td>
+                                    <br><span class="htSettingsLabel">&times;r</span></td>
                                 <td>Octave
-                                    <br/><span class="htSettingsLabel">&times;2</span></td>
+                                    <br><span class="htSettingsLabel">&times;2</span></td>
                             </tr>
                             <tr>
                                 <td style="text-align: right;">Harmonics</td>
@@ -528,12 +530,13 @@
     <!-- <script type="text/javascript" src='assets/js/lib/web-audio-peak-meter.min.js'></script> -->
     <script type="text/javascript" src='assets/js/utils.js'></script>
     <script type="text/javascript" src='assets/js/synth-ir-default.js'></script>
-    <script type="text/javascript" src='assets/js/midi-ports.js'></script>
-    <script type="text/javascript" src='assets/js/keymaps-reader.js'></script>
-    <script type="text/javascript" src='assets/js/dhc.js'></script>
+    <script type="text/javascript" src='assets/js/synth.js'></script>
     <script type="text/javascript" src='assets/js/midi-input.js'></script>
     <script type="text/javascript" src='assets/js/midi-output.js'></script>
-    <script type="text/javascript" src='assets/js/synth.js'></script>
+    <script type="text/javascript" src='assets/js/midi-ports.js'></script>
+    <script type="text/javascript" src='assets/js/keymap-preset.js'></script>
+    <script type="text/javascript" src='assets/js/keymap-reader.js'></script>
+    <script type="text/javascript" src='assets/js/dhc.js'></script>
     <!-- <script type="text/javascript" src='assets/js/lib/visualizers.js'></script> -->
     <script type="text/javascript" src='assets/js/keyboard.js'></script>
 </body>
