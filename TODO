@@ -6,20 +6,19 @@ TASK PRIORITY LEVEL
 ------------------------------------------------------------
             < GENERAL >
 
-@TODO: 5-6 Default built-in keymaps loaded by dropdown.
 @TODO: Fix deprecated node.value in synth.js (before January 2018)
 @TODO: Implement a little barebone MIDI file player
     @TODO: ** Disconnect all voices before delete them (?)
-    @TODO: FT SETTING (tuning files)
-        @TODO: Transfer this list to the GitHub Issues section
-        @TODO: LISSAJOUS, OSCILLOSCOPE, SPECTRUM, SPECTROGRAM.
-        @TODO: Integrate an overtone spiral view & UI (es. from https://github.com/sunyatasattva/overtones/ but maybe problem due to new CPAL license?)
+    @TODO: ** Virtual keyboard PC KEYS custom maps (bypass Qwerty Hancock)
+        @TODO: ** FT SETTING (tuning files)
         @TODO: ** SYNTH - Implement load reverb from Net
-            @TODO: ** Implement a duplicable HSTACK > MULTIPLE HSTACK, each one assigned (follows) to an FT (to compare)
+        @TODO: Transfer this list to the GitHub Issues section
+        @TODO: LISSAJOUS, OSCILLOSCOPE, SPECTRUM, SPECTROGRAM
+        @TODO: Integrate an overtone spiral view & UI (es. from https://github.com/sunyatasattva/overtones/ but maybe problem due to new CPAL license?)
             @TODO: ** Implement polyrithm section
+            @TODO: Implement a duplicable HSTACK > MULTIPLE HSTACK, each one assigned (follows) to an FT (to compare)
             @TODO: Global Hz/MIDI.cents ACCURACY LIMIT for error-known scientific applications
             @TODO: Load files with WORKER-SERVICE
-            @TODO: Virtual keyboard PC KEYS custom maps (bypass Qwerty Hancock)
             @TODO: Implement dynamic FT_BASE table: SET RANGE (MAX) > REMOVE FT_BASE table
             @TODO: Implement dynamic HT_TABLE: SET RANGE (MAX)
             @TODO: Accuracy UP/DOWN arrows increase/decrease ZEROS (NOT +/- step)
