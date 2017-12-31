@@ -117,7 +117,7 @@ var icDHC = {
                     // Transpose ratio in decimal for Harmonics and Subharmonics
                     // 0.5, 0.25, 0.125, 0.0625... for octaves down – 2, 4, 8, 16... for octaves up – 1 to not transpose
                     h_tr: 1,
-                    s_tr: 2
+                    s_tr: 16
                 },
                 transposed: {
                     // Transpose ratio in decimal for Harmonics and Subharmonics
@@ -152,9 +152,9 @@ var icDHC = {
                 // Transpose ratio in decimal for Harmonics and Subharmonics
                 // 0.5, 0.25, 0.125, 0.0625... for octaves down – 2, 4, 8, 16... for octaves up – 1 to not transpose
                 h: 1,
-                s: 2
+                s: 16
             },
-            // The current FT (that generated the last HT table)
+            // The current FT (that generated the last HT table). Init value must be 0
             curr_ft: 0,
             // 'last_ht' init value must be null
             last_ht: null
@@ -166,7 +166,7 @@ var icDHC = {
         // PD {hf_table} & {sf_table}
         ht_table: null,
         // PD {ctrl_fn}
-        // Default ctrl_map
+        // Default ctrl_map: ctrl_nEDx(7-7)_bonkaA(16h)_p
         ctrl_map: {
             41: { ft: -7, ht: 129 },
             42: { ft: -6, ht: 129 },
@@ -199,7 +199,7 @@ var icDHC = {
             69: { ft: 129, ht: 12 },
             70: { ft: 129, ht: 13 },
             71: { ft: 129, ht: 14 },
-            72: { ft: 129, ht: 14 },
+            72: { ft: 129, ht: 16 },
             73: { ft: 129, ht: 15 },
             74: { ft: 129, ht: 16 }
         },
@@ -224,7 +224,8 @@ window.onload = icInit;
 
 function icInit() {
     // Set defaults value on the UI
-    let init = icUIinit ();
+    icUIinit ();
+    icKeymapsUIinit();
     // Create the HStack
     icHSTACKcreate();
     // Initialize the DHC
@@ -246,7 +247,7 @@ function icDHCinit() {
         icDHC.settings.fm.hz = icGetFM("hz");
     }
     // Create FT & HT tables
-    let init = icTablesCreate();
+    icTablesCreate();
 }
 
 // (Re)create FT & HT tables in the right order
@@ -496,6 +497,7 @@ function icSwitchFTsys(system) {
             }
         }
     icTablesCreate();
+    icUpdateKeymapPreset();
 }
 
 // Set the nEDx (called when UI is updated)
@@ -574,7 +576,7 @@ function icHTtranspose(ratio, type, octave) {
     // Recreate the HT table on the last FT
     icDHC.tables.ht_table = icHTtableCreate(icDHC.tables.ft_table[icDHC.settings.ht.curr_ft].hz);
     // Update the current HTs osc frequncies on Synth
-    let init = icUpdateSynthHTfrequency();
+    icUpdateSynthHTfrequency();
     // Resend (repress) all the MIDI Note-ON currently pending
     icUpdateMIDInoteON("ht");
     // Update the UI: Compile the HStack
