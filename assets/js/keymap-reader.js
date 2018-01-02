@@ -42,13 +42,13 @@ function icUpdateKeymapPreset() {
     let htmlElem = document.getElementById('HTMLi_controllerKeymapPresets');
     let lastValue = icCtrlKeymapPreset.current[icDHC.settings.ft.selected];
     let event = {target: {value: lastValue}};
-    let keymaps = Object.entries(icCtrlKeymapPreset[icDHC.settings.ft.selected]);
+    let keymaps = Object.keys(icCtrlKeymapPreset[icDHC.settings.ft.selected]);
     let optionFile = document.createElement("option");
     htmlElem.innerHTML = "";
-    for (const [key, value] of keymaps) {
+    for (let key of keymaps) {
         let option = document.createElement("option");
         option.value = key;
-        option.text = value.notes;
+        option.text = icCtrlKeymapPreset[icDHC.settings.ft.selected][key].notes;
         htmlElem.add(option);
     }
     optionFile.text = "Load from file...";
@@ -74,7 +74,6 @@ function icLoadKeymapPreset(event) {
     } else {
         document.getElementById('HTMLi_controllerKeymapFile').style.visibility = "initial";
     }
-
 }
 
 // On loading the Controller Keymap file
