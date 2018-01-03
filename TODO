@@ -10,6 +10,7 @@ TASK PRIORITY LEVEL
 @TODO: Implement a little barebone MIDI file player
     @TODO: ** Disconnect all voices before delete them (?)
     @TODO: ** Virtual keyboard PC KEYS custom maps (bypass Qwerty Hancock)
+    @TODO: Useful MIDI messages (program, panic...)
         @TODO: ** FT SETTING (tuning files)
         @TODO: ** SYNTH - Implement load reverb from Net
         @TODO: Transfer this list to the GitHub Issues section
@@ -57,7 +58,6 @@ TASK PRIORITY LEVEL
         @TODO: Implement XMLHttpRequest() to get IR reverbs from URLs on the net
         @TODO: Apply the normal envelope ADS to the updated voice (like the "new" "ft")
             @TODO: implement the limit of polyphony
-            @TODO: ERROR WHEN CANCEL A FILE UPLOAD WINDOW
 
             ------------------------------------------------
             < midi-ports.js >
