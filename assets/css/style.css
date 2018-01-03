@@ -673,7 +673,7 @@ label[for="HTMLi_dhc_middleC"] {
     padding: 0;
 }
 
-.synthOut span.rotatedElement {
+.synthOut div.rotatedElement {
     -webkit-transform: rotate(-90deg);
     -moz-transform: rotate(-90deg);
     -ms-transform: rotate(-90deg);
@@ -877,7 +877,7 @@ th.hstackDivisor {
     float: right;
     margin-bottom: 10px;
     margin-right:10px;
-    width: 265px;
+    width: 280px;
 }
 .toneMonitor .monitorTableTitle {
     font-size: 10px;
@@ -888,37 +888,27 @@ th.hstackDivisor {
  ***********************************************/
 /*QWERTY HANCOCK SETTINGS*/
 /*======================*/
-.pianoVelocity {
-    display: inline-grid;
-    float: right;
-    padding-right: 12px;
-}
-.pianoChannel {
-    display: grid;
+.pianoSettings1 {
     float: right;
     margin-right: 35px;
 }
-.pianoChannel input {
-    width: 35px;
+.pianoSettings2 td {
+    padding: 0 10px 0 12px;
 }
-.pianoSettings td {
-    padding-left: 20px;
-    text-align: left;
+.pianoSettings2 input[type="range"] {
+    margin-top: 0;
 }
-
 /*QWERTY HANCOCK WRAPPER*/
 /*======================*/
 #HTMLo_pianoContainer {
     background-color: transparent!important; /*@DARK*/
     display: table;
-    margin-top: 10px!important;
+    margin-top: 5px!important;
+    /*Prevent double-tap zoom*/
+    touch-action: none;
 }
 #HTMLo_pianoContainer > ul {
     background-color: transparent!important; /*@DARK*/
-}
-/*Prevent double-tap zoom*/
-#HTMLo_pianoContainer {
-    touch-action: none;
 }
 
 /*FT keys*/
@@ -976,7 +966,9 @@ th.hstackDivisor {
 
 /*Key-numbers (from the keymap)*/
 .FTbKeyFn,
-.FTwKeyFn {
+.FTwKeyFn,
+.HTbKeyFn,
+.HTwKeyFn {
     background: none!important;
     color: #000;
     display: initial;
@@ -988,7 +980,9 @@ th.hstackDivisor {
     top: 70%;
 }
 .pressedKey .FTbKeyFn,
-.pressedKey .FTwKeyFn {
+.pressedKey .FTwKeyFn,
+.pressedKey .HTbKeyFn,
+.pressedKey .HTwKeyFn {
     color: #DDD;
 }
 

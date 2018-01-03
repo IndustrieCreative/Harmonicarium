@@ -90,38 +90,37 @@
                         </table>
                     </div>
                     <h1>Virtual MIDI Controller</h1>
-                    <div class="pianoVelocity">
-                        <label for="HTMLi_piano_velocity">Velocity</label>
-                        <input type="range" min="1" max="127" step="1" value="120" id="HTMLi_piano_velocity">
-                    </div>
-                    <div class="pianoChannel">
-                        <label for="HTMLi_piano_channel">Channel</label>
-                        <input type="number" min="1" max="16" step="1" value="1" id="HTMLi_piano_channel">
+                    <div class="pianoSettings1">
+                        <label for="HTMLi_piano_offset">Offset</label>
+                        <!-- 119 (B9) is max startNote for Qwerty Hancock-->
+                        <input type="range" min="0" max="119" step="1" value="41" id="HTMLi_piano_offset"><br>
+                        <label for="HTMLi_piano_range">Range</label>
+                        <input type="range" min="1" max="10" step="1" value="4" id="HTMLi_piano_range">
                     </div>
                     <details>
                         <summary>Settings</summary>
-                        <div class="pianoSettings">
+                        <div class="pianoSettings2">
                             <table class="invisibleTable">
                                 <tr>
                                     <td>
-                                        <label for="HTMLi_piano_offset">Offset</label>
-                                        <!-- 119 (B9) is max startNote for Qwerty Hancock-->
-                                        <input type="range" min="0" max="119" step="1" value="41" id="HTMLi_piano_offset">
+                                        <label for="HTMLi_piano_velocity">Velocity</label><br>
+                                        <input type="range" min="1" max="127" step="1" value="120" id="HTMLi_piano_velocity">
                                     </td>
                                     <td>
-                                        <label for="HTMLi_piano_width">Width</label>
+                                        <label for="HTMLi_piano_channel">Channel</label><br>
+                                        <input type="number" min="1" max="16" step="1" value="1" id="HTMLi_piano_channel">
+                                    </td>
+                                    <td>
+                                        <label for="HTMLi_piano_height">Height</label><br>
+                                        <input type="range" min="40" max="400" step="20" value="80" id="HTMLi_piano_height">
+                                    </td>
+                                    <td>
+                                        <label for="HTMLi_piano_width">Width</label><br>
                                         <input type="range" min="300" max="1000" step="50" value="400" id="HTMLi_piano_width">
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>
-                                        <label for="HTMLi_piano_range">Range</label>
-                                        <input type="range" min="1" max="10" step="1" value="4" id="HTMLi_piano_range">
-                                    </td>
-                                    <td>
-                                        <label for="HTMLi_piano_height">Height</label>
-                                        <input type="range" min="40" max="400" step="20" value="80" id="HTMLi_piano_height">
-                                    </td>
+
                                 </tr>
                             </table>
                         </div>
@@ -134,12 +133,12 @@
                     <h1>DHC Settings</h1>
                     <div class="dhcSettings">
                         <div class="dhcParam">
-                            <label for="HTMLi_dhc_hzAccuracy" title="Decimal precision">UI Hz accuracy</label>
-                            <input id="HTMLi_dhc_hzAccuracy" title="Decimal precision">
+                            <label for="HTMLi_dhc_hzAccuracy" title="Places of decimal precision">UI Hz accuracy</label>
+                            <input type="number" min="0" max="50" step="1" id="HTMLi_dhc_hzAccuracy" title="Places of decimal precision">
                         </div>
                         <div class="dhcParam">
-                            <label for="HTMLi_dhc_mcAccuracy" title="Decimal precision">UI Cents accuracy</label>
-                            <input id="HTMLi_dhc_mcAccuracy" title="Decimal precision">
+                            <label for="HTMLi_dhc_mcAccuracy" title="Places of decimal precision">UI Cents accuracy</label>
+                            <input type="number" min="0" max="50" step="1" id="HTMLi_dhc_mcAccuracy" title="Places of decimal precision">
                         </div>
                         <div class="dhcParam">
                             <label>Middle C octave</label>
@@ -148,8 +147,8 @@
                             </label>
                         </div>
                         <div class="dhcParam">
-                            <label for="HTMLi_dhc_pitchbendRange">Ctrl PitchBend range</label>
-                            <input type="number" min="0" step="100" id="HTMLi_dhc_pitchbendRange">
+                            <label for="HTMLi_dhc_pitchbendRange" title="Cents">Ctrl PitchBend range</label>
+                            <input type="number" min="0" step="100" id="HTMLi_dhc_pitchbendRange" title="Cents">
                         </div>
                         <div class="dhcParam">
                             <label for="HTMLi_dhc_piperSteps">Piper (HT0) steps</label>
@@ -243,10 +242,10 @@
                             <input type="range" min="0.02" max="5" step="0.01" id="HTMLi_synth_release">
                         </div>
                         <div id="HTMLo_synth_meter" style="width: 75px; height: 214px; margin: 1em 0;"></div>
-                        <span class="rotatedElement">
+                        <div class="rotatedElement">
                             <label for="HTMLi_synth_volume">&minus; &nbsp;&nbsp;MASTER &nbsp;VOLUME &nbsp;&nbsp;&plus;</label>
                             <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volume">
-                        </span>
+                        </div>
                     </div>
                 </div>
             </div>

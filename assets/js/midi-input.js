@@ -310,7 +310,6 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusByte, timestamp) {
 // Piper's default settings
 var icPipe = {
     maxLenght: 5,
-    // queue: [],
     queue: [ [144, 66, 120], [144, 67, 120], [144, 65, 120], [144, 60, 120], [144, 62, 120] ],
     pipe: [],
     currStep: 5,
@@ -394,3 +393,27 @@ function icPiping(state) {
         }
     }
 }
+
+// TEST FUNCTION FOR DYNAMIC PRELOADED PIPER MELODY (...)
+// function icPipeQueueGen(type) {
+//     let ctrlMap = icDHC.tables.ctrl_map;
+//     let melodies = {
+//         h: [9, 10, 8, 4, 6],
+//         s: [-6, -5, -4, -3, -4, -5],
+//         hs: [6, -6, 6, -6, 6, -6]
+//     };
+//     let msgsQueue = [];
+//     for (let tone of melodies[type]) {
+//         let once = 0;
+//         for (let key of Object.keys(ctrlMap)) {
+//             for (let m = 1; m < 128; m *= 2) {
+//                 if (ctrlMap[key].ht === tone * m && once === 0) {
+//                     msgsQueue.push([144, Number(key), 120]);
+//                     once++;
+//                 }            
+//             }
+//         }
+//     }
+//     icPipe.maxLenght = document.getElementById("HTMLi_dhc_piperSteps").value = msgsQueue.length;
+//     icPipe.queue = msgsQueue;
+// }

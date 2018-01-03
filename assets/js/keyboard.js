@@ -191,13 +191,13 @@ function icHancockKeymap() {
                         // Use a darker color
                         key.classList.add("HTbKey", "releasedKey");
                         // Write the key-number
-                        key.innerHTML = "<div class='FTbKeyFn unselectableText'>" + ht + "</div>";
+                        key.innerHTML = "<div class='HTbKeyFn unselectableText'>" + ht + "</div>";
                     // Else is a normal key
                     } else {
                         // Use a lighter color
                         key.classList.add("HTwKey", "releasedKey");
                         // Write the key-number
-                        key.innerHTML = "<div class='FTwKeyFn unselectableText'>" + ht + "</div>";
+                        key.innerHTML = "<div class='HTwKeyFn unselectableText'>" + ht + "</div>";
                     }
                 // **HT0 (Piper)**
                 // If is HT0
