@@ -429,15 +429,16 @@ function icHandleIrFile(changeEvent) {
 // Initialize the file reading process
 function icReadIrFile(file) {
     var reader = new FileReader();
-    //@TODO: ERROR WHEN CANCEL A FILE UPLOAD WINDOW
-    // Read file into memory as UTF-8      
-    reader.readAsArrayBuffer(file);
-    // Launch the data processing as soon as the file has been loaded
-    reader.onload = function(event){
-        icProcessIrData(event.target.result, file.name);
-    };
     // Handle loading errors
     reader.onerror = icFileErrorHandler;
+    if (file) {
+        // Read file into memory as UTF-8      
+        reader.readAsArrayBuffer(file);
+        // Launch the data processing as soon as the file has been loaded
+        reader.onload = function(event){
+            icProcessIrData(event.target.result, file.name);
+        };
+    }
 }
 
 function icProcessIrData(data, fileName) {
