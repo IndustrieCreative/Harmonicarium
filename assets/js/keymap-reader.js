@@ -70,6 +70,17 @@ function icLoadKeymapPreset(event) {
         icHSTACKfillin();
         // Update the offset of the Qwerty Hancock on UI
         icHancockChangeOffset(Object.keys(icDHC.tables.ctrl_map)[0]);
+        // Update the range of the Qwerty Hancock on UI
+        let keysArray = Object.keys(icDHC.tables.ctrl_map);
+        let keyMin = Math.min.apply(null, keysArray);
+        let keyMax = Math.max.apply(null, keysArray);
+        let keysNum = keyMax - keyMin;
+        let keyOctaves = Math.ceil(keysNum/12);
+        let keyRemainder = keysNum % 12;
+        if (keyRemainder < 2) {
+            keyOctaves++;
+        }
+        icHancockChangeRange(keyOctaves);
         document.getElementById('HTMLi_controllerKeymapFile').style.visibility = "hidden";
     } else {
         document.getElementById('HTMLi_controllerKeymapFile').style.visibility = "initial";
@@ -91,36 +102,39 @@ function icHandleKeymapFile(changeEvent) {
 // Initialize the file reading process
 function icReadKeymapFile(file) {
     var reader = new FileReader();
-    // Read file into memory as UTF-8      
-    reader.readAsText(file);
-    // Launch the data processing as soon as the file has been loaded
-    reader.onload = function(event){
-        icProcessKeymapData(event.target.result);
-    };
     // Handle loading errors
     reader.onerror = icFileErrorHandler;
+    if (file) {
+        // Read file into memory as UTF-8      
+        reader.readAsText(file);
+        // Launch the data processing as soon as the file has been loaded
+        reader.onload = function(event){
+            icProcessKeymapData(event.target.result, file.name);
+        };
+    }
 }
 
 // Build the Controller Keymap table {ctrl_fn}
 // Incoming raw data from .hcmap file
-function icProcessKeymapData(data) { 
+function icProcessKeymapData(data, name) { 
+    let optionValue = document.getElementById('HTMLi_controllerKeymapPresets').length;
     // Split by lines
-    var allTextLines = data.split(/\r\n|\n/);
-    var lines = {};
+    let allTextLines = data.split(/\r\n|\n/);
+    let lines = {};
     // For every line
-    for (var i = 0; i < allTextLines.length; i++) {
+    for (let i = 0; i < allTextLines.length; i++) {
         // Split the line by spaces or tabs
-        var elements = allTextLines[i].split(/\s\s*/);
-        // lines.push( { midikey: parseInt(elements[0]), ft: parseInt(elements[1]), ht: parseInt(elements[2]) } );
+        let elements = allTextLines[i].split(/\s\s*/);
         lines[parseInt(elements[0])] = { ft: parseInt(elements[1]), ht: parseInt(elements[2]) };
     }
-    // Write the Controller Keymap into the global object
-    icDHC.tables.ctrl_map = lines;
-    // Update the HStack
-    icHSTACKcreate();
-    icHSTACKfillin();
-    // Update the offset of the Qwerty Hancock on UI
-    icHancockChangeOffset(Object.keys(icDHC.tables.ctrl_map)[0]);
+    // Write the Controller Keymap into a new slot in icCtrlKeymapPreset
+    icCtrlKeymapPreset[icDHC.settings.ft.selected][optionValue] = {};
+    icCtrlKeymapPreset[icDHC.settings.ft.selected][optionValue].map = lines;
+    icCtrlKeymapPreset[icDHC.settings.ft.selected][optionValue].name = name;
+    icCtrlKeymapPreset[icDHC.settings.ft.selected][optionValue].notes = "FILE: " + name;
+    icCtrlKeymapPreset.current[icDHC.settings.ft.selected] = optionValue;
+    // Update the dropdown (and the UI monitors)
+    icUpdateKeymapPreset();
 }
 
 // Handle errors on loading the file
