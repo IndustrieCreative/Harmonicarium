@@ -39,14 +39,12 @@ var icDHC = {
         global: {
             // UI Master decimal precision for frequencies in Hertz
             // (Expressed in integer, 100 = 0.01)
-            hz_accuracy: 100,
+            hz_accuracy: 2,
             // UI Master decimal precision for midi#.cents: 0.01 is precision of 1 cent / 0.0001 is precision of 1 cent of cent
             // (Expressed in integer, 100 = 0.01)
-            midicents_accuracy: 100,
+            midicents_accuracy: 0,
             // @TODO: Enharmonic note naming: "sharp", "flat" or "relative"
             enharmonic_nn: "sharp",
-            // @REMOVE: Variable for avoid to reinit things that shouldn't reinitiate (currently not used)
-            firstinit: 0,
             // Middle C octave (-1 = from octave -1 >> Middle C = 60)
             // Starting octave
             middle_c: -1
@@ -58,9 +56,7 @@ var icDHC = {
                 range: 100,
                 // Default pitchbend amount is always 0
                 amount: 0.0
-            },
-            // @REMOVE: Cannot load a local default file? JSON?
-            file: null
+            }
         },
         // Default settings for MIDI-out tuning methods
         instrument: {
@@ -376,7 +372,7 @@ function icHTtableCreate(fundamental) {
 }
 
 //-----------------------------------------------
-// @TODO: BUILD THE INSTRUMENT TABLE {inst_table}
+// @TODO: BUILD THE INSTRUMENT TABLE {inst_table} for MTS
 // icDHC.tables.inst_table
 
 /*==============================================================================*
@@ -401,20 +397,6 @@ function icCompute_nEDx(relativeTone, unit, division, masterTuning) {
     let frequency = Math.pow(unit, relativeTone / division) * masterTuning;
     // Return full accuracy frequency
     return frequency;
-}
-
-// UI Util to get the note name +/- cents from midi.cents
-function icGetNoteNameCents(midicents) {
-    let notenumber = Math.trunc(midicents);
-    let notecents = midicents - notenumber;
-    let centsign = "&plus;";
-    if (notecents > 0.5) {
-        notenumber = notenumber + 1;
-        notecents = 1 - notecents;
-        centsign = "&minus;";
-    }
-    notecents = Math.round(notecents * icDHC.settings.global.midicents_accuracy) / (icDHC.settings.global.midicents_accuracy / 100);
-    return [icMidiToHancock(notenumber)[1], notecents, centsign];
 }
 
 /*==============================================================================*
@@ -458,9 +440,9 @@ function icPrintFundamentalMother(freq, midicents){
     let bentArray = icArrayPitchbender(arr);
     // Print the FM infos on the UI
     var notename = icGetNoteNameCents(bentArray.mc);
-    midicents = Math.round(bentArray.mc * icDHC.settings.global.midicents_accuracy) / icDHC.settings.global.midicents_accuracy;
+    midicents = bentArray.mc.toFixed(icDHC.settings.global.midicents_accuracy);
     document.getElementById("HTMLo_fm_mc").innerHTML = midicents + " = " + notename[0] + " " + notename[2] + notename[1] + "&cent;";
-    document.getElementById("HTMLo_fm_hz").innerHTML = Math.round(bentArray.hz * icDHC.settings.global.hz_accuracy) / icDHC.settings.global.hz_accuracy;
+    document.getElementById("HTMLo_fm_hz").innerHTML = bentArray.hz.toFixed(icDHC.settings.global.hz_accuracy);
 }
 
 // Set the Fundamental Mother (FM) got from the UI
@@ -518,36 +500,6 @@ function icFThsTranspose(ratio, type) {
         document.getElementById("HTMLo_ftHStranspose_"+type+"_ratio").innerHTML = icDHC.settings.ft.h_s.transposed[type+"_tr"];
     }
     icTablesCreate();
-}
-
-// Handle keypress input codes for Hz and midicents accuracy
-function icDHCaccuracies(event) {
-    let onchange = new Event('input');
-    switch (event.keyCode) {
-        // Arrow UP
-        case 38:
-            event.target.value /= 10;
-            event.target.dispatchEvent(onchange);
-            break;
-        // Arrow DOWN
-        case 40:
-            event.target.value *= 10;
-            event.target.dispatchEvent(onchange);
-            break;
-        // 0, 1, (comma), dot, left, right, backspace, canc
-        // case 188:
-        case 190:
-        case 37:
-        case 39:
-        case 46:
-        case 48:
-        case 49:
-        case 8:
-            break;
-        // Avoid any other keypress
-        default:
-            event.preventDefault();
-    }
 }
 
 /*==============================================================================*
@@ -610,8 +562,8 @@ function icUIinit() {
     document.getElementById("HTMLi_htTranspose_h_ratio").value = icDHC.settings.ht.transpose.h;
     document.getElementById("HTMLi_htTranspose_s_ratio").value = icDHC.settings.ht.transpose.s;
     // Default DHC SETTINGS on UI textboxes
-    document.getElementById("HTMLi_dhc_hzAccuracy").value = 1 / icDHC.settings.global.hz_accuracy;
-    document.getElementById("HTMLi_dhc_mcAccuracy").value = 1 / icDHC.settings.global.midicents_accuracy * 100;
+    document.getElementById("HTMLi_dhc_hzAccuracy").value = icDHC.settings.global.hz_accuracy;
+    document.getElementById("HTMLi_dhc_mcAccuracy").value = icDHC.settings.global.midicents_accuracy;
     document.getElementById("HTMLi_dhc_middleC").value = icDHC.settings.global.middle_c + 5;
     document.getElementById("HTMLi_dhc_pitchbendRange").value = icDHC.settings.controller.pitchbend.range;
     document.getElementById("HTMLi_dhc_piperSteps").value = icPipe.maxLenght;
@@ -624,24 +576,16 @@ function icUIinit() {
     // UI GENERAL DHC settings
     //------------------------
     // Set the UI HZ DECIMAL PRECISION from UI HTML inputs
-    document.getElementById("HTMLi_dhc_hzAccuracy").addEventListener("keydown", icDHCaccuracies);
     document.getElementById("HTMLi_dhc_hzAccuracy").addEventListener("input", function(event) {
-        // Convert commas to dots
-        // event.target.value = event.target.value.replace(/,/g, '.');
         // Store the Hz accuracy in the global slot
-        // Invert the number to get the multiplier factor and round it to avoid JS "0.999999..." shit
-        icDHC.settings.global.hz_accuracy = Math.round(1/event.target.value);
+        icDHC.settings.global.hz_accuracy = Number(event.target.value);
         // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
         icDHCinit();
     });
     // Set the UI MIDI.CENTS DECIMAL PRECISION from UI HTML inputs
-    document.getElementById("HTMLi_dhc_mcAccuracy").addEventListener("keydown", icDHCaccuracies);
     document.getElementById("HTMLi_dhc_mcAccuracy").addEventListener("input", function(event) {
-        // Convert commas to dots
-        // event.target.value = event.target.value.replace(/,/g, '.');
         // Store the mc accuracy in the global slot
-        // Invert the number to get the multiplier factor and round it to avoid JS "0.999999..." shit
-        icDHC.settings.global.midicents_accuracy = Math.round(1/event.target.value) * 100;
+        icDHC.settings.global.midicents_accuracy = Number(event.target.value);
         // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
         icDHCinit();
     });

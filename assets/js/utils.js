@@ -169,23 +169,25 @@ function icDHCmonitor(tone, arr, type) {
     // Apply the controller pitchbend (if present) to the array 
     arr = icArrayPitchbender(arr);
     let notename = icGetNoteNameCents(arr.mc);
+    let hzAccuracy = icDHC.settings.global.hz_accuracy;
+    let mcAccuracy = icDHC.settings.global.midicents_accuracy;
     if (type === "ft") {
         // Update the log on MONITOR FT info on the UI
         document.getElementById("HTMLo_toneMonitorFT_tone").innerHTML = tone;
-        document.getElementById("HTMLo_toneMonitorFT_midicents").innerHTML = Math.round(arr.mc * icDHC.settings.global.midicents_accuracy) / icDHC.settings.global.midicents_accuracy;
+        document.getElementById("HTMLo_toneMonitorFT_midicents").innerHTML = arr.mc.toFixed(mcAccuracy);
         document.getElementById("HTMLo_toneMonitorFT_notename").innerHTML = notename[0] + " " + notename[2] + notename[1] + "&cent;";
-        document.getElementById("HTMLo_toneMonitorFT_frequency").innerHTML = Math.round(arr.hz * icDHC.settings.global.hz_accuracy) / icDHC.settings.global.hz_accuracy;
+        document.getElementById("HTMLo_toneMonitorFT_frequency").innerHTML = arr.hz.toFixed(hzAccuracy);
         // Update the log on HSTACK FT info on the UI
         document.getElementById("HTMLo_hstackFT_tone").innerHTML = tone;
         document.getElementById("HTMLo_hstackFT_note").innerHTML = notename[0];
-        document.getElementById("HTMLo_hstackFT_cents").innerHTML = notename[2] + notename[1] + "&cent;";
-        document.getElementById("HTMLo_hstackFT_hz").innerHTML = Math.round(arr.hz * icDHC.settings.global.hz_accuracy) / icDHC.settings.global.hz_accuracy;
+        document.getElementById("HTMLo_hstackFT_cents").innerHTML = notename[2] + notename[1];
+        document.getElementById("HTMLo_hstackFT_hz").innerHTML = arr.hz.toFixed(hzAccuracy);
     } else if (type === "ht") {
         // Update the log on MONITOR HT info on the UI
         document.getElementById("HTMLo_toneMonitorHT_tone").innerHTML = tone;
-        document.getElementById("HTMLo_toneMonitorHT_midicents").innerHTML = Math.round(arr.mc * icDHC.settings.global.midicents_accuracy) / icDHC.settings.global.midicents_accuracy;
+        document.getElementById("HTMLo_toneMonitorHT_midicents").innerHTML = arr.mc.toFixed(mcAccuracy);
         document.getElementById("HTMLo_toneMonitorHT_notename").innerHTML = notename[0] + " " + notename[2] + notename[1] + "&cent;";
-        document.getElementById("HTMLo_toneMonitorHT_frequency").innerHTML = Math.round(arr.hz * icDHC.settings.global.hz_accuracy) / icDHC.settings.global.hz_accuracy;
+        document.getElementById("HTMLo_toneMonitorHT_frequency").innerHTML = arr.hz.toFixed(hzAccuracy);
     }
 }
 
@@ -198,6 +200,20 @@ function icMIDImonitor(number, velocity, channel, srcElement) {
         document.getElementById("HTMLo_midiMonitor"+x+"_velocity").innerHTML = velocity;
         document.getElementById("HTMLo_midiMonitor"+x+"_channel").innerHTML = channel + 1;
     }
+}
+
+// UI Util to get the note name +/- cents from midi.cents
+function icGetNoteNameCents(midicents) {
+    let notenumber = Math.trunc(midicents);
+    let notecents = midicents - notenumber;
+    let centsign = "&plus;";
+    if (notecents > 0.5) {
+        notenumber = notenumber + 1;
+        notecents = 1 - notecents;
+        centsign = "&minus;";
+    }
+    notecents = (notecents.toFixed(icDHC.settings.global.midicents_accuracy + 2) * 100).toFixed(icDHC.settings.global.midicents_accuracy); 
+    return [icMidiToHancock(notenumber)[1], notecents, centsign];
 }
 
 /*==============================================================================*
@@ -268,8 +284,8 @@ function icHSTACKfillin() {
             // Print the infos to the UI HStack
             document.getElementById("HTMLo_hstackHT_h"+htn).innerHTML = htn;
             document.getElementById("HTMLo_hstackHT_note"+htn).innerHTML = notename[0];
-            document.getElementById("HTMLo_hstackHT_cents"+htn).innerHTML = notename[2] + notename[1] + "&cent;";
-            document.getElementById("HTMLo_hstackHT_hz"+htn).innerHTML = Math.round(htArr.hz * icDHC.settings.global.hz_accuracy) / icDHC.settings.global.hz_accuracy;
+            document.getElementById("HTMLo_hstackHT_cents"+htn).innerHTML = notename[2] + notename[1];
+            document.getElementById("HTMLo_hstackHT_hz"+htn).innerHTML = htArr.hz.toFixed(icDHC.settings.global.hz_accuracy);
         }
     }
 }
