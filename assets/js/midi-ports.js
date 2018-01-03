@@ -149,7 +149,7 @@ function icCreatePortCheckbox(midiPort, htmlElement) {
 // Listen for any MIDI input from the selected MIDI port on the HTML checkbox
 function icPortSelect(event) {
     let elem = event.target;
-    let alterPortType = elem.className === "input" ? "outputs" : "inputs";
+    // let alterPortType = elem.className === "input" ? "outputs" : "inputs";
     // If the port is selected
     if (elem.checked) {
         switch (elem.className) {
@@ -190,12 +190,12 @@ function icPortSelect(event) {
         }
     }
     // Prevent set input<>output on the same port in order to avoid MIDI loops
-    icMidi[alterPortType].forEach((value, key, map) => {
-        if (value.name === elem.name) {
-            // Disable the other chackbox with same Port Name
-            document.getElementById(key).disabled = elem.checked;
-        }
-    });
+    // icMidi[alterPortType].forEach((value, key, map) => {
+    //     if (value.name === elem.name) {
+    //         // Disable the other chackbox with same Port Name
+    //         document.getElementById(key).disabled = elem.checked;
+    //     }
+    // });
 }
 
 // Midi State Refresh for hot (un)plugging - Event from MidiAccess.onstatechange
