@@ -4,8 +4,9 @@
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
- * Copyright (C) 2017 by Walter Mantovani (http://armonici.it).
- * Written by Walter Mantovani < armonici.it [*at*] gmail [*dot*] com >.
+ * @license
+ * Copyright (C) 2017-2018 by Walter Mantovani (http://armonici.it).
+ * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,21 +22,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @fileoverview QWERTY HANCOCK KEYBOARD WRAPPER<br>
+ *     Bypass the default style of the Qwerty Hancock keyboard (./lib/)
+ *     to provide custom key colors and events.
+ * 
+ * @author Walter Mantovani < armonici.it [at] gmail [dot] com >
+ */
+
 /* exported icKeyON */
 /* exported icKeyOFF */
-
-/**
- * QWERTY HANCOCK KEYBOARD WRAPPER
- * Bypass the default style of the Qwerty Hancock keyboard (./lib/)
- * to provide custom key colors and events.
- */
+/* exported icKeyboardUIinit */
 
 "use strict";
 
 /*==============================================================================*
  * MAIN HANCOCK KEYBOARD OBJECTS
  *==============================================================================*/
-// Note conversion reference
+
+/**
+ * Note name to MIDI number conversion reference
+ *
+ * @type {Object}
+ *
+ * @property {Object.<string, number>} toMidi    - Note name to number
+ * @property {Object.<number, string>} toHancock - Number to note name
+ */
 var icHancockRef = {
     toMidi: {
         "C": 0,
@@ -67,7 +79,20 @@ var icHancockRef = {
     }
 };
 
-// Default Qwerty Hancock settings
+/**
+ * Default Qwerty Hancock settings
+ *
+ * @type {Object}
+ *
+ * @property {string} id               - Id of the htmlElement in which to put the keyboard
+ * @property {number} width            - Width of the keyboard in pixels
+ * @property {number} height           - Height of the keyboard in pixels
+ * @property {number} octaves          - How many octaves to show
+ * @property {string} startNote        - The note name (hancock numbering) of the first key to show
+ * @property {string} whiteNotesColour - Default released key color for white keys (bypassed by classes & css)
+ * @property {string} blackNotesColour - Default released key color for black keys (bypassed by classes & css)
+ * @property {string} hoverColour      - Default pressed key color for all the keys (bypassed by classes & css)
+ */
 var icHancockCurrSets = {
     id: 'HTMLo_pianoContainer',
     width: 600,
@@ -79,22 +104,40 @@ var icHancockCurrSets = {
     hoverColour: '#f3e939'
 };
 
-// Initialize and get the default Current Velocity from the default value on UI slider
-var icHancockCurrentVelocity = document.getElementById("HTMLi_piano_velocity").value;
+/**
+ * Get the default current Velocity from the default value on UI slider
+ *
+ * @type {number}
+ */
+var icHancockCurrentVelocity = Number(document.getElementById("HTMLi_piano_velocity").value);
+
+/**
+ * Get the default current Channel from the default value on UI slider
+ *
+ * @type {number}
+ */
 var icHancockCurrentChannel = Number(document.getElementById("HTMLi_piano_channel").value);
 
-// Initialize the Qwerty Hancock keyboard
+/**
+ * Initialize a new Qwerty Hancock keyboard
+ *
+ * @type {QwertyHancock}
+ */
 var icKeyboard = new QwertyHancock(icHancockCurrSets);
-// Start the style wrapper
-icHancockKeymap();
-// Init the Keyboard UI controllers
-icKeyboardUIinit();
 
-// Qwerty Hancock on UI key-press
+/**
+ * Send a fake MIDI Note-ON (key press)
+ * 
+ * @param {string} note - Hancock note name (e.g. G#5)
+ */
 icKeyboard.keyDown = function (note) {
     icFakeMidiNote(note, 1);
 };
-// Qwerty Hancock on UI key-release
+/**
+ * Send a fake MIDI Note-OFF (key release)
+ * 
+ * @param {string} note - Hancock note name (e.g. G#5)
+ */
 icKeyboard.keyUp = function (note) {
     icFakeMidiNote(note, 0);
 };
@@ -102,19 +145,32 @@ icKeyboard.keyUp = function (note) {
 /*==============================================================================*
  * MIDI < > HANCOCK TOOLS AND UTILS
  *==============================================================================*/
-// Parse the output from Qwerty Hancock to get the MIDI note number
+
+/**
+ * Parse the output note name from Qwerty Hancock to get the MIDI note number
+ *
+ * @param  {string} note - Hancock note name (e.g. G#5)
+ *
+ * @return {number}      - MIDI note number
+ */
 function icHancockToMidi(note) {
     // Get the number of the octave
     let num = note.match(/\d+/);
     // Get the note name
     let char = note.match(/[A-Z]+#*/);
-    if (num && char){
+    if (num && char) {
         // Return the MIDI note number 
         return icHancockRef.toMidi[char[0]] + (12 * num[0]);
     }
 }
 
-// Transform a MIDI note number to a Qwerty Hancock note name
+/**
+ * Transform a MIDI note number to a Qwerty Hancock note name
+ *
+ * @param  {number} midikey - MIDI note number
+ *
+ * @return {Array}          - An array with Hancock note name and Standard note name
+ */
 function icMidiToHancock(midikey) {
     // Compute the quotient and remainder of the MIDI note number
     let quotient = Math.trunc(midikey/12);
@@ -123,12 +179,17 @@ function icMidiToHancock(midikey) {
     let hancock = icHancockRef.toHancock[remainder] + quotient;
     // String concatenation: Standard note name 
     let notename = icHancockRef.toHancock[remainder] + (quotient + icDHC.settings.global.middle_c);
-    // Return an array with both, hancock and standard note name)
+    // Return an array with both, hancock and standard note name
     return [hancock, notename];
 }
 
-// FAKE MIDI EVENT NOTE ON/OFF
-// To input Qwerty Hancock as a MIDI device
+/**
+ * Send a fake MIDI event note ON/OFF
+ * in order to input Qwerty Hancock as a virtual MIDI device
+ *
+ * @param  {string} note  - Hancock note name (e.g. G#5)
+ * @param  {(0|1)}  state - 0 is Note-OFF | 1 is Note-ON
+ */
 function icFakeMidiNote(note, state) {
     // Note ON
     let cmd = 9;
@@ -154,8 +215,11 @@ function icFakeMidiNote(note, state) {
 /*==============================================================================*
  * HANCOCK STYLE WRAPPER
  *==============================================================================*/
-// Bypass the Qwerty Hancock default key colors (released)
-// Write the key-numbers according to the keymap
+
+/**
+ * Bypass the Qwerty Hancock default key colors (released)
+ * Write the key-numbers according to the keymap
+ */
 function icHancockKeymap() {
     for (var i = 0; i < 128; i++) {
         let note = icMidiToHancock(i)[0];
@@ -232,8 +296,12 @@ function icHancockKeymap() {
     }
 }
 
-// (On MIDI note ON)
-// Bypass the Qwerty Hancock default key colors (pressed)
+/**
+ * Bypass the Qwerty Hancock default key colors (key pressed)
+ * Used on MIDI Note-ON
+ *
+ * @param  {number} ctrlNoteNumber - MIDI note number
+ */
 function icKeyON(ctrlNoteNumber) {
     var key = icMidiToHancock(ctrlNoteNumber)[0];
     if (document.getElementById(key)){
@@ -242,8 +310,12 @@ function icKeyON(ctrlNoteNumber) {
     }
 }
 
-// (On MIDI note OFF)
-// Bypass the Qwerty Hancock default key colors (back to released again)
+/**
+ * Bypass the Qwerty Hancock default key colors (back to released again)
+ * Used on MIDI Note-OFF
+ *
+ * @param  {number} ctrlNoteNumber - MIDI note number
+ */
 function icKeyOFF(ctrlNoteNumber) {
     var key = icMidiToHancock(ctrlNoteNumber)[0];
     if (document.getElementById(key)){
@@ -255,31 +327,47 @@ function icKeyOFF(ctrlNoteNumber) {
 /*==============================================================================*
  * UI KEYBOARD SETTINGS TOOLS
  *==============================================================================*/
-// To update the Qwerty Hancock keyboard on UI setting changes
+
+/**
+ * To update the Qwerty Hancock keyboard on UI setting changes
+ */
 function icHancockUpdate() {
     document.getElementById("HTMLo_pianoContainer").innerHTML = "";
     icKeyboard = new QwertyHancock(icHancockCurrSets);
+    // @todo - Why it work without reset 'icKeyboard.keyDown' 'icKeyboard.keyUp' ??
     // Start the style wrapper
     icHancockKeymap();
 }
 
-// Update the offset of the Qwerty Hancock
+/**
+ * Update the offset of the Qwerty Hancock
+ *
+ * @param  {number} midikey - MIDI note number
+ */
 function icHancockChangeOffset(midikey) {
     let note = icMidiToHancock(midikey)[0];
     if (!note.match(/#/)) {
         icHancockCurrSets.startNote = note;
         icHancockUpdate();
     }
-    document.getElementById("HTMLi_piano_offset").value = midikey;
 }
 
-// Modify the octave-range of Qwerty Hancock
+/**
+ * Modify the octave-range of Qwerty Hancock and update the UI
+ *
+ * @param  {number} octaves - Number of octaves to show
+ */
 function icHancockChangeRange(octaves) {
         icHancockCurrSets.octaves = octaves;
         icHancockUpdate();
 }
 
-// Modify the size of Qwerty Hancock
+/**
+ * Modify the size of Qwerty Hancock and update the UI
+ *
+ * @param  {number}    pixels - Number of pixels
+ * @param  {('w'|'h')} dim    - The dimension to change; 'w' is for weight, 'h' is for height 
+ */
 function icHancockChangeSize(pixels, dim) {
     if (dim === "w") {
         icHancockCurrSets.width = pixels;
@@ -294,6 +382,10 @@ function icHancockChangeSize(pixels, dim) {
 /*==============================================================================*
  * KEYBOARD UI INITS
  *==============================================================================*/
+
+/**
+ * Initialize the UI of the MIDI Virtual Controller
+ */
 function icKeyboardUIinit() {
     // Update the channel of the Qwerty Hancock on UI changes
     document.getElementById("HTMLi_piano_channel").addEventListener("input", function(event) {

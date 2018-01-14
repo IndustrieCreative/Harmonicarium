@@ -4,8 +4,9 @@
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
- * Copyright (C) 2017 by Walter Mantovani (http://armonici.it).
- * Written by Walter Mantovani < armonici.it [*at*] gmail [*dot*] com >.
+ * @license
+ * Copyright (C) 2017-2018 by Walter Mantovani (http://armonici.it).
+ * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,23 +23,58 @@
  */
 
  /**
- * DEFAULT CONTROLLER/INSTRUMENTS KEYMAPS 
+ * @fileoverview DEFAULT CONTROLLER/INSTRUMENTS KEYMAPS
+ * 
+ * @author Walter Mantovani < armonici.it [at] gmail [dot] com >
  */
 
 /* exported icCtrlKeymapPreset */
 
 "use strict";
 
+/**
+ * The Controller keymap presets container
+ *
+ * @namespace
+ *
+ * @property {Object}                      current      - Store the current selected Controller keymap for each Tuning System 
+ * @property {number}                      current.eEDx - Current selected Controller keymap for the n-EDx FT Tuning System 
+ * @property {number}                      current.h_s  - Current selected Controller keymap for the Harmonic/Subharmonic FT Tuning System 
+ * @property {Object.<number, CtrlKeymap>} nEDx         - Controller keymaps presets for the n-EDx FT Tuning System
+ * @property {Object.<number, CtrlKeymap>} h_s          - Controller keymaps presets for the Harmonic/Subharmonic FT Tuning System
+ */
 var icCtrlKeymapPreset = {
 	current: {
 		nEDx: 0,
 		h_s: 0
 	},
 	nEDx: {
+		/**
+		 * A Controller keymap preset
+		 * 
+		 * @typedef  {Object} CtrlKeymapPreset
+		 *
+		 * @property {string}     name  - Original filename of the Controller keymap (without extension)
+		 * @property {string}     notes - User-friendly description of the Controller keymap
+		 * @property {CtrlKeymap} map   - The Controller keymap
+		 */
 		0: {
 			name: "ctrl_nEDx(7-7)_bonkaA(16h)_p",
 			notes: "FT: 1-octave / HT: 16 bonka A Harmonics / Piper",
+			/**
+			 * A Controller keymap; each key of the Object is a MIDI Note number 
+			 * 
+			 * @typedef {Object.<number, CtrlKeymapKey>} CtrlKeymap
+			 */
 		    map: {
+				/**
+				 * A single key of the Controller keymap
+				 * 
+				 * @typedef  {Object} CtrlKeymapKey
+				 *
+				 * @property {number} ft - Fundamental Tone (FT) relative number; +/-64, FT0 is the FM, 129 is no FT
+				 * @property {number} ht - Harmonic/Subharmonic Tone (HT) relative number; +/-128, 0 is Piper feature, 129 is no HT
+				 */
 		        41: { ft: -7, ht: 129 },
 		        42: { ft: -6, ht: 129 },
 		        43: { ft: -5, ht: 129 },
@@ -208,7 +244,7 @@ var icCtrlKeymapPreset = {
 		},
 		4: {
 			name: "ctrl_nEDx(7-7)_bonkaB(32h)_p",
-			notes: "FT: 1-octave / HT: 32 bonka Harmonics / Piper",
+			notes: "FT: 1-octave / HT: 32 bonka B Harmonics / Piper",
 		    map: {
 		    	41: {ft: -7, ht: 129},
 				42: {ft: -6, ht: 129},
@@ -552,7 +588,7 @@ var icCtrlKeymapPreset = {
 	h_s: {
 		0: {
 			name: "ctrl_HSt(8-4-8hs)_bonkaA(16h)_p",
-			notes: "FT: -8<4>8 Harm+Subharmonics transposed / HT: 16 bonka A Harmonics / Piper",
+			notes: "FT: -8<4>8 Harm+Subharmonics Same Octave / HT: 16 bonka A Harmonics / Piper",
 		    map: {
 				45: {ft: -64, ht: 129},
 				46: {ft: -7, ht: 129},
@@ -588,7 +624,7 @@ var icCtrlKeymapPreset = {
 		},
 		1: {
 			name: "ctrl_HSt(16-8-16hs)_bonkaA(16h)_p",
-			notes: "FT: -16<8>16 Harm+Subharmonics transposed / HT: 16 bonka A Harmonics / Piper",
+			notes: "FT: -16<8>16 Harm+Subharmonics Same Octave / HT: 16 bonka A Harmonics / Piper",
 		    map: {
 				36: {ft: -64, ht: 129},
 				37: {ft: -15, ht: 129},
@@ -630,7 +666,7 @@ var icCtrlKeymapPreset = {
 		},
 		3: {
 			name: "ctrl_HSt(32-16-32hs)_bonkaA(16h)_p",
-			notes: "FT: -32<16>32 Harm+Subharmonics transposed / HT: 16 bonka A Harmonics / Piper",
+			notes: "FT: -32<16>32 Harm+Subharmonics Same Octave / HT: 16 bonka A Harmonics / Piper",
 		    map: {
 				21: {ft: -64, ht: 129},
 				22: {ft: -31, ht: 129},
@@ -690,7 +726,7 @@ var icCtrlKeymapPreset = {
 		},
 		4: {
 			name: "ctrl_HSt(16-8-16hs)m_bonkaA(16h)_p",
-			notes: "FT: -16<8>16 Harm+Subharmonics transposed mixed / HT: 16 bonka A Harmonics / Piper",
+			notes: "FT: -16<8>16 Harm+Subharmonics Same Octave mixed / HT: 16 bonka A Harmonics / Piper",
 		    map: {
 				40: {ft: -64, ht: 129},
 				41: {ft: -15, ht: 129},

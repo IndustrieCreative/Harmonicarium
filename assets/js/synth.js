@@ -4,8 +4,9 @@
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
- * Copyright (C) 2017 by Walter Mantovani (http://armonici.it).
- * Written by Walter Mantovani < armonici.it [*at*] gmail [*dot*] com >.
+ * @license
+ * Copyright (C) 2017-2018 by Walter Mantovani (http://armonici.it).
+ * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,15 +22,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * Parts of code in this file was taken or inspired by Chris Wilson's Monosynth & MIDI Synth
- * https://github.com/cwilso/midi-synth
- * https://github.com/cwilso/monosynth
+/** 
+ * @fileoverview REFERENCE INTERNAL SYNTHESIZER<br>
+ *     Provide a simple basic synth useful as reference sound.
+ *               
+ * @author Walter Mantovani < armonici.it [at] gmail [dot] com >
  */
 
-/** 
- * REFERENCE INTERNAL SYNTHESIZER
- * Provide a simple basic synth useful as reference sound.
+/**
+ * Parts of code in this file was taken or inspired by Chris Wilson's Monosynth & MIDI Synth
+ * @see https://github.com/cwilso/midi-synth
+ * @see https://github.com/cwilso/monosynth
  */
 
 /* exported icSYNTHinit */
@@ -44,74 +47,100 @@
 /*==============================================================================*
  * MAIN SYNTH OBJECT and INIT
  *==============================================================================*/
-// Initialize the Web Audio "context" object
+/**
+ * Initialize the Web Audio "context" object
+ *
+ * @type {AudioContext}
+ */
 var icAudioContext = null;
 
+/**
+ * The synth settings
+ *
+ * @namespace
+ *
+ * @property {boolean}                status                - Main Power ON/OFF status
+ * @property {Object}                 voice                 - Slots for FT anf HT voices
+ * @property {ICvoice}                voice.ft              - FT slot for an ICvoice object
+ * @property {ICvoice[]}              voice.ht              - HT slot for an array of ICvoice objects
+ * @property {Object}                 volume                - Slots for the Gain nodes
+ * @property {GainNode}               volume.master         - Final gain out node
+ * @property {GainNode}               volume.mix            - FT+HT mixer gain
+ * @property {GainNode}               volume.ft             - FT gain
+ * @property {GainNode}               volume.ht             - HT gain
+ * @property {Object}                 waveform              - Waveforms for FTs and HTs
+ * @property {string}                 waveform.ft           - FTs waveform
+ * @property {string}                 waveform.ht           - HTs waveform
+ * @property {Object}                 envelope              - ADSR envelope (init) values
+ * @property {number}                 envelope.attack       - Attack time (seconds)
+ * @property {number}                 envelope.decay        - Decay time (time-constant)
+ * @property {number}                 envelope.sustain      - Sustain gain value (amount from 0.0 to 1.0)
+ * @property {number}                 envelope.release      - Release time (seconds)
+ * @property {Object}                 portamento            - Portamento/Glide for monophonic FT and FT/HT osc frequency updates
+ * @property {number}                 portamento.amount     - Portamento time (time-constant)
+ * @property {number}                 portamento.lastFreqFT - Last FT frequency expressed in hertz (Hz)
+ * @property {Object}                 reverb                - Slots for convolver reverb and mixer gains
+ * @property {ConvolverNode}          reverb.convolver      - Slot for convolver reverb node
+ * @property {GainNode}               reverb.wet            - Reverberated gain bus/carrier node
+ * @property {GainNode}               reverb.dry            - Dry gain bus/carrier node
+ * @property {GainNode}               reverb.amount         - Reverb wey/dry mixing amount (for cross-fade)
+ * @property {DynamicsCompressorNode} compressor            - Slot for the compressor node
+ */
 var icSYNTH = {
-    // Main Power ON/OFF status
     status: false,
-    // Slots for ICvoice objects
     voice: {
         ft: null,
         ht: []
     },
-    // Slots for the Gain nodes
     volume: {
-        // Final gain out node
         master: null,
-        // FT+HT mixer gain 
         mix: null,
-        // FT gain
         ft: null,
-        // HT gain
         ht: null
     },
     waveform: {
         ft: "sine",
         ht: "sine"
     },
-    // ADSR envelope (init) values
     envelope: {
-        // time (sec)
         attack: 0.3,
-        // time (timeconstant)
         decay: 0.15,
-        // gain value amount (0 > 1)
         sustain: 0.68,
-        // time (sec)
         release: 0.3
     },
-    // Potemanto/Glide for monophonic FT and osc frequency updates
     portamento: {
         amount: 0.03,
         lastFreqFT: null
     },
     reverb: {
-        // Slot for convolver node
         convolver: null,
-        // Reverbered gain bus/carrier node
         wet: null,
-        // Dry gain bus/carrier node
         dry: null,
-        // Referb wey/dry mixing amount (for crossfade)
         amount: null
     },
-    // Slot for the compressor node
     compressor: null
 };
 
-// @TODO: merge icVoices into icSYNTH (?)
+/**
+ * Slots for FT anf HT voices
+ *
+ * @todo - merge icVoices into icSYNTH (?)
+ *
+ * @type {Object}
+ *
+ * @property  {ICvoice}   ft         - FT slot for an ICvoice object
+ * @property  {Array}     ftKeyQueue - the stack of actively-pressed keys
+ * @property  {ICvoice[]} ht         - HT slot for an array of ICvoice objects
+ */
 var icVoices = {
     ft: null,
-    ftKeyQueue: [],  // the stack of actively-pressed keys
+    ftKeyQueue: [],  // 
     ht: {}
 };
 
-//@TODO: finish the visualiser
-// Init the analyser element
-// var icAnalyser = null;
-
-// INIT THE AUDIO CONTEXT AND SYNTH OUTS
+/**
+ * Initialize the AudioContext and the Synth outs
+ */
 function icSYNTHinit() {
     // Patch up the AudioContext prefixes
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -140,8 +169,8 @@ function icSYNTHinit() {
     // Prepare the FINAL COMPRESSOR node
     icSYNTH.compressor = icAudioContext.createDynamicsCompressor();
     
-    //@TODO: finish the visualiser
-    // Create the VISUALISER
+    // @todo - finish the visualizer
+    // Create the VISUALIZER
     // icAnalyser = icAudioContext.createAnalyser();
     // icAnalyser.minDecibels = -90;
     // icAnalyser.maxDecibels = -10;
@@ -163,14 +192,14 @@ function icSYNTHinit() {
     icSYNTH.reverb.dry.connect(icSYNTH.volume.master);
     // Connect the MASTER to the final OUT
     icSYNTH.volume.master.connect(icAudioContext.destination);
-    //@TODO: finish the visualiser
+    // @todo - finish the visualizer
     // icSYNTH.volume.master.connect(icAnalyser);
     // icAnalyser.connect(icAudioContext.destination);
 
     // Load the Base64-coded default IR Reverb
     icReadIrFile(icBase64ToBlob(icDefaultReverb));
-    //@TODO: Implement XMLHttpRequest() to get IR reverbs from URLs on the net
-    //@TODO: https://codepen.io/andremichelle/pen/NPPEPY
+    // @todo - Implement XMLHttpRequest() to get IR reverbs from URLs on the net
+    // @todo - https://codepen.io/andremichelle/pen/NPPEPY
     // Init the Synth UI
     icSynthUIinit();
     // Create the WEB AUDIO PEAK METERS (/assets/js/lib/web-audio-peak-meter.min.js)
@@ -182,10 +211,24 @@ function icSYNTHinit() {
 /*==============================================================================*
  * SYNTH VOICES 
  *==============================================================================*/
-//---------------------------------
-// ICvoice constructor –– START
-//- - - - - - - - - - - - - - - - -
+
+/**
+ * Constructor for a single voice of the synth
+ * 
+ * @constructor
+ *
+ * @param    {number}         freq          - Frequency expressed in hertz (Hz)
+ * @param    {number}         velocity      - MIDI Velocity amount (from 0 to 127)
+ * @param    {('ft'|'ht')}    type          - If the voice will be a FTs or HTs
+ *
+ * @property {GainNode}       envelope      - A gain to implement the envelope generator
+ * @property {number}         initFrequency - Initial frequency expressed in hertz (Hz)
+ * @property {OscillatorNode} osc           - The oscillator
+ * @property {('ft'|'ht')}    type          - Type of the voice; FT or HT
+ * @property {GainNode}       volume        - A gain to manage the final voice volume if needed (currently not used) 
+ */
 function ICvoice(freq, velocity, type) {
+    this.type = type;
     // Store the initial frequency (Hz)
     this.initFrequency = freq;
     // Create the oscillator
@@ -224,7 +267,7 @@ function ICvoice(freq, velocity, type) {
     this.envelope.gain.setValueAtTime(0, icAudioContext.currentTime); // Repeated ?!
 
     // Call the method to tune the oscillator
-    this.setFrequency("new", type);
+    this.setFrequency(false);
     // Start the oscillator
     this.osc.start(0);
 
@@ -239,26 +282,39 @@ function ICvoice(freq, velocity, type) {
     // Decay the gain to the Sustain level > then > maintain the Sustain gain level until a .noteOff() event
     this.envelope.gain.setTargetAtTime(icSYNTH.envelope.sustain, envAttackEnd, icSYNTH.envelope.decay + 0.001 );
 }
+/**
+ * Set/update the voice waveform
+ *
+ * @param {string} waveform - Waveform type
+ */
 ICvoice.prototype.setWaveform = function(waveform) {
     this.osc.type = waveform;
 };
-ICvoice.prototype.setFrequency = function(operation, type) {
+/**
+ * Set/update the voice frequency
+ *
+ * @param {boolean} update - If the voice must be created (false) or updated (true)
+ */
+ICvoice.prototype.setFrequency = function(update) {
     // NEW VOICE
-    if (operation === "new") {
-        if (type === "ft") {
-            this.osc.frequency.setTargetAtTime( this.initFrequency, 0, icSYNTH.portamento.amount);
+    if (update === false) {
+        if (this.type === "ft") {
+            this.osc.frequency.setTargetAtTime(this.initFrequency, 0, icSYNTH.portamento.amount);
             icSYNTH.portamento.lastFreqFT = this.initFrequency;
-        } else if (type === "ht") {
+        } else if (this.type === "ht") {
             this.osc.frequency.setValueAtTime(this.initFrequency, 0);
         }
     // UPDATE VOICE
-    } else if (operation === "update") {
-        // @TODO: Apply the normal envelope ADS to the updated voice (like the "new" "ft") or implement a
+    } else if (update === true) {
+        // @todo - Apply the normal envelope ADS to the updated voice (like the "new" "ft") or implement a
         this.osc.frequency.setTargetAtTime( this.initFrequency, 0, icSYNTH.portamento.amount);
     }
     // APPLY CURRENT DETUNING (if present): "value" and "range" are in cents, "amount" is normalized to -1 > 0 > 0.99987792968750
-    this.osc.detune.setValueAtTime((icDHC.settings.controller.pitchbend.amount * icDHC.settings.controller.pitchbend.range), 0);
+    this.osc.detune.setValueAtTime((icDHC.settings.controller.pb_amount * icDHC.settings.controller.pb_range), 0);
 };
+/**
+ * Turn off the sound of voice (release)
+ */
 ICvoice.prototype.noteOff = function() {
     // Shutdown the envelope before stopping the oscillator (release)
     // To avoid sound artifact in case the Attack or Release are still running...
@@ -276,16 +332,21 @@ ICvoice.prototype.noteOff = function() {
     // Stop the oscillator 0.2 second after the Release has been completed
     this.osc.stop(envReleaseEnd + 0.2);
 };
-//- - - - - - - - - - - - - - - - -
-// ICvoice constructor –– END
-//---------------------------------
 
+/**
+ * Create a new voice of the synth
+ *
+ * @param {number}      freq           - Frequency expressed in hertz (Hz)
+ * @param {number}      ctrlNoteNumber - MIDI Note number of the MIDI-IN message from the controller
+ * @param {number}      velocity       - MIDI Velocity amount (from 0 to 127) of the MIDI-IN message from the controller
+ * @param {('ft'|'ht')} type           - If the voice will be a FTs or HTs
+ */
 function icVoiceON(freq, ctrlNoteNumber, velocity, type) {
     // If the synth is turned-on
     if (icSYNTH.status === true) {
         // **HT**
         if (type === "ht") {
-            // @TODO: implement the limit of polyphony
+            // @todo - implement the limit of polyphony
             // If there isn't a voice turned on with the same note number
             // (prevent duplication in case of stuck note - not turned off)
             if (!icVoices.ht[ctrlNoteNumber]) {   // && Object.keys(icVoices.ht).length < 2
@@ -308,6 +369,12 @@ function icVoiceON(freq, ctrlNoteNumber, velocity, type) {
     }
 }
 
+/**
+ * Destroy a voice of the synth
+ *
+ * @param {number}      ctrlNoteNumber - MIDI Note number of the MIDI-IN message from the controller
+ * @param {('ft'|'ht')} type           - If you need to destroy a FT or HT voice
+ */
 function icVoiceOFF(ctrlNoteNumber, type) {
     if (icSYNTH.status === true) {
         // **HT**
@@ -332,19 +399,22 @@ function icVoiceOFF(ctrlNoteNumber, type) {
     }
 }
 
-// Update the frequency of the current playng FT's osc
-// on UI setting changes
+/**
+ * Update the frequency of the current playing FT oscillator
+ * (on UI setting changes)
+ */
 function icUpdateSynthFTfrequency() {
     if (icVoices.ft != null) {
-        var ftArr = icDHC.tables.ft_table[icDHC.settings.ht.curr_ft];
-        icVoices.ft.initFrequency = ftArr.hz;
-        icVoices.ft.setFrequency("update", "ft");
+        var ftObj = icDHC.tables.ft_table[icDHC.settings.ht.curr_ft];
+        icVoices.ft.initFrequency = ftObj.hz;
+        icVoices.ft.setFrequency(true);
     }
-    return;
 }
 
-// Update the frequncies of the current playng HTs' oscs
-// when the FT is changing or on other UI setting changes
+/**
+ * Update the frequencies of the current playing HT oscillators
+ * (when the FT is changing or on other UI setting changes)
+ */
 function icUpdateSynthHTfrequency() {
     for (var i = 0; i < 255; i++) {
         // For every active voice
@@ -352,16 +422,19 @@ function icUpdateSynthHTfrequency() {
             // Get the number of the HT from the controller keymap
             var harmonic = icDHC.tables.ctrl_map[i].ht;
             // Get the data about the HT from the ht_table
-            var htArr = icDHC.tables.ht_table[harmonic];
+            var htObj = icDHC.tables.ht_table[harmonic];
             // Set a new osc frequency and apply the change
-            icVoices.ht[i].initFrequency = htArr.hz;
-            icVoices.ht[i].setFrequency("update", "ht");
+            icVoices.ht[i].initFrequency = htObj.hz;
+            icVoices.ht[i].setFrequency(true);
         }
     }
-    return;
 }
 
-// Update the current FT or HT waveform
+/**
+ * Update the current FT or HT waveform
+ *
+ * @param {string} type - Waveform type
+ */
 function icUpdateWaveform(type) {
     // **HT**
     if (type === "ht") {
@@ -370,7 +443,7 @@ function icUpdateWaveform(type) {
                 icVoices.ht[i].setWaveform( icSYNTH.waveform[type] );
             }
         }
-    // *FT**
+    // **FT**
     } else {
         if (icVoices.ft != null) {
             icVoices.ft.setWaveform( icSYNTH.waveform[type] );
@@ -378,15 +451,20 @@ function icUpdateWaveform(type) {
     }
 }
 
-// Update REVERB amount
-// "value" is normalized to 0.0 > 1.0
+/**
+ * Update the Reverb amount mixing the wet and dry lines with an equal-power cross-fade
+ *
+ * @param  {number} value - Reverb (wet) amount (normalized to 0.0 > 1.0)
+ */
 function icUpdateReverb(value) {
-    // Wet/Dry equal-power crossfade
+    // Wet/Dry equal-power cross-fade
     icSYNTH.reverb.dry.gain.setValueAtTime(Math.cos(value * 0.5 * Math.PI), 0);
     icSYNTH.reverb.wet.gain.setValueAtTime(Math.cos((1.0 - value) * 0.5 * Math.PI), 0);
 }
 
-// PITCHBEND MANAGEMENT FOR EVERY ALREADY ACTIVE SYNTH VOICES
+/**
+ * PitchBend management for every already active synth voices
+ */
 function icSynthPitchBend() {
     // If the synth is turned-on
     if (icSYNTH.status === true) {
@@ -396,7 +474,7 @@ function icSynthPitchBend() {
                 // If the osc exist
                 if (icVoices.ht[i].osc){
                     // Detune the osc: "value" and "range" are in cents, "amount" is normalized to -1 > 0 > 0.99987792968750
-                    icVoices.ht[i].osc.detune.value = icDHC.settings.controller.pitchbend.amount * icDHC.settings.controller.pitchbend.range;
+                    icVoices.ht[i].osc.detune.value = icDHC.settings.controller.pb_amount * icDHC.settings.controller.pb_range;
                 }
             }
         }
@@ -405,7 +483,7 @@ function icSynthPitchBend() {
             // If the osc exist
             if (icVoices.ft.osc){
                 // Detune the osc: "value" and "range" are in cents, "amount" is normalized to -1 > 0 > 0.99987792968750
-                icVoices.ft.osc.detune.value = icDHC.settings.controller.pitchbend.amount * icDHC.settings.controller.pitchbend.range;
+                icVoices.ft.osc.detune.value = icDHC.settings.controller.pb_amount * icDHC.settings.controller.pb_range;
             }
         }
     }
@@ -414,7 +492,12 @@ function icSynthPitchBend() {
 /*==============================================================================*
  * REVERB IR FILE HANDLING
  *==============================================================================*/
-// On loading the Controller Keymap file
+
+/**
+ * On loading the IR Reverb file
+ *
+ * @param  {Event} changeEvent - Change HTML event on 'input' element (reverb file uploader)
+ */
 function icHandleIrFile(changeEvent) {
     // Check for the various File API support.
     if (window.File && window.FileReader && window.FileList && window.Blob) {
@@ -426,7 +509,11 @@ function icHandleIrFile(changeEvent) {
     }
 }
 
-// Initialize the file reading process
+/**
+ * Initialize the reading process of the IR Reverb file
+ *
+ * @param {File} file - The file to be read
+ */
 function icReadIrFile(file) {
     var reader = new FileReader();
     // Handle loading errors
@@ -441,6 +528,12 @@ function icReadIrFile(file) {
     }
 }
 
+/**
+ * Load the IR Reverb wav file on the convolver
+ *
+ * @param {ArrayBuffer} data     - The text of the Controller keymap file
+ * @param {string}      fileName - The filename
+ */
 function icProcessIrData(data, fileName) {
     icAudioContext.decodeAudioData(data, function(buffer) {
         if (icSYNTH.reverb.convolver) {
@@ -455,8 +548,19 @@ function icProcessIrData(data, fileName) {
 /*==============================================================================*
  * UI CONTROLLERS
  *==============================================================================*/
-// Check the status of the synth Power ON/OFF checkbox
-// Also use as a sort of PANIC button for stuck synth Voices
+
+/**
+ * @todo - finish the visualizer
+ * Init the analyser element
+ * var icAnalyser = null;
+ */
+
+/**
+ * Check the status of the synth Power ON/OFF checkbox
+ * Also use as a sort of PANIC button for stuck synth Voices
+ *
+ * @param  {Event} clickEvent - Click HTML event on 'input' element (synth  checkbox)
+ */
 function icSynthState(clickEvent) {
     if (clickEvent.target.checked === true) {
         icSYNTH.status = true;
@@ -480,7 +584,9 @@ function icSynthState(clickEvent) {
     }
 }
 
-// Initialize the DHC UI controllers
+/**
+ * Initialize the DHC UI controllers  
+ */
 function icSynthUIinit() {
     // ** UI DEFAULT VALUES **
     // --------------------------
@@ -582,5 +688,5 @@ function icSynthUIinit() {
         document.getElementById("HTMLi_synth_reverb").setAttribute("data-tooltip", event.target.value);
     });
     // When all the UI has been set-up, AUTO POWER ON the SYNTH
-    document.getElementById("HTMLi_synth_power").click();
+    icSYNTH.status = document.getElementById("HTMLi_synth_power").checked = true;
 }

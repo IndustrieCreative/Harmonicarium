@@ -1,11 +1,12 @@
-/**
+ /**
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
- * Copyright (C) 2017 by Walter Mantovani (http://armonici.it).
- * Written by Walter Mantovani < armonici.it [*at*] gmail [*dot*] com >.
+ * @license
+ * Copyright (C) 2017-2018 by Walter Mantovani (http://armonici.it).
+ * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,47 +23,100 @@
  */
 
 /**
- * DYNAMIC HARMONICS CALCULATOR
- * This is the heart of the program.
- * All frequency/midi.cent tables are computed here.
+ * @fileoverview DYNAMIC HARMONICS CALCULATOR<br>
+ *     This is the heart of the program.
+ *     All frequency/midi.cent tables are computed here.
+ *
+ * @author Walter Mantovani < armonici.it [at] gmail [dot] com >
  */
 
 "use strict";
 
-/*==============================================================================*
+/**
  * MAIN DHC OBJECT
- *==============================================================================*/
-// Build the global object
+ * Holds settings and other useful data
+ * 
+ * @namespace icDHC
+ */
 var icDHC = {
+    /**
+     * DHC Settings
+     * 
+     * @namespace icDHC.settings
+     * @memberof! icDHC
+     */
     settings: {
-        // Global settings
+        /**
+         * Global settings
+         * 
+         * @memberof icDHC.settings
+         *
+         * @type     {Object}
+         *
+         * @property {number}                      hz_accuracy   - Number of decimal places (on UI) for numbers expressed in hertz (Hz)
+         * @property {number}                      cent_accuracy - Number of decimal places (on UI) for numbers expressed in cents
+         * @property {('sharp'|'flat'|'relative')} enharmonic_nn - Enharmonic note naming; 'sharp' for [#], 'flat' for [b] or "relative" for [#/b]
+         * @property {number}                      middle_c      - Middle C octave (-1 = from octave -1 >> Middle C = 60) - Starting octave
+         */
         global: {
-            // UI Master decimal precision for frequencies in Hertz
-            // (Expressed in integer, 100 = 0.01)
             hz_accuracy: 2,
-            // UI Master decimal precision for midi#.cents: 0.01 is precision of 1 cent / 0.0001 is precision of 1 cent of cent
-            // (Expressed in integer, 100 = 0.01)
-            midicents_accuracy: 0,
-            // @TODO: Enharmonic note naming: "sharp", "flat" or "relative"
+            cent_accuracy: 0,
+            // @todo - Enharmonic note naming
             enharmonic_nn: "sharp",
-            // Middle C octave (-1 = from octave -1 >> Middle C = 60)
-            // Starting octave
             middle_c: -1
         },
-        // Controller Keymap
+        /**
+         * Controller settings
+         * 
+         * @memberof icDHC.settings
+         *
+         * @type     {Object}
+         *
+         * @property {number} pb_range  - Range value in cents (use hundreds when use MIDI-OUT and the same as the instrument)
+         * @property {number} pb_amount - Current input controller pitchbend; default amount is always 0
+         */
         controller: {
-            pitchbend: {
-                // Range value in cents (use hundreds when use MIDI out and the same as the instrument)
-                range: 100,
-                // Default pitchbend amount is always 0
-                amount: 0.0
-            }
+            pb_range: 100,
+            pb_amount: 0.0
         },
-        // Default settings for MIDI-out tuning methods
+        /**
+         * Port settings for MIDI-OUT tuning methods; each out port has its own settings
+         * 
+         * @typedef  {Object} MIDIoutSettings
+         *
+         * @property {Object}                       mts                      - MIDI Tuning Standard method settings
+         * @property {Object}                       pb                       - Pitch Bend method settings
+         * @property {Object}                       pb.channels              - FTs & HTs multichannel polyphony management
+         * @property {Object}                       pb.channels.ft           - Multichannel polyphony for FTs
+         * @property {Array.<number>}               pb.channels.ft.used      - Sorted array containing the FT used channel numbers
+         * @property {Object.<number, HeldChannel>} pb.channels.ft.held      - Object containing the FT busy channel; key is the original Controller MIDI Note number
+         * @property {number}                       pb.channels.ft.last      - Number of the last held FT channel
+         * @property {Object}                       pb.channels.ht           - Multichannel polyphony for HTs
+         * @property {Array.<number>}               pb.channels.ht.used      - Sorted array containing the HT used channel numbers
+         * @property {Object.<number, HeldChannel>} pb.channels.ht.held      - Object containing the HT busy channels; keys are the original Controller MIDI Note number
+         * @property {Array.<number>}               pb.channels.ht.heldOrder - Array of channel numbers, sorted according to the held order
+         * @property {number}                       pb.channels.ht.last      - Number of the last held HT channel
+         * @property {Object}                       pb.range                 - PitchBend sensitivity
+         * @property {number}                       pb.range.ft              - PitchBend sensitivity for FT channels
+         * @property {number}                       pb.range.ht              - PitchBend sensitivity for HT channels
+         * @property {Object}                       pb.delay                 - Delay between the PitchBend and Note-ON messages
+         * @property {number}                       pb.delay.ft              - Delay for FT channels (milliseconds)
+         * @property {number}                       pb.delay.ht              - Delay for HT channels (milliseconds)
+         * @property {Object}                       pb.voicestealing         - Voice stealing management ON/OFF (now stealing is always ON)
+         * @property {boolean}                      pb.voicestealing.ft      - Voice stealing ON/OFF for FT channels
+         * @property {boolean}                      pb.voicestealing.ht      - Voice stealing ON/OFF for HT channels
+         * @property {boolean}                      pb.gm                    - General MIDI ON/OFF (when 'true', avoid channel 10)
+         * @property {('pb'|'mts')}                 selected                 - Selected MIDI-OUT Tuning Method for this port; 'pb' is PitchBend method, 'mts' is MIDI Tuning Standard method
+         */
+        /**
+         * Default settings for MIDI-OUT tuning methods; Object inside is {{@link MIDIoutSettings}}
+         * 
+         * @memberof icDHC.settings
+         *
+         * @type {MIDIoutSettings}
+         */
         instrument: {
-            // @TODO: MIDI Tuning Standard method
-            mts: {},
-            // Pitch Bend method
+            mts: {}, // @todo - MIDI Tuning Standard method
             pb: {
                 channels: {
                     ft: {
@@ -85,129 +139,238 @@ var icDHC = {
                     ft: 5,
                     ht: 5
                 },
-                // @TODO: Voice stealing management ON/OFF. Now stealing is always ON.
-                voicestealing: {
-                    ft: 1,
-                    ht: 1
+                voicestealing: { // @todo - Voice stealing management ON/OFF
+                    ft: true,
+                    ht: true
                 },
                 gm: undefined
             },
             selected: "pb"
         },
-        // Fundamental Mother frequency (Hz)
+        /**
+         * Fundamental Mother (FM) settings
+         * 
+         * @memberof icDHC.settings
+         *
+         * @type     {Object}
+         *
+         * @property {number} hz   - Frequency expressed in hertz (Hz)
+         * @property {number} mc   - Frequency expressed in midi.cents (mc)
+         * @property {string} init - What unit to use to initialize; 'hz' or 'mc'
+         */
         fm: {
             hz: 130.812782650299,
-            midicents: 48,
-            init: "midicents"
+            mc: 48,
+            init: "mc"
         },
-        // FT scale tuning method
+        /**
+         * Fundamental Tones (FTs) scale tuning method settings
+         * 
+         * @namespace icDHC.settings.ft
+         * @memberof! icDHC.settings
+         */
         ft: {
-            // Equal Temperament
+            /**
+             * Equal Temperament
+             * 
+             * @memberof icDHC.settings.ft
+             *
+             * @type     {Object}
+             *
+             * @property {number} unit     - The ratio to divide
+             * @property {number} division - The equal divisions
+             */            
             nEDx: {
                 unit: 2,
                 division: 12
             },
-            // Harmonics and subharmonics
+            /**
+             * Harmonics and subharmonics
+             * 
+             * @namespace icDHC.settings.ft.h_s
+             * @memberof! icDHC.settings.ft
+             */  
             h_s: {
+                /**
+                 * Natural (no transposition)
+                 * 
+                 * @memberof icDHC.settings.ft.h_s
+                 *
+                 * @type     {Object}
+                 *
+                 * @property {TransposeRatio} h_tr - Transpose ratio in decimal for Harmonics
+                 * @property {TransposeRatio} s_tr - Transpose ratio in decimal for Subharmonics
+                 */  
                 natural: {
-                    // Transpose ratio in decimal for Harmonics and Subharmonics
-                    // 0.5, 0.25, 0.125, 0.0625... for octaves down – 2, 4, 8, 16... for octaves up – 1 to not transpose
+                    /**
+                     * Transpose ratio
+                     * <ul>
+                     * <li>2, 4, 8, 16... for octaves up </li>
+                     * <li>0.5, 0.25, 0.125, 0.0625... for octaves down </li>
+                     * <li>1 to not transpose </li>
+                     * </ul>
+                     *
+                     * @typedef {number} TransposeRatio
+                     */
                     h_tr: 1,
                     s_tr: 16
                 },
-                transposed: {
-                    // Transpose ratio in decimal for Harmonics and Subharmonics
-                    // 0.5, 0.25, 0.125, 0.0625... for octaves down – 2, 4, 8, 16... for octaves up – 1 to not transpose
+                /**
+                 * Same octave transposition
+                 * 
+                 * @memberof icDHC.settings.ft.h_s
+                 *
+                 * @type     {Object}
+                 *
+                 * @property {TransposeRatio} h_tr - Transpose ratio in decimal for Harmonics
+                 * @property {TransposeRatio} s_tr - Transpose ratio in decimal for Subharmonics
+                 */  
+                sameOctave: {
                     h_tr: 1,
                     s_tr: 2
                 },
-                // Set value
-                selected: "transposed"
+                /**
+                 * Default/current sub-method selected
+                 * 
+                 * @memberof icDHC.settings.ft.h_s
+                 *
+                 * @type {('natural'|'sameOctave')}
+                 */ 
+                selected: "sameOctave"
             },
-            // @TODO: Tuning file formats
+            /**
+             * Tuning files (currently not used)
+             * 
+             * @namespace icDHC.settings.ft.file
+             * @memberof! icDHC.settings.ft
+             * 
+             * @todo - Tuning file formats
+             */ 
             file: {
                 scl: {},
                 tun: {},
                 mtx: {},
                 lmso: {},
-                // Set value
-                selected: "scl",
-                steps: 128
+                selected: "scl"
             },
-            // Set value
+            /**
+             * Default/current method selected
+             * 
+             * @memberof icDHC.settings.ft
+             *
+             * @type {('nEDx'|'h_s'|'file')}
+             */ 
             selected: "nEDx",
-            // Step for ft_table
-            // 32 = -32 > +32 : (old default: I think +-64 is too wide, but let's try)
-            // 64 = -64 > +64 : FM = #63 or #64 to use the full MIDI note range
-            // (#63 out of range on -1)
-            // (#64 out of range on 128)
+            /**
+             * +/- Steps for ft_table
+             *
+             * @example
+             * 'steps' to final range: MIDI Note number range considerations<br>
+             * 32 = -32 > +32 : (old default: I think +-64 is too wide, but let's try)<br>
+             * 64 = -64 > +64 : FM = midi#63 or midi#64 to use the full MIDI note range<br>
+             * ( midi#63 out of range on -1  )<br>
+             * ( midi#64 out of range on 128 )
+             * 
+             * @memberof icDHC.settings.ft
+             *
+             * @type {number}
+             */ 
             steps: 64
         },
+        /**
+         * Harmonic/subharmonic Tones (HTs) scale tuning settings
+         * 
+         * @namespace icDHC.settings.ht
+         * @memberof! icDHC.settings
+         */
         ht: {
+            /**
+             * Harmonics and subharmonics transpose
+             * 
+             * @memberof icDHC.settings.ht
+             *
+             * @type {Object}
+             * 
+             * @property {TransposeRatio} h - Transpose ratio in decimal for Harmonics
+             * @property {TransposeRatio} s - Transpose ratio in decimal for Subharmonics
+             */
             transpose: {
-                // Transpose ratio in decimal for Harmonics and Subharmonics
-                // 0.5, 0.25, 0.125, 0.0625... for octaves down – 2, 4, 8, 16... for octaves up – 1 to not transpose
                 h: 1,
                 s: 16
             },
-            // The current FT (that generated the last HT table). Init value must be 0
+            /**
+             * The current FT (that generated the last HT table); init value must be 0
+             * 
+             * @memberof icDHC.settings.ht
+             *
+             * @type {number}
+             */
             curr_ft: 0,
-            // 'last_ht' init value must be null
-            last_ht: null
+            /**
+             * The last pressed HT; init value must be null
+             * 
+             * @memberof icDHC.settings.ht
+             *
+             * @type {number}
+             */
+            curr_ht: null
         }
     },
+    /**
+     * DHC Tables
+     * 
+     * @namespace icDHC.tables
+     * @memberof! icDHC
+     */
     tables: {
-        // PD {ff_table}
-        ft_table: null,
-        // PD {hf_table} & {sf_table}
-        ht_table: null,
-        // PD {ctrl_fn}
-        // Default ctrl_map: ctrl_nEDx(7-7)_bonkaA(16h)_p
-        ctrl_map: {
-            41: { ft: -7, ht: 129 },
-            42: { ft: -6, ht: 129 },
-            43: { ft: -5, ht: 129 },
-            44: { ft: -4, ht: 129 },
-            45: { ft: -3, ht: 129 },
-            46: { ft: -2, ht: 129 },
-            47: { ft: -1, ht: 129 },
-            48: { ft: 0, ht: 129 },
-            49: { ft: 1, ht: 129 },
-            50: { ft: 2, ht: 129 },
-            51: { ft: 3, ht: 129 },
-            52: { ft: 4, ht: 129 },
-            53: { ft: 5, ht: 129 },
-            54: { ft: 6, ht: 129 },
-            55: { ft: 7, ht: 129 },
-            56: { ft: 129, ht: 0 },
-            57: { ft: 129, ht: 1 },
-            58: { ft: 129, ht: 2 },
-            59: { ft: 129, ht: 3 },
-            60: { ft: 129, ht: 4 },
-            61: { ft: 129, ht: 5 },
-            62: { ft: 129, ht: 6 },
-            63: { ft: 129, ht: 7 },
-            64: { ft: 129, ht: 8 },
-            65: { ft: 129, ht: 8 },
-            66: { ft: 129, ht: 9 },
-            67: { ft: 129, ht: 10 },
-            68: { ft: 129, ht: 11 },
-            69: { ft: 129, ht: 12 },
-            70: { ft: 129, ht: 13 },
-            71: { ft: 129, ht: 14 },
-            72: { ft: 129, ht: 16 },
-            73: { ft: 129, ht: 15 },
-            74: { ft: 129, ht: 16 }
-        },
-        // PD {inst_fn}
-        inst_map: null,
-        // PD {inst_table}
-        inst_table: null,
-        // PD {used_keys}
-        inst_usedkeys: null,
-        // PD {bulk-tuning-dump}
-        inst_mtsbank_table: null,
-        // Queue for FT key-press tracking
+        /**
+         * The current Controller Keymap
+         * 
+         * @memberof icDHC.tables
+         *
+         * @type {CtrlKeymap}
+         */
+        ctrl_map: {},             // PD {ctrl_fn}
+
+        /**
+         * A FT or HT relative tone (used in ft_table ht_table)
+         * 
+         * @typedef {Object} Xtone
+         *
+         * @property {number} hz - Frequency expressed in hertz (Hz)
+         * @property {number} mc - MIDI note number expressed in midi.cents
+         */
+
+        /**
+         * The current Fundamental Tones Table
+         * 
+         * @memberof icDHC.tables
+         *
+         * @type {Object.<number, Xtone>}
+         */
+        ft_table: {},             // PD {ff_table}
+        /**
+         * The current Harmonic/Subharmonic Tones table
+         * 
+         * @memberof icDHC.tables
+         *
+         * @type {Object.<number, Xtone>}
+         */
+        ht_table: {},             // PD {hf_table} & {sf_table}
+
+        // @todo - Tables for MTS MIDI-OUT tuning method
+        // inst_map: {},             // PD {inst_fn}
+        // inst_table: {},           // PD {inst_table}
+        // inst_usedkeys: null,      // PD {used_keys}
+        // inst_mtsbank_table: null, // PD {bulk-tuning-dump}
+
+        /**
+         * Queue for FT key-press tracking
+         * 
+         * @memberof icDHC.tables
+         *
+         * @type {Array.<Object.<number, Array.<number>>>}
+         */
         ftKeyQueue: []
     }
 };
@@ -215,12 +378,19 @@ var icDHC = {
 /*==============================================================================*
  * CORE INITS
  *==============================================================================*/
-// Init start for all the app
+ 
+// Init the app
 window.onload = icInit;
 
+/**
+ * Inits each section of the app
+ */
 function icInit() {
     // Set defaults value on the UI
-    icUIinit ();
+    icUIinit();
+    // Init the Keyboard UI controllers
+    icKeyboardUIinit();
+    // Initialize the controller keymap presets
     icKeymapsUIinit();
     // Create the HStack
     icHSTACKcreate();
@@ -231,12 +401,14 @@ function icInit() {
     icUTILSinit();
 }
 
-// Init function for (re)initialize the tables
+/**
+ * Init function for (re)initialize the tables
+ */
 function icDHCinit() {
-    // If the FM 'init' value is 'midicents'
-    if (icDHC.settings.fm.init === "midicents") {
+    // If the FM 'init' value is 'mc'
+    if (icDHC.settings.fm.init === "mc") {
         // Init th FM from the MIDI FM value on the UI
-        icDHC.settings.fm.hz = icGetFM("midicents");
+        icDHC.settings.fm.hz = icGetFM("mc");
      // If the FM 'init' value is 'hz'
     } else if (icDHC.settings.fm.init === "hz") {
         // Init th FM from the Hz FM value on the UI
@@ -246,7 +418,9 @@ function icDHCinit() {
     icTablesCreate();
 }
 
-// (Re)create FT & HT tables in the right order
+/**
+ * (Re)create FT & HT tables in the right order
+ */
 function icTablesCreate() {
     // Create the FT table
     icDHC.tables.ft_table = icFTtableCreate();
@@ -260,19 +434,20 @@ function icTablesCreate() {
     icUpdateMIDInoteON("ht");
     // Update the UI Monitors
     icMONITORSinit();
-    return true;
 }
 
-// Update the UI with default FT0 (FM), its HStack and the last HT pressed (if present)
+/**
+ * Update the UI with default FT0 (FM), its HStack and the last HT pressed (if present)
+ */
 function icMONITORSinit() {
     // Compile the FM monitors
     icPrintFundamentalMother(icDHC.settings.fm.hz, icDHC.settings.fm.mc);
     // Compile the FT monitors
     icDHCmonitor(icDHC.settings.ht.curr_ft, icDHC.tables.ft_table[icDHC.settings.ht.curr_ft], "ft");
     // If a HT has been already pressed
-    if (icDHC.settings.ht.last_ht) {
+    if (icDHC.settings.ht.curr_ht) {
         // Compile the HT monitor
-        icDHCmonitor(icDHC.settings.ht.last_ht, icDHC.tables.ht_table[icDHC.settings.ht.last_ht], "ht");
+        icDHCmonitor(icDHC.settings.ht.curr_ht, icDHC.tables.ht_table[icDHC.settings.ht.curr_ht], "ht");
     }
     // Compile the HStack (in utils.js)
     icHSTACKfillin();
@@ -281,8 +456,12 @@ function icMONITORSinit() {
 /*==============================================================================*
  * DHC TABLES CREATION
  *==============================================================================*/
-// Build the fundamental frequencies table {ff_table}
-// Called on Init and FM update
+
+/**
+ * Build the fundamental frequencies table; called on Init and FM update
+ *
+ * @return {Object.<number, Xtone>} - The Fundamental Tone table
+ */
 function icFTtableCreate() {
     // Temp object
     let fundamentalsTable = {};
@@ -299,7 +478,7 @@ function icFTtableCreate() {
         // HARMONICS / SUBHARMONICS FT
         case "h_s":
             if (icDHC.settings.ft.h_s.selected === "natural") {
-                // Compute the sub/harmonics (NOT transposed to the same octave)
+                // Compute the sub/harmonics naturally (NOT transposed to the Same Octave)
                 for (let i = 1; i <= icDHC.settings.ft.steps; i++) {
                     let sFreq = icDHC.settings.fm.hz / i * icDHC.settings.ft.h_s.natural.s_tr;
                     let hFreq = icDHC.settings.fm.hz * i * icDHC.settings.ft.h_s.natural.h_tr;
@@ -311,8 +490,8 @@ function icFTtableCreate() {
                 // FT0 is always the FM
                 fundamentalsTable[0] = { hz: icDHC.settings.fm.hz, mc: Number(icDHC.settings.fm.mc) };
             }
-            if (icDHC.settings.ft.h_s.selected === "transposed") {
-                // Compute the sub/harmonics. All transposed to the same octave
+            if (icDHC.settings.ft.h_s.selected === "sameOctave") {
+                // Compute the sub/harmonics all transposed to the Same Octave
                 for (let i = 1; i <= icDHC.settings.ft.steps; i++) {
                     let h_so_tr = null;
                     let s_so_tr = null;
@@ -335,8 +514,8 @@ function icFTtableCreate() {
                         h_so_tr = i / 32;
                         s_so_tr = 1 / i * 32;
                     }
-                    let hFreq = icDHC.settings.fm.hz * h_so_tr * icDHC.settings.ft.h_s.transposed.h_tr;
-                    let sFreq = icDHC.settings.fm.hz * s_so_tr * icDHC.settings.ft.h_s.transposed.s_tr;
+                    let hFreq = icDHC.settings.fm.hz * h_so_tr * icDHC.settings.ft.h_s.sameOctave.h_tr;
+                    let sFreq = icDHC.settings.fm.hz * s_so_tr * icDHC.settings.ft.h_s.sameOctave.s_tr;
                     let sMidicents = icFtoM(sFreq);
                     let hMidicents = icFtoM(hFreq);
                     fundamentalsTable[-i] = { hz: sFreq, mc: sMidicents } ;
@@ -346,17 +525,22 @@ function icFTtableCreate() {
                 fundamentalsTable[0] = { hz: icDHC.settings.fm.hz, mc: Number(icDHC.settings.fm.mc) };
             }
             return fundamentalsTable;
-        // @TODO: TUNING FILES FT
+        // @todo - TUNING FILES FT
         case "file":
             break;
     }
 }
 
-// Build the (Sub)Harmonic tones table {hf_table} & {sf_table}
-// fundamental unit is Hz
-// icDHC.tables.ht_table
+/**
+ * Build the (Sub)Harmonic tones table
+ * Destination is 'icDHC.tables.ht_table'
+ * 
+ * @param  {number} fundamental     - The tone on which to build the table expressed in hertz (Hz)
+ * 
+ * @return {Object.<number, Xtone>} - The Harmonic Tone table
+ */
 function icHTtableCreate(fundamental) {
-    // @TODO: implement custom H/S table lenght (16>32>64>128) to increase performances if needed
+    // @todo - Implement custom H/S table length (16>32>64>128) to increase performances if needed
     let harmonicsTable = {};
     for (let i = -128; i < 0; i++) {
         let freq = fundamental / -i * icDHC.settings.ht.transpose.s;
@@ -371,28 +555,48 @@ function icHTtableCreate(fundamental) {
     return harmonicsTable;
 }
 
-//-----------------------------------------------
-// @TODO: BUILD THE INSTRUMENT TABLE {inst_table} for MTS
-// icDHC.tables.inst_table
+/**
+ * @todo - BUILD THE INSTRUMENT TABLE {inst_table} for MTS
+ * Destination is 'icDHC.tables.inst_table'
+ */
 
 /*==============================================================================*
  * GENERAL DHC COMPUTING TOOLS
  *==============================================================================*/
-// From MIDI note number to frequency (Hz)
-function icMtoF(midikey) {
+
+/**
+ * From MIDI note number to frequency (Hz)
+ * @param  {number} midicent - MIDI note number expressed in midi.cents
+ * 
+ * @return {number}          - Frequency expressed in hertz (Hz)
+ */
+function icMtoF(midicent) {
     // Use the icCompute_nEDx() function to get frequency
-    return icCompute_nEDx(midikey - 69, 2, 12, 440);
+    return icCompute_nEDx(midicent - 69, 2, 12, 440);
 }
 
-// From frequency (Hz) to MIDI note number
+/**
+ * From frequency (Hz) to MIDI note number
+ * @param  {number} freq - Frequency expressed in hertz (Hz)
+ * 
+ * @return {number}      - MIDI note number expressed in midi.cents
+ */
 function icFtoM(freq) {
-    // Return the midi.cent rounded to two decimals
     let midicent = 69 + 12 * Math.log2(freq / 440);
     // Return full accuracy midicent
     return midicent;
 }
 
-// Calculate the n-EDx ("free" equal temperament) of a relative tone
+/**
+ * Calculate the n-EDx ("free" equal temperament) of a relative tone
+ *
+ * @param  {number} relativeTone - Relative number of the "step" in the scale
+ * @param  {number} unit         - Ratio unit
+ * @param  {number} division     - Equal divisions of the ratio unit
+ * @param  {number} masterTuning - Reference frequency expressed in hertz (Hz)
+ * 
+ * @return {number}              - Frequency expressed in hertz (Hz)
+ */
 function icCompute_nEDx(relativeTone, unit, division, masterTuning) {
     let frequency = Math.pow(unit, relativeTone / division) * masterTuning;
     // Return full accuracy frequency
@@ -402,13 +606,20 @@ function icCompute_nEDx(relativeTone, unit, division, masterTuning) {
 /*==============================================================================*
  * FM UI tools
  *==============================================================================*/
-// Get the Fundamental Mother (FM) in Hz from the UI
+
+/**
+ * Get the Fundamental Mother (FM) from the UI
+ *
+ * @param  {('midicents'|'hz')} method - Method to use to get the FM
+ *
+ * @return {number}                    - Frequency expressed in hertz (Hz)
+ */
 function icGetFM(method) {
     var fm = null;
     var freq = null;
     var midicents = null;
     switch (method) {
-        case "midicents":
+        case "mc":
             fm = document.getElementById("HTMLi_fm_mc").value;
             midicents = fm;
             freq = icMtoF(fm);
@@ -429,7 +640,12 @@ function icGetFM(method) {
     return freq;
 }
 
-// Print the Fundamental Mother (FM) data to the UI (monitor)
+/**
+ * Print the Fundamental Mother (FM) data to the UI (monitor)
+ *
+ * @param {number} freq      - Frequency expressed in hertz (Hz)
+ * @param {number} midicents - MIDI note number expressed in midi.cents
+ */
 function icPrintFundamentalMother(freq, midicents){
     // Prepare the array to pass to the icArrayPitchbender
     let arr = {
@@ -440,64 +656,80 @@ function icPrintFundamentalMother(freq, midicents){
     let bentArray = icArrayPitchbender(arr);
     // Print the FM infos on the UI
     var notename = icGetNoteNameCents(bentArray.mc);
-    midicents = bentArray.mc.toFixed(icDHC.settings.global.midicents_accuracy);
-    document.getElementById("HTMLo_fm_mc").innerHTML = midicents + " = " + notename[0] + " " + notename[2] + notename[1] + "&cent;";
+    document.getElementById("HTMLo_fm_mc").innerHTML = bentArray.mc.toFixed(icDHC.settings.global.cent_accuracy + 2) + " = " + notename[0] + " " + notename[2] + notename[1] + "&cent;";
     document.getElementById("HTMLo_fm_hz").innerHTML = bentArray.hz.toFixed(icDHC.settings.global.hz_accuracy);
 }
 
-// Set the Fundamental Mother (FM) got from the UI
+/**
+ * Set the Fundamental Mother (FM) got from the UI
+ *
+ * @param {number} freq - Frequency expressed in hertz (Hz)
+ */
 function icSetFM(freq) {
     // Store the FM to the global variable
     icDHC.settings.fm.hz = freq;
-    // Rereate all tables
+    // Recreate all tables
     icTablesCreate();
 }
 
 /*==============================================================================*
  * FT UI tools
  *==============================================================================*/
-// Switch the FT TUNING SYSTEM (called when UI is updated)
-function icSwitchFTsys(system) {
+
+/**
+ * Switch the FT TUNING SYSTEM (called when UI is updated)
+ *
+ * @param {('nedx'|'hs')}             sys    - FTs tuning method; 'nedx' (equal temperament) or 'hs' (harm/subharm)
+ * @param {('natural'|'sameOctave')=} sys_hs - FTs Harm/Subharm tuning method; 'natural' (no transposition) or 'sameOctave' (to the same octave)
+ */
+function icSwitchFTsys(sys, sys_hs) {
     let nedx = document.getElementById("HTMLf_ftNEDX");
     let hs = document.getElementById("HTMLf_ftHS");
-        if (system[0] === "nedx") {
+        if (sys === "nedx") {
             nedx.style.display = "initial";
             hs.style.display = "none";
             icDHC.settings.ft.selected = "nEDx";
-        } else if (system[0] === "hs") {
+        } else if (sys === "hs") {
             nedx.style.display = "none";
             hs.style.display = "initial";
             icDHC.settings.ft.selected = "h_s";
-            if (system[1] === "natural") {
+            if (sys_hs === "natural") {
                 icDHC.settings.ft.h_s.selected = "natural";
                 document.getElementById("HTMLo_ftHStranspose_h_ratio").innerHTML = icDHC.settings.ft.h_s.natural.h_tr;
                 document.getElementById("HTMLo_ftHStranspose_s_ratio").innerHTML = icDHC.settings.ft.h_s.natural.s_tr;
-            } else if (system[1] === "transposed") {
-                icDHC.settings.ft.h_s.selected = "transposed";
-                document.getElementById("HTMLo_ftHStranspose_h_ratio").innerHTML = icDHC.settings.ft.h_s.transposed.h_tr;
-                document.getElementById("HTMLo_ftHStranspose_s_ratio").innerHTML = icDHC.settings.ft.h_s.transposed.s_tr;
+            } else if (sys_hs === "sameOctave") {
+                icDHC.settings.ft.h_s.selected = "sameOctave";
+                document.getElementById("HTMLo_ftHStranspose_h_ratio").innerHTML = icDHC.settings.ft.h_s.sameOctave.h_tr;
+                document.getElementById("HTMLo_ftHStranspose_s_ratio").innerHTML = icDHC.settings.ft.h_s.sameOctave.s_tr;
             }
         }
     icTablesCreate();
     icUpdateKeymapPreset();
 }
 
-// Set the nEDx (called when UI is updated)
+/**
+ * Set the nEDx (called when UI is updated)
+ */
 function icSetNEDX() {
     icDHC.settings.ft.nEDx.unit = document.getElementById("HTMLi_ftNEDX_unit").value;
     icDHC.settings.ft.nEDx.division = document.getElementById("HTMLi_ftNEDX_division").value;
-    // Rereate all tables
+    // Recreate all tables
     icTablesCreate();
 }
 
-// Transpose FT (sub)harmonics (called when UI is updated)
+/**
+ * Transpose FT (sub)harmonics (called when UI is updated)
+ *
+ * @param {number} ratio - The ratio
+ * @param {string} type  - The type
+ */
 function icFThsTranspose(ratio, type) {
     if (icDHC.settings.ft.h_s.selected === "natural") {
         icDHC.settings.ft.h_s.natural[type+"_tr"] *= ratio;
         document.getElementById("HTMLo_ftHStranspose_"+type+"_ratio").innerHTML = icDHC.settings.ft.h_s.natural[type+"_tr"];
-    } else if (icDHC.settings.ft.h_s.selected === "transposed") {
-        icDHC.settings.ft.h_s.transposed[type+"_tr"] *= ratio;
-        document.getElementById("HTMLo_ftHStranspose_"+type+"_ratio").innerHTML = icDHC.settings.ft.h_s.transposed[type+"_tr"];
+    } else if (icDHC.settings.ft.h_s.selected === "sameOctave") {
+        icDHC.settings.ft.h_s.sameOctave[type+"_tr"] *= ratio;
+        document.getElementById("HTMLo_ftHStranspose_"+type+"_ratio").innerHTML = icDHC.settings.ft.h_s.sameOctave[type+"_tr"];
     }
     icTablesCreate();
 }
@@ -505,9 +737,16 @@ function icFThsTranspose(ratio, type) {
 /*==============================================================================*
  * HT UI tools
  *==============================================================================*/
-// Transpose HT (sub)harmonics (called when UI is updated)
+
+/**
+ * Transpose HT (sub)harmonics (called when UI is updated)
+ *
+ * @param  {number}    ratio  - The ratio with which to compute the transposition
+ * @param  {('h'|'s')} type   - Type of transposition; 'h' for harmonics or 's' for subharmonics
+ * @param  {boolean}   octave - If it's an octave transposition or not
+ */
 function icHTtranspose(ratio, type, octave) {
-    // If it's an ovtave transpose
+    // If it's an octave transpose
     if (octave === true) {
         // Multiply the current transpose ratio by the input ratio
         icDHC.settings.ht.transpose[type] *= ratio;
@@ -527,7 +766,7 @@ function icHTtranspose(ratio, type, octave) {
     }
     // Recreate the HT table on the last FT
     icDHC.tables.ht_table = icHTtableCreate(icDHC.tables.ft_table[icDHC.settings.ht.curr_ft].hz);
-    // Update the current HTs osc frequncies on Synth
+    // Update the current HTs osc frequencies on Synth
     icUpdateSynthHTfrequency();
     // Resend (repress) all the MIDI Note-ON currently pending
     icUpdateMIDInoteON("ht");
@@ -538,14 +777,18 @@ function icHTtranspose(ratio, type, octave) {
 /*==============================================================================*
  * DHC UI INITS
  *==============================================================================*/
+
+/**
+ * Initialize the DHC UI
+ */
 function icUIinit() {
 
     /*  UI DEFAULT SETTINGS
      * ====================*/
 
     // Default UI FM
-    if (icDHC.settings.fm.init === "midicents") {
-        // If the FM 'init' value is 'midicents'
+    if (icDHC.settings.fm.init === "mc") {
+        // If the FM 'init' value is 'mc'
         // Set UI midicents FM from icDHC.settings.fm.mc
         document.getElementById("HTMLi_fm_mc").value = icDHC.settings.fm[icDHC.settings.fm.init];
     } else if (icDHC.settings.fm.init === "hz") {
@@ -563,9 +806,9 @@ function icUIinit() {
     document.getElementById("HTMLi_htTranspose_s_ratio").value = icDHC.settings.ht.transpose.s;
     // Default DHC SETTINGS on UI textboxes
     document.getElementById("HTMLi_dhc_hzAccuracy").value = icDHC.settings.global.hz_accuracy;
-    document.getElementById("HTMLi_dhc_mcAccuracy").value = icDHC.settings.global.midicents_accuracy;
+    document.getElementById("HTMLi_dhc_mcAccuracy").value = icDHC.settings.global.cent_accuracy;
     document.getElementById("HTMLi_dhc_middleC").value = icDHC.settings.global.middle_c + 5;
-    document.getElementById("HTMLi_dhc_pitchbendRange").value = icDHC.settings.controller.pitchbend.range;
+    document.getElementById("HTMLi_dhc_pitchbendRange").value = icDHC.settings.controller.pb_range;
     document.getElementById("HTMLi_dhc_piperSteps").value = icPipe.maxLenght;
 
 
@@ -576,32 +819,32 @@ function icUIinit() {
     // UI GENERAL DHC settings
     //------------------------
     // Set the UI HZ DECIMAL PRECISION from UI HTML inputs
-    document.getElementById("HTMLi_dhc_hzAccuracy").addEventListener("input", function(event) {
+    document.getElementById("HTMLi_dhc_hzAccuracy").addEventListener("input", (event) => {
         // Store the Hz accuracy in the global slot
         icDHC.settings.global.hz_accuracy = Number(event.target.value);
         // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
         icDHCinit();
     });
     // Set the UI MIDI.CENTS DECIMAL PRECISION from UI HTML inputs
-    document.getElementById("HTMLi_dhc_mcAccuracy").addEventListener("input", function(event) {
+    document.getElementById("HTMLi_dhc_mcAccuracy").addEventListener("input", (event) => {
         // Store the mc accuracy in the global slot
-        icDHC.settings.global.midicents_accuracy = Number(event.target.value);
+        icDHC.settings.global.cent_accuracy = Number(event.target.value);
         // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
         icDHCinit();
     });
     // Set the MIDDLE C OCTAVE from UI HTML inputs
-    document.getElementById("HTMLi_dhc_middleC").addEventListener("input", function(event) {
+    document.getElementById("HTMLi_dhc_middleC").addEventListener("input", (event) => {
         // Beginning octave = Middle C octave - 5   (-1 => C4)
         icDHC.settings.global.middle_c = event.target.value - 5;
         // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
         icDHCinit();
     });
     // Set the CONTROLLER PITCHBEND RANGE from UI HTML inputs
-    document.getElementById("HTMLi_dhc_pitchbendRange").addEventListener("input", function(event) {
-        icDHC.settings.controller.pitchbend.range = event.target.value;
+    document.getElementById("HTMLi_dhc_pitchbendRange").addEventListener("input", (event) => {
+        icDHC.settings.controller.pb_range = event.target.value;
     });
     // Set the PIPER HT0 FEATURE from UI HTML inputs
-    document.getElementById("HTMLi_dhc_piperSteps").addEventListener("input", function(event) {
+    document.getElementById("HTMLi_dhc_piperSteps").addEventListener("input", (event) => {
         icPipe.maxLenght = event.target.value;
     });
 
@@ -609,11 +852,11 @@ function icUIinit() {
     // UI FM DHC settings
     //-------------------
     // Set the Fundamental Mother (FM) from UI HTML inputs
-    document.getElementById("HTMLi_fm_mc").addEventListener("change", function() {
-        icSetFM(icGetFM("midicents"));
+    document.getElementById("HTMLi_fm_mc").addEventListener("change", () => {
+        icSetFM(icGetFM("mc"));
         document.getElementById("HTMLi_fm_hz").value = "";
     });
-    document.getElementById("HTMLi_fm_hz").addEventListener("change", function() {
+    document.getElementById("HTMLi_fm_hz").addEventListener("change", () => {
         icSetFM(icGetFM("hz"));
         document.getElementById("HTMLi_fm_mc").value = "";
     });
@@ -623,21 +866,21 @@ function icUIinit() {
     //-------------------
     // Set the RADIO BUTTONS for FT TUNING SYSTEM
     // Radio NEDX system
-    document.getElementById("HTMLf_ftSys_NEDX").addEventListener("click", function(event) {
+    document.getElementById("HTMLf_ftSys_NEDX").addEventListener("click", (event) => {
         if (event.target.checked) {
-            icSwitchFTsys(["nedx"]);
+            icSwitchFTsys("nedx");
         }
     });
     // Radio HS Natural system
-    document.getElementById("HTMLf_ftSys_HSnat").addEventListener("click", function(event) {
+    document.getElementById("HTMLf_ftSys_HSnat").addEventListener("click", (event) => {
         if (event.target.checked) {
-            icSwitchFTsys(["hs", "natural"]);
+            icSwitchFTsys("hs", "natural");
         }
     });
-    // Radio HS Transposed system
-    document.getElementById("HTMLf_ftSys_HStrans").addEventListener("click", function(event) {
+    // Radio HS Transposed Same Octave system
+    document.getElementById("HTMLf_ftSys_HStrans").addEventListener("click", (event) => {
         if (event.target.checked) {
-            icSwitchFTsys(["hs", "transposed"]);
+            icSwitchFTsys("hs", "sameOctave");
         }
     });
     // Set default FT Tuning System after the radio buttons are set-up
@@ -650,21 +893,21 @@ function icUIinit() {
     // Get and set the FT HARM/SUBHARM UI HTML inputs
     // Harmonic Tones transposition
     // + Octave
-    document.getElementById("HTMLi_ftHStranspose_h_plus").addEventListener("click", function() {
+    document.getElementById("HTMLi_ftHStranspose_h_plus").addEventListener("click", () => {
         icFThsTranspose(2, "h");
     });
     // - Octave
-    document.getElementById("HTMLi_ftHStranspose_h_minus").addEventListener("click", function() {
+    document.getElementById("HTMLi_ftHStranspose_h_minus").addEventListener("click", () => {
         icFThsTranspose(0.5, "h");
     });
 
     // Subharmonic Tones transposition
     // + Octave
-    document.getElementById("HTMLi_ftHStranspose_s_plus").addEventListener("click", function() {
+    document.getElementById("HTMLi_ftHStranspose_s_plus").addEventListener("click", () => {
         icFThsTranspose(2, "s");
     });
     // - Octave
-    document.getElementById("HTMLi_ftHStranspose_s_minus").addEventListener("click", function() {
+    document.getElementById("HTMLi_ftHStranspose_s_minus").addEventListener("click", () => {
         icFThsTranspose(0.5, "s");
     });
 
@@ -674,29 +917,29 @@ function icUIinit() {
     // Get and set the HT UI HTML inputs
     // Harmonic Tones transposition
     // + Octave
-    document.getElementById("HTMLi_htTranspose_h_plus").addEventListener("click", function() {
+    document.getElementById("HTMLi_htTranspose_h_plus").addEventListener("click", () => {
         icHTtranspose(2, "h", true);
     });
     // – Octave
-    document.getElementById("HTMLi_htTranspose_h_minus").addEventListener("click", function() {
+    document.getElementById("HTMLi_htTranspose_h_minus").addEventListener("click", () => {
         icHTtranspose(0.5, "h", true);
     });
     // Free ratio
-    document.getElementById("HTMLi_htTranspose_h_ratio").addEventListener("change", function(event) {
+    document.getElementById("HTMLi_htTranspose_h_ratio").addEventListener("change", (event) => {
         icHTtranspose(event.target.value, "h", false);
     });
 
     // Subharmonic Tones transposition
     // + Octave
-    document.getElementById("HTMLi_htTranspose_s_plus").addEventListener("click", function() {
+    document.getElementById("HTMLi_htTranspose_s_plus").addEventListener("click", () => {
         icHTtranspose(2, "s", true);
     });
     // – Octave
-    document.getElementById("HTMLi_htTranspose_s_minus").addEventListener("click", function() {
+    document.getElementById("HTMLi_htTranspose_s_minus").addEventListener("click", () => {
         icHTtranspose(0.5, "s", true);
     });
     // Free ratio
-    document.getElementById("HTMLi_htTranspose_s_ratio").addEventListener("change", function(event) {
+    document.getElementById("HTMLi_htTranspose_s_ratio").addEventListener("change", (event) => {
         icHTtranspose(event.target.value, "s", false);
     });
 }

@@ -4,8 +4,9 @@
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
- * Copyright (C) 2017 by Walter Mantovani (http://armonici.it).
- * Written by Walter Mantovani < armonici.it [*at*] gmail [*dot*] com >.
+ * @license
+ * Copyright (C) 2017-2018 by Walter Mantovani (http://armonici.it).
+ * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,9 +23,10 @@
  */
 
  /**
- * DEFAULT IR REVERB FILE & HANDLER
- * The IR .wav file encoded in Base64 an the function to transform to into blob
- * To make a Base64 file with OpenSSL: #openssl base64 -in /path/ir.wav -out /path/ir.base64 
+ * @fileoverview DEFAULT IR REVERB FILE & HANDLER<br>
+ *     The IR .wav file encoded in Base64 an the function to transform to into blob
+ * 
+ * @author Walter Mantovani < armonici.it [at] gmail [dot] com >
  */
 
 /* exported icBase64ToBlob */
@@ -32,24 +34,29 @@
 
 "use strict";
 
-// Convert Base64 data into blob
-// Based on https://gist.github.com/fupslot/5015897
+/**
+ * Convert Base64 data held in a string into raw binary blob
+ * 
+ * @see  {@link https://gist.github.com/fupslot/5015897|Based on this snippet}
+ *
+ * @param  {Object} file      - A File-like object
+ * @param  {Object} file.name - Filename
+ * @param  {Object} file.data - Data content in Base64
+ *
+ * @return {Blob}             - The decoded file in a Blob object
+ */
 function icBase64ToBlob(file) {
-    // convert base64 to raw binary data held in a string
-    // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+    // Note: doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
     var byteString = atob(file.data.split(',')[1]);
-
-    // separate out the mime component
+    // Separate out the mime component
     var mimeString = file.data.split(',')[0].split(':')[1].split(';')[0];
-
-    // write the bytes of the string to an ArrayBuffer
+    // Write the bytes of the string to an ArrayBuffer
     var ab = new ArrayBuffer(byteString.length);
     var ia = new Uint8Array(ab);
     for (var i = 0; i < byteString.length; i++) {
         ia[i] = byteString.charCodeAt(i);
     }
-
-    // write the ArrayBuffer to a blob, and you're done
+    // Write the ArrayBuffer to a blob
     var bb = new Blob([ab], {type : mimeString});
     // Add the filename to the blob imitating a real file
     if (file.name) {
@@ -61,9 +68,18 @@ function icBase64ToBlob(file) {
 
 /**
  * IR file from the Voxengo Free Reverb Impulse Responses library by Aleksey Vaneev
- * http://www.voxengo.com/impulses/
- * Voxengo_LICENSE in the ./ir/ directory
+ * @see {@link http://www.voxengo.com/impulses/}
+ * @see Voxengo_LICENSE in the ./ir/ directory
  * (The Musikvereinssaal, Vienna)
+ *
+ * @example
+ * To make a Base64 file with OpenSSL:
+ * #openssl base64 -in /path/ir.wav -out /path/ir.base64 
+ *
+ * @type {Object}
+ *
+ * @property {string} name - Filename
+ * @property {string} data - The WAV audio file coded in Base64
  */
 var icDefaultReverb = {};
 // The IR file name or description

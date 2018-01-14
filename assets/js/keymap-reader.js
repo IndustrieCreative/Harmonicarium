@@ -4,8 +4,9 @@
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
- * Copyright (C) 2017 by Walter Mantovani (http://armonici.it).
- * Written by Walter Mantovani < armonici.it [*at*] gmail [*dot*] com >.
+ * @license
+ * Copyright (C) 2017-2018 by Walter Mantovani (http://armonici.it).
+ * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,9 +22,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * KEYMAP READERS
- * To open, parse and handle the Keymap tables.
+ /**
+ * @fileoverview KEYMAP READERS<br>
+ *     To open, parse and handle the Keymap tables.
+ * 
+ * @author Walter Mantovani < armonici.it [at] gmail [dot] com >
  */
 
 /* exported icKeymapsUIinit */
@@ -31,6 +34,9 @@
 
 "use strict";
 
+/**
+ * Initialize the UI of the Controller keymap readers
+ */
 function icKeymapsUIinit() {
     // Add an EventListener to the (on)change event of the Controller Keymap File <input> tag
     document.getElementById('HTMLi_controllerKeymapFile').addEventListener('change', icHandleKeymapFile, false);
@@ -38,6 +44,9 @@ function icKeymapsUIinit() {
     document.getElementById('HTMLi_controllerKeymapPresets').addEventListener('change', icLoadKeymapPreset);
 }
 
+/**
+ * Update the preset list according to the selected FTs Tuning System
+ */
 function icUpdateKeymapPreset() {
     let htmlElem = document.getElementById('HTMLi_controllerKeymapPresets');
     let lastValue = icCtrlKeymapPreset.current[icDHC.settings.ft.selected];
@@ -58,20 +67,16 @@ function icUpdateKeymapPreset() {
     icLoadKeymapPreset(event);
 }
 
-function icLoadKeymapPreset(event) {
-    if (event.target.value != 99) {
-        let keymap = icCtrlKeymapPreset[icDHC.settings.ft.selected][event.target.value].map;
-        // Store the current Keymap <option> value in a global slot
-        icCtrlKeymapPreset.current[icDHC.settings.ft.selected] = event.target.value;
-        // Write the Controller Keymap into the global object
-        icDHC.tables.ctrl_map = keymap;
-        // Update the HStack
-        icHSTACKcreate();
-        icHSTACKfillin();
-        // Update the offset of the Qwerty Hancock on UI
-        icHancockChangeOffset(Object.keys(icDHC.tables.ctrl_map)[0]);
-        // Update the range of the Qwerty Hancock on UI
-        let keysArray = Object.keys(icDHC.tables.ctrl_map);
+/**
+ * Load a Controller keymap from icCtrlKeymapPreset according to the selection on UI
+ *
+ * @param {Event} changeEvent - Change HTML event on 'select' element (ctrl keymap dropdown)
+ */
+function icLoadKeymapPreset(changeEvent) {
+    let indexValue = changeEvent.target.value;
+    if (indexValue != 99) {
+        let keymap = icCtrlKeymapPreset[icDHC.settings.ft.selected][indexValue].map;
+        let keysArray = Object.keys(keymap);
         let keyMin = Math.min.apply(null, keysArray);
         let keyMax = Math.max.apply(null, keysArray);
         let keysNum = keyMax - keyMin;
@@ -80,14 +85,30 @@ function icLoadKeymapPreset(event) {
         if (keyRemainder < 2) {
             keyOctaves++;
         }
+        // Store the current Keymap <option> value in a global slot
+        icCtrlKeymapPreset.current[icDHC.settings.ft.selected] = indexValue;
+        // Write the Controller Keymap into the global object
+        icDHC.tables.ctrl_map = keymap;
+        // Update the range of the Qwerty Hancock on UI
         icHancockChangeRange(keyOctaves);
+        document.getElementById("HTMLi_piano_range").value = keyOctaves;
+        // Update the offset of the Qwerty Hancock on UI
+        icHancockChangeOffset(keysArray[0]);
+        document.getElementById("HTMLi_piano_offset").value = keysArray[0];
+        // Update the HStack
+        icHSTACKcreate();
+        icHSTACKfillin();
         document.getElementById('HTMLi_controllerKeymapFile').style.visibility = "hidden";
     } else {
         document.getElementById('HTMLi_controllerKeymapFile').style.visibility = "initial";
     }
 }
 
-// On loading the Controller Keymap file
+/**
+ * On loading the Controller Keymap file
+ *
+ * @param {Event} changeEvent - Change HTML event on 'input' element (ctrl keymap file uploader)
+ */
 function icHandleKeymapFile(changeEvent) {
     // Check for the various File API support.
     if (window.File && window.FileReader && window.FileList && window.Blob) {
@@ -99,7 +120,11 @@ function icHandleKeymapFile(changeEvent) {
     }
 }
 
-// Initialize the file reading process
+/**
+ * Initialize the reading process of the Controller Keymap file
+ *
+ * @param {File} file - The file to be read
+ */
 function icReadKeymapFile(file) {
     var reader = new FileReader();
     // Handle loading errors
@@ -114,9 +139,13 @@ function icReadKeymapFile(file) {
     }
 }
 
-// Build the Controller Keymap table {ctrl_fn}
-// Incoming raw data from .hcmap file
-function icProcessKeymapData(data, name) { 
+/**
+ * Build the Controller Keymap table on the incoming raw data from .hcmap file
+ *
+ * @param {string} data - The text of the Controller keymap file
+ * @param {string} name - The filename
+ */
+function icProcessKeymapData(data, name) {
     let optionValue = document.getElementById('HTMLi_controllerKeymapPresets').length;
     // Split by lines
     let allTextLines = data.split(/\r\n|\n/);
@@ -137,7 +166,11 @@ function icProcessKeymapData(data, name) {
     icUpdateKeymapPreset();
 }
 
-// Handle errors on loading the file
+/**
+ * Handle errors in loading the Controller Keymap file
+ *
+ * @param {Event} errorEvent - The error event
+ */
 function icFileErrorHandler(errorEvent) {
     switch (errorEvent.target.error.code) {
         case errorEvent.target.error.NOT_FOUND_ERR:
@@ -147,7 +180,7 @@ function icFileErrorHandler(errorEvent) {
             alert('File is not readable.');
             break;
         case errorEvent.target.error.ABORT_ERR:
-            break; // noop
+            break; // void
         default:
             alert('An error occurred reading this file.');
     }

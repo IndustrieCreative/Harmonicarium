@@ -1,11 +1,12 @@
- /**
+/**
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
- * Copyright (C) 2017 by Walter Mantovani (http://armonici.it).
- * Written by Walter Mantovani < armonici.it [*at*] gmail [*dot*] com >.
+ * @license
+ * Copyright (C) 2017-2018 by Walter Mantovani (http://armonici.it).
+ * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,8 +23,10 @@
  */
 
  /**
- * MIDI OUTPUT HANDLER
- * Prepare the MIDI output message and send them to the MIDI-OUT ports.
+ * @fileoverview MIDI-OUT HANDLER<br>
+ *     Prepare the MIDI-OUT message and send them to the MIDI-OUT ports.
+ *               
+ * @author Walter Mantovani < armonici.it [at] gmail [dot] com >
  */
 
 /* exported icUpdateMOT */
@@ -31,18 +34,33 @@
 /* exported icUpdateMIDInoteON */
 /* exported icMIDIout */
 /* exported icSendMiddleC */
+
 "use strict";
 
-// Init the temporary MIDI out ports settings cache (a little DB where to store the user's settings about the port)
+/**
+ * Temporary MIDI-OUT ports settings cache; keys are the output port IDs
+ * (a little DB where to store the user's settings about the port)
+ *
+ * @type {Object.<number, MIDIoutSettings>}
+ */
 var icMIDIoutSettings = {};
-// Get the "MIDI Out Tuning" HTML element and store to global
+
+/**
+ * Get the "MIDI-OUT Tuning" HTML element and store to global
+ *
+ * @type {Object}
+ */
 var icHTMLmotModalContent = document.getElementById("HTMLf_motPanelContent");
 
+/**
+ * Update the MIDI-OUT Tuning UI
+ * Create the UI to manage the MIDI port channels
+ */
 function icUpdateMOT() {
     // Init the container
     icHTMLmotModalContent.innerHTML = "";
     icSelectedOutputs.forEach((value, key, map) => {
-        // If it's a new port in this broswer section
+        // If it's a new port in this browser section
         if (!icMIDIoutSettings[key]) {
             // Initialize the port with default settings
             icMIDIoutSettings[key] = JSON.parse(JSON.stringify(icDHC.settings.instrument));
@@ -96,6 +114,16 @@ function icUpdateMOT() {
             labelHT.setAttribute("for", key + "_" + ch + "_ht");
             labelFT.innerHTML = labelHT.innerHTML = ch + 1  ;
             checkboxFT.type = checkboxHT.type = 'checkbox';
+            /**
+             * MIDI Channel assignment event-data
+             * 
+             * @typedef {Object} ChanAssignment
+             *
+             * @property {number}     1 - A floating point number, the time-stamp
+             * @property {number}     1 - A floating point number, the time-stamp
+             * @property {number}     1 - A floating point number, the time-stamp
+             * @property {number}     1 - A floating point number, the time-stamp
+             */
             checkboxFT.value = '{ "port": "' + key + '", "chan": '+ ch + ', "fn": "ft", "not": "ht" }';
             checkboxHT.value = '{ "port": "' + key + '", "chan": '+ ch + ', "fn": "ht", "not": "ft" }';
             checkboxFT.name = checkboxHT.name = key + "_" + ch;
@@ -217,7 +245,12 @@ function icUpdateMOT() {
     });
 }
 
-// OnClick event on the channel checkboxes of the MIDI-Out PitchBend Method
+/**
+ * What to do if a MIDI channel is selected in the MIDI-OUT PitchBend Method UI
+ *
+ * @param {Event}  event              - OnClick event on the MIDI-OUT PitchBend Method channel checkboxes
+ * @param {string} event.target.value - Stringified JSON version of the {@link ChanAssignment} type
+ */
 function icChanSelect(event) {
     // Parse the JSON from the checkbox value
     let chanSet = JSON.parse(event.target.value);
@@ -254,10 +287,13 @@ function icChanSelect(event) {
     icMIDIoutSettings[chanSet.port].pb.channels.ht.used.sort((a, b) => {
         return a - b;
     });
-    // @TODO: Send all Note-OFF and re-init the last channel in order to avoit stuck notes
-    icEventLog("MIDI multichannel polyphony assigment:\n| Output port = " + icMidi.outputs.get(chanSet.port).name + "\n| " + chanSet.fn.toUpperCase() + " selected channels = " + icMIDIoutSettings[chanSet.port].pb.channels[chanSet.fn].used + "\n| " + chanSet.not.toUpperCase() + " selected channels = " + icMIDIoutSettings[chanSet.port].pb.channels[chanSet.not].used + "\n| ---------------------------------------");
+    // @todo - Send all Note-OFF and re-init the last channel in order to avoid stuck notes
+    icEventLog("MIDI multichannel polyphony assignment:\n| Output port = " + icMidi.outputs.get(chanSet.port).name + "\n| " + chanSet.fn.toUpperCase() + " selected channels = " + icMIDIoutSettings[chanSet.port].pb.channels[chanSet.fn].used + "\n| " + chanSet.not.toUpperCase() + " selected channels = " + icMIDIoutSettings[chanSet.port].pb.channels[chanSet.not].used + "\n| ---------------------------------------");
 }
 
+/**
+ * Open the MIDI I/O modal panel on UI
+ */
 function icOpenMidiPanel() {
     // Get the modal element
     var modal = document.getElementById('HTMLf_motPanelModal');
@@ -277,6 +313,12 @@ function icOpenMidiPanel() {
     };
 }
 
+/**
+ * Send the MIDI Pitch Bend Sensitivity (range) message
+ *
+ * @param {number}      portID - The MIDI-OUT port on which to send the message
+ * @param {('ft'|'ht')} type   - If the ports to which the message should be sent are assigned to FTs or HTs
+ */
 function icSendMIDIoutPBrange(portID, type) {
     let midiOutput = icMidi.outputs.get(portID);
     // If the user is not playing
@@ -305,6 +347,16 @@ function icSendMIDIoutPBrange(portID, type) {
     }
 }
 
+/**
+ * Create a MIDI Note ON/OFF message
+ *
+ * @param  {number} ch       - MIDI Channel to which the message should be sent
+ * @param  {(0|1)}  state    - Note ON or OFF; 1 is Note-ON, 0 is Note-OFF
+ * @param  {number} note     - MIDI Note number (from 0 to 127)
+ * @param  {number} velocity - MIDI Velocity amount (from 0 to 127)
+ *
+ * @return {Array}           - The MIDI Note ON/OFF message
+ */
 function icMakeMIDIoutNoteMsg(ch, state, note, velocity) {
     let msg = [];
     if (state === 1) {
@@ -315,6 +367,14 @@ function icMakeMIDIoutNoteMsg(ch, state, note, velocity) {
     return msg;
 }
 
+/**
+ * Create a MIDI Pitch Bend Change message
+ *
+ * @param  {number} ch     - MIDI Channel to which the message should be sent (from 0 to 15)
+ * @param  {number} amount - Pitch Bend amount (from 0 to 16383)
+ *
+ * @return {Array}         - The MIDI Pitch Bend Change message
+ */
 function icMakeMIDIoutPitchBendMsg(ch, amount) {
     let lsb = amount & 0x7F;
     let msb = amount >> 7;
@@ -322,12 +382,18 @@ function icMakeMIDIoutPitchBendMsg(ch, amount) {
     return msg;
 }
 
-// @TODO: The voice stealing implementation of the MIDI out has not the same results of the DHC/Synth
-//        When voices are overloaded on HT and you release a key on the controller there is a different behaviour
+/**
+ * @todo - The voice stealing implementation of the MIDI-OUT has not the same results of the DHC/Synth.
+ *         When voices are overloaded on HT and you release a key on the controller there is a different behavior.
+ */
 
-// Update the frequency of every sill pending Note-ON
+/**
+ * Update the frequency of every sill pending Note-ON
+ *
+ * @param {('ft'|'ht')} whatToUpdate - If the notes/channels to be updated are assigned to FTs or HTs
+ */
 function icUpdateMIDInoteON(whatToUpdate) {
-    // For each selected MIDI Output ports
+    // For each selected MIDI-OUT ports
     icSelectedOutputs.forEach((value, key, map) => {
         // PitchBend method
         if (icMIDIoutSettings[key].selected === "pb") {
@@ -339,29 +405,29 @@ function icUpdateMIDInoteON(whatToUpdate) {
                 if (heldChsKeysFT.length > 0) {
                     for (let k in heldChsKeysFT) {
                         let ft = heldChsFT[heldChsKeysFT[k]].xt;
-                        let ftArr = icDHC.tables.ft_table[ft];
+                        let ftObj = icDHC.tables.ft_table[ft];
                         let velocity = heldChsFT[heldChsKeysFT[k]].vel;
-                        icSendMIDIoutPB(heldChsKeysFT[k], ft, ftArr, 64, 0, "ft", key);
-                        icSendMIDIoutPB(heldChsKeysFT[k], ft, ftArr, velocity, 1, "ft", key);
+                        icSendMIDIoutPB(heldChsKeysFT[k], ft, ftObj, 64, 0, "ft", key);
+                        icSendMIDIoutPB(heldChsKeysFT[k], ft, ftObj, velocity, 1, "ft", key);
                     }
                 }
                 if (heldChsKeysHT.length > 0) {
                     for (let k in heldChsKeysHT) {
                         let ht = heldChsHT[heldChsKeysHT[k]].xt;
-                        let htArr = icDHC.tables.ht_table[ht];
+                        let htObj = icDHC.tables.ht_table[ht];
                         let velocity = heldChsHT[heldChsKeysHT[k]].vel;
-                        icSendMIDIoutPB(heldChsKeysHT[k], ht, htArr, 64, 0, "ht", key);
-                        icSendMIDIoutPB(heldChsKeysHT[k], ht, htArr, velocity, 1, "ht", key);
+                        icSendMIDIoutPB(heldChsKeysHT[k], ht, htObj, 64, 0, "ht", key);
+                        icSendMIDIoutPB(heldChsKeysHT[k], ht, htObj, velocity, 1, "ht", key);
                     }
                 }
             } else if (whatToUpdate === "ht") {
                 if (heldChsKeysHT.length > 0) {
                     for (let k in heldChsKeysHT) {
                         let ht = heldChsHT[heldChsKeysHT[k]].xt;
-                        let htArr = icDHC.tables.ht_table[ht];
+                        let htObj = icDHC.tables.ht_table[ht];
                         let velocity = heldChsHT[heldChsKeysHT[k]].vel;
-                        icSendMIDIoutPB(heldChsKeysHT[k], ht, htArr, 64, 0, "ht", key);
-                        icSendMIDIoutPB(heldChsKeysHT[k], ht, htArr, velocity, 1, "ht", key);
+                        icSendMIDIoutPB(heldChsKeysHT[k], ht, htObj, 64, 0, "ht", key);
+                        icSendMIDIoutPB(heldChsKeysHT[k], ht, htObj, velocity, 1, "ht", key);
                     }
                 }
             }
@@ -372,34 +438,57 @@ function icUpdateMIDInoteON(whatToUpdate) {
     });
 }
 
-function icMIDIout(statusByte, ctrlNoteNumber, xt, xtArr, velocity, state, type) {
-    // For each selected MIDI Output ports
+/**
+ * For each selected MIDI-OUT Port,
+ * prepare the MIDI-OUT message according to the selected MIDI-OUT Tuning Method of the port
+ *
+ * @param {number}      statusByte     - Status Byte of the original MIDI-IN message from the controller
+ * @param {number}      ctrlNoteNumber - MIDI Note number of the original MIDI-IN message from the controller
+ * @param {number}      xt             - Outgoing FT or HT relative tone number
+ * @param {Xtone}       xtObj          - FT or HT object of the outgoing tone 
+ * @param {number}      velocity       - MIDI Velocity amount (from 0 to 127) of the original MIDI-IN message from the controller
+ * @param {(0|1)}       state          - Note ON or OFF; 1 is Note-ON, 0 is Note-OFF
+ * @param {('ft'|'ht')} type           - If the outgoing MIDI message is for FTs or HTs
+ */
+function icMIDIout(statusByte, ctrlNoteNumber, xt, xtObj, velocity, state, type) {
+    // For each selected MIDI-OUT ports
     icSelectedOutputs.forEach((value, key, map) => {
         // PitchBend method
         if (icMIDIoutSettings[key].selected === "pb") {
             // Check the if Instrument MIDI Note Number is in the range 0-127
-            if (Math.trunc(xtArr.mc) <= 127 && Math.trunc(xtArr.mc) >= 0) {
+            if (Math.trunc(xtObj.mc) <= 127 && Math.trunc(xtObj.mc) >= 0) {
                 // Check if another note with the same ctrlNoteNumber came before its respective Note-OFF
-                // @TODO: Manage in different way the Double Note-ON: change index ??
+                // @todo - Manage in different way the Double Note-ON: change index ??
                 if (icMIDIoutSettings[key].pb.channels[type].held[ctrlNoteNumber] && state === 1) {
-                    icSendMIDIoutPB(ctrlNoteNumber, xt, xtArr, 64, 0, type, key);                
-                    icSendMIDIoutPB(ctrlNoteNumber, xt, xtArr, velocity, state, type, key);                
+                    icSendMIDIoutPB(ctrlNoteNumber, xt, xtObj, 64, 0, type, key);                
+                    icSendMIDIoutPB(ctrlNoteNumber, xt, xtObj, velocity, state, type, key);                
                     console.log(type + " MIDI event: Double Note-ON");
                 } else {
-                    icSendMIDIoutPB(ctrlNoteNumber, xt, xtArr, velocity, state, type, key);                
+                    icSendMIDIoutPB(ctrlNoteNumber, xt, xtObj, velocity, state, type, key);                
                 }
             }
-        // @TODO: MIDI Tuning Standard method
+        // @todo - MIDI Tuning Standard method
         } else if (icMIDIoutSettings[key].selected === "mts") {
 
         }
     });
 }
 
-// The main function to manage the multichannel poly-assigment
-// This is to implement the "MIDI Channel Mode 4" aka "Guitar Mode"
-function icSendMIDIoutPB(ctrlNoteNumber, xt, xtArr, velocity, state, type, key) {
-    // @TODO: Some functional Note-OFF must be sent without delay?
+/**
+ * MIDI-OUT Tuning - PITCHBEND METHOD
+ * The main function to manage the multichannel poly-assignment and send the MIDI messages
+ * This is to implement the "MIDI Channel Mode 4" aka "Guitar Mode" for outgoing messages
+ *
+ * @param {number}      ctrlNoteNumber - MIDI Note number of the original MIDI-IN message from the controller
+ * @param {number}      xt             - Outgoing FT or HT relative tone number
+ * @param {Xtone}       xtObj          - FT or HT object of the outgoing tone
+ * @param {number}      velocity       - MIDI Velocity amount (from 0 to 127) of the original MIDI-IN message from the controller
+ * @param {(0|1)}       state          - Note ON or OFF; 1 is Note-ON, 0 is Note-OFF
+ * @param {('ft'|'ht')} type           - If the outgoing MIDI message is for FTs or HTs
+ * @param {number}      key            - ID of the MIDI-OUT Port to send the message to
+ */
+function icSendMIDIoutPB(ctrlNoteNumber, xt, xtObj, velocity, state, type, key) {
+    // @todo - Some functional Note-OFF must be sent without delay?!?
     let usedChs = icMIDIoutSettings[key].pb.channels[type].used;
     let heldChs = icMIDIoutSettings[key].pb.channels[type].held;
     if (usedChs.length > 0 || Object.keys(heldChs).length > 0) {
@@ -407,18 +496,17 @@ function icSendMIDIoutPB(ctrlNoteNumber, xt, xtArr, velocity, state, type, key) 
         let heldOrder = icMIDIoutSettings[key].pb.channels[type].heldOrder;
         let lastCh = icMIDIoutSettings[key].pb.channels[type].last;
         let currCh =  null;
-        let instNoteNumber = Math.trunc(xtArr.mc);
-        let cents = xtArr.mc - Math.trunc(xtArr.mc);
+        let instNoteNumber = Math.trunc(xtObj.mc);
+        let cents = xtObj.mc - Math.trunc(xtObj.mc);
         let midiOutput = icMidi.outputs.get(key);
         if (cents > 0.5) {
-            instNoteNumber = Math.trunc(xtArr.mc + 0.5);
+            instNoteNumber = Math.trunc(xtObj.mc + 0.5);
             cents -= 1;
         }
+        // @todo - Check 8192 or 8191 depending on the +/-amount (since +amount is up to 8191)
         let pbAmount = cents * (8192 / icMIDIoutSettings[key].pb.range[type]) + 8192;
         let outMsgsQueue = [];
-        // let noteMsg = [];
-        // let pbMsg = [];
-
+        // ** FTs **
         if (type === "ft") {
             // Note ON
             if (state === 1) {
@@ -434,7 +522,6 @@ function icSendMIDIoutPB(ctrlNoteNumber, xt, xtArr, velocity, state, type, key) 
                             currCh = ch;
                             // If there are held channels
                             if (heldChsKey.length > 0) {
-                                // console.log("RESTORE CH: " + heldChs[heldChsKey[0]].ch);
                                 // Restore the held-on-hold channel to the used channel array
                                 icMIDIoutSettings[key].pb.channels[type].used.push(heldChs[heldChsKey[0]].ch);
                                 // Make the Note-Off to close the previous note on the last channel
@@ -449,6 +536,17 @@ function icSendMIDIoutPB(ctrlNoteNumber, xt, xtArr, velocity, state, type, key) 
                             icMIDIoutSettings[key].pb.channels[type].used.sort((a, b) => {
                                 return a - b;
                             });
+                            /**
+                             * Held channel' infos during the multi-channel polyphony routing;
+                             *     a Held Channel is a currently busy channel already occupied by an outgoing tone
+                             * 
+                             * @typedef  {Object} HeldChannel
+                             *
+                             * @property {number} ch   - MIDI Channel Number (from 0 to 15)
+                             * @property {number} note - Final MIDI Note Number on the Instrument
+                             * @property {number} vel  - MIDI velocity amount (from 0 to 127)
+                             * @property {number} xt   - Relative tone number (FT or HT)
+                             */
                             // Store the current channel to the held-on-hold channel var in order to avoid over-assignment
                             icMIDIoutSettings[key].pb.channels[type].held[ctrlNoteNumber] = {ch: currCh, note: instNoteNumber, vel: velocity, xt: xt};
                             break;
@@ -463,7 +561,6 @@ function icSendMIDIoutPB(ctrlNoteNumber, xt, xtArr, velocity, state, type, key) 
                         currCh = usedChs[0];
                         // If there are held channels
                         if (heldChsKey.length > 0) {
-                            // console.log("reRESTORE CH: " + heldChs[heldChsKey[0]].ch);
                             // Restore the held-on-hold channel to the used channel array
                             icMIDIoutSettings[key].pb.channels[type].used.push(heldChs[heldChsKey[0]].ch);
                             // Make the Note-Off to close the previous note on the last channel
@@ -502,14 +599,12 @@ function icSendMIDIoutPB(ctrlNoteNumber, xt, xtArr, velocity, state, type, key) 
                     // Re-store the current channel to the held-on-hold channels array in order to avoid over-assignment
                     icMIDIoutSettings[key].pb.channels[type].held[ctrlNoteNumber] = {ch: currCh, note: instNoteNumber, vel: velocity, xt: xt};
                 }
-                // Store the current channel on the global slot for polypony handling
+                // Store the current channel on the global slot for polyphony handling
                 icMIDIoutSettings[key].pb.channels[type].last = currCh;
-                
                 // Make the PitchBend
                 outMsgsQueue.push(icMakeMIDIoutPitchBendMsg(currCh, pbAmount));
                 // Make the Note-On
                 outMsgsQueue.push(icMakeMIDIoutNoteMsg(currCh, 1, instNoteNumber, velocity));
-
             // Note OFF
             } else if (state === 0) {
                 if (icMIDIoutSettings[key].pb.channels[type].held[ctrlNoteNumber]) {
@@ -528,6 +623,7 @@ function icSendMIDIoutPB(ctrlNoteNumber, xt, xtArr, velocity, state, type, key) 
                     delete icMIDIoutSettings[key].pb.channels[type].held[ctrlNoteNumber];
                 }                
             }
+        // ** HTs **
         } else if (type === "ht") {
             // Note ON
             if (state === 1) {
@@ -586,14 +682,12 @@ function icSendMIDIoutPB(ctrlNoteNumber, xt, xtArr, velocity, state, type, key) 
                     // Re-store the current channel to the held-on-hold channels array in order to avoid over-assignment
                     icMIDIoutSettings[key].pb.channels[type].held[ctrlNoteNumber] = {ch: currCh, note: instNoteNumber, vel: velocity, xt: xt};
                 }
-                // Store the current channel on the global slot for polypony handling
+                // Store the current channel on the global slot for polyphony handling
                 icMIDIoutSettings[key].pb.channels[type].last = currCh;
-
                 // Make the PitchBend
                 outMsgsQueue.push(icMakeMIDIoutPitchBendMsg(currCh, pbAmount));
                 // Make the Note-On
                 outMsgsQueue.push(icMakeMIDIoutNoteMsg(currCh, 1, instNoteNumber, velocity));
-
             // Note OFF
             } else if (state === 0) {
                 if (icMIDIoutSettings[key].pb.channels[type].held[ctrlNoteNumber]) {
@@ -627,7 +721,7 @@ function icSendMIDIoutPB(ctrlNoteNumber, xt, xtArr, velocity, state, type, key) 
             }
             // If is a Note-ON or Note-OFF message
             if (outMsgsQueue[i][0] >> 4 === 9 || outMsgsQueue[i][0] >> 4 === 8) {
-                // @TODO: Check this native delay method
+                // @todo - Check this native delay method
                 // outputPort.send(msg, timestamp)
                 // midiOutput.send(outMsgsQueue[i], window.performance.now() + icMIDIoutSettings[key].pb.delay[type]);
                 setTimeout(() => {

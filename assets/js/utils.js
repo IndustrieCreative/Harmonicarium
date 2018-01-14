@@ -4,8 +4,9 @@
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
- * Copyright (C) 2017 by Walter Mantovani (http://armonici.it).
- * Written by Walter Mantovani < armonici.it [*at*] gmail [*dot*] com >.
+ * @license
+ * Copyright (C) 2017-2018 by Walter Mantovani (http://armonici.it).
+ * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,8 +23,8 @@
  */
 
 /** 
- * USER INTERFACE UTILITIES 
- * Provide some useful functions to the UI interaction
+ * @fileoverview USER INTERFACE UTILITIES<br>
+ *     Provide some useful functions to the UI interaction
  */
 
 /* exported icEventLog */
@@ -38,6 +39,9 @@
 
 "use strict";
 
+/**
+ * Initialize the UI Utilities
+ */
 function icUTILSinit() {
     // Get the button that opens the modal controller keymap table
     document.getElementById("HTMLf_controllerKeymapTableShow").addEventListener("click", icCtrlKeymap2HTML);
@@ -46,10 +50,10 @@ function icUTILSinit() {
     document.getElementById("HTMLf_help").addEventListener("click", function() { icHelp("help"); } );
     document.getElementById("HTMLf_credits").addEventListener("click", function() { icHelp("credits"); } );
     
-    // Init H Stack fontsize zoom
+    // Init H Stack font-size zoom
     let hstack_zoom = document.getElementById("HTMLf_hstack_zoom");
     let hstack_fontsize = document.getElementById("HTMLo_hstack_fontsize");
-    // Init Hstack zoom with defaul value
+    // Init H Stack zoom with default value
     hstack_zoom.value = 20;
     hstack_fontsize.style.fontSize = hstack_zoom.value + "px";
     hstack_zoom.setAttribute("data-tooltip", hstack_zoom.value + "px" );
@@ -63,8 +67,13 @@ function icUTILSinit() {
 /*==============================================================================*
  * UI HELP/CREDITS
  *==============================================================================*/
-// Open the Help/Credits panel from the right side
-// Toggle help/credits depending on the command pressed on the menu
+
+/**
+ * Open the Help/Credits panel from the right side.
+ * Toggle help/credits depending on the command pressed on the menu.
+ *
+ * @param {('credits'|'help')} type - If it must open the 'credits' or 'help' panel
+ */
 function icHelp(type) {
     let element = document.getElementById("HTMLf_helpPanel");
     let help = document.getElementById("HTML_helpObj");
@@ -89,10 +98,20 @@ function icHelp(type) {
 /*==============================================================================*
  * UI EVENTS LOG
  *==============================================================================*/
-// Get the HTML Log element and store it to global
+
+/**
+ *  The HTML Log element
+ *
+ * @type {Object}
+ */
 var icEventLogText = document.getElementById("HTMLo_logText");
 icEventLogText.innerHTML = "<p>>>>>>>>> > Welcome to the Harmonicarium!</p><p>...</p><p>..</p><p>.</p>";
-// Log passed infos into the HTML Log element
+
+/**
+ * Log into the HTML Log element the infos passed via the argument
+ *
+ * @param {string} str - Text string describing the event to log
+ */
 function icEventLog(str) {
     let time = new Date();
     let s = time.getSeconds();
@@ -105,8 +124,11 @@ function icEventLog(str) {
     icEventLogText.scrollTop = icEventLogText.scrollHeight;
 }
 
-// EVENTS LOG
-// Open the Event Log panel from the bottom and toggle the open/close button
+/**
+ * Open the Event Log panel from the bottom and toggle the open/close button
+ *
+ * @param {Object} element - HTML element of the Event Log open/close button
+ */
 function icToggleOpenLogBtn(element) {
     if (element.classList.contains("panelShown")) {
         // Closed %
@@ -121,7 +143,10 @@ function icToggleOpenLogBtn(element) {
 /*==============================================================================*
  * UI CONTROLLER KEYMAP TABLE
  *==============================================================================*/
-// Create an HTML table from the controller keymap and write it to the UI under a modal element
+
+/**
+ * Create an HTML table from the controller keymap and write it to the UI under a modal element
+ */
 function icCtrlKeymap2HTML() {
     var txt = "";
     var map = icDHC.tables.ctrl_map;
@@ -164,45 +189,65 @@ function icCtrlKeymap2HTML() {
 /*==============================================================================*
  * UI TONE MONITORS
  *==============================================================================*/
-//MONITOR UI
-function icDHCmonitor(tone, arr, type) {
+
+/**
+ * Monitor UI
+ *
+ * @param  {number}      xt    - FT or HT relative tone number
+ * @param  {Xtone}       xtObj - FT or HT object of the tone
+ * @param  {('ft'|'ht')} type  - If the tone is a FT or HT
+ */
+function icDHCmonitor(xt, xtObj, type) {
     // Apply the controller pitchbend (if present) to the array 
-    arr = icArrayPitchbender(arr);
-    let notename = icGetNoteNameCents(arr.mc);
+    xtObj = icArrayPitchbender(xtObj);
+    let notename = icGetNoteNameCents(xtObj.mc);
     let hzAccuracy = icDHC.settings.global.hz_accuracy;
-    let mcAccuracy = icDHC.settings.global.midicents_accuracy;
+    let mcAccuracy = icDHC.settings.global.cent_accuracy;
     if (type === "ft") {
         // Update the log on MONITOR FT info on the UI
-        document.getElementById("HTMLo_toneMonitorFT_tone").innerHTML = tone;
-        document.getElementById("HTMLo_toneMonitorFT_midicents").innerHTML = arr.mc.toFixed(mcAccuracy);
+        document.getElementById("HTMLo_toneMonitorFT_tone").innerHTML = xt;
+        document.getElementById("HTMLo_toneMonitorFT_midicents").innerHTML = xtObj.mc.toFixed(mcAccuracy + 2);
         document.getElementById("HTMLo_toneMonitorFT_notename").innerHTML = notename[0] + " " + notename[2] + notename[1] + "&cent;";
-        document.getElementById("HTMLo_toneMonitorFT_frequency").innerHTML = arr.hz.toFixed(hzAccuracy);
+        document.getElementById("HTMLo_toneMonitorFT_frequency").innerHTML = xtObj.hz.toFixed(hzAccuracy);
         // Update the log on HSTACK FT info on the UI
-        document.getElementById("HTMLo_hstackFT_tone").innerHTML = tone;
+        document.getElementById("HTMLo_hstackFT_tone").innerHTML = xt;
         document.getElementById("HTMLo_hstackFT_note").innerHTML = notename[0];
         document.getElementById("HTMLo_hstackFT_cents").innerHTML = notename[2] + notename[1];
-        document.getElementById("HTMLo_hstackFT_hz").innerHTML = arr.hz.toFixed(hzAccuracy);
+        document.getElementById("HTMLo_hstackFT_hz").innerHTML = xtObj.hz.toFixed(hzAccuracy);
     } else if (type === "ht") {
         // Update the log on MONITOR HT info on the UI
-        document.getElementById("HTMLo_toneMonitorHT_tone").innerHTML = tone;
-        document.getElementById("HTMLo_toneMonitorHT_midicents").innerHTML = arr.mc.toFixed(mcAccuracy);
+        document.getElementById("HTMLo_toneMonitorHT_tone").innerHTML = xt;
+        document.getElementById("HTMLo_toneMonitorHT_midicents").innerHTML = xtObj.mc.toFixed(mcAccuracy + 2);
         document.getElementById("HTMLo_toneMonitorHT_notename").innerHTML = notename[0] + " " + notename[2] + notename[1] + "&cent;";
-        document.getElementById("HTMLo_toneMonitorHT_frequency").innerHTML = arr.hz.toFixed(hzAccuracy);
+        document.getElementById("HTMLo_toneMonitorHT_frequency").innerHTML = xtObj.hz.toFixed(hzAccuracy);
     }
 }
 
-// MIDI INPUT MONITOR
-function icMIDImonitor(number, velocity, channel, srcElement) {
+/**
+ * MIDI-IN MONITOR
+ *
+ * @param  {number} noteNumber     - MIDI Note number
+ * @param  {number} velocity       - MIDI Velocity amount
+ * @param  {number} channel        - MIDI Channel number
+ * @param  {string} portName       - MIDI Port name
+ */
+function icMIDImonitor(noteNumber, velocity, channel, portName) {
     // Update the log on MIDI MONITOR on the UI
     for (var x = 0; x < 2; x++) {
-        document.getElementById("HTMLo_midiMonitor"+x+"_port").innerHTML = srcElement.name;
-        document.getElementById("HTMLo_midiMonitor"+x+"_note").innerHTML = number;
+        document.getElementById("HTMLo_midiMonitor"+x+"_note").innerHTML = noteNumber;
         document.getElementById("HTMLo_midiMonitor"+x+"_velocity").innerHTML = velocity;
         document.getElementById("HTMLo_midiMonitor"+x+"_channel").innerHTML = channel + 1;
+        document.getElementById("HTMLo_midiMonitor"+x+"_port").innerHTML = portName;
     }
 }
 
-// UI Util to get the note name +/- cents from midi.cents
+/**
+ * UI Util to get the note name +/- cents from midi.cents
+ *
+ * @param  {number} midicents - Pitch in midi.cents
+ *
+ * @return {Array.<string, number, string>} - Array containing [note name, cents, +/- sign]
+ */
 function icGetNoteNameCents(midicents) {
     let notenumber = Math.trunc(midicents);
     let notecents = midicents - notenumber;
@@ -212,16 +257,23 @@ function icGetNoteNameCents(midicents) {
         notecents = 1 - notecents;
         centsign = "&minus;";
     }
-    notecents = (notecents.toFixed(icDHC.settings.global.midicents_accuracy + 2) * 100).toFixed(icDHC.settings.global.midicents_accuracy); 
+    notecents = (notecents.toFixed(icDHC.settings.global.cent_accuracy + 2) * 100).toFixed(icDHC.settings.global.cent_accuracy); 
     return [icMidiToHancock(notenumber)[1], notecents, centsign];
 }
 
 /*==============================================================================*
  * UI H STACK
  *==============================================================================*/
-// Global var useful to icHSTACKfillin
+/**
+ * Global var useful to 'icHSTACKfillin'
+ *
+ * @type {Array.<number>}
+ */
 var icUsedHT = [];
-// HSTACK TABLE CREATE
+
+/**
+ * H Stack table create
+ */
 function icHSTACKcreate() {
     let usedHT = [];
     let hstackHTML = `<table class="dataTable">
@@ -240,8 +292,9 @@ function icHSTACKcreate() {
             usedHT.push(ht);
         }
     }
-    usedHT.sort(icSortNumericArray);
-    // Store in the global var the uniquifized version of the array useful to icHSTACKfillin
+    // Sort the array from max to min
+    usedHT.sort( (a, b) => { return b - a; } );
+    // Store in the global var the uniquified version of the array useful to icHSTACKfillin
     icUsedHT = icUniqArray(usedHT);
     for (let ht in icUsedHT) {
         let htn = icUsedHT[ht];
@@ -256,19 +309,26 @@ function icHSTACKcreate() {
     document.getElementById("HTMLo_hstackHT").innerHTML = hstackHTML;
 
 }
-function icSortNumericArray(a,b) {
-    return b - a;
-}
+
+/**
+ * Remove duplicated values on the array passed via the argument
+ *
+ * @param  {Array.<number>} arrArg - Array of HT numbers
+ *
+ * @return {Array.<number>}        - Uniquified array
+ */
 function icUniqArray(arrArg) {
-    return arrArg.filter(function(elem, pos,arr) {
+      return arrArg.filter(function(elem, pos, arr) {
         return arr.indexOf(elem) == pos;
     });
 }
 
-// HSTACK TABLE FILL-IN
+/**
+ * H Stack table fill-in
+ */
 function icHSTACKfillin() {
     // Empty object to store the HTn data
-    var htArr = {};
+    var htObj = {};
     // For every HT used in the Controller Keymap (icDHC.tables.ctrl_map)
     for (let ht in icUsedHT) {
         // Get the HT number
@@ -276,34 +336,46 @@ function icHSTACKfillin() {
         // If it's not 0
         if (htn !== 0) {
             // Read 'mc' and 'hz' data of the HTn from 'ht_table'
-            htArr = icDHC.tables.ht_table[htn];
+            htObj = icDHC.tables.ht_table[htn];
             // Apply the controller pitchbend (if present) to the array 
-            htArr = icArrayPitchbender(htArr);
+            htObj = icArrayPitchbender(htObj);
             // Get the array containing the standard note name info and +/- cents
-            let notename = icGetNoteNameCents(htArr.mc);
+            let notename = icGetNoteNameCents(htObj.mc);
             // Print the infos to the UI HStack
             document.getElementById("HTMLo_hstackHT_h"+htn).innerHTML = htn;
             document.getElementById("HTMLo_hstackHT_note"+htn).innerHTML = notename[0];
             document.getElementById("HTMLo_hstackHT_cents"+htn).innerHTML = notename[2] + notename[1];
-            document.getElementById("HTMLo_hstackHT_hz"+htn).innerHTML = htArr.hz.toFixed(icDHC.settings.global.hz_accuracy);
+            document.getElementById("HTMLo_hstackHT_hz"+htn).innerHTML = htObj.hz.toFixed(icDHC.settings.global.hz_accuracy);
         }
     }
 }
 
-// Apply the controller pitchbend (if present) to the incoming array
-function icArrayPitchbender(arr) {
+/**
+ * Apply the controller pitchbend (if present) to the incoming object
+ *
+ * @param  {Xtone} xtObj - FT or HT object of the tone to bend
+ *
+ * @return {Object}      - The bent object
+ */
+function icArrayPitchbender(xtObj) {
     // Compute the Controller Pitchbend amount in cents
-    let pitchbend = icDHC.settings.controller.pitchbend.amount * icDHC.settings.controller.pitchbend.range;
+    let pitchbend = icDHC.settings.controller.pb_amount * icDHC.settings.controller.pb_range;
     // Apply the controller pitchbend if present
-    let bentArr = {
-        hz: Math.pow(2, pitchbend / 1200) * arr.hz,
-        mc: (arr.mc + pitchbend / 100)
+    let bentObj = {
+        hz: Math.pow(2, pitchbend / 1200) * xtObj.hz,
+        mc: (xtObj.mc + pitchbend / 100)
     };
-    return bentArr;
+    return bentObj;
 }
 
-// HSTACK NOTE ON/OFF MONITOR
-function icHSTACKmonitor(type, ht, state) {
+/**
+ * H Stack note on/off Monitor
+ *
+ * @param {('ft'|'ht')} type  - If the note to turn ON/OFF is a FT or HT
+ * @param {0|1}         state - Note ON/OFF; 0 is OFF, 1 is ON 
+ * @param {number=}     ht    - HT number (required if type=='ht')
+ */
+function icHSTACKmonitor(type, state, ht) {
     if (type === "ht") {
         // If is a normal HT (it's not HT0)
         if (ht !== 0) {
@@ -346,7 +418,9 @@ function icHSTACKmonitor(type, ht, state) {
 //     console.log(event.keyCode)
 // });
 
-// Button for test purposes
+/**
+ * Button for test/debug purposes
+ */
 function icTESTER() {
     // icEventLog(JSON.stringify(icDHC.tables.ft_table, null, 2).replace(/}|{|"|,/g, ''));
     icEventLog("TEST: Full tables printed out. Look at the console of your browser.");

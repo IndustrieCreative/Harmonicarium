@@ -4,8 +4,9 @@
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
- * Copyright (C) 2017 by Walter Mantovani (http://armonici.it).
- * Written by Walter Mantovani < armonici.it [*at*] gmail [*dot*] com >.
+ * @license
+ * Copyright (C) 2017-2018 by Walter Mantovani (http://armonici.it).
+ * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,8 +23,10 @@
  */
 
  /**
- * MIDI INPUT HANDLER
- * Parse the MIDI input message and do the consequent action.
+ * @fileoverview MIDI-IN HANDLER<br>
+ *     Parse the MIDI-IN message and do the consequent action.
+ * 
+ * @author Walter Mantovani < armonici.it [at] gmail [dot] com >
  */
 
 /* exported icMidiMessageReceived */
@@ -33,10 +36,24 @@
 /*==============================================================================*
  * MAIN MIDI MESSAGE HANDLER
  *==============================================================================*/
-// Initialize the empty output queue buffer (not used at the moment)
-var icOutputBuffer = [];
 
-// Handle the incoming MIDI messages
+/**
+ * Output queue buffer for MIDI messages that must pass through and go out
+ *     (used as logger at the moment)
+ *
+ * @todo - Pass through for most of the MIDI messages
+ *
+ * @type {Array.<OtherMidiMsg>}
+ */
+var icMidiPassThrough = [];
+
+/**
+ * Handle the incoming MIDI messages
+ *
+ * @param {MIDIMessageEvent} midievent           - The MIDI message from {@link icMidi}; see {@link https://webaudio.github.io/web-midi-api/#MIDIMessageEvent|Web MIDI API specs}
+ * @param {Uint8Array}       midievent.data      - The data array (each entry is a 8bit integer)
+ * @param {number}           midievent.timeStamp - The Time-stamp of the message in milliseconds (floating-point number)
+ */
 function icMidiMessageReceived(midievent) {
     // Divide the informations contained in the first byte (Status byte)
     // 4 bits bitwise shift to the right to get the remaining 4 bits representing
@@ -49,14 +66,14 @@ function icMidiMessageReceived(midievent) {
 
     // Handle Piper feature (fake midievent)
     // Default: is not a Piper midievent
-    var piper = 0;
+    var piper = false;
     // Special 4th byte in the 'midievent' containing 'piper' tag
     if (midievent.data[3] === "piper") {
         // If it's a Piper's fake midievent
-        piper = 1;
+        piper = true;
     }
 
-    // @DEBUG: Parsing log
+    // @debug - Parsing log
     // Filter the Active Sensing messages (254 = 0xFE = 11111110)
     // if (midievent.data[0] !== 254) {
     //     var str = "** Incoming MIDI message [" + midievent.data.length + " bytes]: ";
@@ -77,14 +94,14 @@ function icMidiMessageReceived(midievent) {
     // Filter the Active Sensing messages (254 = 0xFE = 11111110)
     if (cmd > 7 && midievent.data[0] !== 254) {
 
-        // @TODO: implement RUNNING STATUS (status byte not repeated on every message)
+        // @todo - implement RUNNING STATUS (status byte not repeated on every message)
         // If the message has at least 3 bytes
         // if (midievent.data.length > 2) {
         //     // Read the velocity from the 3rd byte
         //     velocity = midievent.data[2];
         // }
 
-        // @TODO: implement TRANSMISSION ERRORS HANDLING
+        // @todo - implement TRANSMISSION ERRORS HANDLING
 
         // Note OFF (MIDI note-on with velocity=0 is the same as note-off)
         if (cmd === 8 || ((cmd === 9) && (midievent.data[2] === 0))) {
@@ -93,11 +110,11 @@ function icMidiMessageReceived(midievent) {
         } else if (cmd === 9) {
             // Call note on function
             // Pass the 'piper' argument to avoid loop of Piper's fake midievents
-            // 'statusByte' is useful to the Piper, and with 'timestamp' will be used for MIDI OUT
+            // 'statusByte' is useful to the Piper, and with 'timestamp' will be used for MIDI-OUT
             icNoteON(midievent.data[1], midievent.data[2], midievent.data[0], midievent.timeStamp, piper);
             // Do not MIDI monitor if it's a Piper's fake midievent (FT0)
-            if (piper === 0) {
-                icMIDImonitor(midievent.data[1], midievent.data[2], channel, midievent.srcElement);
+            if (piper === false) {
+                icMIDImonitor(midievent.data[1], midievent.data[2], channel, midievent.srcElement.name);
             }
         // Control Change message or Selects Channel Mode message
         } else if (cmd === 11) {
@@ -108,7 +125,7 @@ function icMidiMessageReceived(midievent) {
             // Handle pitchbend message
             let pitchbendValue = ((midievent.data[2] * 128 + midievent.data[1]) - 8192) / 8192;
             // Store the pitchbend value into global slot: value normalized to [-1 > 0,99987792968750]
-            icDHC.settings.controller.pitchbend.amount = pitchbendValue;
+            icDHC.settings.controller.pb_amount = pitchbendValue;
             // Update the Synth voices frequencies
             icSynthPitchBend();
             // Update the UI Monitors
@@ -116,13 +133,21 @@ function icMidiMessageReceived(midievent) {
         // Other type of MIDI message
         } else {
             console.log("Incoming MIDI > type: Other message...");
-            // Any other type of message pass through (MIDI Thru)
-            icOutputBuffer.push( [midievent.data, timestamp] );
+            // @todo - Any other type of message pass through and go out
+            /**
+             * A MIDI message (data + timestamp)
+             * 
+             * @typedef {Array} OtherMidiMsg
+             *
+             * @property {Uint8Array} 0 - Message; an array of 8-bit unsigned integers
+             * @property {number}     1 - Time-stamp; a floating point number
+             */
+            icMidiPassThrough.push( [midievent.data, timestamp] );
         }
     // Filter the Active Sensing messages (254 = 0xFE = 11111110)
     } else if (midievent.data[0] !== 254) {
-        // @TODO: implement RUNNING STATUS and interprete a message starting with a Data byte
-        // as part of the last recived Status byte
+        // @todo - implement RUNNING STATUS and interpret a message starting with a Data byte
+        // as part of the last received Status byte - Check if the browser do this for us
         
         // Debug
         console.log("Incoming MIDI > NON-STANDARD MIDI Message (maybe RUNNING STATUS). The first 4 bits of the 1st byte of the message (Status byte) has an unexpected value: " + cmd + " = " + cmd.toString(2));
@@ -132,6 +157,15 @@ function icMidiMessageReceived(midievent) {
 /*==============================================================================*
  * MIDI NOTE ON/OFF HANDLING
  *==============================================================================*/
+/**
+ * Send a Note-ON over the app
+ *
+ * @param {number}   ctrlNoteNumber - MIDI note number of the incoming MIDI message
+ * @param {number}   velocity       - Velocity of the incoming MIDI message
+ * @param {number}   statusByte     - Status Byte of the incoming MIDI message
+ * @param {number}   timestamp      - Timestamp of the incoming MIDI message (currently not used)
+ * @param {boolean}  piper          - If is a note generated by the Piper feature; 'false' it's not Piper, 'true' it's Piper
+ */
 function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
     // Get frequency and midi.cents assigned to the incoming MIDI key (ctrlNoteNumber)
     // If the input MIDI key is in the ctrl_map, proceed
@@ -145,9 +179,9 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
         // If the key is mapped to a Fundamental Tone 
         if (ft !== 129) {
             // Get its frequency and midi.cents 
-            var ftArr = icDHC.tables.ft_table[ft];
+            var ftObj = icDHC.tables.ft_table[ft];
             // Recalculate the ht_table passing the frequency (Hz)
-            icDHC.tables.ht_table = icHTtableCreate(ftArr.hz);
+            icDHC.tables.ht_table = icHTtableCreate(ftObj.hz);
             for (let t in icDHC.tables.ftKeyQueue) {
                 // If the key is already pressed
                 if (icDHC.tables.ftKeyQueue[t][ft]) {
@@ -157,7 +191,7 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
                     if (position !== -1) {
                         // Send VoiceOFF to the Synth
                         icVoiceOFF(icDHC.tables.ftKeyQueue[t][ft][1], "ft");
-                        icMIDIout(statusByte, ctrlNoteNumber, ft, ftArr, velocity, 0, "ft");
+                        icMIDIout(statusByte, ctrlNoteNumber, ft, ftObj, velocity, 0, "ft");
                         // Remove the FTn from the ftKeyQueue array
                         icDHC.tables.ftKeyQueue.splice(position, 1);
                     // If the FTn does not exist
@@ -167,19 +201,19 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
                 }
             }
             // Send VoiceON to the Synth
-            icVoiceON(ftArr.hz, ctrlNoteNumber, velocity, "ft");
-            icMIDIout(statusByte, ctrlNoteNumber, ft, ftArr, velocity, 1, "ft");
+            icVoiceON(ftObj.hz, ctrlNoteNumber, velocity, "ft");
+            icMIDIout(statusByte, ctrlNoteNumber, ft, ftObj, velocity, 1, "ft");
             if (icDHC.settings.ht.curr_ft !== ft) {
                 icUpdateMIDInoteON("ht");
             }
-            // Store the current FT into the global slot for future HT table recomputations and UI monitor updates
+            // Store the current FT into the global slot for future HT table re-computations and UI monitor updates
             icDHC.settings.ht.curr_ft = ft;
             // Add to the Key Queue the infos about the current pressed FT key (to manage monophony)
-            icDHC.tables.ftKeyQueue.push( { [ft]: [ftArr.hz, ctrlNoteNumber, velocity] } );
+            icDHC.tables.ftKeyQueue.push( { [ft]: [ftObj.hz, ctrlNoteNumber, velocity] } );
             // Update the UI
-            icDHCmonitor(ft, ftArr, "ft");
+            icDHCmonitor(ft, ftObj, "ft");
             icHSTACKfillin();
-            icHSTACKmonitor("ft", ft, 1);
+            icHSTACKmonitor("ft", 1);
         }
 
         // **HT**
@@ -187,20 +221,20 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
         if (ht !== 129) {
             // If it's a normal HT
             if (ht !== 0) {
-                var htArr = icDHC.tables.ht_table[ht];
+                var htObj = icDHC.tables.ht_table[ht];
                 // Store the current HT into the global slot for future UI monitor updates
-                icDHC.settings.ht.last_ht = ht;
+                icDHC.settings.ht.curr_ht = ht;
                 // Send VoiceON to the Synth
-                icVoiceON(htArr.hz, ctrlNoteNumber, velocity, "ht");
-                icMIDIout(statusByte, ctrlNoteNumber, ht, htArr, velocity, 1, "ht");
+                icVoiceON(htObj.hz, ctrlNoteNumber, velocity, "ht");
+                icMIDIout(statusByte, ctrlNoteNumber, ht, htObj, velocity, 1, "ht");
                 // If the Note ON is not a Piper's fake midievent (FT0)
-                if (piper === 0) {
+                if (piper === false) {
                     // Add the HT to the Pipe
                     icPiper(statusByte, ctrlNoteNumber, velocity, "ht");
                 }
                 // Update the UI
-                icDHCmonitor(ht, htArr, "ht");
-                icHSTACKmonitor("ht", ht, 1);
+                icDHCmonitor(ht, htObj, "ht");
+                icHSTACKmonitor("ht", 1, ht);
             // If HT0 is pressed, it's the Piper feature!
             } else if (ht === 0) {
                 // Note ON the next piped HT
@@ -209,7 +243,7 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
         }
 
         // **FT+HT**
-        // @TODO: Implement the controller-key mapped both to an FT and HT
+        // @todo - Implement the controller-key mapped both to an FT and HT
         
     // If the input MIDI key is NOT in the ctrl_map, the message stop here
     } else {
@@ -219,6 +253,14 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
     icKeyON(ctrlNoteNumber);
 }
 
+/**
+ * Send a Note-OFF over the app
+ *
+ * @param {number} ctrlNoteNumber - MIDI note number of the incoming MIDI message
+ * @param {number} velocity       - Velocity of the incoming MIDI message
+ * @param {number} statusByte     - Status Byte of the incoming MIDI message
+ * @param {number} timestamp      - Timestamp of the incoming MIDI message (currently not used)
+ */
 function icNoteOFF(ctrlNoteNumber, velocity, statusByte, timestamp) {
        // If the input MIDI key is in the ctrl_map, proceed
     if (icDHC.tables.ctrl_map[ctrlNoteNumber]) {
@@ -230,8 +272,8 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusByte, timestamp) {
         // **FT**
         // If the key is mapped to a Fundamental Tone
         if (ft !== 129) {
-            // Get frequency and midi.cents for MIDI-Out polyphony handling
-            var ftArr = icDHC.tables.ft_table[ft];
+            // Get frequency and midi.cents for MIDI-OUT polyphony handling
+            var ftObj = icDHC.tables.ft_table[ft];
             // Search the FT number in the ftKeyQueue array
             var position = icDHC.tables.ftKeyQueue.findIndex(p => p[ft]);
             // If the FTn exist
@@ -246,36 +288,36 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusByte, timestamp) {
             if (icDHC.tables.ftKeyQueue.length === 0) {
                 // Send VoiceOFF to the Synth
                 icVoiceOFF(ctrlNoteNumber, "ft");
-                icMIDIout(statusByte, ctrlNoteNumber, ft, ftArr, velocity, 0, "ft");
-                icHSTACKmonitor("ft", ft, 0);
+                icMIDIout(statusByte, ctrlNoteNumber, ft, ftObj, velocity, 0, "ft");
+                icHSTACKmonitor("ft", 0);
             // Else (if there are other notes) read and play the next note on the ftKeyQueue array
             } else {
+                let nextIndex = icDHC.tables.ftKeyQueue.length - 1;
                 let nextTone = [];
                 // Read the next FT
-                // @TODO: remove this "for...in"
-                for( let t in icDHC.tables.ftKeyQueue[icDHC.tables.ftKeyQueue.length - 1]) {
-                    nextTone = icDHC.tables.ftKeyQueue[icDHC.tables.ftKeyQueue.length - 1][t];
+                // @todo - remove this "for...in"
+                for( let t in icDHC.tables.ftKeyQueue[nextIndex]) {
+                    nextTone = icDHC.tables.ftKeyQueue[nextIndex][t];
                     nextTone.ft = t;
                 }
                 // If the next tone is NOT the active one
                 if (nextTone.ft != icDHC.settings.ht.curr_ft) {
                     // Send VoiceOFF to the Synth
                     icVoiceOFF(ctrlNoteNumber, "ft");
-                    icMIDIout(statusByte, ctrlNoteNumber, ft, ftArr, velocity, 0, "ft");
-                    // Get frequency and midi.cents for MIDI-Out polyphony handling
+                    icMIDIout(statusByte, ctrlNoteNumber, ft, ftObj, velocity, 0, "ft");
+                    // Get frequency and midi.cents for MIDI-OUT polyphony handling
                     var ftNextArr = icDHC.tables.ft_table[nextTone.ft];
                     // Recalculate the ht_table passing the frequency (Hz)
                     icDHC.tables.ht_table = icHTtableCreate(nextTone[0]);
-                    // Store the current FT into the global slot for future HT table recomputations and UI monitor updates
+                    // Store the current FT into the global slot for future HT table re-computations and UI monitor updates
                     icDHC.settings.ht.curr_ft = nextTone.ft;
                     // Send VoiceON to the Synth
                     icVoiceON(nextTone[0], nextTone[1], nextTone[2], "ft");
                     icMIDIout(statusByte, nextTone[1], nextTone.ft, ftNextArr, nextTone[2], 1, "ft");
-                    console.log(statusByte, nextTone[1], nextTone.ft, ftNextArr, velocity, 1, "ft");
                     // Update the UI
-                    icDHCmonitor(nextTone.ft, ftArr, "ft");
+                    icDHCmonitor(nextTone.ft, ftObj, "ft");
                     icHSTACKfillin();
-                    icHSTACKmonitor("ft", ft, 1);
+                    icHSTACKmonitor("ft", 1);
                 }
             }
         }
@@ -285,12 +327,12 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusByte, timestamp) {
         if (ht !== 129) {
             // If it's a normal HT
             if (ht !== 0) {
-                var htArr = icDHC.tables.ht_table[ht];
+                var htObj = icDHC.tables.ht_table[ht];
                 // Send VoiceOFF to the Synth
                 icVoiceOFF(ctrlNoteNumber, "ht");
-                icMIDIout(statusByte, ctrlNoteNumber, ht, htArr, velocity, 0, "ht");
+                icMIDIout(statusByte, ctrlNoteNumber, ht, htObj, velocity, 0, "ht");
                 // Update the UI
-                icHSTACKmonitor("ht", ht, 0);
+                icHSTACKmonitor("ht", 0, ht);
             // If HT0 is pressed, it's the Piper feature
             } else if (ht === 0) {
                 // Note OFF the active piped HT
@@ -307,7 +349,18 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusByte, timestamp) {
  * The Piper store the last N pressed HTs and repeat them when HT0 is pressed
  * simulating a special fake MIDI message
  *==============================================================================*/
-// Piper's default settings
+
+/**
+ * Piper's default settings
+ *
+ * @namespace
+ *
+ * @property {number} maxLenght - How many steps has the Pipe
+ * @property {Array}  queue     - Last HT MIDI Note-ON messages received
+ * @property {Array}  pipe      - MIDI Note-ON messages stored into the Pipe
+ * @property {number} currStep  - Last step played by the Piper
+ * @property {Array}  currTone  - Last fake MIDI Note-ON message send
+ */
 var icPipe = {
     maxLenght: 5,
     queue: [ [144, 66, 120], [144, 67, 120], [144, 65, 120], [144, 60, 120], [144, 62, 120] ],
@@ -316,6 +369,14 @@ var icPipe = {
     currTone: null
 };
 
+/**
+ * Store the last HTs MIDI messages into the Piper's queue
+ *
+ * @param {number}      statusByte     - Status Byte of the incoming MIDI message
+ * @param {number}      ctrlNoteNumber - MIDI note number of the incoming MIDI message
+ * @param {number}      velocity       - Velocity of the incoming MIDI message
+ * @param {('ft'|'ht')} type           - If the MIDI note number of the incoming message is assigned to FTs or HTs
+ */
 function icPiper(statusByte, ctrlNoteNumber, velocity, type) {
     // Prepare the fake MIDI message
     let pack = [statusByte, ctrlNoteNumber, velocity];
@@ -332,7 +393,11 @@ function icPiper(statusByte, ctrlNoteNumber, velocity, type) {
     }
 }
 
-// When HT0 is pressed (or released)
+/**
+ * When HT0 is pressed (or released)
+ *
+ * @param {(0|1)} state - Note ON/OFF; 1 is ON, 0 is OFF
+ */
 function icPiping(state) {
     // Get the index (current step)
     let i = icPipe.currStep;
@@ -394,26 +459,32 @@ function icPiping(state) {
     }
 }
 
-// TEST FUNCTION FOR DYNAMIC PRELOADED PIPER MELODY (...)
-// function icPipeQueueGen(type) {
-//     let ctrlMap = icDHC.tables.ctrl_map;
-//     let melodies = {
-//         h: [9, 10, 8, 4, 6],
-//         s: [-6, -5, -4, -3, -4, -5],
-//         hs: [6, -6, 6, -6, 6, -6]
-//     };
-//     let msgsQueue = [];
-//     for (let tone of melodies[type]) {
-//         let once = 0;
-//         for (let key of Object.keys(ctrlMap)) {
-//             for (let m = 1; m < 128; m *= 2) {
-//                 if (ctrlMap[key].ht === tone * m && once === 0) {
-//                     msgsQueue.push([144, Number(key), 120]);
-//                     once++;
-//                 }            
-//             }
-//         }
-//     }
-//     icPipe.maxLenght = document.getElementById("HTMLi_dhc_piperSteps").value = msgsQueue.length;
-//     icPipe.queue = msgsQueue;
-// }
+/**
+ * Experimental function for dynamic preloaded piper melody (...)
+ *
+ * @todo - The preloaded Pipe must use only available keys
+ * 
+ * @param {('h'|'s'|'hs')} type - The HTs scale type of the current Controller keymap
+ */
+function icPipeQueueGen(type) {
+    let ctrlMap = icDHC.tables.ctrl_map;
+    let melodies = {
+        h: [9, 10, 8, 4, 6],
+        s: [-6, -5, -4, -3, -4, -5],
+        hs: [6, -6, 6, -6, 6, -6]
+    };
+    let msgsQueue = [];
+    for (let tone of melodies[type]) {
+        let once = 0;
+        for (let key of Object.keys(ctrlMap)) {
+            for (let m = 1; m < 128; m *= 2) {
+                if (ctrlMap[key].ht === tone * m && once === 0) {
+                    msgsQueue.push([144, Number(key), 120]);
+                    once++;
+                }            
+            }
+        }
+    }
+    icPipe.maxLenght = document.getElementById("HTMLi_dhc_piperSteps").value = msgsQueue.length;
+    icPipe.queue = msgsQueue;
+}

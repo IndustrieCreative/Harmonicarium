@@ -4,8 +4,9 @@
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
- * Copyright (C) 2017 by Walter Mantovani (http://armonici.it).
- * Written by Walter Mantovani < armonici.it [*at*] gmail [*dot*] com >.
+ * @license
+ * Copyright (C) 2017-2018 by Walter Mantovani (http://armonici.it).
+ * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,9 +22,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * MIDI I/O
- * This part provide the access to the Web MIDI API
+ /**
+ * @fileoverview MIDI I/O<br>
+ *     This part provide the access to the Web MIDI API
+ *               
+ * @author Walter Mantovani < armonici.it [at] gmail [dot] com >
  */
 
 "use strict";
@@ -31,17 +34,41 @@
 /*==============================================================================*
  * MAIN MIDI OBJECTS
  *==============================================================================*/
-// Initialize the global MIDIAccess object
+/**
+ * The global MIDIAccess object
+ * 
+ * @see {@link https://webaudio.github.io/web-midi-api/#MIDIAccess|Web MIDI API specs} for 'MIDIAccess'
+ *
+ * @type {MIDIAccess}
+ */
 var icMidi = null;
 
-// Initialize the global map of selected MIDI outputs
+/**
+ * The global map of selected MIDI outputs
+ *
+ * @type {Map}
+ */
 var icSelectedOutputs = new Map();
 
-// Get the UI HTML elements that contain the MIDI I/O checkboxes (need to be global ??)
+/**
+ * The UI HTML elements that contain the MIDI-IN checkboxes (need to be global ??)
+ *
+ * @type {Object}
+ */
 var icHTMLelementInputs = document.getElementById("HTMLo_inputPorts");
+
+/**
+ * The UI HTML elements that contain the MIDI-OUT checkboxes (need to be global ??)
+ *
+ * @type {Object}
+ */
 var icHTMLelementOutputs = document.getElementById("HTMLo_outputPorts");
 
-// Variable to check if there is at least some MIDI ports...
+/**
+ * Data structure to keep track of how many ports are available and how many are used
+ *
+ * @type {Object}
+ */
 var icAtLeastOneMidi = {
     availablePort: {
         input: 0,
@@ -58,20 +85,30 @@ if (navigator.requestMIDIAccess) {
     navigator.requestMIDIAccess().then(icOnMidiInit, icOnMidiReject);
 } else {
     // If MIDIAccess does not exist
-    // https://webaudiodemos.appspot.com/namm/#/11
+    // @see - https://webaudiodemos.appspot.com/namm/#/11
     icEventLog("Unfortunately, your browser does not seem to support Web MIDI API.");
 }
 
-// On MIDI Access error, if MIDIAccess exist but there is another kind of problem
+/**
+ * What to do on MIDI Access error, if MIDIAccess exist but there is another kind of problem
+ *
+ * @see {@link https://webaudio.github.io/web-midi-api/#extensions-to-the-navigator-interface|Web MIDI API specs}
+ *
+ * @param  {DOMException} error - Possible error
+ */
 function icOnMidiReject(error) {
     icEventLog("Failed to get MIDI access because: " + error);
 }
 
-// On MIDI Access, when MIDI is initialized
-function icOnMidiInit(MidiAccess) {
+/**
+ * What to do on MIDI Access, when MIDI is initialized
+ *
+ * @param  {MIDIAccess} MidiAccess - The MIDIAccess object; see the {@link https://webaudio.github.io/web-midi-api/#MIDIAccess|Web MIDI API specs}
+ */
+function icOnMidiInit(midiAccess) {
     icEventLog("Luckily, your browser seems to support the Web MIDI API!");
     // Store in the global ??(in real usage, would probably keep in an object instance)??
-    icMidi = MidiAccess;
+    icMidi = midiAccess;
     // UI INITIALIZATION
     // Button to open the MIDI settings
     document.getElementById("HTMLf_motPanelModalShow").addEventListener("click", icOpenMidiPanel);
@@ -89,22 +126,31 @@ function icOnMidiInit(MidiAccess) {
     // When the state or an attribute of any port changes
     // Execute the Midi State Refresh function with the Event as argument
     icMidi.onstatechange = icMidiStateRefresh;
-    // Check the MIDI input ports available
-    icCheckAtLeastOneMidi("io", 0);
+    // Check the MIDI-IN ports available
+    icCheckAtLeastOneMidi("io", false);
 }
 
 /*==============================================================================*
  * MIDI PORTS HW/UI HANDLING 
  *==============================================================================*/
-// Log on the Event Log the informations about a single input or output port
+/**
+ * Log on the Event Log the informations about a single input or output port
+ *
+ * @param {MIDIPort} midiPort - The MIDI port; see the {@link https://webaudio.github.io/web-midi-api/#MIDIPort|Web MIDI API specs}
+ */
 function icPortLogger(midiPort) {
     // let icPortInfos = icPort.state + " " + icPort.type + " port | id: " + icPort.id + " | name: " + icPort.name + " | manufacturer: " + icPort.manufacturer + " | version:" + icPort.version + " | connection: " + icPort.connection;
     let portInfos = midiPort.type + " port: " + midiPort.name + " | " + midiPort.state + ": " + midiPort.connection;
     icEventLog(portInfos);
 }
 
-// Create a single checkbox and its label in a div.
-// Assign the onclick event to the the checkbox.
+/**
+ * Create a single checkbox and its label in a div.
+ * Assign the onclick event to the the checkbox.
+ *
+ * @param {MIDIPort} midiPort    - The MIDI port; see the {@link https://webaudio.github.io/web-midi-api/#MIDIPort|Web MIDI API specs}
+ * @param {Object}   htmlElement - The 'div' containers of the ports on UI ('icHTMLelementInputs' or 'icHTMLelementOutputs')
+ */
 function icCreatePortCheckbox(midiPort, htmlElement) {
     // DIV
     // Create the <div> container
@@ -145,8 +191,14 @@ function icCreatePortCheckbox(midiPort, htmlElement) {
     portSelectorDiv.appendChild(portSelectorLabel);
 }
 
-// onclick event from the port checkbox
-// Listen for any MIDI input from the selected MIDI port on the HTML checkbox
+/**
+ * If an Input port has been selected, open that port and start to listen from it.
+ * If an Output port has been selected, start to send MIDI messages to that port.
+ * The function is invoked when a HTML checkbox has been clicked.
+ * 
+ * @param {Event}   event                - OnClick event on the MIDI I/O Ports checkboxes
+ * @param {boolean} event.target.checked - Checkbox checked or not
+ */
 function icPortSelect(event) {
     let elem = event.target;
     // let alterPortType = elem.className === "input" ? "outputs" : "inputs";
@@ -198,8 +250,13 @@ function icPortSelect(event) {
     // });
 }
 
-// Midi State Refresh for hot (un)plugging - Event from MidiAccess.onstatechange
-// Update the informations about the state of the MIDI devices in the HTML UI
+/**
+ * Midi State Refresh for hot (un)plugging
+ * Update the informations about the state of the MIDI ports/devices in the HTML UI
+ *
+ * @param  {MIDIConnectionEvent} event      - Event from MidiAccess.onstatechange; see the {@link https://webaudio.github.io/web-midi-api/#MIDIConnectionEvent|Web MIDI API specs}
+ * @param  {MIDIPort}            event.port - The MIDI Port; see the {@link https://webaudio.github.io/web-midi-api/#MIDIPort|Web MIDI API specs}
+ */
 function icMidiStateRefresh(event) {
     var midiPort = event.port;
     var htmlElement = null;
@@ -214,14 +271,14 @@ function icMidiStateRefresh(event) {
                 if (inputPortSelector.checked === true) {
                     icAtLeastOneMidi.openPort.input--;
                 }
-                // Check the available MIDI input ports
-                icCheckAtLeastOneMidi("i", 0);
+                // Check the available MIDI-IN ports
+                icCheckAtLeastOneMidi("i", false);
             } else if (midiPort.type === "output") {
                 if (inputPortSelector.checked === true) {
                     icAtLeastOneMidi.openPort.output--;
                 }
-                // Check the available MIDI output ports
-                icCheckAtLeastOneMidi("o", 0);
+                // Check the available MIDI-OUT ports
+                icCheckAtLeastOneMidi("o", false);
             }
             // Remove the checkbox
             inputPortSelectorDiv.remove();
@@ -257,18 +314,23 @@ function icMidiStateRefresh(event) {
     }
 }
 
-// Check if there is at least one MIDI ports available (I or O)
-// Check if there is at least one MIDI ports open (I or O)
-// (xPut: "i/o/io", isOpen: 0/1)
+/**
+ * Check if there is at least one available MIDI port (Input or Output)
+ * Check if there is at least one open MIDI port (Input or Output)
+ *
+ * @param  {('i'|'o'|'io')}  xPut   - Check for Input ('i'), Output port ('o') or both ('io')
+ * @param  {Boolean}         isOpen - false: Check if there are ports selected and used by the user
+ *                                    true:  Check if there are available ports
+ */
 function icCheckAtLeastOneMidi(xPut, isOpen) {
     icAtLeastOneMidi.availablePort.input = icMidi.inputs.size;
     icAtLeastOneMidi.availablePort.output = icMidi.outputs.size;
     let msg = "";
-    if (isOpen === 0) {
+    if (isOpen === false) {
         switch (xPut) {
             case "io":
                 if (icAtLeastOneMidi.availablePort.input === 0 && icAtLeastOneMidi.availablePort.output === 0) {
-                    msg = "NO MIDI INPUT/OUTPUT PORTS AVAILABLE.\nTo best use this software, connect:\n– MIDI Controller >> incoming MIDI port\n– MIDI Instrument >> outgoing MIDI port";
+                    msg = "NO MIDI-IN/OUT PORTS AVAILABLE.\nTo best use this software, connect:\n– MIDI Controller >> incoming MIDI port\n– MIDI Instrument >> outgoing MIDI port";
                     icEventLog(msg);
                     // alert(msg);
                     break;
@@ -276,7 +338,7 @@ function icCheckAtLeastOneMidi(xPut, isOpen) {
                 // Fall through
             case "i":
                 if (icAtLeastOneMidi.availablePort.input === 0) {
-                    msg = "NO MIDI INPUT PORTS AVAILABLE!\nTo best use this software, an Input MIDI Controller is recommended.\nIn order to connect a MIDI Controller, at least one MIDI input port is required.";
+                    msg = "NO MIDI-IN PORTS AVAILABLE!\nTo best use this software, an Input MIDI Controller is recommended.\nIn order to connect a MIDI Controller, at least one MIDI-IN port is required.";
                     icEventLog(msg);
                     // alert(msg);
                     break;
@@ -284,33 +346,33 @@ function icCheckAtLeastOneMidi(xPut, isOpen) {
                 // Fall through
             case "o":
                 if (icAtLeastOneMidi.availablePort.output === 0) {
-                    msg = "NO MIDI OUTPUT PORTS AVAILABLE!\nIn order to retune and play a MIDI Instrument, an Output MIDI Port is required.";
+                    msg = "NO MIDI-OUT PORTS AVAILABLE!\nIn order to retune and play a MIDI Instrument, an Output MIDI Port is required.";
                     icEventLog(msg);
                     // alert(msg);
                 }
                 break;
         }
-    //@TODO: isOpen NOT USED YET
+    // @todo - isOpen NOT USED YET
     //Use isOpen to check if the user selected an output port
-    } else if (isOpen === 1) {
+    } else if (isOpen === true) {
         switch (xPut) {
             case "i":
                 if (icAtLeastOneMidi.openPort.input === 0) {
-                    msg = "You have to select at least one MIDI INPUT port.";
+                    msg = "You have to select at least one MIDI-IN port.";
                     icEventLog(msg);
                     alert(msg);
                 }
                 break;
             case "o":
                 if (icAtLeastOneMidi.openPort.output === 0) {
-                    msg = "You have to select at least one MIDI OUTPUT port.";
+                    msg = "You have to select at least one MIDI-OUT port.";
                     icEventLog(msg);
                     alert(msg);
                 }
                 break;
             case "io":
                 if (icAtLeastOneMidi.openPort.input === 0 && icAtLeastOneMidi.openPort.output === 0) {
-                    msg = "You have to select at least one MIDI INPUT and one MIDI OUTPUT port.";
+                    msg = "You have to select at least one MIDI-IN and one MIDI-OUT port.";
                     icEventLog(msg);
                     alert(msg);
                 }
