@@ -6,71 +6,82 @@ TASK PRIORITY LEVEL
 ------------------------------------------------------------
             < GENERAL >
 
-@TODO: Fix deprecated node.value in synth.js (before January 2018)
-@TODO: Implement a little barebone MIDI file player
-    @TODO: ** Disconnect all voices before delete them (?)
-    @TODO: ** Virtual keyboard PC KEYS custom maps (bypass Qwerty Hancock)
-    @TODO: Useful MIDI messages (program, panic...)
-        @TODO: ** FT SETTING (tuning files)
-        @TODO: ** SYNTH - Implement load reverb from Net
-        @TODO: Transfer this list to the GitHub Issues section
-        @TODO: LISSAJOUS, OSCILLOSCOPE, SPECTRUM, SPECTROGRAM
-        @TODO: Integrate an overtone spiral view & UI (es. from https://github.com/sunyatasattva/overtones/ but maybe problem due to new CPAL license?)
-            @TODO: ** Implement polyrithm section
-            @TODO: Implement a duplicable HSTACK > MULTIPLE HSTACK, each one assigned (follows) to an FT (to compare)
-            @TODO: Global Hz/MIDI.cents ACCURACY LIMIT for error-known scientific applications
-            @TODO: Load files with WORKER-SERVICE
-            @TODO: Implement dynamic FT_BASE table: SET RANGE (MAX) > REMOVE FT_BASE table
-            @TODO: Implement dynamic HT_TABLE: SET RANGE (MAX)
-            @TODO: Accuracy UP/DOWN arrows increase/decrease ZEROS (NOT +/- step)
-            @TODO: Check the change of the "PITCHBEND RANGE" parameter on UI (DHC Settings) during bending events via MIDI
-            @TODO: Implement "HOLD" on the virtual keyboard
-            @TODO: Responsive QWERTY HANCOCK keyboard (adapt to the display width)
-            @TODO: different key colors for FT-HT Subharmonics / FT0 ??
-            @TODO: Export/Store the DHC+Synth settings to JSON
-            @TODO: Implement different keymap per MIDI input port (very messed up!) -> Use an ad-hoc "big" Controller keymap and set the right octave-offset on each controller
+@todo - Fix deprecated node.value in synth.js (before January 2018)
+@todo - Implement a little barebone MIDI file player
+    @todo - ** Disconnect all voices before delete them (?)
+    @todo - ** Virtual keyboard PC KEYS custom maps (bypass Qwerty Hancock)
+    @todo - Useful MIDI messages (program, panic...)
+        @todo - ** FT SETTING (tuning files)
+        @todo - ** SYNTH - Implement load reverb from Net
+        @todo - Transfer this list to the GitHub Issues section
+        @todo - LISSAJOUS, OSCILLOSCOPE, SPECTRUM, SPECTROGRAM
+        @todo - Integrate an overtone spiral view & UI (es. from https://github.com/sunyatasattva/overtones/ but maybe problem due to new CPAL license?)
+        @todo - The HTs' volume sould be inversely proportional to the frequency
+            @todo - ** Implement polyrithm section
+            @todo - Implement a duplicable HSTACK > MULTIPLE HSTACK, each one assigned (follows) to an FT (to compare)
+            @todo - Global Hz/MIDI.cents ACCURACY LIMIT for error-known scientific applications
+            @todo - Load files with WORKER-SERVICE
+            @todo - Implement dynamic FT_BASE table: SET RANGE (MAX) > REMOVE FT_BASE table
+            @todo - Implement dynamic HT_TABLE: SET RANGE (MAX)
+            @todo - Accuracy UP/DOWN arrows increase/decrease ZEROS (NOT +/- step)
+            @todo - Check the change of the "PITCHBEND RANGE" parameter on UI (DHC Settings) during bending events via MIDI
+            @todo - Implement "HOLD" on the virtual keyboard
+            @todo - Responsive QWERTY HANCOCK keyboard (adapt to the display width)
+            @todo - different key colors for FT-HT Subharmonics / FT0 ??
+            @todo - Export/Store the DHC+Synth settings to JSON
+            @todo - Implement different keymap per MIDI-IN port (very messed up!) -> Use an ad-hoc "big" Controller keymap and set the right octave-offset on each controller
 
             ------------------------------------------------
             < dhc.js >
 
-            @TODO: Enharmonic note naming: "sharp", "flat" or "relative"
-            @TODO: MIDI Tuning Standard method
-            @TODO: Voice stealing management ON/OFF. Now stealing is always ON
-    @TODO: Tuning file formats
-    @TODO: TUNING FILES FT
-            @TODO: implement custom H/S table lenght (16>32>64>128) to increase performances if needed
-            @TODO: BUILD THE INSTRUMENT TABLE {inst_table}
+            @todo - Enharmonic note naming: "sharp", "flat" or "relative"
+            @todo - MIDI Tuning Standard method
+            @todo - Voice stealing management ON/OFF. Now stealing is always ON
+    @todo - Tuning file formats
+            @todo - Tables for MTS MIDI-OUT tuning method
+    @todo - TUNING FILES FT
+            @todo - implement custom H/S table lenght (16>32>64>128) to increase performances if needed
+            @todo - BUILD THE INSTRUMENT TABLE {inst_table}
 
             ------------------------------------------------
-            < midi-input.js >
+            < midi-in.js >
 
-            @TODO: implement RUNNING STATUS (status byte not repeated on every message)
-            @TODO: implement TRANSMISSION ERRORS HANDLING
-            @TODO: implement RUNNING STATUS and interprete a message starting with a Data byte
-            @TODO: Implement the controller-key mapped both to an FT and HT
-            @TODO: remove this "for...in"
+            @todo - Pass through for most of the MIDI messages
+            @todo - implement RUNNING STATUS (status byte not repeated on every message)
+            @todo - implement TRANSMISSION ERRORS HANDLING
+            @todo - Any other type of message pass through and go out
+            @todo - implement RUNNING STATUS and interprete a message starting with a Data byte
+            @todo - Implement the controller-key mapped both to an FT and HT
+            @todo - The preloaded Pipe must use only available keys
+
+            ------------------------------------------------
+            < keyboard.js >
+
+            @todo - Why it work without reset 'icKeyboard.keyDown' 'icKeyboard.keyUp' ??
 
             ------------------------------------------------
             < synth.js >
 
-            @TODO: merge icVoices into icSYNTH (?)
-            @TODO: finish the visualiser
-        @TODO: Implement XMLHttpRequest() to get IR reverbs from URLs on the net
-        @TODO: Apply the normal envelope ADS to the updated voice (like the "new" "ft")
-            @TODO: implement the limit of polyphony
+            @todo - merge icVoices into icSYNTH (?)
+            @todo - finish the visualiser
+        @todo - Implement XMLHttpRequest() to get IR reverbs from URLs on the net
+        @todo - Apply the normal envelope ADS to the updated voice (like the "new" "ft")
+            @todo - implement the limit of polyphony
 
             ------------------------------------------------
             < midi-ports.js >
 
-            @TODO: isOpen NOT USED YET
-                - Use isOpen to check if the user selected an output port
+            @todo - isOpen NOT USED YET
+            >>>>>>> Use isOpen to check if the user selected an output port
 
             ------------------------------------------------
-            < midi-output.js >
-            @TODO: Send all Note-OFF and re-init the last channel in order to avoit stuck notes (??)
-    @TODO: The voice stealing implementation of the MIDI out has not the same results of the DHC/Synth
-        - When voices are overloaded on HT and you release a key on the controller there is a different behaviour
-            @TODO: Manage in different way the Double Note-ON: change index ??
-            @TODO: MIDI Tuning Standard method
-    @TODO: Some functional Note-OFF must be sent without delay?
-    @TODO: Check other delay method (see example below)
+            < midi-out.js >
+
+            @todo - Send all Note-OFF and re-init the last channel in order to avoit stuck notes (??)
+    @todo - The voice stealing implementation of the MIDI out has not the same results of the DHC/Synth
+    >>>>>>> When voices are overloaded on HT and you release a key on the controller there is a different behaviour
+            @todo - Manage in different way the Double Note-ON: change index ??
+            @todo - MIDI Tuning Standard method
+    @todo - Some functional Note-OFF must be sent without delay?
+    @todo - Check 8192 or 8191 depending on the +/-amount (since +amount is up to 8191)
+    @todo - Check native delay method
