@@ -369,7 +369,7 @@ var icDHC = {
          * 
          * @memberof icDHC.tables
          *
-         * @type {Array.<Object.<number, Array.<number>>>}
+         * @type {Array.<Array.<number>>}
          */
         ftKeyQueue: []
     }

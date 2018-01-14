@@ -182,15 +182,15 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
             var ftObj = icDHC.tables.ft_table[ft];
             // Recalculate the ht_table passing the frequency (Hz)
             icDHC.tables.ht_table = icHTtableCreate(ftObj.hz);
-            for (let t in icDHC.tables.ftKeyQueue) {
+            for (let key of icDHC.tables.ftKeyQueue) {
                 // If the key is already pressed
-                if (icDHC.tables.ftKeyQueue[t][ft]) {
+                if (key[3] === ft) {
                     // Search the FT number in the ftKeyQueue array
-                    var position = icDHC.tables.ftKeyQueue.findIndex(p => p[ft]);
+                    var position = icDHC.tables.ftKeyQueue.findIndex(p => p[3] === ft);
                     // If the FTn exist
                     if (position !== -1) {
                         // Send VoiceOFF to the Synth
-                        icVoiceOFF(icDHC.tables.ftKeyQueue[t][ft][1], "ft");
+                        icVoiceOFF(key[1], "ft");
                         icMIDIout(statusByte, ctrlNoteNumber, ft, ftObj, velocity, 0, "ft");
                         // Remove the FTn from the ftKeyQueue array
                         icDHC.tables.ftKeyQueue.splice(position, 1);
@@ -209,7 +209,7 @@ function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
             // Store the current FT into the global slot for future HT table re-computations and UI monitor updates
             icDHC.settings.ht.curr_ft = ft;
             // Add to the Key Queue the infos about the current pressed FT key (to manage monophony)
-            icDHC.tables.ftKeyQueue.push( { [ft]: [ftObj.hz, ctrlNoteNumber, velocity] } );
+            icDHC.tables.ftKeyQueue.push( [ftObj.hz, ctrlNoteNumber, velocity, ft] );
             // Update the UI
             icDHCmonitor(ft, ftObj, "ft");
             icHSTACKfillin();
@@ -275,7 +275,7 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusByte, timestamp) {
             // Get frequency and midi.cents for MIDI-OUT polyphony handling
             var ftObj = icDHC.tables.ft_table[ft];
             // Search the FT number in the ftKeyQueue array
-            var position = icDHC.tables.ftKeyQueue.findIndex(p => p[ft]);
+            var position = icDHC.tables.ftKeyQueue.findIndex(p => p[3] === ft);
             // If the FTn exist
             if (position !== -1) {
                 // Remove the FTn from the ftKeyQueue array
@@ -292,30 +292,25 @@ function icNoteOFF(ctrlNoteNumber, velocity, statusByte, timestamp) {
                 icHSTACKmonitor("ft", 0);
             // Else (if there are other notes) read and play the next note on the ftKeyQueue array
             } else {
-                let nextIndex = icDHC.tables.ftKeyQueue.length - 1;
-                let nextTone = [];
                 // Read the next FT
-                // @todo - remove this "for...in"
-                for( let t in icDHC.tables.ftKeyQueue[nextIndex]) {
-                    nextTone = icDHC.tables.ftKeyQueue[nextIndex][t];
-                    nextTone.ft = t;
-                }
+                let nextIndex = icDHC.tables.ftKeyQueue.length - 1;
+                let nextTone = icDHC.tables.ftKeyQueue[nextIndex];
                 // If the next tone is NOT the active one
-                if (nextTone.ft != icDHC.settings.ht.curr_ft) {
+                if (nextTone[3] !== icDHC.settings.ht.curr_ft) {
                     // Send VoiceOFF to the Synth
                     icVoiceOFF(ctrlNoteNumber, "ft");
                     icMIDIout(statusByte, ctrlNoteNumber, ft, ftObj, velocity, 0, "ft");
                     // Get frequency and midi.cents for MIDI-OUT polyphony handling
-                    var ftNextArr = icDHC.tables.ft_table[nextTone.ft];
+                    var ftNextArr = icDHC.tables.ft_table[nextTone[3]];
                     // Recalculate the ht_table passing the frequency (Hz)
                     icDHC.tables.ht_table = icHTtableCreate(nextTone[0]);
                     // Store the current FT into the global slot for future HT table re-computations and UI monitor updates
-                    icDHC.settings.ht.curr_ft = nextTone.ft;
+                    icDHC.settings.ht.curr_ft = nextTone[3];
                     // Send VoiceON to the Synth
                     icVoiceON(nextTone[0], nextTone[1], nextTone[2], "ft");
-                    icMIDIout(statusByte, nextTone[1], nextTone.ft, ftNextArr, nextTone[2], 1, "ft");
+                    icMIDIout(statusByte, nextTone[1], nextTone[3], ftNextArr, nextTone[2], 1, "ft");
                     // Update the UI
-                    icDHCmonitor(nextTone.ft, ftObj, "ft");
+                    icDHCmonitor(nextTone[3], ftObj, "ft");
                     icHSTACKfillin();
                     icHSTACKmonitor("ft", 1);
                 }

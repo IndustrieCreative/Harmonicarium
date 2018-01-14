@@ -151,19 +151,19 @@ function icCtrlKeymap2HTML() {
     var txt = "";
     var map = icDHC.tables.ctrl_map;
     txt += '<table class="dataTable"><tr><th>MIDI #</th><th>FT</th><th>HT</th></tr>';
-    for (let key in map) {
+    for (let key of Object.entries(map)) {
         let ft, ht = "";
-        if (map[key].ft === 129) {
+        if (key[1].ft === 129) {
             ft = "N/A";
         } else {
-            ft = map[key].ft;
+            ft = key[1].ft;
         }
-        if (map[key].ht === 129) {
+        if (key[1].ht === 129) {
             ht = "N/A";
         } else {
-            ht = map[key].ht;
+            ht = key[1].ht;
         }
-        txt += "<tr><td>" + key + "</td><td>" + ft + "</td><td>" + ht + "</td></tr>";
+        txt += "<tr><td>" + key[0] + "</td><td>" + ft + "</td><td>" + ht + "</td></tr>";
     }
     txt += "<tr><th>MIDI #</th><th>FT</th><th>HT</th></tr></table>";
     document.getElementById("HTMLo_controllerKeymapTable").innerHTML = txt;
@@ -286,8 +286,8 @@ function icHSTACKcreate() {
                             <th width="30%" class="hstackHT_cents">cents</th>
                             <th width="42%" class="hstackHT_hz">Hz</th>
                         </tr>`;
-    for (let key in icDHC.tables.ctrl_map) {
-        let ht = icDHC.tables.ctrl_map[key].ht;
+    for (let key of Object.entries(icDHC.tables.ctrl_map)) {
+        let ht = key[1].ht;
         if (ht !== 129 && ht !== 0) {
             usedHT.push(ht);
         }
@@ -296,8 +296,7 @@ function icHSTACKcreate() {
     usedHT.sort( (a, b) => { return b - a; } );
     // Store in the global var the uniquified version of the array useful to icHSTACKfillin
     icUsedHT = icUniqArray(usedHT);
-    for (let ht in icUsedHT) {
-        let htn = icUsedHT[ht];
+    for (let htn of icUsedHT) {
         hstackHTML += '<tr id="HTMLf_hstackHTrow_h'+htn+'" class="HToff">';
         hstackHTML += '<td class="hstackHT_h" id="HTMLo_hstackHT_h'+htn+'">'+htn+'</td>';
         hstackHTML += '<td class="hstackHT_note" id="HTMLo_hstackHT_note'+htn+'"></td>';
@@ -330,9 +329,7 @@ function icHSTACKfillin() {
     // Empty object to store the HTn data
     var htObj = {};
     // For every HT used in the Controller Keymap (icDHC.tables.ctrl_map)
-    for (let ht in icUsedHT) {
-        // Get the HT number
-        var htn = icUsedHT[ht];
+    for (let htn of icUsedHT) {
         // If it's not 0
         if (htn !== 0) {
             // Read 'mc' and 'hz' data of the HTn from 'ht_table'
