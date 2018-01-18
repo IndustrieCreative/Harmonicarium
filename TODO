@@ -23,13 +23,13 @@ TASK PRIORITY LEVEL
             @todo - Load files with WORKER-SERVICE
             @todo - Implement dynamic FT_BASE table: SET RANGE (MAX) > REMOVE FT_BASE table
             @todo - Implement dynamic HT_TABLE: SET RANGE (MAX)
-            @todo - Accuracy UP/DOWN arrows increase/decrease ZEROS (NOT +/- step)
             @todo - Check the change of the "PITCHBEND RANGE" parameter on UI (DHC Settings) during bending events via MIDI
             @todo - Implement "HOLD" on the virtual keyboard
             @todo - Responsive QWERTY HANCOCK keyboard (adapt to the display width)
             @todo - different key colors for FT-HT Subharmonics / FT0 ??
             @todo - Export/Store the DHC+Synth settings to JSON
-            @todo - Implement different keymap per MIDI-IN port (very messed up!) -> Use an ad-hoc "big" Controller keymap and set the right octave-offset on each controller
+            @todo - 
+            @todo - wontfix - Implement different keymap per MIDI-IN port (very messed up!) -> Use an ad-hoc "big" Controller keymap and set the right octave-offset on each controller
 
             ------------------------------------------------
             < dhc.js >
@@ -80,7 +80,7 @@ TASK PRIORITY LEVEL
             @todo - Send all Note-OFF and re-init the last channel in order to avoit stuck notes (??)
     @todo - The voice stealing implementation of the MIDI out has not the same results of the DHC/Synth
     >>>>>>> When voices are overloaded on HT and you release a key on the controller there is a different behaviour
-            @todo - Manage in different way the Double Note-ON: change index ??
+    @todo - Manage in different way the Double Note-ON: change index ??
             @todo - MIDI Tuning Standard method
     @todo - Some functional Note-OFF must be sent without delay?
     @todo - Check 8192 or 8191 depending on the +/-amount (since +amount is up to 8191)
