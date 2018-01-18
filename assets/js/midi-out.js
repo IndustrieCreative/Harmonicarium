@@ -587,13 +587,14 @@ function icSendMIDIoutPB(ctrlNoteNumber, xt, xtObj, velocity, state, type, portI
                     // Use the held channel
                     currCh = heldChs[heldChsKey[0]].ch;
                     // For every held channels
-                    for (let key of Object.entries(icMIDIoutSettings[portID].pb.channels[type].held)) {
+                    for (let key of Object.keys(icMIDIoutSettings[portID].pb.channels[type].held)) {
+                        let heldChan = icMIDIoutSettings[portID].pb.channels[type].held[key];
                         // If the held channel is the current channel needed
-                        if (key[1].ch === currCh) {
+                        if (heldChan.ch === currCh) {
                             // Make the Note-Off to close the previous Note-On this channel
-                            outMsgsQueue.push(icMakeMIDIoutNoteMsg(key[1].ch, 0, key[1].note, 64));
+                            outMsgsQueue.push(icMakeMIDIoutNoteMsg(heldChan.ch, 0, heldChan.note, 64));
                             // Remove the current channel from the held-channels array
-                            delete icMIDIoutSettings[portID].pb.channels[type].held[key[0]];
+                            delete icMIDIoutSettings[portID].pb.channels[type].held[key];
                         }
                     }
                     // Re-store the current channel to the held-on-hold channels array in order to avoid over-assignment
@@ -672,11 +673,12 @@ function icSendMIDIoutPB(ctrlNoteNumber, xt, xtObj, velocity, state, type, portI
                     icMIDIoutSettings[portID].pb.channels[type].heldOrder.splice(0, 1);
                     icMIDIoutSettings[portID].pb.channels[type].heldOrder.push(currCh);
                     // Remove the current channel from the held-channels array
-                    for (let key of Object.entries(icMIDIoutSettings[portID].pb.channels[type].held)) {
-                        if (key[1].ch === currCh) {
+                    for (let key of Object.keys(icMIDIoutSettings[portID].pb.channels[type].held)) {
+                        let heldChan = icMIDIoutSettings[portID].pb.channels[type].held[key];
+                        if (heldChan.ch === currCh) {
                             // Make the Note-Off to close the previous Note-On this channel
-                            outMsgsQueue.push(icMakeMIDIoutNoteMsg(key[1].ch, 0, key[1].note, 64));
-                            delete icMIDIoutSettings[portID].pb.channels[type].held[key[0]];
+                            outMsgsQueue.push(icMakeMIDIoutNoteMsg(heldChan.ch, 0, heldChan.note, 64));
+                            delete icMIDIoutSettings[portID].pb.channels[type].held[key];
                         }
                     }
                     // Re-store the current channel to the held-on-hold channels array in order to avoid over-assignment

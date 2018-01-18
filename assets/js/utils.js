@@ -151,19 +151,19 @@ function icCtrlKeymap2HTML() {
     var txt = "";
     var map = icDHC.tables.ctrl_map;
     txt += '<table class="dataTable"><tr><th>MIDI #</th><th>FT</th><th>HT</th></tr>';
-    for (let key of Object.entries(map)) {
+    for (let key of Object.keys(map)) {
         let ft, ht = "";
-        if (key[1].ft === 129) {
+        if (map[key].ft === 129) {
             ft = "N/A";
         } else {
-            ft = key[1].ft;
+            ft = map[key].ft;
         }
-        if (key[1].ht === 129) {
+        if (map[key].ht === 129) {
             ht = "N/A";
         } else {
-            ht = key[1].ht;
+            ht = map[key].ht;
         }
-        txt += "<tr><td>" + key[0] + "</td><td>" + ft + "</td><td>" + ht + "</td></tr>";
+        txt += "<tr><td>" + key + "</td><td>" + ft + "</td><td>" + ht + "</td></tr>";
     }
     txt += "<tr><th>MIDI #</th><th>FT</th><th>HT</th></tr></table>";
     document.getElementById("HTMLo_controllerKeymapTable").innerHTML = txt;
@@ -286,8 +286,8 @@ function icHSTACKcreate() {
                             <th width="30%" class="hstackHT_cents">cents</th>
                             <th width="42%" class="hstackHT_hz">Hz</th>
                         </tr>`;
-    for (let key of Object.entries(icDHC.tables.ctrl_map)) {
-        let ht = key[1].ht;
+    for (let key of Object.keys(icDHC.tables.ctrl_map)) {
+        let ht = icDHC.tables.ctrl_map[key].ht;
         if (ht !== 129 && ht !== 0) {
             usedHT.push(ht);
         }
