@@ -133,6 +133,29 @@ function icOnMidiInit(midiAccess) {
 /*==============================================================================*
  * MIDI PORTS HW/UI HANDLING 
  *==============================================================================*/
+
+/**
+ * Open the MIDI I/O modal panel on UI
+ */
+function icOpenMidiPanel() {
+    // Get the modal element
+    var modal = document.getElementById('HTMLf_motPanelModal');
+    // Get the <span> element that closes the modal element
+    var span = document.getElementsByClassName("modalOverlay_close")[0];
+    // When the user clicks the button, open the modal element
+    modal.style.display = "block";
+    // When the user clicks on <span> (x), close the modal element
+    span.onclick = () => {
+        modal.style.display = "none";
+    };
+    // When the user clicks anywhere outside of the modal element, close it
+    window.onclick = (event) => {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    };
+}
+
 /**
  * Log on the Event Log the informations about a single input or output port
  *
