@@ -44,7 +44,8 @@ This program is a web-app. This means that it uses the HTML5 technology and you 
    * download [the sources](https://github.com/IndustrieCreative/Harmonicarium/zipball/master) from GitHub and open "index.html" to run a local instance of the app.
 
 > NOTES:
-> * On Android/iOS mobile devices the "local version" of the app could not work at the moment.
+> * On Android/iOS mobile devices the "local version" of the app could not work "directly".
+> * To use Harmonicarium locally with Android, there is a little workaround. Android does not allow you to open html files with Chrome, so you have to browse through files using Chrome in order to reach the index.html file. Unzip the .zip in the internal memory (on some phone does not work if it is on the SD) and write **file:///sdcard** in the Chrome's address bar. Now go to look for the app's folder by navigating through the files and start index.html directly from Chrome.
 > * Of course, if you run the app locally, do not rename or move any other file inside the main folder. You can rename and move only the main folder.
   
 ## How to use it?
