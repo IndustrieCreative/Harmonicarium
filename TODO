@@ -8,6 +8,8 @@ TASK PRIORITY LEVEL
 
 @todo - Fix deprecated node.value in synth.js (before January 2018)
 @todo - Implement a little barebone MIDI file player
+@todo - Fix: when FT and HT come simultaneously from the Controller, if the HT come first, the last HT frequency is played for a very short time (1-11 ms). This cause MIDI artifacts when Mix Down the MIDI stream in a DAW.
+             When an HT has been recived, we could wait/delay 2-3ms for a possible concurrent FT before processing the HT.
     @todo - ** Disconnect all voices before delete them (?)
     @todo - ** Virtual keyboard PC KEYS custom maps (bypass Qwerty Hancock)
     @todo - Useful MIDI messages (program, panic...)
@@ -17,6 +19,7 @@ TASK PRIORITY LEVEL
         @todo - LISSAJOUS, OSCILLOSCOPE, SPECTRUM, SPECTROGRAM
         @todo - Integrate an overtone spiral view & UI (es. from https://github.com/sunyatasattva/overtones/ but maybe problem due to new CPAL license?)
         @todo - The HTs' volume sould be inversely proportional to the frequency
+        @todo - Implement switch between H number / Frequency mode in Piper: store the frequency instead of harmonic number in order to imitate the same-position in the mouth
             @todo - ** Implement polyrithm section
             @todo - Implement a duplicable HSTACK > MULTIPLE HSTACK, each one assigned (follows) to an FT (to compare)
             @todo - Global Hz/MIDI.cents ACCURACY LIMIT for error-known scientific applications
