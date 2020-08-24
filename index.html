@@ -280,9 +280,94 @@
                                                 </tr>
                                             </table>
                                         </div>
-                                        <h2>Input ports:</h2>
+                                        <h2>Input ports (controllers):</h2>
                                         <div id="HTMLo_inputPorts"></div>
-                                        <h2>Output ports:</h2>
+
+                                        <table class="invisibleTable midiParam">
+
+                                            <tr>
+                                                <td>
+                                                    <h3>Receiving mode</h3>
+                                                    <select id="HTMLi_midiReceiveMode">
+                                                        <option value="keymap">Controller Keymapped MIDI note #</option>
+                                                        <option value="tsnap-channel">Tone snapping – Channel</option>
+                                                        <option value="tsnap-divider">Tone snapping – Divider</option>
+                                                        <!-- <option value="velocity1-1">Encoded into Velocity: 1-1</option> -->
+                                                        <!-- <option value="velocity_lin">Encoded into Velocity: Full range linear</option> -->
+                                                        <!-- <option value="velocity_log">Encoded into Velocity: Full range logarithmic</option> -->
+                                                    </select>
+                                                </td>
+                                            </tr>
+
+
+                                            <tr id="HTMLf_midiReceiveModeTsnapTolerance">
+                                                <td>
+                                                    <div class="midiSubParam">
+                                                        <label for="HTMLi_midiReceiveModeTsnapTolerance" title="Cents">Harmoninc snap tolerance</label>
+                                                        <input type="number" min="0" max="100" step="1" id="HTMLi_midiReceiveModeTsnapTolerance" title="Cents">
+                                                    </div>
+                                                </td>
+                                            </tr>
+
+
+                                            <tr id="HTMLf_midiReceiveModeTsnapChan">
+                                                <td>
+                                                    <div class="midiSubParam">
+                                                        <label for="HTMLi_midiReceiveModeTsnapChanFT">FT channel</label>
+                                                        <select id="HTMLi_midiReceiveModeTsnapChanFT">
+                                                            <option value="0">1</option>
+                                                            <option value="1">2</option>
+                                                            <option value="2">3</option>
+                                                            <option value="3">4</option>
+                                                            <option value="4">5</option>
+                                                            <option value="5">6</option>
+                                                            <option value="6">7</option>
+                                                            <option value="7">8</option>
+                                                            <option value="8">9</option>
+                                                            <option value="9">10</option>
+                                                            <option value="10">11</option>
+                                                            <option value="11">12</option>
+                                                            <option value="12">13</option>
+                                                            <option value="13">14</option>
+                                                            <option value="14">15</option>
+                                                            <option value="15">16</option>
+                                                        </select>
+
+                                                        <label for="HTMLi_midiReceiveModeTsnapChanHT">HT channel</label>
+                                                        <select id="HTMLi_midiReceiveModeTsnapChanHT">
+                                                            <option value="0">1</option>
+                                                            <option value="1">2</option>
+                                                            <option value="2">3</option>
+                                                            <option value="3">4</option>
+                                                            <option value="4">5</option>
+                                                            <option value="5">6</option>
+                                                            <option value="6">7</option>
+                                                            <option value="7">8</option>
+                                                            <option value="8">9</option>
+                                                            <option value="9">10</option>
+                                                            <option value="10">11</option>
+                                                            <option value="11">12</option>
+                                                            <option value="12">13</option>
+                                                            <option value="13">14</option>
+                                                            <option value="14">15</option>
+                                                            <option value="15">16</option>
+                                                        </select>
+                                                    </div>
+                                                </td>
+                                            </tr>
+
+                                            <tr id="HTMLf_midiReceiveModeTsnapDivider">
+                                                <td>
+                                                    <div class="midiSubParam">
+                                                        <label for="HTMLi_midiReceiveModeTsnapDivider" title="MIDI note number">Divider key</label>
+                                                        <input type="number" min="0" max="127" step="1" id="HTMLi_midiReceiveModeTsnapDivider" title="MIDI note number">
+                                                    </div>
+                                                </td>
+                                            </tr>
+
+                                        </table>
+
+                                        <h2>Output ports (instruments):</h2>
                                         <div id="HTMLo_outputPorts"></div>
                                         <table id="HTMLf_webMidiLinkLoader0" class="invisibleTable midiParam" style="display:none;">
                                             <tr>

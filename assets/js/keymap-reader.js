@@ -98,6 +98,8 @@ function icLoadKeymapPreset(changeEvent) {
         // Update the HStack
         icHSTACKcreate();
         icHSTACKfillin();
+        // re-Create FT & HT tables (necessary for reverse-tables on tsnap midi receivig mode)
+        icTablesCreate();
         document.getElementById('HTMLi_controllerKeymapFile').style.visibility = "hidden";
     } else {
         document.getElementById('HTMLi_controllerKeymapFile').style.visibility = "initial";

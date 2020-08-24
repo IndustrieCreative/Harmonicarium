@@ -72,12 +72,65 @@ var icDHC = {
          *
          * @type     {Object}
          *
-         * @property {number} pb_range  - Range value in cents (use hundreds when use MIDI-OUT and the same as the instrument)
-         * @property {number} pb_amount - Current input controller pitchbend; default amount is always 0
+         * @property {Object}                                             pb                  - Controller's Pitch Bend settings
+         * @property {number}                                             pb.range            - Range value in cents (use hundreds when use MIDI-OUT and the same as the instrument)
+         * @property {number}                                             pb.amount           - Current input controller pitchbend amount; default amount is always 0
+         * @property {('keymap'|'tsnap-channel'|'tsnap-divider')}         receive_mode        - FT/HT controller note receiving mode
+         * @property {Object}                                             tsnap               - Tone snapping receiving mode settings
+         * @property {number}                                             tsnap.tolerance     - 
+         * @property {number}                                             tsnap.divider       - 
+         * @property {Object}                                             tsnap.channel       - 
+         * @property {number}                                             tsnap.channel.ft    - 
+         * @property {number}                                             tsnap.channel.ht    - 
+         * @property {Object}                                             notes_on            - 
+         * @property {Object.<number, MIDIinNoteOn>}                      notes_on[0-15]      - 
          */
         controller: {
-            pb_range: 100,
-            pb_amount: 0.0
+            pb: {
+                range: 100,
+                amount: 0.0
+            },
+            receive_mode: "keymap",
+            tsnap: {
+                tolerance: 0.5,
+                divider: 56,
+                channel: {
+                    ft: 1,
+                    ht: 0
+                }
+            },
+            notes_on: {
+                /**
+                 * @todo: docstings
+                 * MIDI note number from external input controller
+                 * 
+                 * @typedef  {Object} MIDIinNoteOn
+                 * 
+                 * {
+                 *     channel: {
+                 *         external: {
+                 *             keymapped: <number>,
+                 *             midievent: <midievent>
+                 *     }
+                 * }
+                 */
+                0: {},
+                1: {},
+                2: {},
+                3: {},
+                4: {},
+                5: {},
+                6: {},
+                7: {},
+                8: {},
+                9: {},
+                10: {},
+                11: {},
+                12: {},
+                13: {},
+                14: {},
+                15: {}
+            }
         },
         /**
          * Port settings for MIDI-OUT tuning methods; each out port has its own settings
@@ -358,6 +411,18 @@ var icDHC = {
          */
         ht_table: {},             // PD {hf_table} & {sf_table}
 
+
+        /**
+         * TODO
+         * 
+         * @memberof icDHC.tables
+         *
+         * @type {Object.<number, number>}
+         */
+        reverse_ft_table: {},
+        reverse_ht_table: {},
+
+
         // @todo - Tables for MTS MIDI-OUT tuning method
         // inst_map: {},             // PD {inst_fn}
         // inst_table: {},           // PD {inst_table}
@@ -422,10 +487,14 @@ function icDHCinit() {
  * (Re)create FT & HT tables in the right order
  */
 function icTablesCreate() {
-    // Create the FT table
-    icDHC.tables.ft_table = icFTtableCreate();
-    // Create the HT table on the current FT
-    icDHC.tables.ht_table = icHTtableCreate(icDHC.tables.ft_table[icDHC.settings.ht.curr_ft].hz);
+    // Create the FT tables
+    let ft_tables = icFTtableCreate();
+    icDHC.tables.ft_table = ft_tables['table'];
+    icDHC.tables.reverse_ft_table = ft_tables['reverse_table'];
+    // Create the HT tables on the current FT
+    let ht_tables = icHTtableCreate(icDHC.tables.ft_table[icDHC.settings.ht.curr_ft].hz);
+    icDHC.tables.ht_table = ht_tables['table'];
+    icDHC.tables.reverse_ht_table = ht_tables['reverse_table'];
     // Update the frequency on the internal reference Synth
     icUpdateSynthFTfrequency();
     icUpdateSynthHTfrequency();
@@ -465,6 +534,7 @@ function icMONITORSinit() {
 function icFTtableCreate() {
     // Temp object
     let fundamentalsTable = {};
+    let fundamentalsReverseTable = {};
     // Select current FT Tuning Systems
     switch (icDHC.settings.ft.selected) {
         // n-EDx EQUAL TEMPERAMENT
@@ -472,9 +542,22 @@ function icFTtableCreate() {
             for (let i = -icDHC.settings.ft.steps; i <= icDHC.settings.ft.steps; i++) {
                 let freq = icCompute_nEDx(i, icDHC.settings.ft.nEDx.unit, icDHC.settings.ft.nEDx.division, icDHC.settings.fm.hz);
                 let midicents = icFtoM(freq);
+                let ok_rev = false;
                 fundamentalsTable[i] = { hz: freq, mc: midicents} ;
+                // Insert in the reverse table only if present on the keymap
+                for (let key of Object.keys(icDHC.tables.ctrl_map)) {
+                    if (icDHC.tables.ctrl_map[key].ft === i) {
+                        ok_rev = true;
+                    }
+                }
+                if (ok_rev === true) {
+                    fundamentalsReverseTable[midicents] = i;
+                }
             }
-            return fundamentalsTable;
+            return {
+                'table': fundamentalsTable,
+                'reverse_table': fundamentalsReverseTable
+            };
         // HARMONICS / SUBHARMONICS FT
         case "h_s":
             if (icDHC.settings.ft.h_s.selected === "natural") {
@@ -484,11 +567,29 @@ function icFTtableCreate() {
                     let hFreq = icDHC.settings.fm.hz * i * icDHC.settings.ft.h_s.natural.h_tr;
                     let sMidicents = icFtoM(sFreq);
                     let hMidicents = icFtoM(hFreq);
+                    let ok_rev_h = false;
+                    let ok_rev_s = false;
                     fundamentalsTable[-i] = { hz: sFreq, mc: sMidicents } ;
                     fundamentalsTable[i] = { hz: hFreq, mc: hMidicents } ;
+                    // Insert in the reverse table only if present on the keymap
+                    for (let key of Object.keys(icDHC.tables.ctrl_map)) {
+                        if (icDHC.tables.ctrl_map[key].ft === i) {
+                            ok_rev_h = true;
+                        }
+                        if (icDHC.tables.ctrl_map[key].ft === -i) {
+                            ok_rev_s = true;
+                        }
+                    }
+                    if (ok_rev_h === true) {
+                        fundamentalsReverseTable[hMidicents] = i;
+                    }
+                    if (ok_rev_s === true) {
+                        fundamentalsReverseTable[sMidicents] = -i;
+                    }
                 }
                 // FT0 is always the FM
                 fundamentalsTable[0] = { hz: icDHC.settings.fm.hz, mc: Number(icDHC.settings.fm.mc) };
+                fundamentalsReverseTable[Number(icDHC.settings.fm.mc)] = 0;
             }
             if (icDHC.settings.ft.h_s.selected === "sameOctave") {
                 // Compute the sub/harmonics all transposed to the Same Octave
@@ -518,13 +619,34 @@ function icFTtableCreate() {
                     let sFreq = icDHC.settings.fm.hz * s_so_tr * icDHC.settings.ft.h_s.sameOctave.s_tr;
                     let sMidicents = icFtoM(sFreq);
                     let hMidicents = icFtoM(hFreq);
+                    let ok_rev_h = false;
+                    let ok_rev_s = false;
                     fundamentalsTable[-i] = { hz: sFreq, mc: sMidicents } ;
                     fundamentalsTable[i] = { hz: hFreq, mc: hMidicents } ;
+                    // Insert in the reverse table only if present on the keymap
+                    for (let key of Object.keys(icDHC.tables.ctrl_map)) {
+                        if (icDHC.tables.ctrl_map[key].ft === i) {
+                            ok_rev_h = true;
+                        }
+                        if (icDHC.tables.ctrl_map[key].ft === -i) {
+                            ok_rev_s = true;
+                        }
+                    }
+                    if (ok_rev_h === true) {
+                        fundamentalsReverseTable[hMidicents] = i;
+                    }
+                    if (ok_rev_s === true){
+                        fundamentalsReverseTable[sMidicents] = -i;
+                    }
                 }
                 // FT0 is always the FM
                 fundamentalsTable[0] = { hz: icDHC.settings.fm.hz, mc: Number(icDHC.settings.fm.mc) };
+                fundamentalsReverseTable[Number(icDHC.settings.fm.mc)] = 0;
             }
-            return fundamentalsTable;
+            return {
+                'table': fundamentalsTable,
+                'reverse_table': fundamentalsReverseTable
+            };
         // @todo - TUNING FILES FT
         case "file":
             break;
@@ -542,17 +664,23 @@ function icFTtableCreate() {
 function icHTtableCreate(fundamental) {
     // @todo - Implement custom H/S table length (16>32>64>128) to increase performances if needed
     let harmonicsTable = {};
+    let harmonicsReverseTable = {};
     for (let i = -128; i < 0; i++) {
         let freq = fundamental / -i * icDHC.settings.ht.transpose.s;
         let midicents = icFtoM(freq);
         harmonicsTable[i] = { hz: freq, mc: midicents };
+        harmonicsReverseTable[midicents] = i;
     }
     for (let i = 1; i < 129; i++) {
         let freq = fundamental * i * icDHC.settings.ht.transpose.h;
         let midicents = icFtoM(freq);
         harmonicsTable[i] = { hz: freq, mc: midicents };
+        harmonicsReverseTable[midicents] = i;
     }
-    return harmonicsTable;
+    return {
+        'table': harmonicsTable,
+        'reverse_table': harmonicsReverseTable,
+    };
 }
 
 /**
@@ -765,13 +893,46 @@ function icHTtranspose(ratio, type, octave) {
         }
     }
     // Recreate the HT table on the last FT
-    icDHC.tables.ht_table = icHTtableCreate(icDHC.tables.ft_table[icDHC.settings.ht.curr_ft].hz);
+    let ht_tables = icHTtableCreate(icDHC.tables.ft_table[icDHC.settings.ht.curr_ft].hz);
+    icDHC.tables.ht_table = ht_tables['table'];
+    icDHC.tables.reverse_ht_table = ht_tables['reverse_table'];
     // Update the current HTs osc frequencies on Synth
     icUpdateSynthHTfrequency();
     // Resend (repress) all the MIDI Note-ON currently pending
     icUpdateMIDInoteON("ht");
     // Update the UI: Compile the HStack
     icHSTACKfillin();
+}
+
+/*==============================================================================*
+ * MIDI UI tools
+ *==============================================================================*/
+
+/**
+ * Switch the MIDI INPUT RECEIVING MODE (called when UI is updated)
+ *
+ * @param {('keymap'|'tsnap-channel'|'tsnap-divider')}      receive_mode    - FT/HT controller note receiving mode
+ */
+function icSwitchMidiReceiveMode(receive_mode) {
+    let tsnap_tolerance = document.getElementById("HTMLf_midiReceiveModeTsnapTolerance");
+    let tsnap_chan = document.getElementById("HTMLf_midiReceiveModeTsnapChan");
+    let tsnap_divider = document.getElementById("HTMLf_midiReceiveModeTsnapDivider");
+    if (receive_mode === "keymap") {
+        tsnap_tolerance.style.display = "none";
+        tsnap_chan.style.display = "none";
+        tsnap_divider.style.display = "none";
+    } else if (receive_mode === "tsnap-channel") {
+        tsnap_tolerance.style.display = "table-row";
+        tsnap_chan.style.display = "table-row";
+        tsnap_divider.style.display = "none";
+    } else if (receive_mode === "tsnap-divider") {
+        tsnap_tolerance.style.display = "table-row";
+        tsnap_chan.style.display = "none";
+        tsnap_divider.style.display = "table-row";
+    } else {
+        let error = "The 'HTMLi_midiReceiveMode' HTML element has an unexpected value: " + receive_mode;
+        throw error;
+    }
 }
 
 /*==============================================================================*
@@ -808,9 +969,16 @@ function icUIinit() {
     document.getElementById("HTMLi_dhc_hzAccuracy").value = icDHC.settings.global.hz_accuracy;
     document.getElementById("HTMLi_dhc_mcAccuracy").value = icDHC.settings.global.cent_accuracy;
     document.getElementById("HTMLi_dhc_middleC").value = icDHC.settings.global.middle_c + 5;
-    document.getElementById("HTMLi_dhc_pitchbendRange").value = icDHC.settings.controller.pb_range;
+    document.getElementById("HTMLi_dhc_pitchbendRange").value = icDHC.settings.controller.pb.range;
     document.getElementById("HTMLi_dhc_piperSteps").value = icPipe.maxLenght;
-
+    // Default MIDI SETTINGS on UI textboxes
+    document.getElementById("HTMLi_midiReceiveMode").value = icDHC.settings.controller.receive_mode;
+    document.getElementById("HTMLi_midiReceiveModeTsnapTolerance").value = icDHC.settings.controller.tsnap.tolerance;
+    document.getElementById("HTMLi_midiReceiveModeTsnapDivider").value = icDHC.settings.controller.tsnap.divider;
+    document.getElementById("HTMLi_midiReceiveModeTsnapChanFT").value = icDHC.settings.controller.tsnap.channel.ft;
+    document.getElementById("HTMLi_midiReceiveModeTsnapChanHT").options[icDHC.settings.controller.tsnap.channel.ft].disabled = true;
+    document.getElementById("HTMLi_midiReceiveModeTsnapChanHT").value = icDHC.settings.controller.tsnap.channel.ht;
+    document.getElementById("HTMLi_midiReceiveModeTsnapChanFT").options[icDHC.settings.controller.tsnap.channel.ht].disabled = true;
 
     /*  UI EVENT LISTENERS
      * ====================*/
@@ -841,12 +1009,53 @@ function icUIinit() {
     });
     // Set the CONTROLLER PITCHBEND RANGE from UI HTML inputs
     document.getElementById("HTMLi_dhc_pitchbendRange").addEventListener("input", (event) => {
-        icDHC.settings.controller.pb_range = event.target.value;
+        icDHC.settings.controller.pb.range = event.target.value;
     });
     // Set the PIPER HT0 FEATURE from UI HTML inputs
     document.getElementById("HTMLi_dhc_piperSteps").addEventListener("input", (event) => {
         icPipe.maxLenght = event.target.value;
     });
+
+    //------------------------
+    // UI MIDI settings
+    //------------------------
+    // Set the FT/HT NUMBER RECEIVING MODE from UI HTML inputs
+    document.getElementById("HTMLi_midiReceiveMode").addEventListener("change", (event) => {
+        icDHC.settings.controller.receive_mode = event.target.value;
+        icSwitchMidiReceiveMode(event.target.value);
+    });
+    document.getElementById("HTMLi_midiReceiveModeTsnapTolerance").addEventListener("input", (event) => {
+        icDHC.settings.controller.tsnap.tolerance = event.target.value;
+    });
+    document.getElementById("HTMLi_midiReceiveModeTsnapDivider").addEventListener("input", (event) => {
+        icDHC.settings.controller.tsnap.divider = event.target.value;
+    });
+    document.getElementById("HTMLi_midiReceiveModeTsnapChanFT").addEventListener("change", (event) => {
+        if (event.target.value == icDHC.settings.controller.tsnap.channel.ht) {
+            throw "FT and HT cannot share the same MIDI channel!"
+        } else {
+            let ht_channels = document.getElementById("HTMLi_midiReceiveModeTsnapChanHT");
+            for (let opt of ht_channels) { 
+                opt.disabled = false;
+            }
+            ht_channels.options[event.target.value].disabled = true;
+            icDHC.settings.controller.tsnap.channel.ft = event.target.value;
+        }
+    });
+    document.getElementById("HTMLi_midiReceiveModeTsnapChanHT").addEventListener("change", (event) => {
+        if (event.target.value == icDHC.settings.controller.tsnap.channel.ft) {
+            throw "FT and HT cannot share the same MIDI channel!"
+        } else {
+            let ft_channels = document.getElementById("HTMLi_midiReceiveModeTsnapChanFT");
+            for (let opt of ft_channels) { 
+                opt.disabled = false;
+            }
+            ft_channels.options[event.target.value].disabled = true;
+            icDHC.settings.controller.tsnap.channel.ht = event.target.value;
+        }
+    });
+    // Set default FT/HT NUMBER RECEIVING MODE after the UI widgets are set-up
+    icSwitchMidiReceiveMode(icDHC.settings.controller.receive_mode);
 
     //-------------------
     // UI FM DHC settings

@@ -201,12 +201,12 @@ function icFakeMidiNote(note, state) {
     let statusbyte = (cmd << 4) + channel;
     // Create a fake MIDI event for icMidiMessageReceived
     let midievent = {
-        data: [statusbyte, icHancockToMidi(note), icHancockCurrentVelocity * state],
+        data: [statusbyte, icHancockToMidi(note), icHancockCurrentVelocity * state, "hancock", false],
         srcElement: {
             id: "952042271",
             manufacturer : "Industrie Creative",
             name: "Virtual MIDI Controller",
-            type: "builtin-input"
+            type: "input"
         }
     };
     icMidiMessageReceived(midievent);

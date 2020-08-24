@@ -226,12 +226,13 @@ function icDHCmonitor(xt, xtObj, type) {
 /**
  * MIDI-IN MONITOR
  *
- * @param  {number} noteNumber     - MIDI Note number
+ * @param  {string} noteNumber     - MIDI Note number (or conversion string if the Tone snapping receiving mode is active)
  * @param  {number} velocity       - MIDI Velocity amount
  * @param  {number} channel        - MIDI Channel number
  * @param  {string} portName       - MIDI Port name
  */
 function icMIDImonitor(noteNumber, velocity, channel, portName) {
+
     // Update the log on MIDI MONITOR on the UI
     for (var x = 0; x < 2; x++) {
         document.getElementById("HTMLo_midiMonitor"+x+"_note").innerHTML = noteNumber;
@@ -356,7 +357,7 @@ function icHSTACKfillin() {
  */
 function icArrayPitchbender(xtObj) {
     // Compute the Controller Pitchbend amount in cents
-    let pitchbend = icDHC.settings.controller.pb_amount * icDHC.settings.controller.pb_range;
+    let pitchbend = icDHC.settings.controller.pb.amount * icDHC.settings.controller.pb.range;
     // Apply the controller pitchbend if present
     let bentObj = {
         hz: Math.pow(2, pitchbend / 1200) * xtObj.hz,
