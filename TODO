@@ -21,7 +21,8 @@ TASK PRIORITY LEVEL
         @todo - The HTs' volume sould be inversely proportional to the frequency
         @todo - Implement switch between H number / Frequency mode in Piper: store the frequency instead of harmonic number in order to imitate the same-position in the mouth
             @todo - ** Implement polyrithm section
-            @todo - Implement a duplicable HSTACK > MULTIPLE HSTACK, each one assigned (follows) to an FT (to compare)
+    @todo - Implement a duplicable HSTACK > MULTIPLE HSTACK, each one assigned (follows) to an FT (to compare)
+    @todo - Implement common harmonics marked on stack when a second FT is pressed
             @todo - Global Hz/MIDI.cents ACCURACY LIMIT for error-known scientific applications
             @todo - Load files with WORKER-SERVICE
             @todo - Implement dynamic FT_BASE table: SET RANGE (MAX) > REMOVE FT_BASE table
