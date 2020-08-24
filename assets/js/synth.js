@@ -177,19 +177,19 @@ function icSYNTHinit() {
     // icAnalyser.smoothingTimeConstant = 0.85;
     // icVisualize();
 
-    // Conect the FT and HT gains to the MIX
+    // Connect the FT and HT gains to the MIX
     icSYNTH.volume.ft.connect(icSYNTH.volume.mix);
     icSYNTH.volume.ht.connect(icSYNTH.volume.mix);
-    // Connect the MIX to the COMPRESSOR
-    icSYNTH.volume.mix.connect(icSYNTH.compressor);
-    // Connect the COMPRESSOR to the REVERB and to DRY CARRIER
-    icSYNTH.compressor.connect(icSYNTH.reverb.convolver);
-    icSYNTH.compressor.connect(icSYNTH.reverb.dry);
+    // Split the MIX to the REVERB and to DRY CARRIER
+    icSYNTH.volume.mix.connect(icSYNTH.reverb.convolver);
+    icSYNTH.volume.mix.connect(icSYNTH.reverb.dry);
     // Connect the REVERB to the WET CARRIER
     icSYNTH.reverb.convolver.connect(icSYNTH.reverb.wet);
-    // Connect the WET/DRY CARRIERS to the MASTER
-    icSYNTH.reverb.wet.connect(icSYNTH.volume.master);
-    icSYNTH.reverb.dry.connect(icSYNTH.volume.master);
+    // Connect the WET/DRY CARRIERS to the COMPRESSOR
+    icSYNTH.reverb.wet.connect(icSYNTH.compressor);
+    icSYNTH.reverb.dry.connect(icSYNTH.compressor);
+    // Connect the COMPRESSOR to the MASTER
+    icSYNTH.compressor.connect(icSYNTH.volume.master);
     // Connect the MASTER to the final OUT
     icSYNTH.volume.master.connect(icAudioContext.destination);
     // @todo - finish the visualizer
@@ -310,7 +310,7 @@ ICvoice.prototype.setFrequency = function(update) {
         this.osc.frequency.setTargetAtTime( this.initFrequency, 0, icSYNTH.portamento.amount);
     }
     // APPLY CURRENT DETUNING (if present): "value" and "range" are in cents, "amount" is normalized to -1 > 0 > 0.99987792968750
-    this.osc.detune.setValueAtTime((icDHC.settings.controller.pb_amount * icDHC.settings.controller.pb_range), 0);
+    this.osc.detune.setValueAtTime((icDHC.settings.controller.pb.amount * icDHC.settings.controller.pb.range), 0);
 };
 /**
  * Turn off the sound of voice (release)
@@ -375,7 +375,7 @@ function icVoiceON(freq, ctrlNoteNumber, velocity, type) {
  * @param {number}      ctrlNoteNumber - MIDI Note number of the MIDI-IN message from the controller
  * @param {('ft'|'ht')} type           - If you need to destroy a FT or HT voice
  */
-function icVoiceOFF(ctrlNoteNumber, type) {
+function icVoiceOFF(ctrlNoteNumber, type, panic=false) {
     if (icSYNTH.status === true) {
         // **HT**
         if (type === "ht") {
@@ -386,7 +386,9 @@ function icVoiceOFF(ctrlNoteNumber, type) {
                 icVoices.ht[ctrlNoteNumber] = null;
                 delete icVoices.ht[ctrlNoteNumber];
             } else {
-                console.log("STRANGE: there is NOT an HT active voice with ID:", ctrlNoteNumber);
+                if (panic === false) {
+                    console.log("STRANGE: there is NOT an HT active voice with ID:", ctrlNoteNumber);
+                }
             }
         // **FT**
         } else {
@@ -474,7 +476,7 @@ function icSynthPitchBend() {
                 // If the osc exist
                 if (icVoices.ht[i].osc){
                     // Detune the osc: "value" and "range" are in cents, "amount" is normalized to -1 > 0 > 0.99987792968750
-                    icVoices.ht[i].osc.detune.value = icDHC.settings.controller.pb_amount * icDHC.settings.controller.pb_range;
+                    icVoices.ht[i].osc.detune.value = icDHC.settings.controller.pb.amount * icDHC.settings.controller.pb.range;
                 }
             }
         }
@@ -483,7 +485,7 @@ function icSynthPitchBend() {
             // If the osc exist
             if (icVoices.ft.osc){
                 // Detune the osc: "value" and "range" are in cents, "amount" is normalized to -1 > 0 > 0.99987792968750
-                icVoices.ft.osc.detune.value = icDHC.settings.controller.pb_amount * icDHC.settings.controller.pb_range;
+                icVoices.ft.osc.detune.value = icDHC.settings.controller.pb.amount * icDHC.settings.controller.pb.range;
             }
         }
     }
