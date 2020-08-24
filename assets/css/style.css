@@ -339,7 +339,7 @@ button#HTMLf_motPanelModalShow {
  ***********************************************/
 #HTMLf_motPanelModal .modalOverlay_content {
     min-width: 960px;
-    padding: 10px 20px 15px 20px;
+    padding: 0px 20px 55px 20px;
     width: fit-content;
 }
 #HTMLf_motPanelContent h2 {
@@ -394,6 +394,23 @@ td.mot-pb-delayFT {
     margin-bottom: 8px;
     /*width: 235px;*/
 }
+
+/***********************************************
+ * MIDI PARAMS (inside the modal window)
+ ***********************************************/
+table.midiParam {
+    text-align: left;
+}
+.webmidilinkLoaded {
+    color:green;
+}
+.webmidilinkProgress {
+    color:yellow;
+}
+.webmidilinkNotLoaded {
+    color:red;
+}
+
 /***********************************************
  * MENU (under the logo)
  ***********************************************/

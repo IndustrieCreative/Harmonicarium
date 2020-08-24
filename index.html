@@ -284,6 +284,50 @@
                                         <div id="HTMLo_inputPorts"></div>
                                         <h2>Output ports:</h2>
                                         <div id="HTMLo_outputPorts"></div>
+                                        <table id="HTMLf_webMidiLinkLoader0" class="invisibleTable midiParam" style="display:none;">
+                                            <tr>
+                                                <td colspan="2">
+                                                    <h3>WebMidiLink synth @ Port 1: &nbsp;&nbsp;<span id="HTMLf_webMidiLinkStatus0" class="webmidilinkNotLoaded">NOT LOADED</span></h3>
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td rowspan="2">URL</td>
+                                                <td colspan="2">
+                                                    <input id="HTMLf_webMidiLinkUrl0" type="text" value="http://www.g200kg.com/en/docs/webmodular/webmodular.html" size="48" />
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <select id="HTMLf_webMidiLinkSynthSelect0" onchange="icWebMidiLinkSetUrl('HTMLf_webMidiLinkUrl0',this[this.selectedIndex].value)"></select>
+                                                </td>
+                                                <td align="right">
+                                                    <button onclick="icWebSYNTH[0].load(document.getElementById('HTMLf_webMidiLinkUrl0').value)">Load</button>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <table id="HTMLf_webMidiLinkLoader1" class="invisibleTable midiParam" style="display:none;">
+                                            <tr>
+                                                <td colspan="2">
+                                                    <h3>WebMidiLink synth @ Port 2: &nbsp;&nbsp;<span id="HTMLf_webMidiLinkStatus1" class="webmidilinkNotLoaded">NOT LOADED</span></h3>
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td rowspan="2">URL</td>
+                                                <td colspan="2">
+                                                    <input id="HTMLf_webMidiLinkUrl1" type="text" value="http://www.g200kg.com/en/docs/webmodular/webmodular.html" size="48" />
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <select id="HTMLf_webMidiLinkSynthSelect1" onchange="icWebMidiLinkSetUrl('HTMLf_webMidiLinkUrl1',this[this.selectedIndex].value)"></select>
+                                                </td>
+                                                <td align="right">
+                                                    <button onclick="icWebSYNTH[1].load(document.getElementById('HTMLf_webMidiLinkUrl1').value)">Load</button>
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </div>
                                     <div class="midiColumn midiContainerRight">
                                         <h1>MIDI-Out Tuning &nbsp;&ndash; &nbsp;PitchBend method</h1>
@@ -535,6 +579,9 @@
     <script type="text/javascript" src='assets/js/keymap-reader.js'></script>
     <script type="text/javascript" src='assets/js/keyboard.js'></script>
     <script type="text/javascript" src='assets/js/dhc.js'></script>
+    <script type="text/javascript" src="assets/js/lib/synthlist.js"></script>
+    <!-- <script type="text/javascript" src="http://www.g200kg.com/webmidilink/synthlist.js"></script> -->
+
 </body>
 
 </html>

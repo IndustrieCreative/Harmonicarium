@@ -119,10 +119,10 @@ function icUpdateMOT() {
              * 
              * @typedef {Object} ChanAssignment
              *
-             * @property {number}     1 - A floating point number, the time-stamp
-             * @property {number}     1 - A floating point number, the time-stamp
-             * @property {number}     1 - A floating point number, the time-stamp
-             * @property {number}     1 - A floating point number, the time-stamp
+             * @property {number}     port  - A floating point number, the time-stamp
+             * @property {number}     chan  - A floating point number, the time-stamp
+             * @property {number}     fn    - A floating point number, the time-stamp
+             * @property {number}     not   - A floating point number, the time-stamp
              */
             checkboxFT.value = '{ "port": "' + key + '", "chan": '+ ch + ', "fn": "ft", "not": "ht" }';
             checkboxHT.value = '{ "port": "' + key + '", "chan": '+ ch + ', "fn": "ht", "not": "ft" }';
@@ -288,7 +288,7 @@ function icChanSelect(event) {
         return a - b;
     });
     // @todo - Send all Note-OFF and re-init the last channel in order to avoid stuck notes
-    icEventLog("MIDI multichannel polyphony assignment:\n| Output port = " + icMidi.outputs.get(chanSet.port).name + "\n| " + chanSet.fn.toUpperCase() + " selected channels = " + icMIDIoutSettings[chanSet.port].pb.channels[chanSet.fn].used + "\n| " + chanSet.not.toUpperCase() + " selected channels = " + icMIDIoutSettings[chanSet.port].pb.channels[chanSet.not].used + "\n| ---------------------------------------");
+    icEventLog("MIDI multichannel polyphony assignment:\n| Output port = " + icSelectedOutputs.get(chanSet.port).name + "\n| " + chanSet.fn.toUpperCase() + " selected channels = " + icMIDIoutSettings[chanSet.port].pb.channels[chanSet.fn].used + "\n| " + chanSet.not.toUpperCase() + " selected channels = " + icMIDIoutSettings[chanSet.port].pb.channels[chanSet.not].used + "\n| ---------------------------------------");
 }
 
 /**
@@ -298,7 +298,7 @@ function icChanSelect(event) {
  * @param {('ft'|'ht')} type   - If the ports to which the message should be sent are assigned to FTs or HTs
  */
 function icSendMIDIoutPBrange(portID, type) {
-    let midiOutput = icMidi.outputs.get(portID);
+    let midiOutput = icSelectedOutputs.get(portID);
     // If the user is not playing
     if (Object.keys(icMIDIoutSettings[portID].pb.channels[type].held).length === 0) {
         let chansEventLog = []; 
@@ -318,7 +318,7 @@ function icSendMIDIoutPBrange(portID, type) {
                 }
             }
         }
-        icEventLog("MIDI Control Change message:\n| Output Port = " + icMidi.outputs.get(portID).name + "\n| " + type.toUpperCase() + " Channels = " + chansEventLog + "\n| Pitch Bend Sensitivity = " + icMIDIoutSettings[portID].pb.range[type] + " semitones e.t. (12-EDO)\n| ---------------------------------------------------");
+        icEventLog("MIDI Control Change message:\n| Output Port = " + midiOutput.name + "\n| " + type.toUpperCase() + " Channels = " + chansEventLog + "\n| Pitch Bend Sensitivity = " + icMIDIoutSettings[portID].pb.range[type] + " semitones e.t. (12-EDO)\n| ---------------------------------------------------");
     // Else, an alert message
     } else {
         alert("Do not play when sending the message!\nTry again.");
@@ -463,7 +463,7 @@ function icMIDIout(statusByte, ctrlNoteNumber, xt, xtObj, velocity, state, type)
  * @param {number}      velocity       - MIDI Velocity amount (from 0 to 127) of the original MIDI-IN message from the controller
  * @param {(0|1)}       state          - Note ON or OFF; 1 is Note-ON, 0 is Note-OFF
  * @param {('ft'|'ht')} type           - If the outgoing MIDI message is for FTs or HTs
- * @param {number}      key            - ID of the MIDI-OUT Port to send the message to
+ * @param {number}      portID         - ID of the MIDI-OUT Port to send the message to
  */
 function icSendMIDIoutPB(ctrlNoteNumber, xt, xtObj, velocity, state, type, portID) {
     // @todo - Some functional Note-OFF must be sent without delay?!?
@@ -476,7 +476,7 @@ function icSendMIDIoutPB(ctrlNoteNumber, xt, xtObj, velocity, state, type, portI
         let currCh =  null;
         let instNoteNumber = Math.trunc(xtObj.mc);
         let cents = xtObj.mc - Math.trunc(xtObj.mc);
-        let midiOutput = icMidi.outputs.get(portID);
+        let midiOutput = icSelectedOutputs.get(portID);
         if (cents > 0.5) {
             instNoteNumber = Math.trunc(xtObj.mc + 0.5);
             cents -= 1;

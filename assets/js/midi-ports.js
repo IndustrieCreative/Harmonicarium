@@ -88,6 +88,8 @@ if (navigator.requestMIDIAccess) {
     // @see - https://webaudiodemos.appspot.com/namm/#/11
     icEventLog("Unfortunately, your browser does not seem to support Web MIDI API.");
 }
+// Button to open the MIDI settings
+document.getElementById("HTMLf_motPanelModalShow").addEventListener("click", icOpenMidiPanel);
 
 /**
  * What to do on MIDI Access error, if MIDIAccess exist but there is another kind of problem
@@ -122,6 +124,10 @@ function icOnMidiInit(midiAccess) {
         icCreatePortCheckbox(value, icHTMLelementOutputs);
         icPortLogger(value);
     });
+    icCreatePortCheckbox(icWebSYNTH[0], icHTMLelementOutputs);
+    icCreatePortCheckbox(icWebSYNTH[1], icHTMLelementOutputs);
+    icPortLogger(icWebSYNTH[0]);
+    icPortLogger(icWebSYNTH[1]);
 
     // When the state or an attribute of any port changes
     // Execute the Midi State Refresh function with the Event as argument
@@ -235,7 +241,17 @@ function icPortSelect(event) {
                 break;
             // If the port is an output, map it on the icSelectedOutputs global object/map
             case "output":
-                icSelectedOutputs.set(icMidi.outputs.get(elem.value).id, icMidi.outputs.get(elem.value));
+                if (elem.value === "webmidilink_out0") {
+                    icSelectedOutputs.set(elem.value, icWebSYNTH[0]);
+                    document.getElementById("HTMLf_webMidiLinkLoader0").style.display = "table";
+                    icWebSYNTH[0].startStateCheck();
+                } else if (elem.value === "webmidilink_out1") {
+                    icSelectedOutputs.set(elem.value, icWebSYNTH[1]);
+                    document.getElementById("HTMLf_webMidiLinkLoader1").style.display = "table";
+                    icWebSYNTH[1].startStateCheck();
+                } else {
+                    icSelectedOutputs.set(icMidi.outputs.get(elem.value).id, icMidi.outputs.get(elem.value));
+                }
                 icAtLeastOneMidi.openPort.output++;
                 icUpdateMOT();
                 break;
@@ -254,7 +270,19 @@ function icPortSelect(event) {
                 break;
             // If the port is an output, remove it on the icSelectedOutputs global object/map
             case "output":
-                icSelectedOutputs.delete(icMidi.outputs.get(elem.value).id);
+                if (elem.value === "webmidilink_out0") {
+                    icSelectedOutputs.get(elem.value).unload();
+                    icSelectedOutputs.delete(elem.value);
+                    document.getElementById("HTMLf_webMidiLinkLoader0").style.display = "none";
+                    icWebSYNTH[0].stopStateCheck();
+                } else if (elem.value === "webmidilink_out1") {
+                    icSelectedOutputs.get(elem.value).unload();
+                    icSelectedOutputs.delete(elem.value);
+                    document.getElementById("HTMLf_webMidiLinkLoader1").style.display = "none";
+                    icWebSYNTH[1].stopStateCheck();
+                } else {
+                    icSelectedOutputs.delete(icMidi.outputs.get(elem.value).id);
+                }
                 icAtLeastOneMidi.openPort.output--;
                 icUpdateMOT();
                 break;
@@ -402,4 +430,181 @@ function icCheckAtLeastOneMidi(xPut, isOpen) {
                 break;
         }
     }
+}
+
+/*==============================================================================*
+ * WEB-MIDI-LINK MESSAGES HANDLER 
+ * https://www.g200kg.com/en/docs/webmidilink/index.html
+ * (implementation: experimental - work in progress)
+ *==============================================================================*/
+
+window.addEventListener("message", icWebMidiLinkInput, false);
+
+function icWebMidiLinkInput(event) {
+   if (typeof event.data === 'string') {
+        var msg = event.data.split(",");
+        switch (msg[0]) {
+            // Level 1 messages
+            case "link":
+                let synthNum = 0
+                if (event.source === icWebSYNTH[1].synthWindow) {
+                    synthNum = 1
+                }
+
+                // https://www.g200kg.com/en/docs/webmidilink/spec.html @ Link Level 1
+                switch (msg[1]) {
+                    // -------------------------------------------------
+                    // Host<=Synth : if Harmonicarium is used as HOST
+                    case "ready":
+                        icWebSYNTH[synthNum].becomeReady(msg[1]);
+                        break;
+                    case "progress":
+                        icWebSYNTH[synthNum].becomeReady(msg[1]);
+                        break;
+                    case "patch":
+                        console.log("WebMidiLink Level 1 message (link) 'patch' is not implemented yet!");
+                        // ReceivePatchStringFromSynth(msg[2]);
+                        break;
+                    // -------------------------------------------------
+                    // Host=>Synth : if Harmonicarium is used as INSTRUMENT/SYNTH
+                    case "reqpatch":
+                        console.log("WebMidiLink Level 1 message (link) 'reqpatch' is not implemented yet!");
+                        // event.source.postMessage("link,patch," + ReqPatchString(),"*");
+                        break;
+                    case "setpatch":
+                        console.log("WebMidiLink Level 1 message (link) 'setpatch' is not implemented yet!");
+                        // ReceivePatchStringFromHost(msg[2]);
+                        break;
+                    // -------------------------------------------------
+                    default:
+                        console.error("Unknown WebMidiLink Level 1 message (link): '"+ msg[1] +"'");
+                        break;
+                }
+                break;
+            // Level 0 messages
+            case "midi":
+                // Create a MIDI message
+                let midievent = {
+                    data: [parseInt(msg[1], 16), parseInt(msg[2], 16), parseInt(msg[3], 16), false, false],
+                    srcElement: {
+                        id: "webmidilink_in",
+                        manufacturer : "Industrie Creative",
+                        name: "WebMidiLink Port",
+                        type: "input"
+                    }
+                };
+                // Re-send the MIDI generated message
+                icMidiMessageReceived(midievent);
+                break;
+        }
+    }
+}
+
+
+// Should be called when Harmonicarium (hosted) is ready
+// Synth=>Host
+function icWebMidiLinkReady() {
+    // Send message to the host web app
+    if (window.opener)
+        window.opener.postMessage("link,ready", "*");
+    else
+        window.parent.postMessage("link,ready", "*");
+}
+
+
+// class ICwebMidiLinkSynth {
+
+// }
+ 
+
+function ICwebMidiLinkSynth(key) {
+    this.synthWindow = {closed: true};
+
+    this.id = "webmidilink_out" + key;
+    this.manufacturer = "Industrie Creative";
+    this.name = "WebMidiLink OUT Port " + (key+1);
+    this.state = "disconnected";
+    this.type = "output";
+    this.uiStatus = document.getElementById("HTMLf_webMidiLinkStatus"+key);
+
+    this.load = function(url) {
+        alert("A new popup-window containing a web-app instrument is about to be opened and may end up behind the current browser window.\n\nMake sure you interact at least once with the User Interface of the instrument that opened in the new popup-window before you start sending WebMidiLink signals from Harmonicarium.\n\nFor security reasons, the browser may suspend the AudioContext status until the user interacts with that window.\n\nClick OK to continue.");
+        this.synthWindow = window.open(url, (this.id +"_window"), "width=900,height=670,scrollbars=yes,resizable=yes");
+        this.state = "connected";
+        this.uiStatus.innerText = "LOADED";
+        this.uiStatus.classList.remove("webmidilinkNotLoaded", "webmidilinkProgress");
+        this.uiStatus.classList.add("webmidilinkLoaded");
+    }
+    this.unload = function() {
+        if (this.synthWindow.window){
+            this.synthWindow.close();
+        }
+        this.uiStatus.innerText = "NOT LOADED";
+        this.uiStatus.classList.remove("webmidilinkLoaded", "webmidilinkProgress");
+        this.uiStatus.classList.add("webmidilinkNotLoaded");
+    }
+    this.send = function(msg) {
+         this.sendMessage(this.synthWindow, "midi," + msg.map(function(e){return e.toString(16)}));
+    }
+    // this.AllSoundOff = function() {
+    //     this.SendMessage(this.synthWindow, "midi,b0,78,0");
+    // }
+    this.sendMessage = function(synthWindow, msg) {
+        if (this.synthWindow.window) {
+            this.synthWindow.postMessage(msg, "*");
+        }
+        else {
+            this.uiStatus.innerText = "NOT LOADED";
+            this.uiStatus.classList.remove("webmidilinkLoaded", "webmidilinkProgress");
+            this.uiStatus.classList.add("webmidilinkNotLoaded");
+        }
+    }
+    this.startStateCheck = function() {
+        let parent = this;
+        this.stateCheckTimer = setInterval(function() {
+            if (parent.synthWindow.closed) {
+                clearInterval(this.stateCheckTimer);
+                parent.unload();
+            }
+        }, 1500);
+    }
+    this.stopStateCheck = function() {
+        clearInterval(this.stateCheckTimer);
+    }
+    this.becomeReady = function(msg) {
+        if (msg === "ready") {
+            this.isReady = true;
+            this.uiStatus.innerText = "LOADED (ready)";
+            this.uiStatus.classList.remove("webmidilinkNotLoaded", "webmidilinkProgress");
+            this.uiStatus.classList.add("webmidilinkLoaded");
+        } else if (msg === "progress") {
+            this.isReady = false;
+            this.uiStatus.innerText = "LOADING IN PROGRESS...";
+            this.uiStatus.classList.remove("webmidilinkNotLoaded", "webmidilinkLoaded");
+            this.uiStatus.classList.add("webmidilinkProgress");
+        }
+    }
+    this.isReady = false;
+}
+
+// var icWebSYNTH = new ICwebMidiLinkSynth("webmidilink_out");
+
+
+var icWebSYNTH = {
+    0: new ICwebMidiLinkSynth(0),
+    1: new ICwebMidiLinkSynth(1)
+};
+
+function SynthListCallback(synthlist) {
+    var sel0 = document.getElementById("HTMLf_webMidiLinkSynthSelect0");
+    var sel1 = document.getElementById("HTMLf_webMidiLinkSynthSelect1");
+    for (var i = 0; i < synthlist.length; ++i) {
+        sel0.options[i] = new Option(synthlist[i].author+": "+synthlist[i].name, synthlist[i].url);
+        sel1.options[i] = new Option(synthlist[i].author+": "+synthlist[i].name, synthlist[i].url);
+    }
+}
+
+function icWebMidiLinkSetUrl(id, url) {
+  var obj = document.getElementById(id);
+  obj.value = url;
 }
