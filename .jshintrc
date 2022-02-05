@@ -29,7 +29,7 @@
                                 //   true     : all variables, last function parameter
                                 //   "vars"   : all variables only
                                 //   "strict" : all variables, all function parameters
-    "strict"        : true,     // true: Requires all functions run in ES5 Strict Mode
+    "strict"        : false,    // true: Requires all functions run in ES5 Strict Mode
     "maxparams"     : false,    // {int} Max number of formal params allowed per function
     "maxdepth"      : false,    // {int} Max depth of nested blocks (within functions)
     "maxstatements" : false,    // {int} Max number statements per function
@@ -42,13 +42,13 @@
     "boss"          : false,     // true: Tolerate assignments where comparisons would be expected
     "debug"         : false,     // true: Allow debugger statements e.g. browser breakpoints.
     "eqnull"        : false,     // true: Tolerate use of `== null`
-    "esversion"     : 6,         // {int} Specify the ECMAScript version to which the code must adhere.
+    "esversion"     : 9,         // {int} Specify the ECMAScript version to which the code must adhere.
     "moz"           : false,     // true: Allow Mozilla specific syntax (extends and overrides esnext features)
                                  // (ex: `for each`, multiple try/catch, function expression…)
     "evil"          : false,     // true: Tolerate use of `eval` and `new Function()`
     "expr"          : false,     // true: Tolerate `ExpressionStatement` as Programs
     "funcscope"     : false,     // true: Tolerate defining variables inside control statements
-    "globalstrict"  : true,     // true: Allow global "use strict" (also enables 'strict')
+    "globalstrict"  : true,      // true: Allow global "use strict" (also enables 'strict')
     "iterator"      : false,     // true: Tolerate using the `__iterator__` property
     "lastsemic"     : false,     // true: Tolerate omitting a semicolon for the last statement of a 1-line block
     "laxbreak"      : false,     // true: Tolerate possibly unsafe line breakings
@@ -85,126 +85,19 @@
     "worker"        : false,    // Web Workers
     "wsh"           : false,    // Windows Scripting Host
     "yui"           : false,    // Yahoo User Interface
+
 	
 	// Custom Globals
     "globals"       : {
         // BROWSER
-        "AudioContext": true,
+        // "AudioContext": true,
         // HARMONICARIUM
-        "icArrayPitchbender": true,
-        "icAtLeastOneMidi": true,
-        "icAudioContext": true,
-        "icBase64ToBlob": true,
-        "icChanSelect": true,
-        "icCheckAtLeastOneMidi": true,
-        "icCompute_nEDx": true,
-        "icCreatePortCheckbox": true,
-        "icCtrlKeymapPreset": true,
-        "icCtrlKeymap2HTML": true,
-        "icDefaultReverb": true,
-        "icDHC": true,
-        "icDHCaccuracies": true,
-        "icDHCinit": true,
-        "icDHCmonitor": true,
-        "icEventLog": true,
-        "icEventLogText": true,
-        "icFakeMidiNote": true,
-        "icFileErrorHandler": true,
-        "icFThsTranspose": true,
-        "icFtoM": true,
-        "icFTtableCreate": true,
-        "icGetFM": true,
-        "icGetNoteNameCents": true,
-        "icHancockChangeOffset": true,
-        "icHancockChangeRange": true,
-        "icHancockChangeSize": true,
-        "icHancockCurrentChannel": true,
-        "icHancockCurrentVelocity": true,
-        "icHancockCurrSets": true,
-        "icHancockKeymap": true,
-        "icHancockRef": true,
-        "icHancockToMidi": true,
-        "icHancockUpdate": true,
-        "icHandleIrFile": true,
-        "icHandleKeymapFile": true,
-        "icHelp": true,
-        "icHSTACKcreate": true,
-        "icHSTACKfillin": true,
-        "icHSTACKmonitor": true,
-        "icHTMLelementInputs": true,
-        "icHTMLelementOutputs": true,
-        "icHTMLmotModalContent": true,
-        "icHTtableCreate": true,
-        "icHTtranspose": true,
-        "icInit": true,
-        "icINSTtableCreate": true,
-        "icKeyboard": true,
-        "icKeyboardUIinit": true,
-        "icKeymapsUIinit": true,
-        "icKeyOFF": true,
-        "icKeyON": true,
-        "icMakeMIDIoutNoteMsg": true,
-        "icMakeMIDIoutPitchBendMsg": true,
-        "icMidi": true,
-        "icMidiMessageReceived": true,
-        "icMIDImonitor": true,
-        "icMIDIout": true,
-        "icMIDIoutSettings": true,
-        "icMidiStateRefresh": true,
-        "icMidiToHancock": true,
-        "icMONITORSinit": true,
-        "icMtoF": true,
-        "icNoteOFF": true,
-        "icNoteON": true,
-        "icOnMidiInit": true,
-        "icOnMidiReject": true,
-        "icOpenMidiPanel": true,
-        "icOutputBuffer": true,
-        "icPipe": true,
-        "icPiper": true,
-        "icPiping": true,
-        "icPortLogger": true,
-        "icPortSelect": true,
-        "icPrintFundamentalMother": true,
-        "icProcessIrData": true,
-        "icProcessKeymapData": true,
-        "icReadIrFile": true,
-        "icReadKeymapFile": true,
-        "icSelectedOutputs": true,
-        "icSendMiddleC": true,
-        "icSendMIDIoutPB": true,
-        "icSendMIDIoutPBrange": true,
-        "icSetFM": true,
-        "icSetNEDX": true,
-        "icSortNumericArray": true,
-        "icSwitchFTsys": true,
-        "icSYNTH": true,
-        "icSYNTHinit": true,
-        "icSynthPitchBend": true,
-        "icSynthState": true,
-        "icSynthUIinit": true,
-        "icTablesCreate": true,
-        "icTESTER": true,
-        "icToggleOpenLogBtn": true,
-        "icUIinit": true,
-        "icUniqArray": true,
-        "icUpdateKeymapPreset": true,
-        "icUpdateMIDInoteON": true,
-        "icUpdateMOT": true,
-        "icUpdateReverb": true,
-        "icUpdateSynthFTfrequency": true,
-        "icUpdateSynthHTfrequency": true,
-        "icUpdateWaveform": true,
-        "icUsedHT": true,
-        "icUTILSinit": true,
-        "icVoiceOFF": true,
-        "icVoiceON": true,
-        "icVoices": true,
+        // "icArrayPitchbender": true,
         // QWERTYHANCOCK
-        "bizarre_note_counter": true,
-        "QwertyHancock": true,
-        "user_settings": true,
+        // "bizarre_note_counter": true,
+        // "QwertyHancock": true,
+        // "user_settings": true,
         // WEB AUDIO PEAK METERS
-        "webAudioPeakMeter": true
+        // "webAudioPeakMeter": true
     }        
 }

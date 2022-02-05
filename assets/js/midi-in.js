@@ -1,11 +1,11 @@
-/**
+ /**
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2018 by Walter Mantovani (http://armonici.it).
+ * Copyright (C) 2017-2020 by Walter Mantovani (http://armonici.it).
  * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -22,673 +22,715 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
- /**
- * @fileoverview MIDI-IN HANDLER<br>
- *     Parse the MIDI-IN message and do the consequent action.
- * 
- * @author Walter Mantovani < armonici.it [at] gmail [dot] com >
- */
-
-/* exported icMidiMessageReceived */
+/* globals HUM */
 
 "use strict";
 
-/*==============================================================================*
- * MAIN MIDI MESSAGE HANDLER
- *==============================================================================*/
-
-/**
- * Output queue buffer for MIDI messages that must pass through and go out
- *     (used as logger at the moment)
- *
- * @todo - Pass through for most of the MIDI messages
- *
- * @type {Array.<OtherMidiMsg>}
+/** 
+ * The MidiIn class.<br>
+ *     Manage MIDI input messages.
  */
-var icMidiPassThrough = [];
+HUM.midi.MidiIn = class {
+    /**
+    * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs
+    * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs
+    */
+    constructor(dhc, midi) {
+        /**
+        * The DHC instance
+        *
+        * @member {HUM.DHC}
+        */
+        this.dhc = dhc;
+        /**
+        * The MidiHub instance
+        *
+        * @member {HUM.midi.MidiHub}
+        */
+        this.midi = midi;
+        /**
+         * Output queue buffer for MIDI messages that must pass through and go out
+         *     (used as logger at the moment)
+         *
+         * @todo - Pass through for most of the MIDI messages
+         *
+         * @member {Array.<OtherMidiMsg>}
+         */
+        // @old icMidiPassThrough
+        this.midiPassThrough = [];
+        /**
+         * UI HTML elements
+         *
+         * @member {Object}
+         * 
+         * @property {Object.<string, HTMLElement>} fn  - Functional UI elements
+         * @property {Object.<string, HTMLElement>} in  - Input UI elements
+         * @property {Object.<string, HTMLElement>} out - Output UI elements
+         */
+        this.uiElements = {
+            fn: {
+                receiveModeTsnapTolerance: document.getElementById("HTMLf_midiReceiveModeTsnapTolerance"+dhc.id),
+                receiveModeTsnapChan: document.getElementById("HTMLf_midiReceiveModeTsnapChan"+dhc.id),
+                receiveModeTsnapDivider: document.getElementById("HTMLf_midiReceiveModeTsnapDivider"+dhc.id),
+            },
+            in: {
+                receiveMode: document.getElementById("HTMLi_midiReceiveMode"+dhc.id),
+                receiveModeTsnapTolerance: document.getElementById("HTMLi_midiReceiveModeTsnapTolerance"+dhc.id),
+                receiveModeTsnapDivider: document.getElementById("HTMLi_midiReceiveModeTsnapDivider"+dhc.id),
+                receiveModeTsnapChanFT: document.getElementById("HTMLi_midiReceiveModeTsnapChanFT"+dhc.id),
+                receiveModeTsnapChanHT: document.getElementById("HTMLi_midiReceiveModeTsnapChanHT"+dhc.id),
+                receiveModeTsnapChanDivider: document.getElementById("HTMLi_midiReceiveModeTsnapChanDivider"+dhc.id),
+            },
+            out: {
+                monitor0_note: document.getElementById(`HTMLo_midiMonitor0_note${dhc.id}`),
+                monitor0_velocity: document.getElementById(`HTMLo_midiMonitor0_velocity${dhc.id}`),
+                monitor0_channel: document.getElementById(`HTMLo_midiMonitor0_channel${dhc.id}`),
+                monitor0_port: document.getElementById(`HTMLo_midiMonitor0_port${dhc.id}`),
+                monitor1_note: document.getElementById(`HTMLo_midiMonitor1_note${dhc.id}`),
+                monitor1_velocity: document.getElementById(`HTMLo_midiMonitor1_velocity${dhc.id}`),
+                monitor1_channel: document.getElementById(`HTMLo_midiMonitor1_channel${dhc.id}`),
+                monitor1_port: document.getElementById(`HTMLo_midiMonitor1_port${dhc.id}`),
+            },
+        };
+        /**
+         * Register of the MIDI Note-On inputs by channel.
+         *     Actually it's common to all input ports. 
+         *
+         * @member {Object.<number, Object.<midinnum, MidiInNoteOn>>}
+         * 
+         * @example
+         * // An example of structure of .notes_on[0]
+         * 0: {                                   // MIDI Channel
+         *     39: {                              // External MIDI note number (on the instrument)
+         *         keymapped: 56,                 // Internal MIDI note number (on the keymap)
+         *         midievent: {MIDIMessageEvent}  // The original `MIDIMessageEvent`
+         *     }
+         * }
+         * 
+         * @todo Dynamic, one for each imput port.
+         *       Now two in ports can conflicts if use the same channels.
+         */
+        this.notes_on = {
+            /**
+             * MIDI note number from external input controller
+             * @typedef {Object} MidiInNoteOn
+             * 
+             * @property {midinnum}         keymapped - The MIDI Note Number on the keymap (internal)
+             * @property {MIDIMessageEvent} midievent - The original MIDI event containing the note-on message
+             */
+            0: {},
+            1: {},
+            2: {},
+            3: {},
+            4: {},
+            5: {},
+            6: {},
+            7: {},
+            8: {},
+            9: {},
+            10: {},
+            11: {},
+            12: {},
+            13: {},
+            14: {},
+            15: {}
+        };
 
-/**
- * Handle the incoming MIDI messages
- *
- * @param {MIDIMessageEvent} midievent           - The MIDI message from {@link icMidi}; see {@link https://webaudio.github.io/web-midi-api/#MIDIMessageEvent|Web MIDI API specs}
- * @param {Uint8Array}       midievent.data      - The data array (each entry is a 8bit integer)
- * @param {number}           midievent.timeStamp - The Time-stamp of the message in milliseconds (floating-point number)
- */
-function icMidiMessageReceived(midievent) {
-    // Divide the informations contained in the first byte (Status byte)
-    // 4 bits bitwise shift to the right to get the remaining 4 bits representing
-    // the command (the type of MIDI message)
-    var cmd = midievent.data[0] >> 4;
-    // Set to zero the first 4 bits from left and get the channel
-    var channel = midievent.data[0] & 0xf;
-    // Set the timestamp
-    var timestamp = midievent.timeStamp;
+        this._initUI();
 
-    // Handle Piper feature (fake midievent)
-    // Default: is not a Piper midievent
-    var piper = false;
-    var hancock = false;
-    // Special 4th & 5th bytes in the 'midievent' containing 'hancock' and 'piper' tags
-    if (midievent.data[3] === "hancock") {
-        // If it's a Hancock midievent
-        hancock = true;
-    }
-    if (midievent.data[4] === "piper") {
-        // If it's a Piper's fake midievent
-        piper = true;
-    }
+        // Tell to the DHC that a new app is using it
+        this.dhc.registerApp(this, 'updatesFromDHC', 0);
 
-    // @debug - Parsing log
-    // Filter the Active Sensing messages (254 = 0xFE = 11111110)
-    // if (midievent.data[0] !== 254) {
-    //     var str = "** Incoming MIDI message [" + midievent.data.length + " bytes]: ";
-    //     for (var i = 0; i < midievent.data.length; i++) {
-    //         str += "0x" + midievent.data[i].toString(16) + " ";
-    //     }
-    //     str += " | received at timestamp: " + timestamp;
-    //     console.log(str);
-    //     console.log("cmd:      " + cmd + " = " + cmd.toString(2));
-    //     console.log("channel:  " + channel + " = " + channel.toString(2));
-    //     console.log("1st byte: " + midievent.data[0] + " = 0x" + midievent.data[0].toString(16).toUpperCase() + " = " + midievent.data[0].toString(2));
-    //     console.log("2nd byte: " + midievent.data[1] + " = 0x" + midievent.data[1].toString(16).toUpperCase() + " = " + midievent.data[1].toString(2));
-    //     console.log("3rd byte: " + midievent.data[2] + " = 0x" + midievent.data[2].toString(16).toUpperCase() + " = " + midievent.data[2].toString(2));
-    // }
+        // =======================
+    } // end class Constructor
+    // ===========================
 
-    // Check 'cmd' (the first 4 bits of the 1st byte of the message)
-    // If >= 0x80 it's a Status byte
-    // Filter the Active Sensing messages (254 = 0xFE = 11111110)
-    if (cmd > 7 && midievent.data[0] !== 254) {
+    /**
+     * Manage and route an incoming message
+     * @param {HUM.DHCmsg} msg - The incoming message
+     */
+    updatesFromDHC(msg) {
 
-        // @todo - implement RUNNING STATUS (status byte not repeated on every message)
-        // If the message has at least 3 bytes
-        // if (midievent.data.length > 2) {
-        //     // Read the velocity from the 3rd byte
-        //     velocity = midievent.data[2];
-        // }
+        if (msg.cmd === 'panic') {
+            this.allNotesOff();
+        }
 
-        // @todo - implement TRANSMISSION ERRORS HANDLING
+        if (msg.cmd === 'update') {
+            if (msg.type === 'ft') {
+                
+                // this.tsnapUpdateFT();
+                return;
 
-        if (cmd === 8 || (cmd === 9)) {
-            let ctrlNoteNumber = undefined;
-            let monitorNotes = midievent.data[1];
-            if (icDHC.settings.controller.receive_mode === 'keymap') {
-                ctrlNoteNumber = midievent.data[1];
-            // Find the controller (internal and keymapped) note number from the incoming midi message
-            // if the midi receiving mode is Tone snap
-            } else {
-                if (icDHC.settings.controller.receive_mode === 'tsnap-channel') {
-                    ctrlNoteNumber = icTsnapChannel(midievent.data[1], channel, hancock);
-                } else if (icDHC.settings.controller.receive_mode === 'tsnap-divider') {
-                    ctrlNoteNumber = icTsnapDivider(midievent.data[1], hancock);
-                }
-                if (hancock === false) {
-                    let monintorNoteTo = ctrlNoteNumber === undefined ? 'ND' : ctrlNoteNumber;
-                    monitorNotes = midievent.data[1] +'>'+ monintorNoteTo;
-                }
+            } else if (msg.type === 'ht') {
+
+                this.tsnapUpdateHT();
+
+            } else if (msg.type === 'ctrlmap') {
+                return;
             }
-            // Note OFF (MIDI note-on with velocity=0 is the same as note-off)
-            if (cmd === 8 || ((cmd === 9) && (midievent.data[2] === 0))) {
-                // if (ctrlNoteNumber !== undefined) {
-                if (hancock === true) {
-                    ctrlNoteNumber = midievent.data[1];
+
+        }
+    }
+    /**
+     * Clear the {@link HUM.midi.MidiIn#notes_on} register 
+     */
+    allNotesOff() {
+        for (var ch = 0; ch < 16; ch++) {
+            this.notes_on[ch] = {};
+        }
+    }
+    /*==============================================================================*
+     * MAIN MIDI MESSAGE HANDLER
+     *==============================================================================*/
+    /**
+     * Handle the incoming MIDI messages
+     *
+     * @see {@link https://webaudio.github.io/web-midi-api/#MIDIMessageEvent|Web MIDI API specs}
+     * 
+     * @param {MIDIMessageEvent} midievent           - The MIDI message from {@link HUM.midi.MidiPorts#midiAccess}
+     * @param {Uint8Array}       midievent.data      - The data array (each entry is a 8bit integer)
+     * @param {number}           midievent.timeStamp - The Time-stamp of the message in milliseconds (floating-point number)
+     * @param {boolean=}         deSnapped=false     - If the Note-Off comes from de-snapping action, by the T-Snap receive mode.<br>
+     *                                                 `false`: (default) The note will be turned-off deleted from the {@link HUM.midi.MidiIn#notes_on} register
+     *                                                 `true`: (default) The note will be turned-off but still remains in the {@link HUM.midi.MidiIn#notes_on} register
+     */
+    // @old icMidiMessageReceived
+    midiMessageReceived(midievent, deSnapped=false) {
+        // Divide the informations contained in the first byte (Status byte)
+        // 4 bits bitwise shift to the right to get the remaining 4 bits representing
+        // the command (the type of MIDI message)
+        let cmd = midievent.data[0] >> 4;
+        // Set to zero the first 4 bits from left and get the channel
+        let channel = midievent.data[0] & 0xf;
+        // Set the timestamp
+        let timestamp = midievent.timeStamp;
+
+        // Handle Piper feature (fake midievent)
+        // Default: is not a Piper midievent
+        let piper = false;
+        let hancock = false;
+        let tSnapped = false;
+        // Special 4th & 5th bytes in the 'midievent' containing 'hancock' and 'piper' tags
+        if (midievent.data[3] === "hancock") {
+            // If it's a Hancock midievent
+            hancock = true;
+        }
+        if (midievent.data[4] === "piper") {
+            // If it's a Piper's fake midievent
+            piper = true;
+        }
+
+        // this.logMidiEvent(midievent);
+
+        // Check 'cmd' (the first 4 bits of the 1st byte of the message)
+        //     If >= 0x80 it's a Status byte
+        //     Filter the Active Sensing messages (254 = 0xFE = 11111110)
+        if (cmd > 7 && midievent.data[0] !== 254) {
+
+            // @todo - implement RUNNING STATUS (status byte not repeated on every message)
+            // If the message has at least 3 bytes
+            // if (midievent.data.length > 2) {
+            //     // Read the velocity from the 3rd byte
+            //     velocity = midievent.data[2];
+            // }
+
+            // @todo - implement TRANSMISSION ERRORS HANDLING
+
+            if (cmd === 8 || (cmd === 9)) {
+                let ctrlNum = false;
+                let monitorNotes = midievent.data[1];
+                
+                // MIDI NOTE NUMBER PREPARE (in case of Tsnap)
+                if (this.dhc.settings.controller.receive_mode === 'keymap') {
+                    ctrlNum = midievent.data[1];
                 } else {
-                    if (icDHC.settings.controller.notes_on[channel][midievent.data[1]] !== undefined) {
-                        ctrlNoteNumber = icDHC.settings.controller.notes_on[channel][midievent.data[1]]['keymapped'];
-                        delete icDHC.settings.controller.notes_on[channel][midievent.data[1]];
+                    // Find the controller (internal and keymapped) note number from the incoming midi message
+                    // if the midi receiving mode is Tone snap
+                    if (this.dhc.settings.controller.receive_mode === 'tsnap-channel') {
+                        ctrlNum = this.tsnapChannel(midievent.data[1], channel, hancock);
+                    } else if (this.dhc.settings.controller.receive_mode === 'tsnap-divider') {
+                        ctrlNum = this.tsnapDivider(midievent.data[1], channel, hancock);
+                    }
+                    if (hancock === false) {
+                        // Mark that's a Hancock internal generated message
+                        // (it is currently fixed on the keymap receiving mode)
+                        tSnapped = ctrlNum !== false ? true : false;
+                        // MIDI-IN MONITOR translation
+                        let monintorNoteTo = ctrlNum === false ? 'ND' : ctrlNum;
+                        monitorNotes = midievent.data[1] +'>'+ monintorNoteTo;
                     }
                 }
-                icNoteOFF(ctrlNoteNumber, midievent.data[2], midievent.data[0], midievent.timeStamp);
-                // }
-            // Note ON
-            } else if (cmd === 9) {
-                // Call note on function
-                // Pass the 'piper' argument to avoid loop of Piper's fake midievents
-                // 'statusByte' is useful to the Piper, and with 'timestamp' will be used for MIDI-OUT
-                icNoteON(ctrlNoteNumber, midievent.data[2], midievent.data[0], midievent.timeStamp, piper);
-                if (hancock === false) {
-                    icDHC.settings.controller.notes_on[channel][midievent.data[1]] = {'keymapped': ctrlNoteNumber, 'midievent': midievent};
-                }
-                // Do not MIDI monitor if it's a Piper's fake midievent (FT0)
-                if (piper === false) {
-                    icMIDImonitor(monitorNotes, midievent.data[2], channel, midievent.srcElement.name);
-                }
-        }
-        // Control Change message or Selects Channel Mode message (0xBn)
-        } else if (cmd === 11) {
-            if (midievent.data[1] >= 0 && midievent.data[1] <= 119) {
-                // console.log("Incoming MIDI > type: CHANNEL VOICE message");
-            } else {
-                // All Notes Off message
-                if (midievent.data[1] === 123) {
-                    // console.log("Incoming MIDI > type: ALL NOTES OFF message");
-                    for (var mnn = 0; mnn <= 127; mnn++) {
-                        icNoteOFF(mnn, 80, midievent.data[0], midievent.timeStamp, true);
-                        if (icDHC.settings.controller.notes_on[channel][mnn] !== undefined) {
-                            delete icDHC.settings.controller.notes_on[channel][mnn];
+                
+                // NOTE OFF (MIDI note-on with velocity=0 is the same as note-off)
+                if (cmd === 8 || ((cmd === 9) && (midievent.data[2] === 0))) {
+                    // if (ctrlNum !== false) {
+                    if (hancock === true) {
+                        ctrlNum = midievent.data[1];
+                    } else {
+                        // If the ctrlNum note is in the 'notes_on' register
+                        if (this.notes_on[channel][midievent.data[1]] !== undefined) {
+                            ctrlNum = this.notes_on[channel][midievent.data[1]].keymapped;
+                            if (!deSnapped) {
+                                delete this.notes_on[channel][midievent.data[1]];
+                            }
                         }
                     }
-                } else {
-                    // console.log("Incoming MIDI > type: CHANNEL MODE message");
-                }
+                    this.muteTone(ctrlNum, midievent.data[2], midievent.data[0], midievent.timeStamp);
+                    // }
+                
+                // NOTE ON
+                } else if (cmd === 9) {
+                    // Call note on function
+                    // Pass the 'piper' argument to avoid loop of Piper's fake midievents
+                    // 'statusByte' is useful to the Piper, and with 'timestamp' will be used for MIDI-OUT
+                    this.playTone(ctrlNum, midievent.data[2], midievent.data[0], midievent.timeStamp, piper, tSnapped);
+                    // If it's not a message from Hancock, store the message
+                    // (because the internal virtual midi controller is mapped with the keymap also if Tsnap is active)
+                    if (hancock === false) {
+                        this.notes_on[channel][midievent.data[1]] = {'keymapped': ctrlNum, 'midievent': midievent};
+                    }
+                    // Do not MIDI monitor if it's a Piper's fake midievent (FT0)
+                    if (piper === false) {
+                        this.monitorMidiIN(monitorNotes, midievent.data[2], channel, midievent.srcElement.name);
+                    }
             }
-        // Pitch Bend Change message
-        } else if (cmd === 14) {
-            // Handle pitchbend message
-            let pitchbendValue = ((midievent.data[2] * 128 + midievent.data[1]) - 8192) / 8192;
-            // Store the pitchbend value into global slot: value normalized to [-1 > 0,99987792968750]
-            icDHC.settings.controller.pb.amount = pitchbendValue;
-            // Update the Synth voices frequencies
-            icSynthPitchBend();
-            // Update the UI Monitors
-            icMONITORSinit();
-        // Other type of MIDI message
-        } else {
-            console.log("Incoming MIDI > type: Other message...");
-            // @todo - Any other type of message pass through and go out
-            /**
-             * A MIDI message (data + timestamp)
-             * 
-             * @typedef {Array} OtherMidiMsg
-             *
-             * @property {Uint8Array} 0 - Message; an array of 8-bit unsigned integers
-             * @property {number}     1 - Time-stamp; a floating point number
-             */
-            // icMidiPassThrough.push( [midievent.data, timestamp] );
-        }
-    // Filter the Active Sensing messages (254 = 0xFE = 11111110)
-    } else if (midievent.data[0] !== 254) {
-        // @todo - implement RUNNING STATUS and interpret a message starting with a Data byte
-        // as part of the last received Status byte - Check if the browser do this for us
-        
-        // Debug
-        console.log("Incoming MIDI > NON-STANDARD MIDI Message (maybe RUNNING STATUS). The first 4 bits of the 1st byte of the message (Status byte) has an unexpected value: " + cmd + " = " + cmd.toString(2));
-    }
-}
-
-/*==============================================================================*
- * MIDI NOTE ON/OFF HANDLING
- *==============================================================================*/
-/**
- * Send a Note-ON over the app
- *
- * @param {number}   ctrlNoteNumber - MIDI note number of the incoming MIDI message
- * @param {number}   velocity       - Velocity of the incoming MIDI message
- * @param {number}   statusByte     - Status Byte of the incoming MIDI message
- * @param {number}   timestamp      - Timestamp of the incoming MIDI message (currently not used)
- * @param {boolean}  piper          - If is a note generated by the Piper feature; 'false' it's not Piper, 'true' it's Piper
- */
-function icNoteON(ctrlNoteNumber, velocity, statusByte, timestamp, piper) {
-    // Get frequency and midi.cents assigned to the incoming MIDI key (ctrlNoteNumber)
-    // If the input MIDI key is in the ctrl_map, proceed
-    if (icDHC.tables.ctrl_map[ctrlNoteNumber]) {
-        
-        // Vars for a better reading
-        var ft = icDHC.tables.ctrl_map[ctrlNoteNumber].ft;
-        var ht = icDHC.tables.ctrl_map[ctrlNoteNumber].ht;
-
-        // **FT**
-        // If the key is mapped to a Fundamental Tone 
-        if (ft !== 129) {
-            // Get its frequency and midi.cents 
-            var ftObj = icDHC.tables.ft_table[ft];
-            // Recalculate the ht_tables passing the frequency (Hz)
-            let ht_tables = icHTtableCreate(ftObj.hz);
-            icDHC.tables.ht_table = ht_tables['table'];
-            icDHC.tables.reverse_ht_table = ht_tables['reverse_table'];
-            for (let key of icDHC.tables.ftKeyQueue) {
-                // If the key is already pressed
-                if (key[3] === ft) {
-                    // Search the FT number in the ftKeyQueue array
-                    var position = icDHC.tables.ftKeyQueue.findIndex(p => p[3] === ft);
-                    // If the FTn exist
-                    if (position !== -1) {
-                        // Send VoiceOFF to the Synth
-                        icVoiceOFF(key[1], "ft");
-                        icMIDIout(statusByte, ctrlNoteNumber, ft, ftObj, velocity, 0, "ft");
-                        // Remove the FTn from the ftKeyQueue array
-                        icDHC.tables.ftKeyQueue.splice(position, 1);
-                    // If the FTn does not exist
+            // Control Change message or Selects Channel Mode message (0xBn)
+            } else if (cmd === 11) {
+                if (midievent.data[1] >= 0 && midievent.data[1] <= 119) {
+                    // console.log("Incoming MIDI > type: CHANNEL VOICE message");
+                } else {
+                    // All Notes Off message
+                    if (midievent.data[1] === 123) {
+                        // console.log("Incoming MIDI > type: ALL NOTES OFF message");
+                        for (var mnn = 0; mnn <= 127; mnn++) {
+                            this.muteTone(mnn, 80, midievent.data[0], midievent.timeStamp, true);
+                            if (this.notes_on[channel][mnn]) {
+                                delete this.notes_on[channel][mnn];
+                            }
+                        }
                     } else {
-                        console.log("STRANGE: there is NOT a FT pressed key #:", ft);
+                        // console.log("Incoming MIDI > type: CHANNEL MODE message");
                     }
                 }
+            // Pitch Bend Change message
+            } else if (cmd === 14) {
+                // Handle pitchbend message
+                let pitchbendValue = ((midievent.data[2] * 128 + midievent.data[1]) - 8192) / 8192;
+                // Store the pitchbend value into global slot: value normalized to [-1 > 0,99987792968750]
+                this.dhc.settings.controller.pb.amount = pitchbendValue;
+                // Update the Synth voices frequencies
+                this.dhc.synth.updatePitchBend();
+                // Update the UI Monitors
+                this.dhc.initUImonitors();
+            // Other type of MIDI message
+            } else {
+                console.log("Incoming MIDI > type: Other message...");
+                // @todo - Any other type of message pass through and go out
+                // this.midiPassThrough.push( [midievent.data, timestamp] );
             }
-            // Handle the change of FT on TSNAP RECEIVING MODE
-            icTsnapUpdateHT();
-            // Send VoiceON to the Synth
-            icVoiceON(ftObj.hz, ctrlNoteNumber, velocity, "ft");
-            icMIDIout(statusByte, ctrlNoteNumber, ft, ftObj, velocity, 1, "ft");
-            if (icDHC.settings.ht.curr_ft !== ft) {
-                icUpdateMIDInoteON("ht");
-            }
-            // Store the current FT into the global slot for future HT table re-computations and UI monitor updates
-            icDHC.settings.ht.curr_ft = ft;
-            // Add to the Key Queue the infos about the current pressed FT key (to manage monophony)
-            icDHC.tables.ftKeyQueue.push( [ftObj.hz, ctrlNoteNumber, velocity, ft] );
-            // Update the UI
-            icDHCmonitor(ft, ftObj, "ft");
-            icHSTACKfillin();
-            icHSTACKmonitor("ft", 1);
+        // Filter the Active Sensing messages (254 = 0xFE = 11111110)
+        } else if (midievent.data[0] !== 254) {
+            // @todo - implement RUNNING STATUS and interpret a message starting with a Data byte
+            // as part of the last received Status byte - Check if the browser do this for us
+            
+            // Debug
+            console.log("Incoming MIDI > NON-STANDARD MIDI Message (maybe RUNNING STATUS). The first 4 bits of the 1st byte of the message (Status byte) has an unexpected value: " + cmd + " = " + cmd.toString(2));
         }
+    }
 
-        // **HT**
-        // If the key is mapped to a Harmonic Tone (or subharmonic) 
-        if (ht !== 129) {
-            // If it's a normal HT
-            if (ht !== 0) {
-                var htObj = icDHC.tables.ht_table[ht];
-                // Store the current HT into the global slot for future UI monitor updates
-                icDHC.settings.ht.curr_ht = ht;
-                // Send VoiceON to the Synth
-                icVoiceON(htObj.hz, ctrlNoteNumber, velocity, "ht");
-                icMIDIout(statusByte, ctrlNoteNumber, ht, htObj, velocity, 1, "ht");
-                // If the Note ON is not a Piper's fake midievent (FT0)
-                if (piper === false) {
-                    // Add the HT to the Pipe
-                    icPiper(statusByte, ctrlNoteNumber, velocity, "ht");
-                }
-                // Update the UI
-                icDHCmonitor(ht, htObj, "ht");
-                icHSTACKmonitor("ht", 1, ht);
-            // If HT0 is pressed, it's the Piper feature!
-            } else if (ht === 0) {
-                // Note ON the next piped HT
-                icPiping(1);
+    /*==============================================================================*
+     * MIDI NOTE ON/OFF HANDLING
+     *==============================================================================*/
+    /**
+     * Send a Note-ON over the app
+     *
+     * @param {midinnum} ctrlNum    - MIDI note number of the incoming MIDI message
+     * @param {velocity} velocity   - Velocity of the incoming MIDI message
+     * @param {number}   statusByte - Status Byte of the incoming MIDI message
+     * @param {number}   timestamp  - Timestamp of the incoming MIDI message (currently not used)
+     * @param {boolean}  piper      - If is a note generated by the Piper feature:
+     *                                `false`: it's not Piper;
+     *                                `true`: it's Piper.
+     * @param {boolean}  tsnap      - If is a note translated by the T-Snap receive mode:
+     *                                 `false`: it's not T-snapped;
+     *                                 `true`: it's T-snapped.
+     */
+    // @old icNoteON
+    playTone(ctrlNum, velocity, statusByte, timestamp, piper, tsnap) {
+        // Get frequency and midi.cents assigned to the incoming MIDI key (ctrlNum)
+        // If the input MIDI key is in the ctrl_map, proceed
+        if (this.dhc.tables.ctrl[ctrlNum]) {
+            
+            // Vars for a better reading
+            let ftNumber = this.dhc.tables.ctrl[ctrlNum].ft,
+                htNumber = this.dhc.tables.ctrl[ctrlNum].ht;
+
+            // **FT**
+            // If the key is mapped to a Fundamental Tone 
+            if (ftNumber !== 129) {
+                // Play the DHC
+                this.dhc.playFT(HUM.DHCmsg.ftON('midi', ftNumber, velocity, ctrlNum, tsnap));
             }
-        }
 
-        // **FT+HT**
-        // @todo - Implement the controller-key mapped both to an FT and HT
+            // **HT**
+            // If the key is mapped to a Harmonic Tone (or subharmonic) 
+            if (htNumber !== 129) {
+                // Play the DHC
+                this.dhc.playHT(HUM.DHCmsg.htON('midi', htNumber, velocity, ctrlNum, piper, tsnap));
+            }
         
-    // If the input MIDI key is NOT in the ctrl_map, the message stop here
-    } else {
-        icEventLog("The pressed KEY on the CONTROLLER is not assigned on the current KEYMAP.");
+        // If the input MIDI key is NOT in the ctrl_map, the message stop here
+        } // else {
+        //     this.dhc.harmonicarium.components.backendUtils.eventLog("The pressed KEY on the CONTROLLER is not assigned on the current KEYMAP.");
+        // }
     }
-    // Turn on the key on the virtual piano
-    icKeyON(ctrlNoteNumber);
-}
 
-/**
- * Send a Note-OFF over the app
- *
- * @param {number} ctrlNoteNumber - MIDI note number of the incoming MIDI message
- * @param {number} velocity       - Velocity of the incoming MIDI message
- * @param {number} statusByte     - Status Byte of the incoming MIDI message
- * @param {number} timestamp      - Timestamp of the incoming MIDI message (currently not used)
- */
-function icNoteOFF(ctrlNoteNumber, velocity, statusByte, timestamp, panic=false) {
-       // If the input MIDI key is in the ctrl_map, proceed
-    if (icDHC.tables.ctrl_map[ctrlNoteNumber]) {
-        
-        // Vars for a better reading
-        let ft = icDHC.tables.ctrl_map[ctrlNoteNumber].ft;
-        let ht = icDHC.tables.ctrl_map[ctrlNoteNumber].ht;
+    /**
+     * Send a Note-OFF over the app
+     *
+     * @param {midinnum} ctrlNum    - MIDI note number of the incoming MIDI message
+     * @param {velocity} velocity   - Velocity of the incoming MIDI message
+     * @param {number}   statusByte - Status Byte of the incoming MIDI message
+     * @param {number}   timestamp  - Timestamp of the incoming MIDI message (currently not used)
+     * @param {boolean=} panic      - It tells that the message has been generated by a "hard" All-Notes-Off request.
+     */
+    // @old icNoteOFF
+    muteTone(ctrlNum, velocity, statusByte, timestamp, panic=false) {
+        // If the input MIDI key is in the ctrl_map, proceed
+        if (this.dhc.tables.ctrl[ctrlNum]) {
+            
+            // Vars for a better reading
+            let ftNumber = this.dhc.tables.ctrl[ctrlNum].ft,
+                htNumber = this.dhc.tables.ctrl[ctrlNum].ht;
+            
+            // **FT**
+            // If the key is mapped to a Fundamental Tone
+            if (ftNumber !== 129) {
+                this.dhc.muteFT(HUM.DHCmsg.ftOFF('midi', ftNumber, velocity, ctrlNum, panic));
+            }
 
-        // **FT**
-        // If the key is mapped to a Fundamental Tone
-        if (ft !== 129) {
-            // Get frequency and midi.cents for MIDI-OUT polyphony handling
-            var ftObj = icDHC.tables.ft_table[ft];
-            // Search the FT number in the ftKeyQueue array
-            var position = icDHC.tables.ftKeyQueue.findIndex(p => p[3] === ft);
-            // If the FTn exist
-            if (position !== -1) {
-                // Remove the FTn from the ftKeyQueue array
-                icDHC.tables.ftKeyQueue.splice(position, 1);
-            // If the FTn does not exist
-            } else {
-                if (panic === false) {
-                    console.log("STRANGE: there is NOT a FT pressed key #:", ft);
-                }
-            }
-            // If there are no more notes in the ftKeyQueue array
-            if (icDHC.tables.ftKeyQueue.length === 0) {
-                // Send VoiceOFF to the Synth
-                icVoiceOFF(ctrlNoteNumber, "ft", panic);
-                icMIDIout(statusByte, ctrlNoteNumber, ft, ftObj, velocity, 0, "ft");
-                icHSTACKmonitor("ft", 0);
-            // Else (if there are other notes) read and play the next note on the ftKeyQueue array
-            } else {
-                // Read the next FT
-                let nextIndex = icDHC.tables.ftKeyQueue.length - 1;
-                let nextTone = icDHC.tables.ftKeyQueue[nextIndex];
-                // If the next tone is NOT the active one
-                if (nextTone[3] !== icDHC.settings.ht.curr_ft) {
-                    // Send VoiceOFF to the Synth
-                    icVoiceOFF(ctrlNoteNumber, "ft", panic);
-                    icMIDIout(statusByte, ctrlNoteNumber, ft, ftObj, velocity, 0, "ft");
-                    // Get frequency and midi.cents for MIDI-OUT polyphony handling
-                    var ftNextArr = icDHC.tables.ft_table[nextTone[3]];
-                    // Recalculate the ht_table passing the frequency (Hz)
-                    let ht_tables = icHTtableCreate(nextTone[0]);
-                    icDHC.tables.ht_table = ht_tables['table'];
-                    icDHC.tables.reverse_ht_table = ht_tables['reverse_table'];
-                    // Store the current FT into the global slot for future HT table re-computations and UI monitor updates
-                    icDHC.settings.ht.curr_ft = nextTone[3];
-                    // Send VoiceON to the Synth
-                    icVoiceON(nextTone[0], nextTone[1], nextTone[2], "ft");
-                    icMIDIout(statusByte, nextTone[1], nextTone[3], ftNextArr, nextTone[2], 1, "ft");
-                    // Update the UI
-                    icDHCmonitor(nextTone[3], ftObj, "ft");
-                    icHSTACKfillin();
-                    icHSTACKmonitor("ft", 1);
-                }
-            }
-        }
-        
-        // **HT**
-        // If the key is mapped to a Harmonic Tone
-        if (ht !== 129) {
-            // If it's a normal HT
-            if (ht !== 0) {
-                var htObj = icDHC.tables.ht_table[ht];
-                // Send VoiceOFF to the Synth
-                icVoiceOFF(ctrlNoteNumber, "ht", panic);
-                icMIDIout(statusByte, ctrlNoteNumber, ht, htObj, velocity, 0, "ht");
-                // Update the UI
-                icHSTACKmonitor("ht", 0, ht);
-            // If HT0 is pressed, it's the Piper feature
-            } else if (ht === 0 && panic === false) {
-                // Note OFF the active piped HT
-                icPiping(0);
+            // **HT**
+            // If the key is mapped to a Harmonic Tone
+            if (htNumber !== 129) {
+                this.dhc.muteHT(HUM.DHCmsg.htOFF('midi', htNumber, velocity, ctrlNum, panic));
             }
         }
     }
-    // Turn off the key on the virtual piano
-    icKeyOFF(ctrlNoteNumber);
-}
 
-/*==============================================================================*
- * TONE SNAPPING - RECEIVING MODE FEATURE
- * ...
- * ...
- *==============================================================================*/
+    /*==============================================================================*
+     * TONE SNAPPING - RECEIVING MODE FEATURE
+     *==============================================================================*/
+    /**
+     * Updates the status of the keys pressed on the controller when the T-Snap is active.
+     * It should be invoked when the HTs table at {@link HUM.DHC#tables} changes. 
+     * Allows you to play only the keys that match the HTs frequencies.
+     * If a key on the controller remains pressed, it will be dynamically switched on or off when the HTs table is updated.
+     */
+     // @old icTsnapUpdateHT
+    tsnapUpdateHT() {
+        // Handle the change of FT on TSNAP RECEIVING MODE
+        // Ignore handling if 'keymap' receiving mode
+        if (this.dhc.settings.controller.receive_mode === 'keymap') {
+            return;
+        } else if (this.dhc.settings.controller.receive_mode === 'tsnap-channel') {
+            let ht_channel = this.dhc.settings.controller.tsnap.channel.ht;
+            let ht_notes_on = this.notes_on[ht_channel];
 
-function icTsnapUpdateHT() {
-    // Handle the change of FT on TSNAP RECEIVING MODE
-    // Ignore handling if 'keymap' receiving mode
-    if (icDHC.settings.controller.receive_mode === 'keymap') {
-        return;
-    } else if (icDHC.settings.controller.receive_mode === 'tsnap-channel') {
-        let ht_channel = icDHC.settings.controller.tsnap.channel.ht;
-        let ht_notes_on = icDHC.settings.controller.notes_on[ht_channel];
+            // Mute or Re-play the current HT playng notes
+            // For every HT notes-on
+            for (let external of Object.keys(ht_notes_on)) {
 
-        // For every HT notes-on
-        for (let external of Object.keys(ht_notes_on)) {
-
-            let newCtrlNoteNumber = icTsnapChannel(external, ht_channel, false);
-            let midievent = ht_notes_on[external]['midievent'];
-            // If the new note in NOT on the keymap
-            if (newCtrlNoteNumber === undefined) {
-                // Remove the note:
-                // Turn the note off (fake midievent)
-                let midievent_noteoff = {
-                    data: [midievent.data[0], midievent.data[1], 0, midievent.data[3], midievent.data[4]],
-                    srcElement: midievent.srcElement
-                };
-                icMidiMessageReceived(midievent_noteoff);
-            // If the new note is on the keymap
-            } else {
-                // Update the note:
-                // Turn the note off (fake midievent)
-                let midievent_noteoff = {
-                    data: [midievent.data[0], midievent.data[1], 0, midievent.data[3], midievent.data[4]],
-                    srcElement: midievent.srcElement
-                };
-                // Turn the note on (fake midievent)
-                let midievent_noteon = {
-                    data: [midievent.data[0], midievent.data[1], midievent.data[2], midievent.data[3], midievent.data[4]],
-                    srcElement: midievent.srcElement
-                };
-                icMidiMessageReceived(midievent_noteoff);
-                icMidiMessageReceived(midievent_noteon);
-            }
-        }
-
-    } else if (icDHC.settings.controller.receive_mode === 'tsnap-divider') {
-        let ht_channel = icDHC.settings.controller.tsnap.channel.ht;
-        let ht_notes_on = icDHC.settings.controller.notes_on[ht_channel];
-
-        // For every HT notes-on
-        for (let external of Object.keys(ht_notes_on)) {
-
-            let newCtrlNoteNumber = icTsnapDivider(external, false);
-            let midievent = ht_notes_on[external]['midievent'];
-            // If the new note in NOT on the keymap
-            if (newCtrlNoteNumber === undefined) {
-                // Remove the note:
-                // Turn the note off (fake midievent)
-                let midievent_noteoff = {
-                    data: [midievent.data[0], midievent.data[1], 0, midievent.data[3], midievent.data[4]],
-                    srcElement: midievent.srcElement
-                };
-                icMidiMessageReceived(midievent_noteoff);
-            // If the new note is on the keymap
-            } else {
-                // Update the note:
-                // Turn the note off (fake midievent)
-                let midievent_noteoff = {
-                    data: [midievent.data[0], midievent.data[1], 0, midievent.data[3], midievent.data[4]],
-                    srcElement: midievent.srcElement
-                };
-                // Turn the note on (fake midievent)
-                let midievent_noteon = {
-                    data: [midievent.data[0], midievent.data[1], midievent.data[2], midievent.data[3], midievent.data[4]],
-                    srcElement: midievent.srcElement
-                };
-                icMidiMessageReceived(midievent_noteoff);
-                icMidiMessageReceived(midievent_noteon);
-            }
-        }
-    }
-}
-
-function icTsnapFindCtrlNoteNumber(midi_note_number, table_keys_array, type) {    
-    let closest_mc = table_keys_array.reduce((prev, curr) => {
-        // @todo: snap to a different tone if two tones are at the same distance
-        let result = (Math.abs(curr - midi_note_number) < Math.abs(prev - midi_note_number) ? curr : prev);
-        if (Math.abs(result - midi_note_number) > icDHC.settings.controller.tsnap.tolerance) {
-            return false;
-        } else {
-            return result;
-        }
-    });
-    if (closest_mc !== false) {
-        if (type === "ft") {
-            let relative_tone = icDHC.tables.reverse_ft_table[closest_mc];
-            for (const [key, value] of Object.entries(icDHC.tables.ctrl_map)) {
-                if (value.ft === relative_tone) {
-                    return Number(key);
-                }
-            }
-        } else if (type === "ht") {
-            let relative_tone = icDHC.tables.reverse_ht_table[closest_mc];
-            for (const [key, value] of Object.entries(icDHC.tables.ctrl_map)) {
-                if (value.ht === relative_tone) {
-                    return Number(key);
-                }
-            }
-        } else {
-            return undefined;
-        }
-    }
-}
-
-function icTsnapChannel(midi_note_number, channel, hancock) {
-    if (hancock === true) {
-        return midi_note_number;
-    } else {
-        if (icDHC.settings.controller.tsnap.channel.ft == channel) {
-            return icTsnapFindCtrlNoteNumber(midi_note_number, Object.keys(icDHC.tables.reverse_ft_table), 'ft');
-        }
-        else if (icDHC.settings.controller.tsnap.channel.ht == channel) {
-            return icTsnapFindCtrlNoteNumber(midi_note_number, Object.keys(icDHC.tables.reverse_ht_table), 'ht');
-        } else {
-            return undefined;
-        }
-    }
-}
-
-function icTsnapDivider(midi_note_number, hancock) {
-    if (hancock === true) {
-        return midi_note_number;
-    } else {
-        if (icDHC.settings.controller.tsnap.divider >= midi_note_number) {
-            return icTsnapFindCtrlNoteNumber(midi_note_number, Object.keys(icDHC.tables.reverse_ft_table), 'ft');
-        }
-        else if (icDHC.settings.controller.tsnap.divider < midi_note_number) {
-            return icTsnapFindCtrlNoteNumber(midi_note_number, Object.keys(icDHC.tables.reverse_ht_table), 'ht');
-        } else {
-            return undefined;
-        }
-    }
-}
-
-/*==============================================================================*
- * PIPER HT0 FEATURE
- * The Piper store the last N pressed HTs and repeat them when HT0 is pressed
- * simulating a special fake MIDI message
- *==============================================================================*/
-
-/**
- * Piper's default settings
- *
- * @namespace
- *
- * @property {number} maxLenght - How many steps has the Pipe
- * @property {Array}  queue     - Last HT MIDI Note-ON messages received
- * @property {Array}  pipe      - MIDI Note-ON messages stored into the Pipe
- * @property {number} currStep  - Last step played by the Piper
- * @property {Array}  currTone  - Last fake MIDI Note-ON message send
- */
-var icPipe = {
-    maxLenght: 5,
-    queue: [ [144, 66, 120], [144, 67, 120], [144, 65, 120], [144, 60, 120], [144, 62, 120] ],
-    pipe: [],
-    currStep: 5,
-    currTone: null
-};
-
-/**
- * Store the last HTs MIDI messages into the Piper's queue
- *
- * @param {number}      statusByte     - Status Byte of the incoming MIDI message
- * @param {number}      ctrlNoteNumber - MIDI note number of the incoming MIDI message
- * @param {number}      velocity       - Velocity of the incoming MIDI message
- * @param {('ft'|'ht')} type           - If the MIDI note number of the incoming message is assigned to FTs or HTs
- */
-function icPiper(statusByte, ctrlNoteNumber, velocity, type) {
-    // Prepare the fake MIDI message
-    let pack = [statusByte, ctrlNoteNumber, velocity];
-    // If the pipe is not full
-    if (icPipe.queue.length < icPipe.maxLenght) {
-        // Insert the message at the beginning of the queue
-        icPipe.queue.push(pack);
-    // Else, if the pipe is full
-    } else {
-        // Remove the oldest message in the pipe
-        icPipe.queue.shift();
-        // Insert in the pipe a new message
-        icPipe.queue.push(pack);
-    }
-}
-
-/**
- * When HT0 is pressed (or released)
- *
- * @param {(0|1)} state - Note ON/OFF; 1 is ON, 0 is OFF
- */
-function icPiping(state) {
-    // Get the index (current step)
-    let i = icPipe.currStep;
-    // If there are notes in the queue
-    if (icPipe.queue.length > 0) {
-        // Inject the queue into the pipe at the current step position
-        icPipe.pipe.splice.apply(icPipe.pipe, [i, icPipe.queue.length].concat(icPipe.queue));
-        // If the final pipe is longer than the maxLenght
-        if (icPipe.pipe.length > icPipe.maxLenght) {
-            // Cut the pipe according to the maxLenght
-            icPipe.pipe.splice(0, (icPipe.pipe.length - icPipe.maxLenght));
-        }
-        // Increase current step and index in order to start playing
-        // after the notes that have just been inserted
-        icPipe.currStep += icPipe.queue.length;
-        i += icPipe.queue.length;
-        // Empty the queue
-        icPipe.queue = [];
-    }
-    // If there are notes in the pipe
-    if (icPipe.pipe.length > 0) {
-        // If step count is not at the end of the pipe
-        if (i < icPipe.maxLenght) {
-            // Note ON
-            if (state === 1) {
-                // If there is some message at the current step in the pipe
-                if (icPipe.pipe[i]) {
-                    // Create the special-marked fake MIDI message
-                    // in order to not to be confused with a normal MIDI message
-                    let hancock = icPipe.pipe[i][3];
-                    if (icDHC.settings.controller.receive_mode !== 'keymap') {
-                        hancock = 'hancock';
-                    }
-                    let midievent = {
-                        data: [icPipe.pipe[i][0], icPipe.pipe[i][1], icPipe.pipe[i][2], hancock, "piper"]
+                let newCtrlNoteNumber = this.tsnapChannel(external, ht_channel, false);
+                let midievent = ht_notes_on[external].midievent;
+                // If the new note in NOT on the keymap
+                if (newCtrlNoteNumber === false) {
+                    // Remove the note:
+                    // Turn the note off (fake midievent)
+                    let midievent_noteoff = {
+                        data: [midievent.data[0], midievent.data[1], 0, midievent.data[3], midievent.data[4]],
+                        srcElement: midievent.srcElement
                     };
-                    // Send the fake MIDI message
-                    icMidiMessageReceived(midievent);
-                    // Store the last sent MIDI message in 'currTone'
-                    icPipe.currTone = midievent;
+                    this.midiMessageReceived(midievent_noteoff, true);
+                // If the new note is on the keymap
                 } else {
-                    icPipe.currTone = null;
+                    // Update the note:
+                    // Turn the note off (fake midievent)
+                    let midievent_noteoff = {
+                        data: [midievent.data[0], midievent.data[1], 0, midievent.data[3], midievent.data[4]],
+                        srcElement: midievent.srcElement
+                    };
+                    // Turn the note on (fake midievent)
+                    let midievent_noteon = {
+                        data: [midievent.data[0], midievent.data[1], midievent.data[2], midievent.data[3], midievent.data[4]],
+                        srcElement: midievent.srcElement
+                    };
+                    this.midiMessageReceived(midievent_noteoff, false);
+                    this.midiMessageReceived(midievent_noteon);
                 }
-            // Note OFF
-            } else if (state === 0) {
-                // If there is a stored MIDI message in 'currTone'
-                if (icPipe.currTone) {
-                    // Set the velocity to zero (Note OFF)
-                    icPipe.currTone.data[2] = 0;
-                    // Send the fake MIDI message
-                    icMidiMessageReceived(icPipe.currTone);
-                }
-                // Go to the next step in the pipe
-                icPipe.currStep++;
             }
-        // If step count is at the end (or out) of the pipe
-        } else {
-            // Reset the step counter                
-            icPipe.currStep = 0;
-            // Retry to execute the icPiping (itself) again
-            icPiping(state);
-        }
-    }
-}
 
-/**
- * Experimental function for dynamic preloaded piper melody (...)
- *
- * @todo - The preloaded Pipe must use only available keys
- * 
- * @param {('h'|'s'|'hs')} type - The HTs scale type of the current Controller keymap
- */
-function icPipeQueueGen(type) {
-    let ctrlMap = icDHC.tables.ctrl_map;
-    let melodies = {
-        h: [9, 10, 8, 4, 6],
-        s: [-6, -5, -4, -3, -4, -5],
-        hs: [6, -6, 6, -6, 6, -6]
-    };
-    let msgsQueue = [];
-    for (let tone of melodies[type]) {
-        let once = 0;
-        for (let key of Object.keys(ctrlMap)) {
-            for (let m = 1; m < 128; m *= 2) {
-                if (ctrlMap[key].ht === tone * m && once === 0) {
-                    msgsQueue.push([144, Number(key), 120]);
-                    once++;
-                }            
+        } else if (this.dhc.settings.controller.receive_mode === 'tsnap-divider') {
+            // @todo - to fix: ht_channel is from tsnap-channel mode!!! (no more omni!)
+            let divider_channel = this.dhc.settings.controller.tsnap.channel.divider;
+            let notes_on = this.notes_on[divider_channel];
+
+            // For every notes-on
+            for (let external of Object.keys(notes_on)) {
+                // If it's HT
+                if (this.dhc.settings.controller.tsnap.divider < external) {
+                    let newCtrlNoteNumber = this.tsnapDivider(external, divider_channel, false);
+                    let midievent = notes_on[external].midievent;
+                    // If the new note in NOT on the keymap
+                    if (newCtrlNoteNumber === false) {
+                        // Remove the note:
+                        // Turn the note off (fake midievent)
+                        let midievent_noteoff = {
+                            data: [midievent.data[0], midievent.data[1], 0, midievent.data[3], midievent.data[4]],
+                            srcElement: midievent.srcElement
+                        };
+                        this.midiMessageReceived(midievent_noteoff, true);
+                    // If the new note is on the keymap
+                    } else {
+                        // Update the note:
+                        // Turn the note off (fake midievent)
+                        let midievent_noteoff = {
+                            data: [midievent.data[0], midievent.data[1], 0, midievent.data[3], midievent.data[4]],
+                            srcElement: midievent.srcElement
+                        };
+                        // Turn the note on (fake midievent)
+                        let midievent_noteon = {
+                            data: [midievent.data[0], midievent.data[1], midievent.data[2], midievent.data[3], midievent.data[4]],
+                            srcElement: midievent.srcElement
+                        };
+                        this.midiMessageReceived(midievent_noteoff, false);
+                        this.midiMessageReceived(midievent_noteon);
+                    }
+                }
             }
         }
     }
-    icPipe.maxLenght = document.getElementById("HTMLi_dhc_piperSteps").value = msgsQueue.length;
-    icPipe.queue = msgsQueue;
-}
+    /**
+     * Check if a frequency of a MIDI Note Number corresponds to a Harmonic (or Subharmonic) in the HT table under {@link HUM.DHC#tables}
+     * @param {midinnum} midi_note_number - The MIDI Note Number to be found in the reverse table
+     * @param {tonetype} type             - The type of tone (FT or HT)
+     *
+     * @returns {(false|midinnum)} - Returns the keymapped MIDI Note Number that match the nearest HT to the incoming Note; if nothing is found, returns `false`
+     */
+    // @old icTsnapFindCtrlNoteNumber
+    tsnapFindCtrlNoteNumber(midi_note_number, type) {  
+        let table_keys_array =  Object.keys(this.dhc.tables.reverse[type]); 
+        let closest_mc = table_keys_array.reduce((prev, curr) => {
+            // @todo: snap to a different tone if two tones are at the same distance
+            let result = (Math.abs(curr - midi_note_number) < Math.abs(prev - midi_note_number) ? curr : prev);
+            if (Math.abs(result - midi_note_number) > this.dhc.settings.controller.tsnap.tolerance) {
+                return false;
+            } else {
+                return result;
+            }
+        });
+        if (closest_mc !== false) {
+            if (type === "ft") {
+                let relative_tone = this.dhc.tables.reverse.ft[closest_mc];
+                for (const [key, value] of Object.entries(this.dhc.tables.ctrl)) {
+                    if (value.ft === relative_tone) {
+                        return Number(key);
+                    }
+                }
+            } else if (type === "ht") {
+                let relative_tone = this.dhc.tables.reverse.ht[closest_mc];
+                for (const [key, value] of Object.entries(this.dhc.tables.ctrl)) {
+                    if (value.ht === relative_tone) {
+                        return Number(key);
+                    }
+                }
+            } else {
+                return false;
+            }
+        }
+        // If nothing found, return false
+        return false;
+    }
+    /**
+     * Tone Snap Channel receive mode router. Route messages accordingly to the MIDI Channel.
+     * @param {midinnum} midi_note_number - The MIDI Note Number to be found in the reverse table
+     * @param {midichan} channel          - The MIDI Channel from which the message is coming from
+     * @param {boolean}  hancock          - If the message comes from the Hancock virtual MIDI input (if it's `true` ignore and don't apply T-Snap)
+     *
+     * @returns {(false|midinnum)} - Returns the keymapped MIDI Note Number that match the nearest HT to the incoming Note; if nothing is found, returns `false`
+     */
+    // @old icTsnapChannel
+    tsnapChannel(midi_note_number, channel, hancock) {
+        if (hancock === true) {
+            return midi_note_number;
+        } else {
+            if (this.dhc.settings.controller.tsnap.channel.ft == channel) {
+                return this.tsnapFindCtrlNoteNumber(midi_note_number, 'ft');
+            }
+            else if (this.dhc.settings.controller.tsnap.channel.ht == channel) {
+                return this.tsnapFindCtrlNoteNumber(midi_note_number, 'ht');
+            } else {
+                return false;
+            }
+        }
+    }
+    /**
+     * Tone Snap Divider receive mode router.  Route messages accordingly to the divider MIDI Note Number.
+     * @param {midinnum} midi_note_number - The MIDI Note Number to be found in the reverse table
+     * @param {midichan} channel          - The MIDI Channel from which the message is coming from
+     * @param {boolean}  hancock          - If the message comes from the Hancock virtual MIDI input (if it's `true` ignore and don't apply T-Snap)
+     *
+     * @returns {(false|midinnum)} - Returns the keymapped MIDI Note Number that match the nearest HT to the incoming Note; if nothing is found, returns `false`
+     */
+    // @old icTsnapDivider
+    tsnapDivider(midi_note_number, channel, hancock) {
+        if (hancock === true) {
+            return midi_note_number;
+        } else {
+            if (this.dhc.settings.controller.tsnap.channel.divider == channel) {
+                if (this.dhc.settings.controller.tsnap.divider >= midi_note_number) {
+                    return this.tsnapFindCtrlNoteNumber(midi_note_number, 'ft');
+                }
+                else if (this.dhc.settings.controller.tsnap.divider < midi_note_number) {
+                    return this.tsnapFindCtrlNoteNumber(midi_note_number, 'ht');
+                } else {
+                    return false;
+                }
+            }
+        }
+    }
+
+    /*==============================================================================*
+     * MIDI UI tools
+     *==============================================================================*/
+
+    /**
+     * Switch the MIDI INPUT RECEIVING MODE (called when UI is updated)
+     *
+     * @param {('keymap'|'tsnap-channel'|'tsnap-divider')} receive_mode - FT/HT controller note receiving mode
+     */
+    // @old icSwitchMidiReceiveMode
+    switchReceiveModeUI(receive_mode) {
+        let tsnap_tolerance = this.uiElements.fn.receiveModeTsnapTolerance,
+            tsnap_chan = this.uiElements.fn.receiveModeTsnapChan,
+            tsnap_divider = this.uiElements.fn.receiveModeTsnapDivider;
+        
+        if (receive_mode === "keymap") {
+            tsnap_tolerance.style.display = "none";
+            tsnap_chan.style.display = "none";
+            tsnap_divider.style.display = "none";
+        } else if (receive_mode === "tsnap-channel") {
+            tsnap_tolerance.style.display = "table-row";
+            tsnap_chan.style.display = "table-row";
+            tsnap_divider.style.display = "none";
+        } else if (receive_mode === "tsnap-divider") {
+            tsnap_tolerance.style.display = "table-row";
+            tsnap_chan.style.display = "none";
+            tsnap_divider.style.display = "table-row";
+        } else {
+            let error = "The 'HTMLi_midiReceiveMode' HTML element has an unexpected value: " + receive_mode;
+            throw error;
+        }
+    }
+
+    /**
+     * MIDI-IN MONITOR
+     *
+     * @param {midinnum} noteNumber - MIDI Note number (or conversion string if the Tone snapping receiving mode is active)
+     * @param {velocity} velocity   - MIDI Velocity amount
+     * @param {midichan} channel    - MIDI Channel number
+     * @param {string}   portName   - MIDI Port name
+     */
+    // @old icMIDImonitor
+    monitorMidiIN(noteNumber, velocity, channel, portName) {
+        let dhcID = this.dhc.id;
+        // Update the log on MIDI MONITOR on the UI
+        for (let x of [0,1]) {
+            this.uiElements.out[`monitor${x}_note`].innerText = noteNumber;
+            this.uiElements.out[`monitor${x}_velocity`].innerText = velocity;
+            this.uiElements.out[`monitor${x}_channel`].innerText = channel + 1;
+            this.uiElements.out[`monitor${x}_port`].innerText = portName;
+        }
+    }
+    /**
+     * MIDI event log for debug purposes
+     *
+     * @param  {MIDIMessageEvent} midievent - The MIDI message event
+     */
+    logMidiEvent(midievent) {
+        // @debug - Parsing log
+        // Filter the Active Sensing messages (254 = 0xFE = 11111110)
+        if (midievent.data[0] !== 254) {
+            var str = "** Incoming MIDI message [" + midievent.data.length + " bytes]: ";
+            for (var i = 0; i < midievent.data.length; i++) {
+                str += "0x" + midievent.data[i].toString(16) + " ";
+            }
+            str += " | received at timestamp: " + timestamp;
+            console.log(str);
+            console.log("cmd:      " + cmd + " = " + cmd.toString(2));
+            console.log("channel:  " + channel + " = " + channel.toString(2));
+            console.log("1st byte: " + midievent.data[0] + " = 0x" + midievent.data[0].toString(16).toUpperCase() + " = " + midievent.data[0].toString(2));
+            console.log("2nd byte: " + midievent.data[1] + " = 0x" + midievent.data[1].toString(16).toUpperCase() + " = " + midievent.data[1].toString(2));
+            console.log("3rd byte: " + midievent.data[2] + " = 0x" + midievent.data[2].toString(16).toUpperCase() + " = " + midievent.data[2].toString(2));
+        }
+    }
+    /**
+     * Initialize the UI of the MidiIn instance
+     */
+    _initUI() {
+        //------------------------
+        // UI MIDI settings
+        //------------------------
+
+        // Default MIDI SETTINGS on UI textboxes
+        this.uiElements.in.receiveMode.value = this.dhc.settings.controller.receive_mode;
+        this.uiElements.in.receiveModeTsnapTolerance.value = this.dhc.settings.controller.tsnap.tolerance;
+        this.uiElements.in.receiveModeTsnapDivider.value = this.dhc.settings.controller.tsnap.divider;
+        this.uiElements.in.receiveModeTsnapChanFT.value = this.dhc.settings.controller.tsnap.channel.ft;
+        this.uiElements.in.receiveModeTsnapChanHT.options[this.dhc.settings.controller.tsnap.channel.ft].disabled = true;
+        this.uiElements.in.receiveModeTsnapChanHT.value = this.dhc.settings.controller.tsnap.channel.ht;
+        this.uiElements.in.receiveModeTsnapChanFT.options[this.dhc.settings.controller.tsnap.channel.ht].disabled = true;
+        this.uiElements.in.receiveModeTsnapChanDivider.value = this.dhc.settings.controller.tsnap.channel.divider;
+
+        // Set the FT/HT NUMBER RECEIVING MODE from UI HTML inputs
+        this.uiElements.in.receiveMode.addEventListener("change", (event) => {
+            this.dhc.settings.controller.receive_mode = event.target.value;
+            this.switchReceiveModeUI(event.target.value);
+        });
+        this.uiElements.in.receiveModeTsnapTolerance.addEventListener("input", (event) => {
+            this.dhc.settings.controller.tsnap.tolerance = event.target.value;
+        });
+        this.uiElements.in.receiveModeTsnapDivider.addEventListener("input", (event) => {
+            this.dhc.settings.controller.tsnap.divider = event.target.value;
+        });
+        this.uiElements.in.receiveModeTsnapChanFT.addEventListener("change", (event) => {
+            if (event.target.value == this.dhc.settings.controller.tsnap.channel.ht) {
+                throw "FT and HT cannot share the same MIDI channel!";
+            } else {
+                let ht_channels = this.uiElements.in.receiveModeTsnapChanHT;
+                for (let opt of ht_channels) { 
+                    opt.disabled = false;
+                }
+                ht_channels.options[event.target.value].disabled = true;
+                this.dhc.settings.controller.tsnap.channel.ft = event.target.value;
+            }
+        });
+        this.uiElements.in.receiveModeTsnapChanHT.addEventListener("change", (event) => {
+            if (event.target.value == this.dhc.settings.controller.tsnap.channel.ft) {
+                throw "FT and HT cannot share the same MIDI channel!";
+            } else {
+                let ft_channels = this.uiElements.in.receiveModeTsnapChanFT;
+                for (let opt of ft_channels) { 
+                    opt.disabled = false;
+                }
+                ft_channels.options[event.target.value].disabled = true;
+                this.dhc.settings.controller.tsnap.channel.ht = event.target.value;
+            }
+        });
+        this.uiElements.in.receiveModeTsnapChanDivider.addEventListener("change", (event) => {
+            this.dhc.settings.controller.tsnap.channel.divider = event.target.value;
+        });
+        // Set default FT/HT NUMBER RECEIVING MODE after the UI widgets are set-up
+        this.switchReceiveModeUI(this.dhc.settings.controller.receive_mode);
+    }   
+
+};

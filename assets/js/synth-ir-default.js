@@ -5,7 +5,7 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2018 by Walter Mantovani (http://armonici.it).
+ * Copyright (C) 2017-2020 by Walter Mantovani (http://armonici.it).
  * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -23,69 +23,37 @@
  */
 
  /**
- * @fileoverview DEFAULT IR REVERB FILE & HANDLER<br>
- *     The IR .wav file encoded in Base64 an the function to transform to into blob
- * 
- * @author Walter Mantovani < armonici.it [at] gmail [dot] com >
+ * @fileoverview DEFAULT IR REVERB FILE<br>
+ *     The IR .wav file is encoded in Base64
  */
 
-/* exported icBase64ToBlob */
-/* exported icDefaultReverb */
+/* globals HUM */
 
 "use strict";
 
 /**
- * Convert Base64 data held in a string into raw binary blob
+ * IR file from the Voxengo Free Reverb Impulse Responses library by Aleksey Vaneev (The Musikvereinssaal, Vienna).
+ * NB: The audio file is encoded in Base64 so that it can be auto-loaded under the local file:// protocol.
  * 
- * @see  {@link https://gist.github.com/fupslot/5015897|Based on this snippet}
- *
- * @param  {Object} file      - A File-like object
- * @param  {Object} file.name - Filename
- * @param  {Object} file.data - Data content in Base64
- *
- * @return {Blob}             - The decoded file in a Blob object
- */
-function icBase64ToBlob(file) {
-    // Note: doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
-    var byteString = atob(file.data.split(',')[1]);
-    // Separate out the mime component
-    var mimeString = file.data.split(',')[0].split(':')[1].split(';')[0];
-    // Write the bytes of the string to an ArrayBuffer
-    var ab = new ArrayBuffer(byteString.length);
-    var ia = new Uint8Array(ab);
-    for (var i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-    }
-    // Write the ArrayBuffer to a blob
-    var bb = new Blob([ab], {type : mimeString});
-    // Add the filename to the blob imitating a real file
-    if (file.name) {
-        bb.name = file.name;
-    }
-    // Return the decoded blob
-    return bb;
-}
-
-/**
- * IR file from the Voxengo Free Reverb Impulse Responses library by Aleksey Vaneev
  * @see {@link http://www.voxengo.com/impulses/}
  * @see Voxengo_LICENSE in the ./ir/ directory
- * (The Musikvereinssaal, Vienna)
  *
  * @example
- * To make a Base64 file with OpenSSL:
+ * <caption>To make a Base64 file with OpenSSL</caption>
  * #openssl base64 -in /path/ir.wav -out /path/ir.base64 
  *
+ * @memberof HUM.Synth
+ * 
  * @type {Object}
  *
  * @property {string} name - Filename
- * @property {string} data - The WAV audio file coded in Base64
+ * @property {string} data - The WAV audio file encoded in Base64
  */
-var icDefaultReverb = {};
-// The IR file name or description
-icDefaultReverb.name = "[DEFAULT REVERB] The Musikvereinssaal, Vienna (by Aleksey Vaneev - Voxengo)";
-// The default IR reverb file in .wav format
-icDefaultReverb.data = `data:audio/wav;base64,UklGRqwVCABXQVZFZm10IBAAAAABAAIARKwAABCxAgAEABAAZGF0YYgVCAAAAAAA
+HUM.Synth.defaultReverb = {
+    // The IR file name or description
+    name: "[DEFAULT REVERB] The Musikvereinssaal, Vienna (by Aleksey Vaneev - Voxengo)",
+    // The default IR reverb file in .wav format
+    data: `data:audio/wav;base64,UklGRqwVCABXQVZFZm10IBAAAAABAAIARKwAABCxAgAEABAAZGF0YYgVCAAAAAAA
 AAAAAAEAAAAAAAAA//8AAAAAAAAAAAAAAAAAAAAAAQAAAP//AAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAQABAAAAAAAAAAEAAAD//wAA//8AAAAAAAAAAAAA
@@ -11123,5 +11091,5 @@ AAABAAAA//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//AAAAAAAA//8AAP//
 AAD//wAAAAAAAAAAAAAAAAAA//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAAAAAAAAAP//
-AAABAAEAAAAAAAAAAAAAAP//AAA=
-`;
+AAABAAEAAAAAAAAAAAAAAP//AAA=`
+};

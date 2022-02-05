@@ -5,7 +5,7 @@ TASK PRIORITY LEVEL
 1   2   3   4 < filename >
 ------------------------------------------------------------
             < GENERAL >
-
+@todo - Full screen mode toggle
 @todo - Fix deprecated node.value in synth.js (before January 2018)
 @todo - Implement a little barebone MIDI file player
 @todo - Fix: when FT and HT come simultaneously from the Controller, if the HT come first, the last HT frequency is played for a very short time (1-11 ms). This cause MIDI artifacts when Mix Down the MIDI stream in a DAW.
@@ -81,7 +81,7 @@ TASK PRIORITY LEVEL
             ------------------------------------------------
             < midi-out.js >
 
-            @todo - Send all Note-OFF and re-init the last channel in order to avoit stuck notes (??)
+            @todo - Send all Note-OFF and re-init the last channel in order to avoid stuck notes (??)
     @todo - The voice stealing implementation of the MIDI out has not the same results of the DHC/Synth
     >>>>>>> When voices are overloaded on HT and you release a key on the controller there is a different behaviour
     @todo - Manage in different way the Double Note-ON: change index ??

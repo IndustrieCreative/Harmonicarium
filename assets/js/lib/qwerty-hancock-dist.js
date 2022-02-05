@@ -475,6 +475,13 @@
             }
         });
 
+        // ###########
+        // ### FIX ### Stucked notes when mouseout + mouseup (outside)
+        // ###########
+        // globalWindow.addEventListener('mouseup', function (event) {
+        //     mouse_is_down = false;
+        // });
+
         // Mouse is clicked down on keyboard element.
         keyboard_element.addEventListener('mousedown', function (event) {
             mouseDown(event.target, that.keyDown);

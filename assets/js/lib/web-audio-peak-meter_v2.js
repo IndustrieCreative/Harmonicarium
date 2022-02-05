@@ -3,13 +3,15 @@
  * https://github.com/esonderegger/web-audio-peak-meter
  * https://github.com/esonderegger/web-audio-peak-meter/blob/master/LICENSE
  */
-'use strict';
+
 var webAudioPeakMeter = (function() {
+    'use strict';
     var options = {
         borderSize: 2,
         fontSize: 9,
         backgroundColor: 'black',
         tickColor: '#ddd',
+        labelColor: '#ddd',
         gradient: ['red 1%', '#ff0 16%', 'lime 45%', '#080 100%'],
         dbRange: 48,
         dbTickSize: 6,
@@ -39,7 +41,7 @@ var webAudioPeakMeter = (function() {
 
     var setOptions = function(userOptions) {
         for (var k in userOptions) {
-            if (userOptions.hasOwnProperty(k)) {
+            if(userOptions.hasOwnProperty(k)) {
                 options[k] = userOptions[k];
             }
         }
@@ -77,7 +79,7 @@ var webAudioPeakMeter = (function() {
         meterWidth = elementWidth - tickWidth - options.borderSize;
         createTicks(meterElement);
         createRainbow(meterElement, meterWidth, meterHeight,
-            meterTop, tickWidth);
+                                    meterTop, tickWidth);
         channelCount = meterNode.channelCount;
         var channelWidth = meterWidth / channelCount;
         if (!vertical) {
@@ -89,13 +91,12 @@ var webAudioPeakMeter = (function() {
         }
         for (var i = 0; i < channelCount; i++) {
             createChannelMask(meterElement, options.borderSize,
-                meterTop, channelLeft, false);
+                              meterTop, channelLeft, false);
             channelMasks[i] = createChannelMask(meterElement, channelWidth,
-                meterTop, channelLeft,
-                options.maskTransition);
+                                                meterTop, channelLeft,
+                                                options.maskTransition);
             channelPeaks[i] = 0.0;
-            channelPeakLabels[i] = createPeakLabel(meterElement, channelWidth,
-                channelLeft);
+            channelPeakLabels[i] = createPeakLabel(meterElement, channelWidth, channelLeft);
             channelLeft += channelWidth;
             maskSizes[i] = 0;
             textLabels[i] = '-∞';
@@ -171,7 +172,7 @@ var webAudioPeakMeter = (function() {
         var label = document.createElement('div');
         parent.appendChild(label);
         label.style.textAlign = 'center';
-        label.style.color = options.tickColor;
+        label.style.color = options.labelColor;
         label.style.fontSize = options.fontSize + 'px';
         label.style.position = 'absolute';
         label.textContent = '-∞';
@@ -262,11 +263,16 @@ var webAudioPeakMeter = (function() {
             }
             channelPeakLabels[i].textContent = textLabels[i];
         }
-        window.requestAnimationFrame(paintMeter);
+        if (paintMeter.animate) {
+            window.requestAnimationFrame(paintMeter);
+        }
     };
+    paintMeter.animate = false;
 
     return {
         createMeterNode: createMeterNode,
-        createMeter: createMeter
+        createMeter: createMeter,
+        updateMeter: updateMeter,
+        paintMeter: paintMeter,
     };
 })();

@@ -13,6 +13,8 @@
 body {
     color: #DDD; /*@DARK*/
     font-family: 'IM Fell DW Pica', serif;
+    padding-left: 20px;
+    padding-right: 20px;
 }
 h1 {
 }
