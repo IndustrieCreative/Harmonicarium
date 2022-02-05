@@ -1,0 +1,409 @@
+<!-- start:source.tmpl.hbs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+		<title>backend.js</title>
+		<!--[if lt IE 9]>
+		<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<link href="https://fonts.googleapis.com/css?family=PT+Mono" rel="stylesheet">
+		<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css">
+		<link type="text/css" rel="stylesheet" href="css/prism.min.css">
+		<link type="text/css" rel="stylesheet" href="css/template.min.css">
+		<script type="text/javascript">
+			window.TEMPLATE_OPTIONS = {"includeDate":true,"dateFormat":"Do MMM YYYY","systemName":"Harmonicarium","systemSummary":"A platform to play the Harmonic Series.","systemLogo":"","systemColor":"","navMembers":[{"kind":"class","title":"Classes","summary":"All documented classes."},{"kind":"external","title":"Externals","summary":"All documented external members."},{"kind":"global","title":"Globals","summary":"All documented globals."},{"kind":"mixin","title":"Mixins","summary":"All documented mixins."},{"kind":"interface","title":"Interfaces","summary":"All documented interfaces."},{"kind":"module","title":"Modules","summary":"All documented modules."},{"kind":"namespace","title":"Namespaces","summary":"All documented namespaces."},{"kind":"tutorial","title":"Tutorials","summary":"All available tutorials."}],"footer":"","copyright":"&#169; Walter Mantovani 2017-2020","linenums":true,"collapseSymbols":false,"inverseNav":true,"inlineNav":true,"outputSourceFiles":true,"sourceRootPath":null,"disablePackagePath":true,"outputSourcePath":false,"showTableOfContents":true,"showAccessFilter":false,"analytics":{"ua":false,"domain":false},"methodHeadingReturns":true,"sort":"linenum, longname, version, since","search":true,"favicon":false,"stylesheets":[],"scripts":[],"monospaceLinks":false,"cleverLinks":false,"default":{"outputSourceFiles":true},"useLongnameInNav":true,"showInheritedInNav":true};
+			window.DOCLET_TOC_ENABLED = false;
+			window.DOCLET_AFILTER_ENABLED = false;
+		</script>
+</head>
+<body>
+	<!-- start:navbar.hbs -->
+	<header class="navbar navbar-default navbar-fixed-top navbar-inverse">
+		<div class="container">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="index.html">
+					Harmonicarium
+				</a>
+				<!-- displayed on small devices -->
+				<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+			</div>
+			<div class="navbar-collapse collapse" id="topNavigation">
+				<ul class="nav navbar-nav">
+							<li><a href="global.html">Globals</a></li>
+							<li><a href="list_class.html">Classes</a></li>
+							<li><a href="list_namespace.html">Namespaces</a></li>
+				</ul>
+					<!-- start:lunr-search-navbar.hbs -->
+					<form class="navbar-form navbar-right" role="search">
+						<div class="input-group">
+							<input type="text" class="form-control" placeholder="Search" id="lunr-search-input">
+							<div class="input-group-btn">
+								<button class="btn btn-default" id="lunr-search-submit">
+									<i class="glyphicon glyphicon-search"></i>
+								</button>
+							</div>
+						</div>
+					</form>
+					<!-- start:lunr-search-navbar.hbs -->		</div>
+		</div>
+	</header>
+	<!-- end:navbar.hbs -->		<div class="page-header">
+			<div class="container">
+				<span class="kind">source</span>
+				<h1><span class="name">backend.js</span></h1>
+			</div>
+		</div>
+	<div class="container content">
+		<div class="row">
+			<div class="col-md-12 main-content">
+		<section class="source-section">
+			<article></article>
+			<pre class="prettyprint source language-javascript line-numbers"><code class="language-javascript"> /**
+ * This file is part of HARMONICARIUM, a web app which allows users to play
+ * the Harmonic Series dynamically by changing its fundamental tone in real-time.
+ * It is available in its latest version from:
+ * https://github.com/IndustrieCreative/Harmonicarium
+ * 
+ * @license
+ * Copyright (C) 2017-2020 by Walter Mantovani (http://armonici.it).
+ * Written by Walter Mantovani.
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/>.
+ */
+
+/* globals HUM */
+
+"use strict";
+/** 
+ * The BackendUtils class&lt;br>
+ *    A toolset to manage the backend UI.
+ */
+HUM.BackendUtils = class {
+     /**
+     * @param {HUM} harmonicarium - The HUM instance to which this DHC must refer
+     */
+    constructor(harmonicarium) {
+        /**
+        * The HUM instance
+        *
+        * @member {HUM}
+        */
+        this.harmonicarium = harmonicarium;
+        /**
+         * UI HTML elements
+         *
+         * @member {Object}
+         * 
+         * @property {Object.&lt;string, HTMLElement>} fn  - Functional UI elements
+         * @property {Object.&lt;string, HTMLElement>} out - Output UI elements
+         */
+        this.uiElements = {
+            fn: {
+                logBtn: document.getElementById("HTMLf_openLogBtn"+harmonicarium.id),
+                logPanel: document.getElementById("HTMLf_logPanel"+harmonicarium.id),
+                logTest: document.getElementById("HTMLf_logTest"+harmonicarium.id),
+
+                sidePanel: document.getElementById("HTMLf_sidePanel"+harmonicarium.id),
+                sidePanel_content: document.getElementById("HTMLf_sidePanel_content"+harmonicarium.id),
+                
+                helpObj: document.getElementById("HTMLf_helpObj"+harmonicarium.id),
+                creditsObj: document.getElementById("HTMLf_creditsObj"+harmonicarium.id),
+                settings: document.getElementById("HTMLf_settingsObj"+harmonicarium.id),
+
+                openHelp: document.getElementById("HTMLf_openHelp"+harmonicarium.id),
+                openCredits: document.getElementById("HTMLf_openCredits"+harmonicarium.id),
+                closeSidePanel: document.getElementById("HTMLf_closeSidePanel"+harmonicarium.id),
+                closeBtn: false,
+                backBtn: false,
+
+            },
+            out: {
+                /**
+                 *  The global HTML Log element (common to all dhc instances)
+                 *
+                 * @type {HTMLElement}
+                 */
+                logText: document.getElementById("HTMLo_logText"+harmonicarium.id),
+            },
+        };
+        this._initUI();
+
+        // =======================
+    } // end class Constructor
+    // ===========================
+
+    /**
+     * Initialize the UI controllers
+     */
+    _initUI() {
+
+        // LogText listeners
+        this.uiElements.out.logText.innerHTML = "&lt;p>>>>>>>>> > Welcome to the Harmonicarium!&lt;/p>&lt;p>...&lt;/p>&lt;p>..&lt;/p>&lt;p>.&lt;/p>";
+        
+        this.uiElements.fn.logBtn.addEventListener("click", () => this.toggleLogPanel() );
+        this.uiElements.fn.logTest.addEventListener("click", () => this.tester() );
+
+        // Menu Help &amp; Credits listeners
+        this.uiElements.fn.openHelp.addEventListener("click", () => this.showSidebarContent("help") );
+        this.uiElements.fn.openCredits.addEventListener("click", () => this.showSidebarContent("credits") );
+
+        this.uiElements.fn.closeBtn = HUM.tmpl.useIcon('closeCross', this.harmonicarium.id, this.uiElements.fn.closeSidePanel, -20, 0);
+        this.uiElements.fn.backBtn = HUM.tmpl.useIcon('leftArrow', this.harmonicarium.id, this.uiElements.fn.closeSidePanel, 8, 0);
+
+        this.uiElements.fn.closeBtn.addEventListener("click", () => this.showSidebar() );
+        this.uiElements.fn.backBtn.addEventListener("click", () => this.showSidebarContent("settings") );
+
+        this.uiElements.fn.closeBtn.setAttributeNS(null, 'preserveAspectRatio', 'xMinYMin meet');
+        this.uiElements.fn.closeBtn.setAttributeNS(null, 'pointer-events', 'bounding-box');
+        this.uiElements.fn.closeBtn.setAttributeNS(null, 'width', '100%');
+        this.uiElements.fn.closeBtn.setAttributeNS(null, 'height', '100%');
+        
+        this.uiElements.fn.backBtn.setAttributeNS(null, 'preserveAspectRatio', 'xMinYMin meet');
+        this.uiElements.fn.backBtn.setAttributeNS(null, 'pointer-events', 'bounding-box');
+        this.uiElements.fn.backBtn.setAttributeNS(null, 'width', '100%');
+        this.uiElements.fn.backBtn.setAttributeNS(null, 'height', '100%');
+
+        // Log PC keyboard keypress events
+        // Useful to avoid unwanted user inputs...
+        document.addEventListener('keydown', function(event) {
+            console.log(event.keyCode);
+            console.log(event.code);
+        });
+
+    }
+
+    /*==============================================================================*
+     * UI EVENTS LOG
+     *==============================================================================*/
+    /**
+     * Log into the HTML Log element the infos passed via the argument
+     *
+     * @param {string} str - Text string describing the event to log
+     */
+    eventLog(str) {
+        let time = new Date();
+        let s = time.getSeconds();
+        let m = time.getMinutes();
+        let h = time.getHours();
+        if (h &lt; 10) {h = "0" + h;}
+        if (m &lt; 10) {m = "0" + m;}
+        if (s &lt; 10) {s = "0" + s;}
+        this.uiElements.out.logText.innerHTML = "&lt;p>" + h + ":" + m + ":" + s + " > " + str + "&lt;/p>" + this.uiElements.out.logText.innerHTML;
+        this.uiElements.out.logText.scrollTop = this.uiElements.out.logText.scrollHeight;
+    }
+
+    /**
+     * Open the Event Log panel from the bottom and toggle the open/close button
+     *
+     * @param {Object} element - HTML element of the Event Log open/close button
+     */
+    toggleLogPanel() {
+        //  onclick="icTESTER()"
+        if (this.uiElements.fn.logBtn.classList.contains("panelShown")) {
+            // Closed %
+            this.uiElements.fn.logPanel.style.height = "0%";
+        } else {
+            // Open %
+            this.uiElements.fn.logPanel.style.height = "35%";  
+        }
+        this.uiElements.fn.logBtn.classList.toggle("panelShown");
+    }
+
+    /*==============================================================================*
+     * UI HELP/CREDITS
+     *==============================================================================*/
+    /**
+     * Display the desired content in the side panel
+     *
+     * @param {('settings'|'help'|'credits')} type - The content to display
+     */
+     showSidebarContent(type) {
+        let help = this.uiElements.fn.helpObj,
+            credits = this.uiElements.fn.creditsObj,
+            settings = this.uiElements.fn.settings;
+
+        switch (type) {
+            case "help":
+                help.setAttribute("style", "display: block;");
+                credits.setAttribute("style", "display: none;");
+                settings.setAttribute("style", "display: none;");
+                this.uiElements.fn.backBtn.style.display = 'block';
+                this.uiElements.fn.sidePanel_content.scrollTo(0,0);
+                break;
+            case "credits":
+                help.setAttribute("style", "display: none;");
+                credits.setAttribute("style", "display: block;");
+                settings.setAttribute("style", "display: none;");
+                this.uiElements.fn.backBtn.style.display = 'block';
+                this.uiElements.fn.sidePanel_content.scrollTo(0,0);
+                break;
+            case "settings":
+                help.setAttribute("style", "display: none;");
+                credits.setAttribute("style", "display: none;");
+                settings.setAttribute("style", "display: block;");
+                this.uiElements.fn.backBtn.style.display = 'none';
+                this.uiElements.fn.sidePanel_content.scrollTo(0,0);
+                break;
+            //default: 
+        }
+     }
+
+    /**
+     * Open the side panel
+     */
+    // @old icHelp
+    showSidebar() {
+        let sidePanel = this.uiElements.fn.sidePanel,
+            dpPadPage = this.harmonicarium.html.dpPadPage;
+        this.showSidebarContent("settings");
+
+        if (sidePanel.classList.contains("panelShown")) {
+            // Close %
+           sidePanel.style.width = "0%";
+           dpPadPage.style.width = "100%";
+           // this.animateSidebar('close', 50, 50);
+        } else {
+            // Open %
+            sidePanel.style.width = "50%"; 
+            dpPadPage.style.width = '50%';
+           // this.animateSidebar('open', 0, 100);
+        }
+        // this.harmonicarium.windowResize();
+        this.harmonicarium.components.dpPad.windowResize();
+
+        sidePanel.classList.toggle("panelShown");
+    }
+
+    // animateSidebar(action, counter, decounter) {
+    //  if (action === 'open') {
+    //      if(counter &lt; 50){
+    //          setTimeout( () => {
+    //              counter += 4;
+    //              decounter -= 4;
+    //              this.uiElements.fn.sidePanel.style.width = counter+'%';
+    //              this.harmonicarium.html.dpPadPage.style.width = decounter+'%';
+    //              // this.harmonicarium.components.dpPad.windowResize();
+    //              this.harmonicarium.windowResize();
+    //              this.animateSidebar(action, counter, decounter);
+    //          }, 18);
+    //      } else {
+    //          this.uiElements.fn.sidePanel.style.width = '50%';
+    //          this.harmonicarium.html.dpPadPage.style.width = '50%';
+    //          // this.harmonicarium.components.dpPad.windowResize();
+    //          this.harmonicarium.windowResize();
+    //      }
+    //     } else {
+    //      if(counter &lt; 100){
+    //          setTimeout( () => {
+    //              counter += 4;
+    //              decounter -= 4;
+    //              this.uiElements.fn.sidePanel.style.width = decounter+'%';
+    //              this.harmonicarium.html.dpPadPage.style.width = counter+'%';
+    //              this.harmonicarium.components.dpPad.windowResize();
+    //              // this.harmonicarium.windowResize();
+    //              this.animateSidebar(action, counter, decounter);
+    //          }, 18);
+    //      } else {
+    //          this.uiElements.fn.sidePanel.style.width = '0%';
+    //          this.harmonicarium.html.dpPadPage.style.width = '100%';
+    //          this.harmonicarium.components.dpPad.windowResize();
+    //          // this.harmonicarium.windowResize();
+    //      }
+    //     }
+    // }
+
+    /*==============================================================================*
+     * UI FILE READ ERROR HANDLING
+     *==============================================================================*/
+
+    /**
+     * Handle errors generated by `FileReader` when loading a file.&lt;br>
+     * It is meant to be assigned to `FileReader.onerror` handler.
+     *
+     * @param {Event} errorEvent - The error event
+     */
+    fileErrorHandler(errorEvent) {
+        switch (errorEvent.target.error.code) {
+            case errorEvent.target.error.NOT_FOUND_ERR:
+                alert('File Not Found!');
+                break;
+            case errorEvent.target.error.NOT_READABLE_ERR:
+                alert('File is not readable.');
+                break;
+            case errorEvent.target.error.ABORT_ERR:
+                break; // void
+            default:
+                alert('An error occurred reading this file.');
+        }
+    }
+
+    /*==============================================================================*
+     * TEST/DEBUG SECTION
+     *==============================================================================*/
+    /**
+     * Print the DHC tone tables in the console for test/debug purposes
+     */
+    tester() {
+        this.eventLog("TEST: Full tables printed out. Look at the console of your browser.");
+        for (const [id, dhc] of Object.entries(this.harmonicarium.components.availableDHCs)) {
+            // this.eventLog(JSON.stringify(dhc.tables.ft, null, 2).replace(/}|{|"|,/g, ''));
+            console.log(`DHC ${id} 'ctrl_map' table:`, dhc.tables.ctrl);
+            console.log(`DHC ${id} 'ft' table:`, dhc.tables.ft);
+            console.log(`DHC ${id} 'ht' table:`, dhc.tables.ht);
+            console.log(`DHC ${id} 'reverse ft' table:`, dhc.tables.reverse.ft);
+            console.log(`DHC ${id} 'reverse ht' table:`, dhc.tables.reverse.ht);
+        }
+    }
+};
+</code></pre>
+		</section>
+			</div>
+		</div>
+	</div>
+	<footer>
+				<div class="copyright">&#169; Walter Mantovani 2017-2020</div>
+			<div class="generated-by">Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.5</a> on 3rd Sep 2020 using the <a href="https://github.com/steveush/foodoc">FooDoc template</a>.</div>
+	</footer>
+	<script src="js/jquery.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/clipboard.min.js"></script>
+	<script src="js/prism.min.js"></script>
+	<script src="js/template.min.js"></script>
+		<!-- start:lunr-search-modal.hbs -->
+		<div class="modal fade" id="lunr-search-modal">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title">Search results</h4>
+					</div>
+					<div class="modal-body" id="lunr-search-body">
+					</div>
+					<div class="modal-footer" id="lunr-search-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					</div>
+				</div><!-- /.modal-content -->
+			</div><!-- /.modal-dialog -->
+		</div>
+		<!-- end:lunr-search-modal.hbs -->		<script src="js/lunr.min.js"></script>
+	
+</body>
+</html>
+<!-- end:source.tmpl.hbs -->

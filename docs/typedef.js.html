@@ -1,0 +1,386 @@
+<!-- start:source.tmpl.hbs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+		<title>typedef.js</title>
+		<!--[if lt IE 9]>
+		<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<link href="https://fonts.googleapis.com/css?family=PT+Mono" rel="stylesheet">
+		<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css">
+		<link type="text/css" rel="stylesheet" href="css/prism.min.css">
+		<link type="text/css" rel="stylesheet" href="css/template.min.css">
+		<script type="text/javascript">
+			window.TEMPLATE_OPTIONS = {"includeDate":true,"dateFormat":"Do MMM YYYY","systemName":"Harmonicarium","systemSummary":"A platform to play the Harmonic Series.","systemLogo":"","systemColor":"","navMembers":[{"kind":"class","title":"Classes","summary":"All documented classes."},{"kind":"external","title":"Externals","summary":"All documented external members."},{"kind":"global","title":"Globals","summary":"All documented globals."},{"kind":"mixin","title":"Mixins","summary":"All documented mixins."},{"kind":"interface","title":"Interfaces","summary":"All documented interfaces."},{"kind":"module","title":"Modules","summary":"All documented modules."},{"kind":"namespace","title":"Namespaces","summary":"All documented namespaces."},{"kind":"tutorial","title":"Tutorials","summary":"All available tutorials."}],"footer":"","copyright":"&#169; Walter Mantovani 2017-2020","linenums":true,"collapseSymbols":false,"inverseNav":true,"inlineNav":true,"outputSourceFiles":true,"sourceRootPath":null,"disablePackagePath":true,"outputSourcePath":false,"showTableOfContents":true,"showAccessFilter":false,"analytics":{"ua":false,"domain":false},"methodHeadingReturns":true,"sort":"linenum, longname, version, since","search":true,"favicon":false,"stylesheets":[],"scripts":[],"monospaceLinks":false,"cleverLinks":false,"default":{"outputSourceFiles":true},"useLongnameInNav":true,"showInheritedInNav":true};
+			window.DOCLET_TOC_ENABLED = false;
+			window.DOCLET_AFILTER_ENABLED = false;
+		</script>
+</head>
+<body>
+	<!-- start:navbar.hbs -->
+	<header class="navbar navbar-default navbar-fixed-top navbar-inverse">
+		<div class="container">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="index.html">
+					Harmonicarium
+				</a>
+				<!-- displayed on small devices -->
+				<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+			</div>
+			<div class="navbar-collapse collapse" id="topNavigation">
+				<ul class="nav navbar-nav">
+							<li><a href="global.html">Globals</a></li>
+							<li><a href="list_class.html">Classes</a></li>
+							<li><a href="list_namespace.html">Namespaces</a></li>
+				</ul>
+					<!-- start:lunr-search-navbar.hbs -->
+					<form class="navbar-form navbar-right" role="search">
+						<div class="input-group">
+							<input type="text" class="form-control" placeholder="Search" id="lunr-search-input">
+							<div class="input-group-btn">
+								<button class="btn btn-default" id="lunr-search-submit">
+									<i class="glyphicon glyphicon-search"></i>
+								</button>
+							</div>
+						</div>
+					</form>
+					<!-- start:lunr-search-navbar.hbs -->		</div>
+		</div>
+	</header>
+	<!-- end:navbar.hbs -->		<div class="page-header">
+			<div class="container">
+				<span class="kind">source</span>
+				<h1><span class="name">typedef.js</span></h1>
+			</div>
+		</div>
+	<div class="container content">
+		<div class="row">
+			<div class="col-md-12 main-content">
+		<section class="source-section">
+			<article></article>
+			<pre class="prettyprint source language-javascript line-numbers"><code class="language-javascript">/*==============================================================================*
+ * INTERNAL PRIMITIVES
+ *==============================================================================*/
+
+/**
+ * Transpose ratio&lt;br>
+ *     A positive floating point number.
+ *     &lt;em>Examples:&lt;/em>
+ *     &lt;ul>
+ *     &lt;li>2, 4, 8, 16... for octaves up &lt;/li>
+ *     &lt;li>0.5, 0.25, 0.125, 0.0625... for octaves down &lt;/li>
+ *     &lt;li>1 to not transpose &lt;/li>
+ *     &lt;/ul>
+ *
+ * @global
+ * @typedef {number} tratio
+ */
+
+/**
+ * Midicent&lt;br>
+ * A midicent is one floating points MIDI-note-number unit.&lt;br>
+ *     It can be a positive or negative floating point number.&lt;br>
+ *     Considering the description of midicent proposed in the following links, our midicent should be called &lt;em>hecto-midicent&lt;/em>.&lt;br>
+ * &lt;ul>
+ * &lt;li>{@link https://fr.wikipedia.org/wiki/Midicent}&lt;/li>
+ * &lt;li>{@link http://support.ircam.fr/docs/om/om6-manual/co/Score-Objects-Intro.html#zdN1d7}&lt;/li>
+ * &lt;/ul>
+ *
+ * @example &lt;caption>How to convert a given frequency in hertz to midicent.&lt;/caption>
+ * // Variables description:
+ * midiA4 = 69;    // The A4 note in MIDI note number notation
+ * semitones = 12; // The number of semitones of the 12-EDO
+ * hzA4 = 440;     // The A4 note in hertz
+ * // Math.log2()     Because we are dividing the octave (frequency ratio 2)
+ * 
+ * midicent = midiA4 + semitones * Math.log2(frequency / hzA4)
+ * //                                        ^^^^^^^^^          
+ * //                                        Input freq.
+ * 
+ * @global
+ * @typedef {number} midicent
+ */
+
+/**
+ * Tone Type&lt;br>
+ *     A string composed by two lowercase characters, representing one of the two tone types:
+ *     Fundamental Tones (FT `-> 'ft'`) and Harmonic Tones (HT `-> 'ht'`).
+ * 
+ * @global
+ * @typedef {('ft'|'ht')} tonetype
+ */
+
+/**
+ * MIDI note number&lt;br>
+ *     A integer number, officially it must be a 8-bit unsigned integer (between 0 and 127 included).&lt;br>
+ *     Negative numbers and number greater than 127 still mean a certain frequency, 
+ *     but you cannot send them to MIDI devices.
+ * 
+ * @global
+ * @typedef {number} midinnum
+ */
+
+/**
+ * Hertz&lt;br>
+ *     A positive floating point number, greater than zero.
+ * 
+ * @global
+ * @typedef {number} hertz
+ */
+
+/**
+ * Xtone number&lt;br>
+ *     An integer number, representing a FT or HT relative tone.&lt;br>
+ *     If it represents an FT, it is relative to FT0, alias the FM (Fundamental Mother).
+ *     If it represents an HT, it is relative to HT1, alias the fundamental of the harmonic/subharmonic series.
+ * 
+ * @global
+ * @typedef {number} xtnum
+ */
+
+/**
+ * Velocity&lt;br>
+ *     8-bit unsigned integer (between 0 and 127 included)
+ * 
+ * @global
+ * @typedef {number} velocity
+ */
+
+/**
+ * MIDI Channel&lt;br>
+ *     4-bit unsigned integer (between 0 and 15 included)
+ * 
+ * @global
+ * @typedef {number} midichan
+ */
+
+/**
+ * DHC Message Command
+ * 
+ * @global
+ * @typedef {('init'|'panic'|'update'|'tone-on'|'tone-off')} msgcmd
+ */
+
+/**
+ * WebMidiLink Message Link 0
+ * 
+ * - `'midi,nn[,nn...]'`: "midi" is a ID string and following "nn"s are comma-separated MIDI message bytes represented in hexadecimal. Do not use the MIDI running status abbreviation.
+ * 
+ * @see {@link https://www.g200kg.com/en/docs/webmidilink/spec.html}
+ * 
+ * @global
+ * @typedef {string} wmlmsg0
+ */
+
+/**
+ * WebMidiLink Message Link 1
+ *
+ *  In the Harmonicarium terms:
+ *  - "Synth" or "Synthesizer" means Instrument
+ *  - "Host" means Controller
+ *  
+ *  Harmonicarium can act:
+ *  - as Host if you load a Synth from WebMidiLink Out;
+ *  - as Synth if you load Harmonicarium from a Host;
+ *  - as both, Host and Synth, if you load Harmonicarium from a Host and then you load a Synth from WebMidiLink Out.
+ *
+ *  Host=>Synth | The messages from Host to Synth are:
+ *  - `'link,reqpatch'`:        The Host request the current configuration data to Synth. The Synth should send following "link,patch" message.
+ *  - `'link,setpatch,&lt;data>'`: The Host send configuration data to Synth with this message. This &lt;data> is a data acquired with "link,patch,&lt;data>". The Synth should set-up the sound patch with this message.
+ *  
+ *  Synth=>Host | The messages from Synth to Host are:
+ *  - `'link,progress'`:     The Synth should send this message to Host when is loading, just after its window or its iframe has been opened.
+ *  - `'link,ready'`:        The Synth should send this message to Host when ready after start up. The host may be window.opener or window.parent depends on popup or iframe. Host noticed the Synth is LinkLevel 1 with this message and enable following LinkLevel 1 messages.
+ *  - `'link,patch,&lt;data>'`: The Synth send current configuration data to Host with this message when received the "link,reqpatch". &lt;data> is a proprietary data of this Synth but should be represented as a string and should not use comma (,). For example, it may be a url-encoded query string (a=00&amp;b=11&amp;c=33), or a Base64 / Base64url encoded binary-data.
+ *
+ * @see {@link https://www.g200kg.com/en/docs/webmidilink/spec.html}
+ * 
+ * @global
+ * @typedef {string} wmlmsg1
+ */
+
+/*==============================================================================*
+ * INTERNAL OBJECTS
+ *==============================================================================*/
+
+/**
+ * The original g200kg's Synth object definition
+ *
+ * @see {@link https://www.g200kg.com/en/docs/webmidilink/synthlist.html}
+ * @see {@link http://www.g200kg.com/webmidilink/synthlist.js}
+ * 
+ * @typedef {Object} WmlSynth
+ * 
+ * @property {string} name             - Name of the Synth
+ * @property {string} url              - URL to the Synth
+ * @property {string} author           - Author of the Synth
+ * @property {string} authorurl        - URL to the author
+ * @property {string} description      - Description of the Synth
+ * @property {Object} latency          - Typical latency (in milliseconds) in each "platform-browser" environment.
+ *                                       Platform is 'win' or 'mac' and the browser is one of the 'ch' (Chrome), 'ff' (Firefox) or 'sa' (Safari).
+ *                                       The key, "*-*" is a default value that used when key is not found.
+ * @property {number} latency."win-ch" - Chrome on Windows
+ * @property {number} latency."win-ff" - Firefox on Windows
+ * @property {number} latency."mac-sa" - Safari on macOS
+ * @property {number} latency."mac-ch" - Chrome on macOS
+ * @property {number} latency."mac-ff" - Firefox on macOS
+ * @property {number} latency."*-*"    - Default/fallback value
+ */
+
+/**
+ * The Harmonicarium (internal) Synth object definition, that extends the {@link WmlSynth|g200kg's one}.
+ * 
+ * @typedef {Object} WmlSynthHum
+ * 
+ * @extends WmlSynth
+ * 
+ * @property {string} pbRange    - Default pitchbend range
+ * @property {string} chVoices   - Number of available voices
+ * @property {string} chMode     - MIDI Channel Mode compatibility
+ * @property {string} chModeDesc - MIDI Channel Mode description
+ * @property {string} note       - Useful notes about Channel Mode implementation
+ * @property {string} status     - Notes about possible issues
+ */
+
+/**
+ * A MIDI message (data + timestamp)
+ * 
+ * @typedef {Array&lt;{2}>} OtherMidiMsg
+ *
+ * @property {Uint8Array} 0 - Message; an array of 8-bit unsigned integers
+ * @property {number}     1 - Time-stamp; a floating point number
+ */
+
+/*==============================================================================*
+ * EXTERNAL OBJECTS
+ *==============================================================================*/
+
+/**
+ * @name HTMLElement
+ * @typedef HTMLElement
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement}
+ */
+
+/**
+ * @name File
+ * @typedef File
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/File}
+ */
+
+/**
+ * @name MIDIMessageEvent
+ * @typedef MIDIMessageEvent
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MIDIMessageEvent}
+ */
+
+/**
+ * @name AudioContext
+ * @typedef AudioContext
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/AudioContext}
+ */
+
+/**
+ * @name GainNode
+ * @typedef GainNode
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/GainNode}
+ */
+
+/**
+ * @name DynamicsCompressorNode
+ * @typedef DynamicsCompressorNode
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/DynamicsCompressorNode}
+ */
+
+/**
+ * @name ConvolverNode
+ * @typedef ConvolverNode
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/ConvolverNode}
+ */
+
+/**
+ * @deprecated WARNING: As of the August 29 2014 Web Audio API spec publication,
+ *     this feature has been marked as deprecated, and was replaced by AudioWorklet (see {@link https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletNode|AudioWorkletNode})
+ * 
+ * @name ScriptProcessorNode
+ * @typedef ScriptProcessorNode
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode}
+ */
+
+/**
+ * @name MIDIAccess
+ * @typedef MIDIAccess
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MIDIAccess}
+ * @see {@link https://www.w3.org/TR/webmidi/#midiaccess-interface}
+ */
+
+/**
+ * @name MIDIConnectionEvent
+ * @typedef MIDIConnectionEvent
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MIDIConnectionEvent}
+ * @see {@link https://www.w3.org/TR/webmidi/#midiconnectionevent-interface}
+ */
+
+/**
+ * @name MIDIPort
+ * @typedef MIDIPort
+ * @see {@link https://www.w3.org/TR/webmidi/#midiport-interface}
+ */
+
+/**
+ * @name ArrayBuffer
+ * @typedef ArrayBuffer
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer}
+ */
+
+/**
+ * @name Uint8Array
+ * @typedef Uint8Array
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array}
+ */
+
+/**
+ * @name DOMException
+ * @typedef DOMException
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMException}
+ */
+</code></pre>
+		</section>
+			</div>
+		</div>
+	</div>
+	<footer>
+				<div class="copyright">&#169; Walter Mantovani 2017-2020</div>
+			<div class="generated-by">Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.5</a> on 3rd Sep 2020 using the <a href="https://github.com/steveush/foodoc">FooDoc template</a>.</div>
+	</footer>
+	<script src="js/jquery.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/clipboard.min.js"></script>
+	<script src="js/prism.min.js"></script>
+	<script src="js/template.min.js"></script>
+		<!-- start:lunr-search-modal.hbs -->
+		<div class="modal fade" id="lunr-search-modal">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title">Search results</h4>
+					</div>
+					<div class="modal-body" id="lunr-search-body">
+					</div>
+					<div class="modal-footer" id="lunr-search-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					</div>
+				</div><!-- /.modal-content -->
+			</div><!-- /.modal-dialog -->
+		</div>
+		<!-- end:lunr-search-modal.hbs -->		<script src="js/lunr.min.js"></script>
+	
+</body>
+</html>
+<!-- end:source.tmpl.hbs -->
