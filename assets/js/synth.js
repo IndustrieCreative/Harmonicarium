@@ -702,11 +702,11 @@ HUM.Synth = class {
         // and prevent stuck notes.
         this.uiElements.in.power.addEventListener("click", (e) => this.synthState(e));
         // Change WAVEFORMS from UI
-        this.uiElements.in.waveformFT.addEventListener("change", function(event) {
+        this.uiElements.in.waveformFT.addEventListener("change", (event) => {
             this.waveform.ft = event.target.value;
             this.updateWaveform("ft");
         });
-        this.uiElements.in.waveformHT.addEventListener("change", function(event) {
+        this.uiElements.in.waveformHT.addEventListener("change", (event) => {
             this.waveform.ht = event.target.value;
             this.updateWaveform("ht");
         });
@@ -714,45 +714,45 @@ HUM.Synth = class {
         this.uiElements.in.irFile.addEventListener('change', (e) => this.handleIrFile(e), false);
 
         // Change VOLUME from UI
-        this.uiElements.in.volumeFT.addEventListener("input", function(event) {
+        this.uiElements.in.volumeFT.addEventListener("input", (event) => {
             this.volume.ft.gain.setValueAtTime(event.target.value, 0);
             this.uiElements.in.volumeFT.setAttribute("data-tooltip", event.target.value);
         });
-        this.uiElements.in.volumeHT.addEventListener("input", function(event) {
+        this.uiElements.in.volumeHT.addEventListener("input", (event) => {
             this.volume.ht.gain.setValueAtTime(event.target.value, 0);
             this.uiElements.in.volumeHT.setAttribute("data-tooltip", event.target.value);
         });
-        this.uiElements.in.volume.addEventListener("input", function(event) {
+        this.uiElements.in.volume.addEventListener("input", (event) => {
             this.volume.master.gain.setValueAtTime(event.target.value, 0);
             this.uiElements.in.volume.setAttribute("data-tooltip", event.target.value);
         });
-        // Change PORTAMENTO from UI
-        this.uiElements.in.portamento.addEventListener("input", function(event) {
+        // Change PORTAMENTO from UI (currently only FTs... why two years ago I did so?)
+        this.uiElements.in.portamento.addEventListener("input", (event) => {
             this.portamento.amount = event.target.value;
             this.uiElements.in.portamento.setAttribute("data-tooltip", event.target.value);
         });
         // Change ATTACK from UI
-        this.uiElements.in.attack.addEventListener("input", function(event) {
+        this.uiElements.in.attack.addEventListener("input", (event) => {
             this.envelope.attack = Number(event.target.value);
             this.uiElements.in.attack.setAttribute("data-tooltip", event.target.value + " s");
         });
         // Change DECAY from UI
-        this.uiElements.in.decay.addEventListener("input", function(event) {
+        this.uiElements.in.decay.addEventListener("input", (event) => {
             this.envelope.decay = Number(event.target.value);
             this.uiElements.in.decay.setAttribute("data-tooltip", event.target.value + " tc");
         });
         // Change SUSTAIN from UI
-        this.uiElements.in.sustain.addEventListener("input", function(event) {
+        this.uiElements.in.sustain.addEventListener("input", (event) => {
             this.envelope.sustain = Number(event.target.value);
             this.uiElements.in.sustain.setAttribute("data-tooltip", event.target.value + " gain");
         });
         // Change RELEASE from UI
-        this.uiElements.in.release.addEventListener("input", function(event) {
+        this.uiElements.in.release.addEventListener("input", (event) => {
             this.envelope.release = Number(event.target.value);
             this.uiElements.in.release.setAttribute("data-tooltip", event.target.value + " s");
         });
         // Change REVERB from UI
-        this.uiElements.in.reverb.addEventListener("input", function(event) {
+        this.uiElements.in.reverb.addEventListener("input", (event) => {
             // Update amount for crossfading
             this.updateReverb(event.target.value);
             this.uiElements.in.reverb.setAttribute("data-tooltip", event.target.value);
