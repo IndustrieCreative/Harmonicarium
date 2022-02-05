@@ -4,7 +4,7 @@ a Dynamic Harmonics Calculator
 ## What is this?
 The Harmonicarium is a platform that allow the user/musician to play the Harmonic Series and change its fundamental tone in real-time. Just like the overtone singers do with the [polyphonic overtone singing technique](https://www.youtube.com/watch?v=haz6W7p8xjM). The idea is to play a fundamental-variable harmonic series on electronic and electro-acoustical instruments retuned via MIDI and in real-time.
 
-![Harmonicarium](http://harmonync.org/wp-content/uploads/slide003.jpg)
+![Harmonicarium](http://harmonicarium.org/wp-content/uploads/slide003.jpg)
 
 It's based on the Pure Data prototype patch "**[Harmonync](https://github.com/IndustrieCreative/Harmonync)**", developed between 2013 and 2016.
 
