@@ -86,6 +86,8 @@ User Guide**" is available [here](http://harmonync.harmonicarium.org/a_first_loo
 has the following DOI: [10.978.88940077/01](http://dx.doi.org/10.978.88940077/01)
 
 ## Roadmap – Contribute... or fork!
+The **API Documentation** [is available on GitHub Pages](https://industriecreative.github.io/Harmonicarium/).
+
 From version 0.6.0 the entire code has been totally refactored to be more modular, and also the **UI**
 is become more intuitive, responsive and touch-events-compliant.
 The app is now a PWA (progressive web app) and so you can install it on your device if you wish.
@@ -96,7 +98,8 @@ Currently there are two main issues:
      Currently all the UI widgets are the default broswer ones. There is no responsiveness! Use settings on
      mobile devices is a true hell.
   2. The "module" diphonicpad.js (the new UI, the frontend) is not complete yet and so is undocumented.
-     I have to review all the functions and make further testing on mobile devices.
+     I have to revise all the functions in it and make further testing on mobile devices. After that, I will
+     try to make it multi-touch as well.
 
 Having done these things, there are other two main milestones to reach:
   
