@@ -16,7 +16,8 @@ developed between 2013 and 2016.
 To better understand, you can read the [**project overview** on the home site](http://harmonicarium.org/project-overview/).
 
 Harmonicarium's **source code** repository [is available on GitHub](https://github.com/IndustrieCreative/Harmonicarium).
-The **API Documentation** [is available on GitHub Pages](https://github.com/IndustrieCreative/Harmonicarium).
+
+The **API Documentation** [is available on GitHub Pages](https://industriecreative.github.io/Harmonicarium/).
 
 ## Potential applications
 * Musical performances and playing music.
@@ -84,7 +85,7 @@ The document "**A first look at THE HARMONYNC: A Dynamic Harmonics Calculator â€
 User Guide**" is available [here](http://harmonync.harmonicarium.org/a_first_look_at_the_harmonync.pdf) and
 has the following DOI: [10.978.88940077/01](http://dx.doi.org/10.978.88940077/01)
 
-## Contribute... or fork!
+## Roadmap â€“ Contribute... or fork!
 From version 0.6.0 the entire code has been totally refactored to be more modular, and also the **UI**
 is become more intuitive, responsive and touch-events-compliant.
 The app is now a PWA (progressive web app) and so you can install it on your device if you wish.
