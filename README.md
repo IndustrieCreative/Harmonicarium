@@ -116,7 +116,7 @@ And if you are a coder, ever help is welcome!
 See also [the **contact page**](https://harmonicarium.org/contacts/) on the project site.
 
 ## Older versions
-* [Open version 0.6.0 (Galilei)](https://harmonicarium.org/apps/galilei/)
+* Open version 0.6.0 (Galilei): [App](https://harmonicarium.org/apps/galilei/) – [Source code](https://github.com/IndustrieCreative/Harmonicarium/tree/v0.6.0)
 
 ## License
 Harmonicarium – a Dynamic Harmonics Calculator
