@@ -8,6 +8,8 @@ fundamental tone in real-time. Just like the overtone singers do with the
 a fundamental-variable harmonic series on electronic and electro-acoustical instruments retuned via MIDI
 and in real-time.
 
+We can say it's a microtonal music tool, specifically designed to play and explore the Harmonic Series.
+
 ![Harmonicarium](http://harmonicarium.org/wp-content/uploads/slide003.jpg)
 
 It's based on the Pure Data prototype patch "**[Harmonync](https://github.com/IndustrieCreative/Harmonync)**",
