@@ -295,7 +295,7 @@ HUM.tmpl = {
                 <div>
 
                     <button id="HTMLf_appInstall${id}">Install this app</button>
-                    <a id="HTMLf_appOpen${id}" href="https://harmonicarium.org/app/kepler/" target="_blank">
+                    <a id="HTMLf_appOpen${id}" href="https://harmonicarium.org/app/" target="_blank">
                         <button>Try to open the App</button>
                     </a>
                     <div id="HTMLf_appUpdateInfo${id}"></div>

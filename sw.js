@@ -1,19 +1,26 @@
 /* globals self */
 /* globals caches */
 
-// version: 0.26
+// version: 0.27
 
 "use strict";
 
 var keepOldCache = false;
 
-const appCacheName = 'kepler-cache-v23';
+const appCacheName = 'kepler-cache-v30';
 
 const deprecatedCaches = [
     'kepler-cache',
     'kepler-cache-v1',
     'kepler-cache-v21',
     'kepler-cache-v22',
+    'kepler-cache-v23',
+    'kepler-cache-v24',
+    'kepler-cache-v25',
+    'kepler-cache-v26',
+    'kepler-cache-v27',
+    'kepler-cache-v28',
+    'kepler-cache-v29',
     'the-magic-cache'
 ];
 
@@ -25,12 +32,12 @@ const staticAssets = [
     './manifest.webmanifest',
     './favicon.png',
 
-    './assets/',
+    // './assets/',
 
-    './assets/css/',
+    // './assets/css/',
     './assets/css/styles.css',
 
-    './assets/js/',
+    // './assets/js/',
     './assets/js/backend.js',
     './assets/js/dhc.js',
     './assets/js/diphonicpad.js',
@@ -48,17 +55,17 @@ const staticAssets = [
     './assets/js/synth.js',
     './assets/js/templates.js',
 
-    './assets/js/lib/',
+    // './assets/js/lib/',
     './assets/js/lib/web-audio-peak-meter_v2.js',
     './assets/js/lib/qwerty-hancock-dist.js',
     './assets/js/lib/synthlist.js',
 
-    './assets/img/',
+    // './assets/img/',
     './assets/img/agpl.png',
     './assets/img/n-edx.png',
     './assets/img/logo.png',
 
-    './assets/img/appicons/',
+    // './assets/img/appicons/',
     './assets/img/appicons/favicon-16x16.png',
     './assets/img/appicons/favicon-128x128.png',
     './assets/img/appicons/apple-touch-icon-120x120.png',
@@ -74,7 +81,7 @@ const staticAssets = [
     './assets/img/appicons/apple-touch-icon-144x144.png',
     './assets/img/appicons/favicon-32x32.png',
 
-    './assets/font/',
+    // './assets/font/',
     './assets/font/IMfellDWpica.woff2',
     './assets/font/SourceCodePro.woff2',
 ];
@@ -128,9 +135,9 @@ self.addEventListener('install', evt => {
                 console.info(`New ServiceWorker install - Stored all the static assets to the cache: ${appCacheName}`);
                 return cache.addAll(staticAssets);
             })
-            .catch( () => {
-                console.error('New ServiceWorker INSTALL ERROR!');
-                })
+            .catch( err => {
+                console.error('New ServiceWorker INSTALL ERROR! – ' + err);
+            })
     );
     console.info('New ServiceWorker installed.');
 });

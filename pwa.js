@@ -256,7 +256,7 @@ if (window.location.protocol !== 'file:') {
         // DEFERRED INSTALL notice
         window.addEventListener('beforeinstallprompt', (evt) => {
             // Prevent the mini-infobar from appearing on mobile
-            // e.preventDefault();
+            // evt.preventDefault();
             // Stash the event so it can be triggered later.
             humPWA.deferredPrompt = evt;
             // Update UI notify the user they can install the PWA
@@ -273,7 +273,8 @@ if (window.location.protocol !== 'file:') {
         // Add PWA MANIFEST meta element
         let link = document.createElement('link');
         link.setAttribute('rel', 'manifest');
-        link.setAttribute('href', 'manifest.webmanifest');
+        link.setAttribute('href', '/app/manifest.webmanifest');
+        link.setAttribute('type', 'application/manifest+json');
         document.getElementsByTagName('head')[0].appendChild(link);
 
 
