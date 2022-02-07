@@ -1,4 +1,4 @@
-# ![Harmonicarium](http://harmonicarium.org/harmonicarium_logo.png "Harmonicarium, a Dynamic Harmonics Calculator")
+# ![Harmonicarium](https://harmonicarium.org/harmonicarium_logo.png "Harmonicarium, a Dynamic Harmonics Calculator")
 a Dynamic Harmonics Calculator
 
 ## What is this?
@@ -10,12 +10,12 @@ and in real-time.
 
 We can say it's a microtonal music tool, specifically designed to play and explore the Harmonic Series.
 
-![Harmonicarium](http://harmonicarium.org/wp-content/uploads/slide003.jpg)
+![Harmonicarium](https://harmonicarium.org/wp-content/uploads/slide003.jpg)
 
 It's based on the Pure Data prototype patch "**[Harmonync](https://github.com/IndustrieCreative/Harmonync)**",
 developed between 2013 and 2016.
 
-To better understand, you can read the [**project overview** on the home site](http://harmonicarium.org/project-overview/).
+To better understand, you can read the [**project overview** on the home site](https://harmonicarium.org/project-overview/).
 
 Harmonicarium's **source code** repository [is available on GitHub](https://github.com/IndustrieCreative/Harmonicarium).
 
@@ -59,7 +59,7 @@ browser-container to run it. As I said at this moment you should use Chrome, but
 1. If you don't have Google **Chrome** on your system, download
    [here](https://www.google.com/chrome/browser/desktop/index.html) and install it.
 2. Run the app's URL in the browser. You can:
-   * open the online version **[harmonicarium.org/app](http://harmonicarium.org/app)**;
+   * open the online version **[harmonicarium.org/app](https://harmonicarium.org/app)**;
    * download [the sources](https://github.com/IndustrieCreative/Harmonicarium/zipball/master)
      from GitHub and open "index.html" to run a local instance of the app.
 
@@ -73,19 +73,19 @@ browser-container to run it. As I said at this moment you should use Chrome, but
     You can rename and move only the main folder.
   
 ## How to use it?
-Visit [harmonicarium.org](http://harmonicarium.org/) for the **Tutorials**.
+Visit [harmonicarium.org](https://harmonicarium.org/) for the **Tutorials**.
 There is no comprehensive guide at this moment, it is currently being drafted.
 A video-guide and a step-by-step tutorial will be released as soon as possible.
 For any questions, do not hesitate to contact Walter Mantovani at armonici.it[*at*]gmail[*dot*]com.
 
-Currently (February, 2022) the **[harmonicarium.org](http://harmonicarium.org/)** site still has a basic
+Currently (February, 2022) the **[harmonicarium.org](https://harmonicarium.org/)** site still has a basic
 documentation but you can also visit the old project site to get more information:
-**[harmonync.harmonicarium.org](http://harmonync.harmonicarium.org)**
+**[harmonync.harmonicarium.org](https://harmonync.harmonicarium.org)**
 
 ## A first public document about the DHC idea
 The document "**A first look at THE HARMONYNC: A Dynamic Harmonics Calculator – Draft of Specifications and
-User Guide**" is available [here](http://harmonync.harmonicarium.org/a_first_look_at_the_harmonync.pdf) and
-has the following DOI: [10.978.88940077/01](http://dx.doi.org/10.978.88940077/01)
+User Guide**" is available [here](https://harmonync.harmonicarium.org/a_first_look_at_the_harmonync.pdf) and
+has the following DOI: [10.978.88940077/01](https://dx.doi.org/10.978.88940077/01)
 
 ## Roadmap – Contribute... or fork!
 The **API Documentation** [is available on GitHub Pages](https://industriecreative.github.io/Harmonicarium/).
@@ -113,7 +113,10 @@ If you have any suggestions, you can write directly to the email in the license 
 ["**Issues**" section](https://github.com/IndustrieCreative/Harmonicarium/issues) of the GitHub repository.
 And if you are a coder, ever help is welcome!
 
-See also [the **contact page**](http://harmonicarium.org/contacts/) on the project site.
+See also [the **contact page**](https://harmonicarium.org/contacts/) on the project site.
+
+## Older versions
+* [Open version 0.6.0 (Galilei)](https://harmonicarium.org/apps/galilei/)
 
 ## License
 Harmonicarium – a Dynamic Harmonics Calculator
