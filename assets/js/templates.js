@@ -214,24 +214,22 @@ HUM.tmpl = {
                 <div id="HTMLf_helpObj${id}" class="help">
                     <h1>Short Help</h1>
                     <h2>This program currently under development.</h2>
-                    <h2>Google Chrome (or Chromium) browser is required.</h2>
-                    <p>In order to listen an OUTPUT SOUND there is the “Built-in Synth”. Its ON/OFF checkbox must be flagged.</p>
-                    <p>If you have a MIDI keyboard you can connect and chose it from “Input ports”.</p>
-                    <p>If you have NO physical MIDI keyboard you can use the “Virtual MIDI Controller” with your mouse or pressing the “<span class="monospace">qwerty</span>” and “<span class="monospace">asdfgh</span>” rows on your PC keyboard. The range is very limited due to the current JavaScript keyboard (Qwerty Hancock) that must be modded or replaced.</p>
-                    <p>Since this program is still in beta and its UI must be totally replaced, I cannot write an exhaustive guide at the moment. The functioning in a few words is as follows.</p>
+                    <h3>Tested only in Chromium (Google Chrome) browsers. With Opera it seems to work as well, but untested.</h3>
+                    <p>Since this program is still in beta, I cannot write an exhaustive guide at the moment. The functioning in a few words is as follows.</p>
                     <h3>OVERVIEW</h3>
-                    <p>You have two keyboard layers:</p>
+                    <p>You have two pads (or keyboard layers):</p>
                     <ul>
-                        <li>Fundamental Tones (FT): the<span class="monospace"> red keys</span>.</li>
-                        <li>Harmonic Tones (HT): the<span class="monospace"> blue keys</span>.</li>
+                        <li>Fundamental Tones (FT): the<span class="monospace"> red pad</span>.</li>
+                        <li>Harmonic Tones (HT): the<span class="monospace"> blue pad</span>.</li>
                     </ul>
-                    <p>You can play the Harmonic Series on the blue keys.</p>
-                    <p>You can change their fundamental by pressing the red keys; the harmonics on blue keys are instantly recalculated.</p>
+                    <p>You can play the Harmonic Series on the blue pad.</p>
+                    <p>You can change their fundamental by pressing  key onn the red pad; the harmonics on blue pad are instantly recalculated.</p>
 
                     <p>The program starts with the Harmonic Series of a <span class="monospace">C3</span> (<span class="monospace">130.81Hz</span>). This is the Fundamental Mother</p>
                     <h3>KEYMAPS</h3>
-                    <p>The position of the FTs and HTs on the keyboard is set on the “Controller Keymap”. You can select one of the preset keymaps or create your own one.</p>
-                    <p>In the  <a href="http://harmonicarium.org/app/keymaps/_mapping-tools" target="_blank">/keymaps/_mapping-tools/</a> folder there is the "<a href="http://harmonicarium.org/app/keymaps/_mapping-tools/keymapping-tool.xlsx" target="_blank">keymapping-tool.xlsx</a>" that can be used to generate keymaps. Other maps can be found on the <a href="http://harmonicarium.org/app/keymaps/n-edx" target="_blank">/keymaps/n-edx/</a> . You can <a href="https://github.com/IndustrieCreative/Harmonicarium/zipball/master" target="_blank">download the "offline" app</a>.</p>
+                    <p>If you want to use an external MIDI keyboard to play this app, you can also choice the position of the FTs and HTs on the keyboard. Under the Piano Keymap” tab in the Settings panel you can select one of the preset keymaps or create your own one.</p>
+                    <p>In the  <a href="https://github.com/IndustrieCreative/Harmonicarium/tree/master/keymaps/_mapping-tools" target="_blank">/keymaps/_mapping-tools/</a> folder there is the "<a href="https://github.com/IndustrieCreative/Harmonicarium/raw/master/keymaps/_mapping-tools/keymapping-tool.xlsx" target="_blank">keymapping-tool.xlsx</a>" that can be used to generate keymaps. Other maps can be found on the <a href="https://github.com/IndustrieCreative/Harmonicarium/tree/master/keymaps/n-edx" target="_blank">/keymaps/n-edx/</a> .</p>
+                    <p>You can also <a href="https://github.com/IndustrieCreative/Harmonicarium/zipball/master" target="_blank">download the "offline" app</a>.</p>
                     <h3>FUNDAMENTAL TONES</h3>
                     <p>The FT are like a palette of frequencies available to generate harmonics. The default FT are <span class="monospace">12</span> tone equally tempered (<span class="monospace">12-TET</span> or <span class="monospace">12-EDO</span>). In the Fundamental Tones box you can edit the FT tuning by choosing between equal temperaments and harmonics/subharmonics tones.</p>
                     <p>Since at the moment I'm writing documentation on the <a href="http://harmonicarium.org/" target="_blank">project site</a> and many options are the same of the old Harmonync, you can read <a href="http://harmonync.harmonicarium.org" target="_blank">the old site project</a> to better understand the purpose and the functioning of this program.</p>
