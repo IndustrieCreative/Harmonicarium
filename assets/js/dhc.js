@@ -716,9 +716,9 @@ HUM.DHC = class {
             // Read file into memory as UTF-8 text
             reader.readAsText(file);
             // Launch the data processing as soon as the file has been loaded
-            reader.onload = function(event){
-                this.processKeymapData(event.target.result, file.name);
-            };
+            reader.onload = (function(e){
+                this.processKeymapData(e.target.result, file.name);
+            }).bind(this);
         }
     }
 
