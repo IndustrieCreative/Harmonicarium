@@ -397,18 +397,19 @@ HUM.Synth = class {
                 // Mute the voice only in there are no more HT tones with the same number
                 // (in order to manage the pressure of multiple copy of the same HT on the controller eg. HT 8)
                 let sameTones = this.dhc.playQueue.ht.findIndex(qt => qt.xtNum === toneID);
-                if (sameTones < 0) {
+                if (sameTones === -1) {
                     // If there is an active voice with ctrlNoteNumber ID
                     if (this.voices.ht[toneID]) {
                         // Shut off the note playing and clear it
                         this.voices.ht[toneID].voiceMute();
                         this.voices.ht[toneID] = null;
                         delete this.voices.ht[toneID];
-                    } else {
-                        if (panic === false) {
-                            console.log("STRANGE: there is NOT an HT active voice with ID:", toneID);
-                        }
                     }
+                    // else {
+                    //     // if (panic === false) {
+                    //     //     console.log("STRANGE: there is NOT an HT active voice with ID:", toneID);
+                    //     // }
+                    // }
                 }
             
             // **FT**

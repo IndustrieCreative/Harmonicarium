@@ -241,7 +241,7 @@ HUM.tmpl = {
                     <h2>License</h2>
                     <h3 style="margin-bottom: 0;">Harmonicarium</h2>
                     <p style="margin-top: 0; margin-bottom: 0;">a Dynamic Harmonics Calculator</p>
-                    <p style="margin-top: 0;"><span class="monospace">ver. 0.7.0 (Kepler)</span></p>
+                    <p style="margin-top: 0;"><span class="monospace">ver. 0.7.1 (Kepler)</span></p>
                     <h3>Copyright (C) 2017-2022 by Walter Mantovani</h3>
                     <p>This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.</p>
                     <p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.</p>

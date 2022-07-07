@@ -867,38 +867,41 @@ HUM.DHC = class {
         // Search the FT number in the playQueue array
         let position = this.playQueue.ft.findIndex(qt => qt.xtNum === dhcMsg.xtNum);
         // If the FTn exist
-        if (position > -1) {
+        if (position !== -1) {
             // Remove the FTn from the playQueue array
             this.playQueue.ft.splice(position, 1);
+
+            this.sendMessageToApps(dhcMsg);
+
+            // If there are other notes, read and play the next note on the playQueue array
+            if (this.playQueue.ft.length > 0) {
+                // Read the next FT
+                let nextIndex = this.playQueue.ft.length - 1;
+                let nextTone = this.playQueue.ft[nextIndex];
+                // If the next tone is NOT the active one
+                if (nextTone.xtNum !== this.settings.ht.curr_ft) {
+                    
+                    // Recalculate the ht table passing the frequency (Hz)
+                    this.createHTtable(this.tables.ft[nextTone.xtNum].hz);
+                    // Store the current FT into the global slot for future HT table re-computations and UI monitor updates
+                    this.settings.ht.curr_ft = nextTone.xtNum;
+                    
+                    this.sendMessageToApps(nextTone);
+
+                    // Update the UI
+                    this.dhcMonitor("ft", nextTone.xtNum);
+
+                }
+            }
+
         // If the FTn does not exist
-        } else {
-            if (dhcMsg.panic === false) {
-                console.log("STRANGE: there is NOT a FT pressed key #:", dhcMsg.xtNum);
-            }
         }
+        // else {
+        //     // if (dhcMsg.panic === false) {
+        //     //     console.log("STRANGE: there is NOT a FT pressed key #:", dhcMsg.xtNum);
+        //     // }
+        // }
 
-        this.sendMessageToApps(dhcMsg);
-
-        // If there are other notes, read and play the next note on the playQueue array
-        if (this.playQueue.ft.length > 0) {
-            // Read the next FT
-            let nextIndex = this.playQueue.ft.length - 1;
-            let nextTone = this.playQueue.ft[nextIndex];
-            // If the next tone is NOT the active one
-            if (nextTone.xtNum !== this.settings.ht.curr_ft) {
-                
-                // Recalculate the ht table passing the frequency (Hz)
-                this.createHTtable(this.tables.ft[nextTone.xtNum].hz);
-                // Store the current FT into the global slot for future HT table re-computations and UI monitor updates
-                this.settings.ht.curr_ft = nextTone.xtNum;
-                
-                this.sendMessageToApps(nextTone);
-
-                // Update the UI
-                this.dhcMonitor("ft", nextTone.xtNum);
-
-            }
-        }
     }
 
     /**
@@ -981,27 +984,30 @@ HUM.DHC = class {
             // Search the HT number in the queue array
             let position = this.playQueue.ht.findIndex(qt => qt.xtNum === dhcMsg.xtNum);
             // If the HTn exist
-            if (position > -1) {
+            if (position !== -1) {
                 // Remove the HTn from the queue array
                 this.playQueue.ht.splice(position, 1);
                 // Update the curr_ht
                 if (this.playQueue.ht.length > 0) {
                     this.settings.ht.curr_ht = this.playQueue.ht[this.playQueue.ht.length-1].xtNum;
                 }
+
+                this.sendMessageToApps(dhcMsg);
+
             // If the FTn does not exist
-            } else {
-                if (dhcMsg.panic === false) {
-                    console.log("STRANGE: there is NOT a HT pressed key #:", dhcMsg.xtNum);
-                }
-            }
+            } 
+            // else {
+            //     // if (dhcMsg.panic === false) {
+            //     //     console.log("STRANGE: there is NOT a HT pressed key #:", dhcMsg.xtNum);
+            //     // }
+            // }
 
         // If HT0 is pressed, it's the Piper feature
         } else if (dhcMsg.xtNum === 0 && dhcMsg.panic === false) {
             // Note OFF the active piped HT
             this.piping(0);
+            this.sendMessageToApps(dhcMsg);
         }
-        
-        this.sendMessageToApps(dhcMsg);
 
     }
 
