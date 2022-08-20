@@ -7,7 +7,7 @@
 
 var keepOldCache = false;
 
-const appCacheName = 'kepler-cache-v30';
+const appCacheName = 'kepler-cache-v31';
 
 const deprecatedCaches = [
     'kepler-cache',
@@ -21,6 +21,7 @@ const deprecatedCaches = [
     'kepler-cache-v27',
     'kepler-cache-v28',
     'kepler-cache-v29',
+    'kepler-cache-v30',
     'the-magic-cache'
 ];
 
