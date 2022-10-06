@@ -5,7 +5,7 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2020 by Walter Mantovani (http://armonici.it).
+ * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
  * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -118,7 +118,7 @@ HUM.midi.MidiPorts = class {
             fn: {
                 motPanelClose: document.getElementById(`HTMLf_motPanelClose${dhc.id}`),
                 motPanelModal: document.getElementById(`HTMLf_motPanelModal${dhc.id}`),
-                motPanelModalShow: document.getElementById(`HTMLf_motPanelModalShow${dhc.id}`),
+                // motPanelModalShow: document.getElementById(`HTMLf_motPanelModalShow${dhc.id}`),
             },
             in: {
 
@@ -161,7 +161,7 @@ HUM.midi.MidiPorts = class {
     _postRequestMIDI() {
         this._initWebMidiLinkOut();
         // Button to open the MIDI settings
-        this.uiElements.fn.motPanelModalShow.addEventListener("click", () => this.openMidiPanel() );
+        // this.uiElements.fn.motPanelModalShow.addEventListener("click", () => this.openMidiPanel() );
     }
 
     /**
@@ -231,26 +231,26 @@ HUM.midi.MidiPorts = class {
      * Open the MIDI I/O modal panel on UI
      */
      // @old icOpenMidiPanel
-    openMidiPanel() {
-        // Get the modal element
-        let modal = this.uiElements.fn.motPanelModal;
-        // Get the <span> element that closes the modal element
-        let close = this.uiElements.fn.motPanelClose;
+    // openMidiPanel() {
+    //     // Get the modal element
+    //     let modal = this.uiElements.fn.motPanelModal;
+    //     // Get the <span> element that closes the modal element
+    //     let close = this.uiElements.fn.motPanelClose;
         
-        // let span = document.getElementsByClassName("modalOverlay_close")[0];
-        // When the user clicks the button, open the modal element
-        modal.style.display = "block";
-        // When the user clicks on <span> (x), close the modal element
-        close.onclick = () => {
-            modal.style.display = "none";
-        };
-        // When the user clicks anywhere outside of the modal element, close it
-        window.onclick = (event) => {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        };
-    }
+    //     // let span = document.getElementsByClassName("modalOverlay_close")[0];
+    //     // When the user clicks the button, open the modal element
+    //     modal.style.display = "block";
+    //     // When the user clicks on <span> (x), close the modal element
+    //     close.onclick = () => {
+    //         modal.style.display = "none";
+    //     };
+    //     // When the user clicks anywhere outside of the modal element, close it
+    //     window.onclick = (event) => {
+    //         if (event.target == modal) {
+    //             modal.style.display = "none";
+    //         }
+    //     };
+    // }
 
     /**
      * Log on the Event Log the informations about a single input or output port

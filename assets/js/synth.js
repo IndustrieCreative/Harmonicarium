@@ -5,7 +5,7 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2020 by Walter Mantovani (http://armonici.it).
+ * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
  * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -25,6 +25,7 @@
 /* globals AudioContext */
 /* globals HUM */
 /* globals webAudioPeakMeter */
+/* globals bootstrap */
 
 "use strict";
 
@@ -61,18 +62,15 @@ HUM.Synth = class {
         * @member {string}
         */
         this.id = dhc.id;
+        this._id = dhc._id;
+        this.name = 'synth';
         /**
         * The DHC instance
         *
         * @member {HUM.DHC}
         */
         this.dhc = dhc;
-        /**
-         * The state of the Synth (Power ON/OFF); if `false`, it is turned off.
-         *
-         * @member {boolean}
-         */
-        this.status = false;
+
         /**
          * Namespace for FT and HT voices slots
          *
@@ -86,6 +84,7 @@ HUM.Synth = class {
             ft: null,
             ht: {}
         };
+
         /**
          * Namespace for Gain nodes
          *
@@ -95,56 +94,15 @@ HUM.Synth = class {
          * @property {GainNode} mix          - FT+HT mixer gain
          * @property {GainNode} ft           - FT gain
          * @property {GainNode} ht           - HT gain
-         * @property {number}   defaultValue - The default volume value for FT and HT
          */
-        this.volume = {
+        this.gains = {
             // Prepare the MASTER, MIX FT and HT gain out nodes
             master: this.audioContext.createGain(),
             mix: this.audioContext.createGain(),
             ft: this.audioContext.createGain(),
             ht: this.audioContext.createGain(),
-            defaultValue: 0.8
         };
-        /**
-         * Namespace for FT and HT waveform
-         *
-         * @member {Object}
-         *
-         * @property {('sine'|'square'|'sawtooth'|'triangle')} ft - FTs waveform
-         * @property {('sine'|'square'|'sawtooth'|'triangle')} ht - HTs waveform
-         */
-        this.waveform = {
-            ft: "triangle",
-            ht: "sine"
-        };
-        /**
-         * Namespace for the ADSR envelope parameters
-         *
-         * @member {Object}
-         *
-         * @property {number} attack  - Attack time (seconds)
-         * @property {number} decay   - Decay time (time-constant)
-         * @property {number} sustain - Sustain gain value (amount from 0.0 to 1.0)
-         * @property {number} release - Release time (seconds)
-         */
-        this.envelope = {
-            attack: 0.3,
-            decay: 0.15,
-            sustain: 0.68,
-            release: 0.3
-        };
-        /**
-         * Portamento/Glide parameters for monophonic FT and FT/HT osc frequency updates.
-         *
-         * @member {Object}
-         *
-         * @property {number} amount     - Portamento time (time-constant)
-         * @property {number} lastFreqFT - Last FT frequency expressed in hertz (Hz); init value should be `null`
-         */
-        this.portamento = {
-            amount: 0.03,
-            lastFreqFT: null
-        };
+
         /**
          * Namespace for convolver Reverb and wet/dry mixer gains
          *
@@ -153,140 +111,40 @@ HUM.Synth = class {
          * @property {ConvolverNode} convolver    - Slot for convolver reverb node
          * @property {GainNode}      wet          - Reverberated gain bus/carrier node
          * @property {GainNode}      dry          - Dry gain bus/carrier node
-         * @property {GainNode}      amount       - Reverb wey/dry mixing amount (for cross-fade)
-         * @property {number}        defaultValue - Default value for the wet/dry mixer gain
          */
         this.reverb = {
             // Prepare the REVERB and the wet/dry gain nodes
             convolver: this.tryCreateConvolver(),
             wet: this.audioContext.createGain(),
             dry: this.audioContext.createGain(),
-            amount: null,
-            defaultValue: 0.5
         };
+
         /**
         * The compressor node
         * 
         * @member {DynamicsCompressorNode}
         */
         this.compressor = this.audioContext.createDynamicsCompressor();
+        
         /**
         * The vumeter from "webAudioPeakMeter" lib
         *     NB: the `{@link ScriptProcessorNode}` is deprecated but still working.
         * 
         * @member {ScriptProcessorNode}
         */
-        this.vumeter = webAudioPeakMeter.createMeterNode(this.volume.master, this.audioContext);
-        /**
-         * UI HTML elements
-         *
-         * @member {Object}
-         * 
-         * @property {Object.<string, HTMLElement>} fn  - Functional UI elements
-         * @property {Object.<string, HTMLElement>} in  - Input UI elements
-         * @property {Object.<string, HTMLElement>} out - Output UI elements
-         */
-        this.uiElements = {
-            fn: {
-                checkboxSynth: this.dhc.harmonicarium.html.synthTab[dhc.id].children[0],
-            },
-            in: {
-                portamento: document.getElementById('HTMLi_synth_portamento'+dhc.id),
-                attack: document.getElementById('HTMLi_synth_attack'+dhc.id),
-                decay: document.getElementById('HTMLi_synth_decay'+dhc.id),
-                sustain: document.getElementById('HTMLi_synth_sustain'+dhc.id),
-                release: document.getElementById('HTMLi_synth_release'+dhc.id),
-                waveformFT: document.getElementById('HTMLi_synth_waveformFT'+dhc.id),
-                waveformHT: document.getElementById('HTMLi_synth_waveformHT'+dhc.id),
-                volumeFT: document.getElementById('HTMLi_synth_volumeFT'+dhc.id),
-                volumeHT: document.getElementById('HTMLi_synth_volumeHT'+dhc.id),
-                volume: document.getElementById('HTMLi_synth_volume'+dhc.id),
-                reverb: document.getElementById('HTMLi_synth_reverb'+dhc.id),
-                power: document.getElementById('HTMLi_synth_power'+dhc.id),
-                irFile: document.getElementById('HTMLi_synth_irFile'+dhc.id),
-            },
-            out: {
-                synth_meter: document.getElementById('HTMLo_synth_meter'+dhc.id),
-            }
-        };
+        this.vumeter = webAudioPeakMeter.createMeterNode(this.gains.master, this.audioContext);
 
-        this._init();
-        // =======================
-    } // end class Constructor
-    // ===========================
 
-    /**
-     * Initialize the new instance of Synth
-     */
-    _init() {
-        // Conect the FT and HT gains to the MIX
-        this.volume.ft.connect(this.volume.mix);
-        this.volume.ht.connect(this.volume.mix);
-        // Split the MIX to the REVERB and to DRY CARRIER
-        this.volume.mix.connect(this.reverb.convolver);
-        this.volume.mix.connect(this.reverb.dry);
-        // Connect the REVERB to the WET CARRIER
-        this.reverb.convolver.connect(this.reverb.wet);
-        // Connect the WET/DRY CARRIERS to the COMPRESSOR
-        this.reverb.wet.connect(this.compressor);
-        this.reverb.dry.connect(this.compressor);
-        // Connect the COMPRESSOR to the MASTER
-        this.compressor.connect(this.volume.master);
-        // Connect the MASTER to the final OUT
-        this.volume.master.connect(this.audioContext.destination);
-            // @todo - finish the visualizer
-            // Create the VISUALIZER
-            // icAnalyser = icAudioContext.createAnalyser();
-            // icAnalyser.minDecibels = -90;
-            // icAnalyser.maxDecibels = -10;
-            // icAnalyser.smoothingTimeConstant = 0.85;
-            // icVisualize();
-            // @todo - finish the visualizer
-            // this.volume.master.connect(icAnalyser);
-            // icAnalyser.connect(icAudioContext.destination);
+        this.parameters = new this.Parameters(this);
 
-        // Init the Synth with default values
-
-        // Load the Base64-coded default IR Reverb
-        this.readIrFile(this.constructor.base64ToBlob(this.constructor.defaultReverb));
-        // @todo - Implement XMLHttpRequest() to get IR reverbs from URLs on the net
-        // @todo - https://codepen.io/andremichelle/pen/NPPEPY
-        
-        this.volume.ft.gain.setValueAtTime(this.volume.defaultValue, 0);
-        this.volume.ht.gain.setValueAtTime(this.volume.defaultValue, 0);
-        this.volume.master.gain.setValueAtTime(this.volume.defaultValue, 0);
-        this.updateReverb(this.reverb.defaultValue);
-        this.status = true;
-        
-        this._initUI();
-
-        // Create the WEB AUDIO PEAK METERS (/assets/js/lib/web-audio-peak-meter.min.js)        
-        webAudioPeakMeter.createMeter(this.uiElements.out.synth_meter, this.vumeter, {
-            backgroundColor: 'rgb(38, 36, 54)',
-            dbTickSize: 4,
-            borderSize: 5,
-            fontSize: 10,
-            maskTransition: '0.1s'
-        });
-        
-        // Start with the analysis suspended
-        this.vumeter.onaudioprocess = undefined;
-
-        // Disable the vu-meter analisys & animation if the accordion Synth tab is closed
-        this.uiElements.fn.checkboxSynth.addEventListener('change', (e) => {
-            if (e.target.checked === true) {
-                this.vumeter.onaudioprocess = webAudioPeakMeter.updateMeter;
-                webAudioPeakMeter.paintMeter.animate = true;
-                webAudioPeakMeter.paintMeter();
-            } else {
-                this.vumeter.onaudioprocess = undefined;
-                webAudioPeakMeter.paintMeter.animate = false;
-            }
-        });
+        this.parameters._init();
 
         // Tell to the DHC that a new app is using it            
         this.dhc.registerApp(this, 'updatesFromDHC', 2);
-    }
+
+        // =======================
+    } // end class Constructor
+    // ===========================
 
     /**
      * Manage and route an incoming message
@@ -351,7 +209,7 @@ HUM.Synth = class {
     voiceON(type, toneID, velocity) {
         let freq = this.dhc.tables[type][toneID].hz;
         // If the synth is turned-on
-        if (this.status === true) {
+        if (this.parameters.status.value === true) {
             
             // **HT**
             if (type === "ht") {
@@ -390,7 +248,7 @@ HUM.Synth = class {
      */
     // @old icVoiceOFF
     voiceOFF(type, toneID, panic=false) {
-        if (this.status === true) {
+        if (this.parameters.status.value === true) {
            
             // **HT**
             if (type === "ht") {
@@ -472,52 +330,21 @@ HUM.Synth = class {
             voice.setFrequency(true);
         }
     }
-    /**
-     * Update the current FT or HT waveform
-     *
-     * @param {('sine'|'square'|'sawtooth'|'triangle')} type - Waveform type
-     */
-    // @old icUpdateWaveform
-    updateWaveform(type) {
-        // **HT**
-        if (type === "ht") {
-            for (var i=0; i<this.voices.ht.lenght; i++) {
-                if (this.voices.ht[i] !== undefined) {
-                    this.voices.ht[i].setWaveform( this.waveform[type] );
-                }
-            }
-        // **FT**
-        } else if (type === "ft") {
-            if (this.voices.ft !== null) {
-                this.voices.ft.setWaveform( this.waveform[type] );
-            }
-        }
-    }
-    /**
-     * Update the Reverb amount mixing the wet and dry lines with an equal-power cross-fade
-     *
-     * @param {number} value - Reverb (wet) amount (normalized to 0.0 > 1.0)
-     */
-    // @old icUpdateReverb
-    updateReverb(value) {
-        // Wet/Dry equal-power cross-fade
-        this.reverb.dry.gain.setValueAtTime(Math.cos(value * 0.5 * Math.PI), 0);
-        this.reverb.wet.gain.setValueAtTime(Math.cos((1.0 - value) * 0.5 * Math.PI), 0);
-    }
+
     /**
      * Apply the current Pitch Bend amount (from the controller) to every already active synth voices
      */
     // @old icSynthPitchBend
     updatePitchBend() {
         // If the synth is turned-on
-        if (this.status === true) {
+        if (this.parameters.status.value === true) {
             for (var i=0; i<255; i++) {
                 // For every HT active voice
                 if (this.voices.ht[i]) {
                     // If the osc exist
                     if (this.voices.ht[i].osc){
                         // Detune the osc: "value" and "range" are in cents, "amount" is normalized to -1 > 0 > 0.99987792968750
-                        this.voices.ht[i].osc.detune.value = this.dhc.settings.controller.pb.amount * this.dhc.settings.controller.pb.range;
+                        this.voices.ht[i].osc.detune.value = this.dhc.settings.controller.pb.amount * this.dhc.settings.controller.pb.range.value;
                     }
                 }
             }
@@ -526,7 +353,7 @@ HUM.Synth = class {
                 // If the osc exist
                 if (this.voices.ft.osc){
                     // Detune the osc: "value" and "range" are in cents, "amount" is normalized to -1 > 0 > 0.99987792968750
-                    this.voices.ft.osc.detune.value = this.dhc.settings.controller.pb.amount * this.dhc.settings.controller.pb.range;
+                    this.voices.ft.osc.detune.value = this.dhc.settings.controller.pb.amount * this.dhc.settings.controller.pb.range.value;
                 }
             }
         }
@@ -553,25 +380,9 @@ HUM.Synth = class {
         }
     }
     /**
-     * Manage the event when the user is trying to load a IR Reverb file
-     *
-     * @param {Event} changeEvent - DOM change event on 'input' element (reverb file uploader)
-     */
-    // @old icHandleIrFile
-    handleIrFile(changeEvent) {
-        // Check for the various File API support.
-        if (window.File && window.FileReader && window.FileList && window.Blob) {
-            // Great success! All the File APIs are supported.
-            // Access to the file and send it to read function
-            this.readIrFile(changeEvent.target.files[0]);
-        } else {
-            alert('The File APIs are not fully supported in this browser.');
-        }
-    }
-    /**
      * Initialize the reading process of the IR Reverb file
      *
-     * @param {File} file - The file to be read
+     * @param {File}     file      - The file to be read
      */
     // @old icReadIrFile
     readIrFile(file) {
@@ -590,8 +401,8 @@ HUM.Synth = class {
     /**
      * Load the IR Reverb wav file on the convolver
      *
-     * @param {ArrayBuffer} data     - The raw binary data of the file
-     * @param {string}      fileName - The filename
+     * @param {ArrayBuffer}  data      - The raw binary data of the file
+     * @param {string}       fileName  - The filename
      */
     // @old icProcessIrData
     loadIrFile(data, fileName) {
@@ -615,152 +426,35 @@ HUM.Synth = class {
      *
      * @return {Blob}             - The decoded file in a Blob object
      */
-    static base64ToBlob(file) {
+    // @todo: Rewrite lookin here: https://stackoverflow.com/questions/35940290/how-to-convert-base64-string-to-javascript-file-object-like-as-from-file-input-f
+    //        Way 2: Maybe make it works with standard url to wave files too.
+    static base64ToFile(file) {
         // Note: doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
-        var byteString = atob(file.data.split(',')[1]);
+        let byteString = atob(file.data.split(',')[1]);
         // Separate out the mime component
-        var mimeString = file.data.split(',')[0].split(':')[1].split(';')[0];
+        let mimeString = file.data.split(',')[0].split(':')[1].split(';')[0];
         // Write the bytes of the string to an ArrayBuffer
-        var ab = new ArrayBuffer(byteString.length);
-        var ia = new Uint8Array(ab);
-        for (var i = 0; i < byteString.length; i++) {
+        let ab = new ArrayBuffer(byteString.length);
+        let ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
             ia[i] = byteString.charCodeAt(i);
         }
         // Write the ArrayBuffer to a blob
-        var bb = new Blob([ab], {type : mimeString});
+        let bb = new File([ab], file.name, {type : mimeString});
+        // var bb = new Blob([ab], {type : mimeString});
         // Add the filename to the blob imitating a real file
-        if (file.name) {
-            bb.name = file.name;
-        }
+        // if (file.name) {
+        //     bb.name = file.name;
+        // }
         // Return the decoded blob
         return bb;
     }
-
-    /*==============================================================================*
-     * UI CONTROLLERS
-     *==============================================================================*/
 
     /**
      * @todo - finish the visualizer
      * Init the analyser element
      * var icAnalyser = null;
      */
-
-    /**
-     * Manage the event when the user clicks on the the status of the synth Power ON/OFF checkbox.<br>
-     * Can be used as a sort of PANIC button for stuck synth Voices by the user.
-     *
-     * @param {Event} clickEvent - Click HTML event on 'input' element (synth  checkbox)
-     */
-    // @old icSynthState
-    synthState(clickEvent) {
-        if (clickEvent.target.checked === true) {
-            this.status = true;
-        } else {
-            this.allNotesOff();
-            this.status = false;
-        }
-    }
-
-    /**
-     * Initialize the Synth UI controllers  
-     */
-    // @old icSynthUIinit
-    _initUI() {
-        // Set default PORTAMENTO on UI slider
-        this.uiElements.in.portamento.value = this.portamento.amount;
-        this.uiElements.in.portamento.setAttribute("data-tooltip", this.portamento.amount);
-        
-        // Set default ATTACK and RELEASE on UI sliders
-        this.uiElements.in.attack.value = this.envelope.attack;
-        this.uiElements.in.attack.setAttribute("data-tooltip", this.envelope.attack + " s");
-        this.uiElements.in.decay.value = this.envelope.decay;
-        this.uiElements.in.decay.setAttribute("data-tooltip", this.envelope.decay + " tc");
-        this.uiElements.in.sustain.value = this.envelope.sustain;
-        this.uiElements.in.sustain.setAttribute("data-tooltip", this.envelope.sustain + " gain");
-        this.uiElements.in.release.value = this.envelope.release;
-        this.uiElements.in.release.setAttribute("data-tooltip", this.envelope.release + " s");
-        
-        // Set the default UI WAVEFORMS on UI dropdwon selector
-        this.uiElements.in.waveformFT.value = this.waveform.ft;
-        this.uiElements.in.waveformHT.value = this.waveform.ht;
-
-        // Set the default GAIN amounts on UI sliders
-        this.uiElements.in.volumeFT.value = this.volume.defaultValue;
-        this.uiElements.in.volumeFT.setAttribute("data-tooltip", this.volume.defaultValue);
-        this.uiElements.in.volumeHT.value = this.volume.defaultValue;
-        this.uiElements.in.volumeHT.setAttribute("data-tooltip", this.volume.defaultValue);
-        this.uiElements.in.volume.value = this.volume.defaultValue;
-        this.uiElements.in.volume.setAttribute("data-tooltip", this.volume.defaultValue);
-        
-        // Set the default reverb dry/wet mix amount on UI
-        this.uiElements.in.reverb.setAttribute("data-tooltip", this.reverb.defaultValue);
-
-        // ** UI EVENT LISTENERS **
-        // ---------------------
-
-        // EventListener to keep updated the state of the ON/OFF Synth checkbox on UI
-        // and prevent stuck notes.
-        this.uiElements.in.power.addEventListener("click", (e) => this.synthState(e));
-        // Change WAVEFORMS from UI
-        this.uiElements.in.waveformFT.addEventListener("change", (event) => {
-            this.waveform.ft = event.target.value;
-            this.updateWaveform("ft");
-        });
-        this.uiElements.in.waveformHT.addEventListener("change", (event) => {
-            this.waveform.ht = event.target.value;
-            this.updateWaveform("ht");
-        });
-        // Upload a new IR reverb .wav file from UI
-        this.uiElements.in.irFile.addEventListener('change', (e) => this.handleIrFile(e), false);
-
-        // Change VOLUME from UI
-        this.uiElements.in.volumeFT.addEventListener("input", (event) => {
-            this.volume.ft.gain.setValueAtTime(event.target.value, 0);
-            this.uiElements.in.volumeFT.setAttribute("data-tooltip", event.target.value);
-        });
-        this.uiElements.in.volumeHT.addEventListener("input", (event) => {
-            this.volume.ht.gain.setValueAtTime(event.target.value, 0);
-            this.uiElements.in.volumeHT.setAttribute("data-tooltip", event.target.value);
-        });
-        this.uiElements.in.volume.addEventListener("input", (event) => {
-            this.volume.master.gain.setValueAtTime(event.target.value, 0);
-            this.uiElements.in.volume.setAttribute("data-tooltip", event.target.value);
-        });
-        // Change PORTAMENTO from UI (currently only FTs... why two years ago I did so?)
-        this.uiElements.in.portamento.addEventListener("input", (event) => {
-            this.portamento.amount = event.target.value;
-            this.uiElements.in.portamento.setAttribute("data-tooltip", event.target.value);
-        });
-        // Change ATTACK from UI
-        this.uiElements.in.attack.addEventListener("input", (event) => {
-            this.envelope.attack = Number(event.target.value);
-            this.uiElements.in.attack.setAttribute("data-tooltip", event.target.value + " s");
-        });
-        // Change DECAY from UI
-        this.uiElements.in.decay.addEventListener("input", (event) => {
-            this.envelope.decay = Number(event.target.value);
-            this.uiElements.in.decay.setAttribute("data-tooltip", event.target.value + " tc");
-        });
-        // Change SUSTAIN from UI
-        this.uiElements.in.sustain.addEventListener("input", (event) => {
-            this.envelope.sustain = Number(event.target.value);
-            this.uiElements.in.sustain.setAttribute("data-tooltip", event.target.value + " gain");
-        });
-        // Change RELEASE from UI
-        this.uiElements.in.release.addEventListener("input", (event) => {
-            this.envelope.release = Number(event.target.value);
-            this.uiElements.in.release.setAttribute("data-tooltip", event.target.value + " s");
-        });
-        // Change REVERB from UI
-        this.uiElements.in.reverb.addEventListener("input", (event) => {
-            // Update amount for crossfading
-            this.updateReverb(event.target.value);
-            this.uiElements.in.reverb.setAttribute("data-tooltip", event.target.value);
-        });
-        // Set the POWER ON checkbox according to the default state
-        this.uiElements.in.power.checked = this.status;
-    }
 
 };
 
@@ -824,22 +518,22 @@ HUM.Synth.prototype.SynthVoice = class {
 
         // Init the starting frequency to emulate the right portamento
         // for the monophonic FT and all frequency update for all voices (FT & HT)
-        if (type === "ft" && this.synth.portamento.lastFreqFT) {
+        if (type === "ft" && this.synth.parameters.portamento.lastFreqFT) {
             // If it's an FT and it's not the first played tone:
             // Init the oscillator's start frequency to the last voiced FT
-            this.osc.frequency.setValueAtTime(this.synth.portamento.lastFreqFT, 0);
-        } else if (type === "ft" && !this.synth.portamento.lastFreqFT) {
+            this.osc.frequency.setValueAtTime(this.synth.parameters.portamento.lastFreqFT, 0);
+        } else if (type === "ft" && !this.synth.parameters.portamento.lastFreqFT) {
             // If it's an FT and it's the first played tone:
             // Init the oscillator's start frequency to the FM (FT0)
-            this.osc.frequency.setValueAtTime(this.synth.dhc.settings.fm.hz, 0);
+            this.osc.frequency.setValueAtTime(this.synth.dhc.settings.fm.hz.value, 0);
         } // If it's an HT, the frequency is set in "this.setFrequency"
         // Set the oscillator's waveform
-        this.osc.type = this.synth.waveform[type];
+        this.osc.type = this.synth.parameters.waveform[type].value;
 
         // Sensitivity scale for velocity
         this.volume.gain.setValueAtTime((velocity / 127), 0);
         // The final voice volume is connected to the main FT or HT volume
-        this.volume.connect( this.synth.volume[type] );
+        this.volume.connect( this.synth.gains[type] );
         // The envelope is connected to the volume
         this.envelope.connect( this.volume );
         // The oscillator is connected to the envelope
@@ -859,14 +553,14 @@ HUM.Synth.prototype.SynthVoice = class {
 
         // **ATTACK**
         // Set the time when the Attack must be completed
-        var envAttackEnd = this.synth.audioContext.currentTime + this.synth.envelope.attack;
+        var envAttackEnd = this.synth.audioContext.currentTime + this.synth.parameters.envelope.attack.value;
         // Go to the max gain in x seconds with a LINEAR ramp
         this.envelope.gain.linearRampToValueAtTime(1.0, envAttackEnd); // NEW
-        // this.envelope.gain.setTargetAtTime(1.0, icAudioContext.currentTime, this.synth.envelope.attack / 10); // OLD
+        // this.envelope.gain.setTargetAtTime(1.0, icAudioContext.currentTime, this.synth.parameters.envelope.attack.value / 10); // OLD
         // **DECAY** + **SUSTAIN**
         // When the Attack is concluded,
         // Decay the gain to the Sustain level > then > maintain the Sustain gain level until a .voiceMute() event
-        this.envelope.gain.setTargetAtTime(this.synth.envelope.sustain, envAttackEnd, this.synth.envelope.decay + 0.001 );
+        this.envelope.gain.setTargetAtTime(this.synth.parameters.envelope.sustain.value, envAttackEnd, this.synth.parameters.envelope.decay.value + 0.001 );
 
         // =======================
     } // end class Constructor
@@ -890,18 +584,18 @@ HUM.Synth.prototype.SynthVoice = class {
         // NEW VOICE
         if (update === false) {
             if (this.type === "ft") {
-                this.osc.frequency.setTargetAtTime(this.initFrequency, 0, this.synth.portamento.amount);
-                this.synth.portamento.lastFreqFT = this.initFrequency;
+                this.osc.frequency.setTargetAtTime(this.initFrequency, 0, this.synth.parameters.portamento.value);
+                this.synth.parameters.portamento.lastFreqFT = this.initFrequency;
             } else if (this.type === "ht") {
                 this.osc.frequency.setValueAtTime(this.initFrequency, 0);
             }
         // UPDATE VOICE
         } else if (update === true) {
             // @todo - Apply the normal envelope ADS to the updated voice (like the "new" "ft") or implement a
-            this.osc.frequency.setTargetAtTime( this.initFrequency, 0, this.synth.portamento.amount);
+            this.osc.frequency.setTargetAtTime( this.initFrequency, 0, this.synth.parameters.portamento.value);
         }
         // APPLY CURRENT DETUNING (if present): "value" and "range" are in cents, "amount" is normalized to -1 > 0 > 0.99987792968750
-        this.osc.detune.setValueAtTime((this.synth.dhc.settings.controller.pb.amount * this.synth.dhc.settings.controller.pb.range), 0);
+        this.osc.detune.setValueAtTime((this.synth.dhc.settings.controller.pb.amount * this.synth.dhc.settings.controller.pb.range.value), 0);
     }
     /**
      * Turn off the sound of the Voice (release)
@@ -917,12 +611,512 @@ HUM.Synth.prototype.SynthVoice = class {
         this.envelope.gain.setValueAtTime(val, 0);
         // **RELEASE**
         // Set the time when the Release must be completed
-        let envReleaseEnd = this.synth.audioContext.currentTime + this.synth.envelope.release;
+        let envReleaseEnd = this.synth.audioContext.currentTime + this.synth.parameters.envelope.release.value;
         // Go near to 0 gain with an EXPONENTIAL ramp
         this.envelope.gain.exponentialRampToValueAtTime(0.0001, envReleaseEnd); // NEW
-        // this.envelope.gain.setTargetAtTime(0, icAudioContext.currentTime, this.synth.envelope.release / 10); // OLD
+        // this.envelope.gain.setTargetAtTime(0, icAudioContext.currentTime, this.synth.parameters.envelope.release.value / 10); // OLD
         // Stop the oscillator 0.2 second after the Release has been completed
         this.osc.stop(envReleaseEnd + 0.2);
+    }
+};
+
+
+HUM.Synth.prototype.Parameters = class {
+    constructor(synth) {
+        this.synthMeter = new HUM.Param({
+            app:synth,
+            idbKey:'synthMeter',
+            uiElements: {
+                'synth_meter': new HUM.Param.UIelem({
+                    role: 'out',
+                }),
+            },
+            postSet: (value, thisParam, init) => {
+                // Only if the peakMeter hasn't been created yet
+                if (!thisParam.uiElements.out.synth_meter.hasChildNodes()) {
+                    // Only if the bootstrap collapsible tab is shown
+                    if (this.synthTab.value) {
+                        // Create the WEB AUDIO PEAK METERS (/assets/js/lib/web-audio-peak-meter.min.js)        
+                        webAudioPeakMeter.createMeter(thisParam.uiElements.out.synth_meter, synth.vumeter, {
+                            backgroundColor: 'rgb(38, 36, 54)',
+                            dbTickSize: 4,
+                            borderSize: 5,
+                            fontSize: 10,
+                            maskTransition: '0.1s'
+                        });
+                    } else {
+                        if (value) {
+                            alert("You cannot create and activate the peakMeter if the accordion's tab is hidden.");
+                        }
+                    }
+                }
+                if (value) {
+                    synth.vumeter.onaudioprocess = webAudioPeakMeter.updateMeter;
+                    webAudioPeakMeter.paintMeter.animate = true;
+                    webAudioPeakMeter.paintMeter();
+                } else {
+                    synth.vumeter.onaudioprocess = undefined;
+                    webAudioPeakMeter.paintMeter.animate = false;
+                }
+            },
+            init:false,
+            dataType:'boolean',
+            initValue:false,
+            restoreStage: 'mid',
+            presetStore:false,
+            presetAutosave:false,
+            presetRestore:false,
+        });
+        this.synthTab = new HUM.Param({
+            app:synth,
+            idbKey:'synthTab',
+            uiElements:{
+                'synthTabShown': new HUM.Param.UIelem({
+                    htmlID: synth.dhc.harmonicarium.html.synthTab[synth.dhc.id].children[1].id,
+                    role: 'fn',
+                    eventType: 'shown.bs.collapse',
+                    opType: 'toggle',
+                    widget:'collapse',
+                    uiSet: (value) => {
+                        if (value) {
+                            this.synthTab.bsCollapse.show();
+                        } else {
+                            this.synthTab.bsCollapse.hide();
+                        }
+                    },
+                    eventListener: evt => {
+                        this.synthTab.valueUI = true;
+                    }
+                }),
+                'synthTabHidden': new HUM.Param.UIelem({
+                    htmlID: synth.dhc.harmonicarium.html.synthTab[synth.dhc.id].children[1].id,
+                    role: 'fn',
+                    eventType: 'hidden.bs.collapse',
+                    opType: 'toggle',
+                    widget:'collapse',
+                    uiSet: null,
+                    eventListener: evt => {
+                        this.synthTab.valueUI = false;
+                    }
+                }),
+            },
+            init:false,
+            dataType:'boolean',
+            initValue:false,
+            restoreStage: 'pre',
+            presetStore:false,
+            presetAutosave:false,
+            presetRestore:false,
+            preInit: () => {
+                // Create a Bootstrap collapsible controller
+                this.synthTab.bsCollapse = new bootstrap.Collapse('#'+synth.dhc.harmonicarium.html.synthTab[synth.dhc.id].children[1].id, {
+                    toggle: this.synthTab.value
+                });
+            },
+            postSet: (value, thisParam, init) => {
+                // Start stop the peakMeter accordingly to the tab visibility
+                if (value) {
+                    this.synthMeter.value = true;
+                } else {
+                    this.synthMeter.value = false;
+                }
+            }
+        });
+
+        /**
+         * The state of the Synth (Power ON/OFF); if `false`, it is turned off.
+         *
+         * @member {boolean}
+         */
+        this.status = new HUM.Param({
+            app:synth,
+            idbKey:'synthStatus',
+            uiElements:{
+                'synth_power': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType:'toggle',
+                    eventType: 'click',
+                    htmlTargetProp:'checked',
+                    widget:'checkbox',
+                })
+            },
+            dataType:'boolean',
+            initValue:true,
+            // Manage the event when the user clicks on the the status of the synth Power ON/OFF checkbox.
+            // NOTE: The user can use the "On/Off" toggle as a sort of PANIC button for stuck synth Voices.
+            postSet:synth.allNotesOff
+        });
+        /**
+         * Namespace for the Volume controls
+         *
+         * @member {Object}
+         *
+         * @property {HUM.Parameter} master   - Final gain out node
+         * @property {HUM.Parameter} ft       - FT gain
+         * @property {HUM.Parameter} ht       - HT gain
+         */
+        this.volume = {
+            // Prepare the MASTER, MIX FT and HT gain out nodes
+            master: new HUM.Param({
+                app:synth,
+                idbKey:'synthVolumeMaster',
+                uiElements:{
+                    'synth_volume': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        widget:'range',
+                        htmlTargetProp:'value',
+                        eventType: 'input',
+                        // eventListeners: {
+                        //     tooltip: {
+                        //         eventType: 'input',
+                        //         function: evt => {
+                        //             this.volume.master.uiElements.in.synth_volume.setAttribute('data-tooltip', evt.target.value);
+                        //         }
+                        //     }
+                        // }
+                    })
+                },
+                dataType:'float',
+                initValue:0.8,
+                preInit: () => {
+                    // Connect the MASTER to the final OUT
+                    synth.gains.master.connect(synth.audioContext.destination);
+                },
+                postSet: (value, thisParam) => {
+                    // Set volume amount on Master GAIN node from UI slider
+                    synth.gains.master.gain.setValueAtTime(value, 0);
+                    // Update the UI slider's tooltip
+                    thisParam.uiElements.in.synth_volume.setAttribute('data-tooltip', value);
+                }
+            }),
+            ft: new HUM.Param({
+                app:synth,
+                idbKey:'synthVolumeFT',
+                uiElements: {
+                    'synth_volumeFT': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'input',
+                        htmlTargetProp:'value',
+                        widget:'range',
+                        // eventListeners: {
+                        //     tooltip: {
+                        //         eventType: 'input',
+                        //         function: evt => {
+                        //             this.volume.master.uiElements.in.synth_volume.setAttribute('data-tooltip', evt.target.value);
+                        //         }
+                        //     }
+                        // }
+                    })
+                },
+                dataType:'float',
+                initValue:0.8,
+                preInit: () => {
+                    // Connect the FT gain to the MIX
+                    synth.gains.ft.connect(synth.gains.mix);
+                },
+                postSet: (value, thisParam) => {
+                    // Set volume amount on FT GAIN node from UI slider
+                    synth.gains.ft.gain.setValueAtTime(value, 0);
+                    // Update the UI slider's tooltip
+                    thisParam.uiElements.in.synth_volumeFT.setAttribute('data-tooltip', value);
+                }
+            }),
+            ht: new HUM.Param({
+                app:synth,
+                idbKey:'synthVolumeHT',
+                uiElements:{
+                    'synth_volumeHT': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'input',
+                        htmlTargetProp:'value',
+                        widget:'range',
+                    })
+                },
+                dataType:'float',
+                initValue:0.8,
+                preInit: () => {
+                    // Connect the HT gain to the MIX
+                    synth.gains.ht.connect(synth.gains.mix);
+                },
+                postSet: (value, thisParam) => {
+                    // Set volume amount on HT GAIN node from UI slider
+                    synth.gains.ht.gain.setValueAtTime(value, 0);
+                    // Update the UI slider's tooltip
+                    thisParam.uiElements.in.synth_volumeHT.setAttribute('data-tooltip', value);
+                }
+            })
+        };
+        /**
+         * Namespace for the ADSR envelope parameters
+         *
+         * @member {Object}
+         *
+         * @property {number} attack  - Attack time (seconds)
+         * @property {number} decay   - Decay time (time-constant)
+         * @property {number} sustain - Sustain gain value (amount from 0.0 to 1.0)
+         * @property {number} release - Release time (seconds)
+         */
+        this.envelope = {
+            attack: new HUM.Param({
+                app:synth,
+                idbKey:'synthAttack',
+                uiElements:{
+                    'synth_attack': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'input',
+                        htmlTargetProp:'value',
+                        widget:'range',
+                    })
+                },
+                dataType:'float',
+                initValue:0.3,
+                postSet: (value, thisParam) => {
+                    // Update the UI slider's tooltip
+                    thisParam.uiElements.in.synth_attack.setAttribute('data-tooltip', value + ' s');
+                },
+                customProperties: {lastFreqFT: null}
+            }),
+            decay: new HUM.Param({
+                app:synth,
+                idbKey:'synthDecay',
+                uiElements:{
+                    'synth_decay': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'input',
+                        htmlTargetProp:'value',
+                        widget:'range',
+                    })
+                },
+                dataType:'float',
+                initValue:0.15,
+                postSet: (value, thisParam) => {
+                    // Update the UI slider's tooltip
+                    thisParam.uiElements.in.synth_decay.setAttribute('data-tooltip', value + ' s(tc)');
+                }
+            }),
+            sustain: new HUM.Param({
+                app:synth,
+                idbKey:'synthSustain',
+                uiElements:{
+                    'synth_sustain': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'input',
+                        htmlTargetProp:'value',
+                        widget:'range',
+                    })
+                },
+                dataType:'float',
+                initValue:0.68,
+                postSet: (value, thisParam) => {
+                    // Update the UI slider's tooltip
+                    thisParam.uiElements.in.synth_sustain.setAttribute('data-tooltip', value + ' gain');
+                }
+            }),
+            release: new HUM.Param({
+                app:synth,
+                idbKey:'synthRelease',
+                uiElements:{
+                    'synth_release': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'input',
+                        htmlTargetProp:'value',
+                        widget:'range',
+                    })
+                },
+                dataType:'float',
+                initValue:0.3,
+                postSet: (value, thisParam) => {
+                    // Update the UI slider's tooltip
+                    thisParam.uiElements.in.synth_release.setAttribute('data-tooltip', value + ' s');
+                }
+            })
+        };
+        /**
+         * Namespace for FT and HT waveform parameters
+         *
+         * @member {Object}
+         *
+         * @property {('sine'|'square'|'sawtooth'|'triangle')} ft - FTs waveform
+         * @property {('sine'|'square'|'sawtooth'|'triangle')} ht - HTs waveform
+         */
+        this.waveform = {
+            ft: new HUM.Param({
+                app:synth,
+                idbKey:'synthWaveformFT',
+                uiElements:{
+                    'synth_waveformFT': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'selection',
+                    })
+                },
+                dataType:'string',
+                initValue:'triangle',
+                allowedValues: ['sine', 'sawtooth', 'square', 'triangle'],
+                // Update also the current running voices
+                postSet: (value) => {
+                    if (synth.voices.ft !== null) {
+                        synth.voices.ft.setWaveform(value);
+                    }
+
+                }
+            }),
+            ht: new HUM.Param({
+                app:synth,
+                idbKey:'synthWaveformHT',
+                uiElements:{
+                    'synth_waveformHT': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'selection',
+                    })
+                },
+                dataType:'string',
+                initValue:'sine',
+                allowedValues: ['sine', 'sawtooth', 'square', 'triangle'],
+                // Update also the current running voices
+                postSet: (value) => {
+                    for (var i=0; i<synth.voices.ht.length; i++) {
+                        if (synth.voices.ht[i] !== undefined) {
+                            synth.voices.ht[i].setWaveform(value);
+                        }
+                    }
+                }
+            })
+        };
+        /**
+         * Portamento/Glide parameters for monophonic FT and FT/HT osc frequency updates.
+         *
+         * @member {Object}
+         *
+         * @property {number} value      - Portamento time (time-constant)
+         * @property {number} lastFreqFT - Last FT frequency expressed in hertz (Hz); init value should be `null`
+         */
+        this.portamento = new HUM.Param({
+            app:synth,
+            idbKey:'synthPortamento',
+            uiElements:{
+                'synth_portamento': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType:'set',
+                    eventType: 'input',
+                    htmlTargetProp:'value',
+                    widget:'range',
+                })
+            },
+            dataType:'float',
+            initValue:0.03,
+            postSet: (value, thisParam) => {
+                // Update the UI slider's tooltip
+                thisParam.uiElements.in.synth_portamento.setAttribute('data-tooltip', value + ' s(tc)');
+            }
+        });
+        this.reverb = {
+            // @param {number} value - Reverb (wet) amount (normalized to 0.0 > 1.0)
+            amount: new HUM.Param({
+                app:synth,
+                idbKey:'synthReverb',
+                uiElements:{
+                    'synth_reverb': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'input',
+                        htmlTargetProp:'value',
+                        widget:'range',
+                    })
+                },
+                dataType:'float',
+                initValue:0.5,
+                preInit: () => {
+                    // Split the MIX to the REVERB and to DRY CARRIER
+                    synth.gains.mix.connect(synth.reverb.convolver);
+                    synth.gains.mix.connect(synth.reverb.dry);
+                    // Connect the REVERB to the WET CARRIER
+                    synth.reverb.convolver.connect(synth.reverb.wet);
+                    // Connect the WET/DRY CARRIERS to the COMPRESSOR
+                    synth.reverb.wet.connect(synth.compressor);
+                    synth.reverb.dry.connect(synth.compressor);
+                    // Connect the COMPRESSOR to the MASTER
+                    synth.compressor.connect(synth.gains.master);
+                },
+                postSet: (value, thisParam) => {
+                    // Update the Reverb amount mixing the Wet and Dry lines with an equal-power cross-fade
+                    synth.reverb.dry.gain.setValueAtTime(Math.cos(value * 0.5 * Math.PI), 0);
+                    synth.reverb.wet.gain.setValueAtTime(Math.cos((1.0 - value) * 0.5 * Math.PI), 0);
+                    // Update the UI slider's tooltip
+                    thisParam.uiElements.in.synth_reverb.setAttribute('data-tooltip', value);
+                }
+            }),
+            irFile: new HUM.Param({
+                app:synth,
+                idbKey:'synthIrFile',
+                uiElements:{
+                    'synth_irFile': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'files',
+                        widget:'file',
+                        // Manage the event when the user is trying to load a IR Reverb file with the UI input
+                        eventListener: evt => {
+                            // Check for the various File API support.
+                            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                                // Access to the file and send it to the setter method
+                                synth.parameters.reverb.irFile.value = evt.target.files[0];
+                            } else {
+                                alert('The File APIs are not fully supported in this browser.');
+                            }
+                        }
+                    }),
+                    'synth_irFileName': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                    'synth_irFileClearBtn': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'run',
+                        eventType: 'click',
+                        widget:'button',
+                        eventListener: evt => {
+                            this.reverb.irFile.value = 'default';
+                        }
+                    })
+                },
+                dataType:'file',
+                initValue:'default', // NOTE: 'default' is a special value in order to avoid the default                                     //        hardcoded reverb from being stored in the IndexedDB.
+                preSet: (value, thisParam, init, fromUI, oldValue) => {
+                    let fileNameElem = thisParam.uiElements.out.synth_irFileName;
+                    if (value === 'default') {
+                        // Load the Base64-coded default IR Reverb
+                        synth.readIrFile(synth.constructor.base64ToFile(synth.constructor.defaultReverb));
+                        fileNameElem.innerText = 'Default reverb';
+                    } else if (value) {
+                        // Load the file from the UI file input 
+                        synth.readIrFile(value);
+                        if (value.name) {
+                            fileNameElem.innerText = value.name;
+                        }
+                    } else {
+                        value = oldValue;
+                        fileNameElem.innerText = oldValue.name;
+                    }
+                    return value;
+                },
+            })
+        };
+    }
+    _init() {
+        this.synthTab._init();
     }
 };
 

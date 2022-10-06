@@ -5,7 +5,7 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2020 by Walter Mantovani (http://armonici.it).
+ * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
  * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -134,7 +134,11 @@ HUM.midi.MidiOut = class MidiOut {
     updateMidiOutUI() {
         let dhcID = this.dhc.id;
         // Init the container
-        this.htmlMotModalContent.innerHTML = "";
+        // this.htmlMotModalContent.innerHTML = "";
+        while (this.htmlMotModalContent.firstChild) {
+            this.htmlMotModalContent.removeChild(this.htmlMotModalContent.firstChild);
+        }
+        
         this.midi.port.selectedOutputs.forEach((value, key) => {
             // If it's a new port in this browser section
             if (!this.settings[key]) {

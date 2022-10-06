@@ -20,102 +20,33 @@
     display: none!important;
 }
 
-/*Remove the blue border on focus (tested on chrome macos)*/
-:focus {
-    outline: none;
-}
-
 body {
     margin:0!important;
     background-color: #575867;
-    color: #DDD; /*@DARK*/
-    font-family: 'IM Fell DW Pica', serif;
+    /*color: #DDD; /*@DARK*/
+    /*font-family: 'IM Fell DW Pica', serif;*/
     /*vertical-align: middle;*/
 }
 
-summary {
-    padding-bottom: 5px;
-}
-
-h1 {
-    font-size: 1.5em;
-}
-
-h2 {
-    font-size: 1.25em;
-}
-a {
-    color: inherit;
-    text-decoration: none;
-}
-input {
-    background-color: #503535; /*@DARK*/
-    background-image: linear-gradient( to top left, #8e4a4a, #2d1e1e);
-    border-radius: 7px;
-    border-style: inset;
-    border-width: 2px;
-    color: #DDD; /*@DARK*/
-    font-family: 'Source Code Pro', monospace;
-    font-size: 0.9em;
-    font-weight: bold;
-    margin-bottom: 5px;
-    text-indent: 5px; /*@DARK*/
-    vertical-align: middle;
-}
-
-/*FILE UPLOAD BUTTON AND LABEL*/
-input[type="file"] {
-    display: inline-flex;
-    font-size: 10px;
-    font-weight: normal;
-    width: 230px;
-}
-input::-webkit-file-upload-button {
-    background-color: rgb(53, 77, 80);
-    border-radius: 5px;
-    border-style: inset;
-    color: #DDD;
-    font-family: 'Source Code Pro', monospace;
-    font-size: 10px;    
-    font-weight: bold;
-    vertical-align: super;
-}
-input::-webkit-file-upload-button:focus {
-    outline: none;
-}
-
-button {
-    background-color: rgb(53, 77, 80);
-    background-image: linear-gradient( to top left, rgb(92, 125, 130), rgb(34, 49, 51));
-    border-radius: 7px;
-    border-style: inset;
-    color: #DDD;
-    cursor: pointer;
-    font-family: 'Source Code Pro', monospace;
-    font-weight: bold;
-    vertical-align: super;
-}
-
-select {
-    background-color: #503535; /*@DARK*/
-    background-image: linear-gradient( to top left, #8e4a4a, #2d1e1e);
-    border-color: #DDD;
-    border-style: inset;
-    border-width: 2px;
-    color: #DDD;
-    font-family: 'Source Code Pro', monospace;
-    font-size: 12px;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
 table {
-    border-collapse: collapse;
-    border-color: #999; /*@DARK*/
-    border-style: solid;
-    border-width: 2px;
-    text-align:center;
+    font-family: 'Source Code Pro', monospace;
+    /*border-collapse: collapse;
+    text-align:center;*/
 }
+
+.invisibleTable {
+    border: none;
+}
+.invisibleTable th {
+    background-color: transparent;
+    background-image: none;
+    color: #DDD;
+}
+.invisibleTable td,
+.invisibleTable th {
+    border: none;
+}
+
 .unselectableText {
    -khtml-user-select: none;
    -moz-user-select: -moz-none;
@@ -123,58 +54,61 @@ table {
    -webkit-user-select: none;
    user-select: none;
 }
-.invisibleTable {
-    border: none;
-}
-.dataTable {
-    background-color: #383749;
-}
-.monitorTable td {
-    font-family: 'Source Code Pro', monospace;
-}
-.monitorTableTitle {
-    border: hidden;
-    height: unset;
-}
 
-th {
-    background-color: #BBB; /*@DARK*/
-    background-image: linear-gradient( to top left, #BBB, #a0a0a0);
-    border-color: #777; /*@DARK*/
-    color: #191919; /*@DARK*/
-    padding: 0;
+/* BS custom small tables */
+.table-sm>:not(caption)>*>* {
+    padding: 0.1rem 0.1rem;
 }
-.invisibleTable th {
-    background-color: transparent;
-    background-image: none;
-    color: #DDD;
-}
-
-td {
-    border-color: #AAA; /*@DARK*/
-    overflow: hidden;
-    padding: 1px;
-    white-space: nowrap;
-}
-
-th, td {
-    border-style: solid;
-    border-width: 1px;
-    height: 18px;
-}
-.invisibleTable td,
-.invisibleTable th {
-    border: none;
-}
-
 
 /***********************************************
  * PANEL OVERLAY
  ***********************************************/
+
+
+.hum-splash-modal .spinner-border {
+    --bs-spinner-border-width: 1.25em;
+}
+
+.hum-dark-backdrop {
+    --bs-backdrop-opacity: 0.7;
+}
+.hum-black-backdrop {
+    --bs-backdrop-opacity: 1;
+}
+
+.hum-custom-popover {
+  /*--bs-popover-max-width: 200px;*/
+  --bs-popover-border-color: #c5b500;
+  --bs-popover-header-bg: #fff9b4;
+  /*--bs-popover-header-color: var(--bs-white);*/
+  /*--bs-popover-body-padding-x: 1rem;*/
+  /*--bs-popover-body-padding-y: .5rem;*/
+}
+
+.hum-toast {
+  --bs-toast-bg: rgba(255, 255, 255, 0.95);
+}
+
+.hum-section-title {
+    background-color: #f7f7f7;
+}
+
+.IOcheckbox {
+    margin-bottom: 0.25rem;
+}
+
+.IOcheckbox label {
+    margin-left: 0.25rem;
+}
+
+input:focus:not([type="range"]):not([type="radio"]), select:focus, button:focus {
+    border-color: #503535cc!important;!important;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 9px #503535cc!important;
+    outline: 0 none!important;
+}
+
 /* The bottom panel Overlay (background) */
 .panelOverlay.bottomPanel {
-    background-color: rgb(8, 3, 31); /* Black fallback color */
-    background-color: rgba(8, 3, 31, 0.9); /* Black w/opacity */
     bottom: 0; 
     height: 0;
     left: 0;
@@ -194,96 +128,66 @@ th, td {
     /*transition: 0.4s; */
     width: 0;
     z-index: 3; /* Sit on top */
+    display: grid;
 }
-/* Position the content inside the overlay */
-.panelOverlay_content {
-    /*color: #AAA;*/
-    height: 100%;
-    padding-top: 15px;
-    padding-bottom: 15px;
-    overflow-y: scroll;
-    /*padding: 0 40px 10px 40px;*/
-    width: 100%;  /* 100% width */
-}
-/*Customized scrollbar */
-/*.panelOverlay_content::-webkit-scrollbar {*/
-    /*background-color: rgb(0,0,0);*/ /* Black fallback color */
-    /*background-color: rgba(0,0,0, 0.9);*/ /* Black w/opacity */
-    /*height: 8px;*/
-    /*width: 5px;*/
-/*}*/
-/* Add a thumb to the scrollbar*/
-/*.panelOverlay_content::-webkit-scrollbar-thumb {
-    background: #AAA; 
-}*/
 
-.panelOverlay h1 {
-    margin-bottom: 5px;
-    margin-top: 0;
-    text-align: center;
+ul.dropdown-menu>li.active>a{
+    background-color: #503535;
+    background-image: linear-gradient( to top left, #8e4a4a, #2d1e1e);
+}
+
+.nav-pills .nav-link.active, .nav-pills .show>.nav-link,
+.dropdown-item.active, .dropdown-item:active {
+    background-color: #503535;
+    background-image: linear-gradient( to top left, #8e4a4a, #2d1e1e);
+}
+
+.nav-pills .nav-link.hum-nav-link:not(.active) {
+    color: #DDD;
+    background-color: #2a2838; /*@DARK*/
+    background-image : linear-gradient( to top left, rgba(124, 120, 150, 0.7), #2a2838); 
+}
+
+.nav-pills .nav-link.hum-nav-link:not(.active):hover {
+    background-color: #2f1a1a; /*@DARK*/
+    background-image: linear-gradient( to top left, #483030, #160e10);
+}
+
+.hum-accordion-button {
+    color: #DDD;
+    /*font-size: calc(1em + 0.4vw);*/
+    background-color: #2a2838; /*@DARK*/
+    background-image : linear-gradient( to top left, rgba(124, 120, 150, 0.7), #2a2838);
+    /*border-radius: 10px;*/
+}
+.hum-accordion-button:hover {
+    background-color: #2f1a1a; /*@DARK*/
+    background-image: linear-gradient( to top left, #483030, #160e10);
+}
+.hum-accordion-button:not(.collapsed) {
+    color: #DDD;
+    background-color: #503535;
+    background-image: linear-gradient( to top left, #8e4a4a, #2d1e1e);
+}
+.hum-accordion-button::after {
+    filter: brightness(0%) invert(100%);
 }
 
 /***********************************************
  * OVERLAY HELP PANEL CONTENT (RIGHT)
  ***********************************************/
-/*.sideMenu p {
-    font-family: 'Source Code Pro', monospace;
-    margin: 0;
-    padding-left: 85px;
-    text-indent: -85px;
-    white-space: pre;
-}*/
-/* The navigation links inside the overlay */
-/*.sideMenu a {
-    color: #818181;
-    display: block;
-    font-size: 36px;
-    padding: 8px;
-    text-decoration: none;
-    transition: 0.3s;
-}*/
-.sideMenu .credits,
-.sideMenu .help {
-    min-height: 100vh;
-    padding-bottom: 100px;
-}
-.rightPanel .panelBtnContainer {
-    display: none;
-}
-.rightPanel.panelShown .panelBtnContainer {
+.rightPanel.hum-modal-shown .panelBtnContainer {
     cursor: pointer;
-    display: flex;
-    margin-left: 16px;
-    /*left: 10px;
-    top: 1px;*/
-    position: absolute;
     max-width: 9vw;
-    width: 100%;
-    min-width: 125px;
-    float: left;
 }
-.settingsContainer {
-    overflow-y: scroll;
-}
-
 
 /***********************************************
  * LOGO
  ***********************************************/
-.sideTopBar {
-    /*min-height: unset;*/
-    /*padding: 12px 12px 7px 12px;*/
-    display: block;
-    float: left;
-    width: 100%;
-    background-color: rgb(38 36 54);
-    box-shadow: inset 0px -20px 20px 0px hsl(250 20% 30% / 1), 12px 11px 20px 12px hsl(250 20% 30% / 1);
-}
-.logoContainer {
+.hum-logo-container {
     padding: 8px 8px 8px 8px;
-
 }
-.logoContainer img {
+.hum-logo-container img {
     display: block; 
     margin-left: auto;
     margin-right: auto;
@@ -295,8 +199,10 @@ th, td {
 /***********************************************
  * OVERLAY LOG TEXTBOX (BOTTOM)
  ***********************************************/
-.logText p {
+.logText {
     font-family: 'Source Code Pro', monospace;
+}
+.logText p {
     margin: 0;
     padding-left: 85px;
     text-indent: -85px;
@@ -318,6 +224,15 @@ so they don't overlap */
 /***********************************************
  * OVERLAY OPEN/CLOSE BUTTON
  ***********************************************/
+
+.hum-modal-shown.hum-modal-half .btn-close.hum-arrow-bar-right {
+    display: none;
+}
+
+.hum-modal-shown.hum-modal-full .btn-close.hum-arrow-bar-left {
+    display: none;
+}
+
 .bottomPanel .panelBtnContainer {
     display: none;
     /*bottom: 10px;*/ /* Position the close button (top right corner) */
@@ -327,19 +242,18 @@ so they don't overlap */
     position: fixed;
     right: 20px;*/
 }
-.bottomPanel .panelShown {
+.bottomPanel .hum-modal-shown {
     position: absolute;
     top: 20px;
 }
-.bottomPanel .panelBtnContainer.panelShown {
+.bottomPanel .panelBtnContainer.hum-modal-shown {
     display: inline-block;
-    height: 40px;
-    position: absolute;
+    /*height: 40px;*/
+    /*position: absolute;*/
     top: 20px;
-    bottom: 10px; /* Position the close button (top right corner) */
     right: 20px;
-    font-size: 60px;
-    cursor: pointer;
+/*    font-size: 60px;
+    cursor: pointer;*/
 }
 /*The three bars for the icon*/
 .panelBtnBar1,
@@ -352,14 +266,14 @@ so they don't overlap */
     width: 35px;
 }
 /* Rotate first bar */
-.panelShown .panelBtnBar1 {
+.hum-modal-shown .panelBtnBar1 {
     -webkit-transform: rotate(-45deg) translate(-9px, 6px) ;
     transform: rotate(-45deg) translate(-9px, 6px) ;
 }
 /* Fade out the second bar */
-.panelShown .panelBtnBar2 {opacity: 0;}
+.hum-modal-shown .panelBtnBar2 {opacity: 0;}
 /* Rotate last bar */
-.panelShown .panelBtnBar3 {
+.hum-modal-shown .panelBtnBar3 {
     -webkit-transform: rotate(45deg) translate(-8px, -8px) ;
     transform: rotate(45deg) translate(-8px, -8px) ;
 }
@@ -373,74 +287,21 @@ so they don't overlap */
     background-color: #CCC;
 }
 
-/***********************************************
- * MODAL OVERLAY
- ***********************************************/
-.modalOverlay {
-    background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-    display: none; /* Hidden by default */
-    height: 100%; /* Full height */
-    left: 0;
-    overflow: auto; /* Enable scroll if needed */
-    padding-top: 40px; /* Location of the box */
-    position: fixed; /* Stay in place */
-    top: 0;
-    width: 100%; /* Full width */
-    z-index: 3; /* Sit on top */
-}
-/* Modal Content */
-.modalOverlay_content {
-    background-color: #2a2838; /*@DARK*/
-    background-image : linear-gradient( to top left, rgba(124, 120, 150, 0.7), #2a2838);
-    border: 1px solid #888;
-    box-shadow: -0.2em -0.2em 0.8em rgb(5, 0, 33); /*@DARK*/
-    margin: auto;
-    padding: 0 20px 0 20px;
-}
-/* The Close Button */
-.modalOverlay_close {
-    color: #aaaaaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-}
-.modalOverlay_close:hover,
-.modalOverlay_close:focus {
-    color: #000;
-    cursor: pointer;
-    text-decoration: none;
-}
-.modalOverlay_content h1 {
-    margin-bottom: 10px;
-    margin-top: 15px;
-}
-.modalOverlay_content table {
-    font-size: 12px;
-}
-.modalOverlay_content th,
-.modalOverlay_content td {
-    padding: 0 4px 0 4px;
-}
 
 
 /***********************************************
- * TOOLBAR
+ * DP PAD TOOLBAR
  ***********************************************/
-
-
 .dpToolbarIcon:hover {
     fill: #d08d8d;
 }
-
-
 
 /***********************************************
  * DP PAD
  ***********************************************/
 
 /* Some CSS styling */
-.dpPadPage {
+.hum-dppad-container {
     /* Prevent nearby text being highlighted when accidentally dragging mouse outside confines of the canvas */
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -493,199 +354,9 @@ so they don't overlap */
 }
 
 
-
-/* *********************
- * *********************
- * *********************
- * *********************/ 
-
-.accordion h1 {
-    margin: 0;
-    line-height: 2;
-    text-align: center;
-}
-
-.accordion h2 {
-    margin: 0 0 .5em;
-    font-weight: normal;
-}
-
-.accordionChkBox {
-    position: absolute;
-    opacity: 0;
-    z-index: -1;
-}
-
-.dhcSideContainer,
-.dpPadSideContainer {
-    display: block;
-    /*display: flex;*/
-}
-.dhcSideContainer .accordion,
-.dpPadSideContainer .accordion {
-    flex: 1;
-}
-.dhcSideContainer .accordion:last-child
-/*.dpPadSideContainer .accordion:last-child */{
-    padding-bottom: 10vw;
-}
-
-/* Accordion styles */
-.accordionTabs {
-    /*border-radius: 8px;*/
-    overflow: hidden;
-    /*box-shadow: 0 4px 4px -2px rgba(0, 0, 0, 0.5);*/
-    /*width: 95%;*/
-}
-
-.accordionTab {
-    /*width: 100%;*/
-    color: white;
-    overflow: hidden;
-    padding: 0px 0 10px 19px;
-}
-.accordionTabLabel {
-    display: flex;
-    -webkit-box-pack: justify;
-    justify-content: space-between;
-    padding: calc(0.3vw + 4px);
-    background: #2c3e50;
-    font-weight: bold;
-    font-size: calc(1em + 0.4vw);
-    cursor: pointer;
-    background-color: #2a2838; /*@DARK*/
-    background-image : linear-gradient( to top left, rgba(124, 120, 150, 0.7), #2a2838);
-    /*box-shadow: -0.2em 0em 0.8em rgb(5, 0, 33);*/
-    /*box-shadow: -0.2em 0.4em 0.6em 0px rgb(5, 0, 33);*/
-    box-shadow: -0.2em 0.4em 0.3em -6px rgb(0, 0, 0);
-    border-radius: 10px;
-}
-.accordionTabLabel:hover {
-    background: #2f1a1a;
-}
-.accordionTabLabel::after {
-    content: "\276F";
-    width: 1em;
-    height: 1em;
-    text-align: center;
-    -webkit-transition: all .35s;
-    : all .35s;
-}
-.accordionTabContent {
-    max-height: 0;
-    padding: 0 1em;
-    -webkit-transition: all .35s;
-    transition: all .35s;
-    overflow: hidden;
-}
-.accordion .tab-close {
-    display: -webkit-box;
-    display: flex;
-    -webkit-box-pack: end;
-                    justify-content: flex-end;
-    padding: 1em;
-    font-size: 0.75em;
-    background: #2c3e50;
-    cursor: pointer;
-}
-.accordion .tab-close:hover {
-    background: #1a252f;
-}
-
-.accordionChkBox:checked + .accordionTabLabel {
-    background: #1a252f;
-    background-color: #f70a0a; /*@DARK*/
-    background-image : linear-gradient( to top left, rgba(124, 120, 150, 0.7), rgb(41 26 26));
-}
-.accordionChkBox:checked + .accordionTabLabel::after {
-    -webkit-transform: rotate(90deg);
-    transform: rotate(90deg);
-}
-.accordionChkBox:checked ~ .accordionTabContent {
-    max-height: 100%;
-    /*max-height: 100vh;*/
-    padding: 1em;
-}
-
-/* *********************
- * *********************
- * *********************
- * *********************/ 
-
-
-
-/***********************************************
- * CONTROLLER IO & KEYMAP
- ***********************************************/
-
-/*CONTROLLER KEYMAP TABLE*/
-.controllerKeymap .modalOverlay_content {
-    padding: 0 20px 50px 20px;
-    width: 230px;
-}
-.controllerKeymap {
-    margin-top: 10px;
-    margin-bottom: 16px;
-    display: grid;
-}
-/*Keymap table*/
-.controllerKeymapTable {
-    display: flex;
-    justify-content: center;
-}
-.controllerKeymapTable td {
-    font-family: 'Source Code Pro', monospace;
-}
-
-.keymapParam {
-    display: inline-flex;
-    margin-bottom: 7px;
-}
-.keymapParam input{
-    margin-left: 10px;
-}
-.keymapParam input{
-    max-width: 30vw;
-}
-    
-/*.controllerKeymapSelect {
-    max-width: 30vw;
-}*/
-/*.controllerKeymapFileInput {
-    margin: 10px 0 0 0;
-}*/
-
-/***********************************************
- * MIDI MONITOR TABLE
- ***********************************************/
-table.monitorTable {
-    float: left;
-    margin-right: 31px;
-}
-.midiPorts label {
-    font-family: 'Source Code Pro', monospace;
-    font-size: 12px;
-}
-.midiMonitor table { 
-    margin-top: 10px;
-    margin-bottom: 8px;
-    width: 235px;
-}
-.midiPorts button {
-    height: 28px;
-}
-
 /***********************************************
  * MODAL MIDI-OUT TUNING METHODS
  ***********************************************/
-.midiPorts .modalOverlay_content {
-    min-width: 960px;
-    padding: 0px 20px 55px 20px;
-    width: fit-content;
-}
-.midiContainerRight h2 {
-    font-family: 'Source Code Pro', monospace;
-}
 .mot-pb-settings button {
     vertical-align: top;
 }
@@ -711,26 +382,6 @@ td.mot-pb-delayFT {
 .mot-pb-typeHeader {
     font-size: 20px;
 }
-.midiColumn {
-    display: table-cell;
-    /*margin-right: 15px;*/
-    padding: 0 15px 0 15px;
-}
-.midiColumn h1 {
-    margin-top: 6px!important;
-}
-.midiColumn h2 {
-    left: -8px;
-    margin: 16px 0 4px 0!important;
-    position: relative;
-}
-.midiColumn.midiContainerLeft {
-    border-right: solid 1px;
-}
-.midiColumn.midiContainerRight {
-    border-left: solid 1px;
-    padding-left: 25px;
-}
 
 
 /***********************************************
@@ -750,345 +401,79 @@ table.midiParam {
 }
 
 /***********************************************
- * MENU (under the logo)
- ***********************************************/
-.menuContainer{
-    text-align: center;
-}
-.menuElement {
-    cursor: pointer;
-}
-
-/***********************************************
- * CONTAINER BOXES
- ***********************************************/
-
-.UIbox {
-    /*box-shadow: 0.2em 0.2em 0.8em rgb(5, 0, 33);*/ /*@DARK*/
-    /*background-color: #2a2838;*/ /*@DARK*/
-    /*background-image : linear-gradient( to top left, rgba(124, 120, 150, 0.7), #2a2838);*/
-    /*box-shadow: -0.2em -0.2em 0.8em rgb(5, 0, 33);*/ /*@DARK*/
-    /*display: table;*/
-    float: left;
-    font-size: 90%;
-    /*margin: 10px;*/
-    /*min-height: 132px;*/
-    /*min-width: 205px;*/
-    padding: 1px 15px 15px 15px;
-    text-align: left;
-    vertical-align: top;
-}
-.UIbox h1 {
-    left: -8px;
-    margin-bottom: 5px;
-    margin-top: 0;
-    position: relative;
-}
-.UIbox h2 {
-    margin-top: 5px;
-}
-
-/***********************************************
- * DP PAD SETTINGS
- ***********************************************/
-.dpPadSettings {
-    display: table;
-}
-.dpPadParam {
-    display: table-row;
-}
-.dpPadParam label {
-    padding-right: 15px;
-    vertical-align: sub;
-    display: table-cell;
-}
-.dpPadParam select {
-    width: 70px;
-    display: table-cell;
-}
-.dpPadParam input {
-    width: 70px;
-    display: table-cell;
-}
-.dpPadParam select {
-    width: 140px;
-    display: table-cell;
-}
-.dpPadParam span {
-    font-family: 'Source Code Pro', monospace;
-}
-.dpPadParam button {
-    margin-left: 6px;
-    vertical-align: unset;
-}
-button.dpPadCopyFreqRange {
-    margin: 16px 14px 23px 14px;
-}
-
-/***********************************************
- * DHC SETTINGS
- ***********************************************/
-.dhc .UIbox {
-    display: table;
-}
-
-.dhcSettings {
-    display: grid;
-}
-.dhcSettings label {
-    margin-right: 5px;
-    vertical-align: sub;
-}
-.dhcParam input {
-    float: right;
-    width: 70px;
-}
-/*Middle C Label+Input hack*/
-.dhcMiddleC input {
-    background-color: transparent;
-    background-image: none;
-    border: none;
-    height: 15px;
-    outline: none;
-    padding-top: 0;
-    text-indent: 0;
-    width: 58px;
-    margin-top: 1px;
-    font-size: inherit;
-}
-label.dhcMiddleC {
-    background-color: #503535;
-    background-image: linear-gradient( to top left, #8e4a4a, #2d1e1e);
-    border-color: #757575;
-    border-radius: 7px;
-    border-style: inset;
-    border-width: 2px;
-    float: right;
-    font-family: 'Source Code Pro', monospace;
-    font-size: 0.9em;
-    font-weight: bold;
-    height: 19px;
-    margin-bottom: 5px;
-    margin-left: 5px;
-    margin-right: 0;
-    padding: 0 0 0 5px;
-}
-
-/***********************************************
  * REFERENCE SYNTH
  ***********************************************/
-.synth .UIbox {
-    display: flex;
-}
-.synthColumn {
-    float: left;
-}
-.synthRxPanel {
-    float: right;
-}
-.synthParam input {
-    margin: auto;
-}
-.synthParam {
-    display: grid;
-    padding: 0 7px 0 7px;
-    text-align: center;
-}
-.synthTonePanel input,
-.synthTonePanel label {
-    display:block;
-}
-.synthTonePanel td,
-.synthTonePanel th {
-    padding: 5px;
-}
-.synthTonePanel td + td,
-.synthTonePanel th + th {
-    border-left: 2px solid #999;
-}
-.synthReverbPanel {
-    display: grid;
-    text-align: center;
-}
-.synthReverbPanel input,
-.synthReverbPanel label {
-    margin: auto;
-    width: 230px;
-}
-
-.synthReverbPanel p {
-    margin: 3px;
-}
-
 .hmVUmeter {
     margin: 8px 0 0 12px;
     width: 75px;
     height: 214px;
 }
 
-.hmMasterVolume {
-    width: 210px;
+/*.slider-wrapper {
+  display: inline-block;
+  width: 20px;
+  height: 150px;
+  padding: 0;
+}
+.slider-wrapper input,
+.slider-wrapper label {
+  width: 150px;
+  height: 20px;
+  margin: 0;
+  transform-origin: 75px 75px;
+  transform: rotate(-90deg);
 }
 
-.synthColumn.synthOut {
-    height: 250px;
-    width: 150px;
+.vertical-wrapper {
+  display: inline-block;
+  width: 16px;
+  height: 175px;
+  position: relative;
+  padding: 0 5px;
 }
-
-.synthColumn.synthOut .synthParam input {
-    margin: 0 auto 0 auto;
+.vertical-wrapper input,
+.vertical-wrapper label {
+  width: 175px;  
+  height: 16px;
+  transform: rotate(-90deg);
+  transform-origin: left;
+  position: absolute;
+  left: 50%;
+  bottom: -1em;
 }
-.synthOut .synthParam {
-    padding: 0;
-}
-
-.synthOut div.rotatedElement {
-    -webkit-transform: rotate(-90deg);
-    -moz-transform: rotate(-90deg);
-    -ms-transform: rotate(-90deg);
-    -o-transform: rotate(-90deg);
-    transform: rotate(-90deg);
-    -webkit-transform-origin: 24% -113%;
-    -moz-transform-origin: 24% -113%;
-    -ms-transform-origin: 24% -113%;
-    -o-transform-origin: 24% -113%;
-    transform-origin: 24% -113%;
-    display: inline-grid;
-}
-.synthOut .rotatedElement label {
-    display: block;
-    text-align: center;
-}
+*/
 
 /***********************************************
  * VISUALIZER (@TODO)
  ***********************************************/
 /*.synthVisualiser {
     width: 220px;
-}
-.visualiser .UIbox {
-    min-height: unset;
-}*/
-
-/***********************************************
- * FUNDAMENTAL MOTHER SETTINGS
- ***********************************************/
-
-/*FM text input*/
-.fm input {
-    width: 60px;
-}
-.fm button {
-    margin-right: 17px; 
-}
-.fm td {
-    padding-top: 5px;
-}
+} */
 
 /***********************************************
  * FUNDAMENTAL TONES SETTINGS
  ***********************************************/
-.ftSettings h2 {
-    margin-bottom: 0;
-}
-.ftSettings img {
-    width: 95%;
-}
-.ftSettings input {
-    width: 35px;
-}
 .ftNEDX_VarsTxt {
     font-family: serif;
     font-size: 16px;
     font-style: italic;
 }
-.ftSettings table {
-    width: 210px;
-}
-.ftHS h2 {
-    margin-top: 0;
-}
-.ftNEDX td,
-.ftNEDX th {
-    padding: 6px 5px 0 5px;
-}
-.ftNEDX tr {
-    margin-top: 5px;
-}
-
 .hmFMout {
-    font-family: 'Source Code Pro', monospace;
-}
-
-.hmSetButton {
-    left: 5px;
-    position: relative;
-}
-
-/***********************************************
- * HARMONIC TONES SETTINGS
- ***********************************************/
-.htSettings h2 {
-    margin-bottom: 0;
-    margin-top: 0;
-    position: relative;
-    top: -3px;
-}
-.htSettings input {
-    text-align: center;
-    width: 35px;
-}
-.htSettings input::-webkit-inner-spin-button, 
-.htSettings input::-webkit-outer-spin-button { 
-    -moz-appearance:textfield !important;
-    -webkit-appearance: none; 
-    margin: 0;
-}
-.htSettings td,
-.htSettings th {
-    width: 40px;
-}
-span.htSettingsLabel {
     font-family: 'Source Code Pro', monospace;
 }
 
 /***********************************************
  * H STACK
  ***********************************************/
-.hstack .UIbox {
-    display: table;
-}
 
-.hstack h1 {
-    float: left;
-}
-.hstack_zoom {
-    display: grid;
-    float: left;
-    padding: 0 0 5px 20px;
-}
-.hstack_zoom input {
-    border-width: 0; 
-    margin: 0 0 5px 0;
-}
-.hstack td {
-    font-family: 'Source Code Pro', monospace;
-    padding: 1px 3px 1px 3px;
-}
-.hstackHT table {
-    margin-top: 0;
-    min-width: 265px;
-    padding-bottom: 10px;
-}
 /***********************************************
  * HSTACK FT (MONITOR) TABLE
  ***********************************************/
-.hstackFT table { 
-    min-width: 100%;
+
+hr {
+    border-top: 7px solid;
 }
-th.hstackDivisor {
-    height: 5px;
-}
+
 /*H Stack HT & FT rows color on keypress events*/
 @keyframes FTpressedKey {
     0% {
@@ -1106,64 +491,35 @@ th.hstackDivisor {
         color: #2A2838;
     }
     100% {
-        background-color: #383749;
+        background-color: #FFF;
         color: #DDD;
     }
 }
-.FTon {
+.hum-hstack-ft-on {
     animation: FTpressedKey 250ms forwards;
     font-weight: bold;
 }
-.FToff {
+.hum-hstack-ft-off {
     animation: FTreleasedKey 250ms linear;
     font-weight: normal;
-    color: #DDD;
+    /*color: #DDD;*/
 }
-.HTon {
+.hum-hstack-ht-on {
     background-color: #C9E2F7;
     color: #2A2838;
     font-weight: bold;
 }
-.HToff {
-    background-color: #383749;
-    color: #DDD;
+.hum-hstack-ht-off {
+    background-color: transparent;
+    /*color: #DDD;*/
     font-weight: normal;
     transition: all 125ms linear;
 }
 
 /***********************************************
- * VIRTUAL PIANO KEYBOARD MONITOR TABLE
- ***********************************************/
-.monitors table { 
-    /*float: right;*/
-/*    margin-bottom: 10px;
-    margin-right:10px;*/
-    width: 280px;
-    margin-bottom: 8px;
-}
-/*.toneMonitor .monitorTableTitle {
-    font-size: 10px;
-}*/
-
-/***********************************************
  * VIRTUAL PIANO KEYBOARD
  ***********************************************/
-/*QWERTY HANCOCK SETTINGS*/
-/*======================*/
-.pianoSettings1 {
-    float: left;
-    margin-right: 35px;
-}
-.pianoSettings2 td {
-    padding: 0 10px 0 12px;
-}
-.pianoSettings2 input[type="range"] {
-    margin-top: 0;
-}
-.piano summary {
-    cursor: pointer;
-    display: inline;
-}
+
 /*QWERTY HANCOCK WRAPPER*/
 /*======================*/
 .hmHancockContainer {
@@ -1177,6 +533,12 @@ th.hstackDivisor {
     background-color: transparent!important; /*@DARK*/
 }
 
+.hmHancockContainer li {
+    box-sizing: content-box; /*BS fix*/
+}
+
+/*QWERTY HANCOCK KEYS*/
+/*======================*/
 /*FT keys*/
 .FTwKey.releasedKey {
     background-color: #ECA589!important;
@@ -1277,14 +639,14 @@ input[data-tooltip]:before {
     background-color: #000;
     background-color: hsla(0, 0%, 20%, 0.9);
     border-radius: 3px;
-    bottom: 70%;
+    bottom: -120%;
     color: #fff;
     content: attr(data-tooltip);
     font-size: 14px;
     left: 70%;
     line-height: 1.2;
     margin-bottom: 5px;
-    margin-left: -80px;
+    /*margin-left: -80px;*/
     padding: 4px;
     position: absolute;
     text-align: center;
@@ -1299,50 +661,99 @@ input[data-tooltip]:hover:before {
 }
 
 
+
+.hum-circle-x {
+    width: 2.2em;
+    height: 2.2em;
+    background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e") center/2.2em auto no-repeat;
+}
+
+.hum-arrow-bar-left {
+    width: 2.2em;
+    height: 2.2em;
+    background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M12.5 15a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5zM10 8a.5.5 0 0 1-.5.5H3.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L3.707 7.5H9.5a.5.5 0 0 1 .5.5z'/%3e%3c/svg%3e") center/2.2em auto no-repeat;
+}
+.hum-arrow-bar-right {
+    width: 2.2em;
+    height: 2.2em;
+    background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8zm-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5z'/%3e%3c/svg%3e") center/2.2em auto no-repeat;
+}
+
+
+div.hum-range-param {
+    text-align: center;
+}
+
+.hum-range-param label{
+    margin: 0;
+}
+
+
+.hum-justify {
+    width: 100%;
+    /*text-align: justify;*/
+    /*height: 1.5em;*/
+    /*line-height: 1.5em;*/
+    text-align-last: justify;
+}
+.hum-justify:after {
+    content: "";
+    display: inline-block;
+    /*width: 100%;*/
+}
+
 /***********************************************
  * CREDITS / HELP
  ***********************************************/
 
-.credits,
-.help {
+.hum-credits p,
+.hum-help p {
+    font-family: 'Source Code Pro', monospace;
+    margin: 0;
+    color: #DDD; /*@DARK*/
+    font-family: 'IM Fell DW Pica', serif;
+}
+/* The navigation links inside the overlay */
+.hum-credits a,
+.hum-help a {
+    /*color: #818181;*/
+    text-decoration: none;
+    transition: 0.3s;
+    color: #f5a282
+}
+
+.hum-credits,
+.hum-help {
+    /*min-height: 100vh;*/
+    margin-bottom: 20px;
     color: #DDD; /*@DARK*/
     font-family: 'IM Fell DW Pica', serif;
     padding-left: 20px;
     padding-right: 20px;
+
 }
 
-.credits p,
-.help p {
-    color: #DDD; /*@DARK*/
-    font-family: 'IM Fell DW Pica', serif;
-}
-
-.credits a,
-.help a {
-  color: #f5a282
-}
-
-.credits h1,
-.help h1 {
+.hum-credits h1,
+.hum-help h1 {
     font-size: 2em;
 }
 
-.credits h2,
-.help h2 {
+.hum-credits h2,
+.hum-help h2 {
     font-size: 1.5em;
 }
 
-.credits h3,
-.help h3 {
+.hum-credits h3,
+.hum-help h3 {
     font-size: 1.17em;
 }
 
-.credits img {
+.hum-credits img {
     float: right;
     width: 30%;
 }
 
-.credits .monospace,
-.help .monospace {
+.hum-credits .monospace,
+.hum-help .monospace {
     font-family: 'Source Code Pro', monospace;
 }

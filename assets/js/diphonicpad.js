@@ -5,7 +5,7 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2020 by Walter Mantovani (http://armonici.it).
+ * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
  * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -98,7 +98,7 @@ HUM.DpPad = function() {
             return {
                 min: this.dhc.midiNumberToNames(Math.round(this.mc.min))[1],
                 max: this.dhc.midiNumberToNames(Math.round(this.mc.min))[1]
-            }
+            };
         }
     }
 
@@ -119,234 +119,6 @@ HUM.DpPad = function() {
         }
     }
 
-
-    /*    _____          _  _____      _   _____        __            _ _       
-     *   |  __ \        | |/ ____|    | | |  __ \      / _|          | | |      
-     *   | |__) |_ _  __| | (___   ___| |_| |  | | ___| |_ __ _ _   _| | |_ ___ 
-     *   |  ___/ _` |/ _` |\___ \ / _ \ __| |  | |/ _ \  _/ _` | | | | | __/ __|
-     *   | |  | (_| | (_| |____) |  __/ |_| |__| |  __/ || (_| | |_| | | |_\__ \
-     *   |_|   \__,_|\__,_|_____/ \___|\__|_____/ \___|_| \__,_|\__,_|_|\__|___/
-     */
-    class PadSetDefaults {
-        constructor(key, dhc) {
-            // If the 'key' does not exist, use preset 0 as default
-            let presetKey = key;
-            if (!PadSetDefaults.presets[key]) {
-                presetKey = 0;
-            }
-            // Just create a copy of the preset object
-            let preset = JSON.parse(JSON.stringify(PadSetDefaults.presets[presetKey]));
-            Object.assign(this, preset);
-
-            this.voiceAmbitus = {
-                ft: {
-                    soprano: new VoiceAmbitus(...this.voiceAmbitus.ft.soprano, dhc),
-                    mezzosoprano: new VoiceAmbitus(...this.voiceAmbitus.ft.mezzosoprano, dhc),
-                    contralto: new VoiceAmbitus(...this.voiceAmbitus.ft.contralto, dhc),
-                    controtenore: new VoiceAmbitus(...this.voiceAmbitus.ft.controtenore, dhc),
-                    tenore: new VoiceAmbitus(...this.voiceAmbitus.ft.tenore, dhc),
-                    baritono: new VoiceAmbitus(...this.voiceAmbitus.ft.baritono, dhc),
-                    basso: new VoiceAmbitus(...this.voiceAmbitus.ft.basso, dhc),
-                    bassoprofondo: new VoiceAmbitus(...this.voiceAmbitus.ft.bassoprofondo, dhc),
-                },
-                ht: {
-                    beginner: new VoiceAmbitus(...this.voiceAmbitus.ht.beginner, dhc),
-                    normal: new VoiceAmbitus(...this.voiceAmbitus.ht.normal, dhc),
-                    extreme: new VoiceAmbitus(...this.voiceAmbitus.ht.extreme, dhc),
-                }
-            };
-
-            this.fonts = {
-                ft: {
-                    // PAD
-                    hzMonitor: new CssFont(...this.fonts.ft.hzMonitor),
-                    // noteMonitor: new CssFont(false, false, '10px', false, false),
-                    // SCALE
-                    // lineLabel: new CssFont(...this.fonts.ft.lineLabel),
-                    keyLabel: new CssFont(...this.fonts.ft.keyLabel),
-                },
-                ht: {
-                    // PAD
-                    hzMonitor: new CssFont(...this.fonts.ht.hzMonitor),
-                    // noteMonitor: new CssFont(false, false, '10px', false, false),
-                    // SCALE
-                    lineLabel: new CssFont(...this.fonts.ht.lineLabel),
-                    keyLabel: new CssFont(...this.fonts.ht.keyLabel),
-                }
-            };
-
-        }
-    }
-    PadSetDefaults.presets = {
-        0: {
-            /*   __   ____  ____ 
-             *  / _\ (  _ \(  _ \
-             * /    \ ) __/ ) __/
-             * \_/\_/(__)  (__)
-             */
-            // 'classic' or 'hidpi'
-            renderMode: 'hidpi',
-            /*  ____  ____  ____ 
-             * / ___)(  __)(_  _)
-             * \___ \ ) _)   )(  
-             * (____/(____) (__)
-            */
-            // @todo: other sets' pads as target (eg. ft0, ft3, ht2) ??
-            // scaleType: targetPad array
-            scaleDisplay: {
-                ft: ['ft'],
-                ht: ['ht']
-            },
-            padOrder: ['ft', 'ht'],
-            showToolbar: true,
-            // 'longitudinal' or 'transversal' (related to this.settings.orientation)
-            toolbarOrientation: 'longitudinal',
-            toolbarPosition: {
-                longitudinal: 1, // 0, 1, 2 (pre, mid, post)
-                transversal: 2 // 0, 2 (pre, post)
-            },
-            toolbarIconOrder: [
-                'menu',
-                'rotateView',
-                'toolbarPos',
-                'invertPads',
-                'rotateFT',
-                'rotateHT',
-                'textIncrease',
-                'textDecrease',
-                'piper',
-                'panic',
-                'openLog'
-            ],
-            // @todo canvas FH/HT ratio calculator
-            padsRatio: {
-                    ft: 0.5,
-                    ht: 0.5,
-                    tbLong: 0.1,
-                    tbTran: 0.1
-            },
-            /*  ____   __   ____ 
-             * (  _ \ / _\ (    \
-             *  ) __//    \ ) D (
-             * (__)  \_/\_/(____/
-             */
-            canvasObjectsRatios: {
-                ft: {
-                    key: {
-                        // 0=0%, 0.5=50%, 1=100%
-                        length: 0.5,
-                        // 0=pre, 0.5=mid, 1=post
-                        position: 0,
-                    },
-                    keyText: {
-                        position: 0.6, // inside the key
-                        rotation: 0.5, // 0.5=90deg 1=180deg 
-                    },
-                    // lineText: {
-                    //     position: 0.5, // inside the canvas dimension
-                    //     rotation: 0.5, // 0.5=90deg 1=180deg 
-                    // }
-                    hzMonitor: {
-                        width: 1,
-                        height: 1
-                    }
-                },
-                ht: {
-                    key: {
-                        length: 0.5,
-                        position: 1,
-                        saturation: 65, // % hsl color
-                        lightness: 50, // % hsl color
-                    },
-                    keyText: {
-                        position: 0.7, // inside the key
-                        rotation: 0.5, // 0.5=90deg 1=180deg 
-                    },
-                    lineText: {
-                        position: 0.2, // inside the canvas dimension
-                        rotation: 0.5, // 0.5=90deg 1=180deg 
-                    },
-                    hzMonitor: {
-                        width: 1,
-                        height: 1
-                    }
-                },
-            },
-            freqRange: {
-                ft: { // 4 octaves + 3 tones
-                    ambitus: 'tenore',
-                    max: 340, // 460, // 460,// 1200,
-                    min: 85 //62,
-                },
-                ht: { // 3 octaves + 1 tone
-                    ambitus: 'normal',
-                    max: 2700, // 3000
-                    min: 350  // 300
-                }
-            },
-            scaleOrientation: {
-                ft: 'vertical',
-                ht: 'vertical'
-            },
-            voiceAmbitus: {
-                ft: {
-                    soprano: ['ft', 'Soprano', 'scientific', 'C4', 'C6'],
-                    mezzosoprano: ['ft', 'Mezzo-soprano', 'scientific', 'A3', 'A5'],
-                    contralto: ['ft', 'Alto', 'scientific', 'F3', 'F5'],
-                    controtenore: ['ft', 'Countertenor', 'scientific', 'E3', 'E5'],
-                    tenore: ['ft', 'Tenor', 'scientific', 'C3', 'C5'],
-                    baritono: ['ft', 'Baritone', 'scientific', 'A2', 'A4'],
-                    basso: ['ft', 'Bass', 'scientific', 'E2', 'E4'],
-                    bassoprofondo: ['ft', 'Basso profondo', 'scientific', 'C2', 'C4'],
-                },
-                ht: {
-                    beginner: ['ht', 'Beginner', 'hz', 400, 2500],
-                    normal: ['ht', 'Normal', 'hz', 350, 2700],
-                    extreme: ['ht', 'Extreme', 'hz', 300, 3000],
-                }
-            },
-            colors: {
-                ft: {
-                    ftKeyWhite: 'white',
-                    ftKeyBlack: 'rgb(38 35 54)',
-                    ftKeyPlay: '',
-                    ftKeyLast: '',
-                    ftLine: '',
-                    ftLinePlay: '',
-                    ftLineLast: '',
-                },
-                ht: {
-                    htKey: 'spectrum', // @todo - spectrum or fixed color code (to implement)
-                    htKeyPlay: '',
-                    htKeyLast: '',
-                    htLine: '',
-                    htLinePlay: '',
-                    htLineLast: '',
-                }  
-            },
-            // Font sizes are relative to refDimensions
-            // Expressed in pixles
-            fonts: {
-                ft: {
-                    // PAD
-                    hzMonitor: ['italic', 'bold', 30, 'px', false, false],
-                    // noteMonitor: new CssFont(false, false, '10px', false, false),
-                    // SCALE
-                    // lineLabel: [false, 'bold', 10, false, false],
-                    keyLabel: [false, 'bold', 100, '%', false, false],
-                },
-                ht: {
-                    // PAD
-                    hzMonitor: ['italic', 'bold', 30, 'px', false, false],
-                    // noteMonitor: new CssFont(false, false, '10px', false, false),
-                    // SCALE
-                    lineLabel: ['italic', 'bold', 90, '%', false, false],
-                    keyLabel: [false, 'bold', 100, '%', false, false],
-                }
-            },
-        }
-    };
-
     /*  _____        _____          _ 
      * |  __ \      |  __ \        | |
      * | |  | |_ __ | |__) |_ _  __| |
@@ -358,6 +130,9 @@ HUM.DpPad = function() {
      */
     class DpPad {
         constructor(harmonicarium, dhc=false) {
+            this.id = harmonicarium.id;
+            this._id = harmonicarium.id;
+            this.name = 'dpPad';
             this.harmonicarium = harmonicarium;
             this.dhc = dhc; // 'dhc' === false is meant for stand-alone distributions of the Diphonic Pad
             this.padSets = new Array();
@@ -401,8 +176,10 @@ HUM.DpPad = function() {
             let existingPads = this.padSets.length;
             let padsToAdd = this.settings.numberOfSets - existingPads;
             for (let n=existingPads; n<padsToAdd; n++) {
+                let hrmID = this.harmonicarium.id;
+                let padSetID = hrmID+'-'+n;
                 // Provides the "dhc" parameter only if the dpPad parent component (this) has one
-                this.padSets[n] = new DpPad.PadSet(n, this, (!this.dhc ? false : this.dhc));
+                this.padSets[n] = new DpPad.PadSet(padSetID, n, this, (!this.dhc ? false : this.dhc));
             }
         }
 
@@ -435,8 +212,8 @@ HUM.DpPad = function() {
             }
         }
         updateViewportSize() {
-            this.viewportDim.x = this.harmonicarium.html.dpPadPage.clientWidth;
-            this.viewportDim.y = this.harmonicarium.html.dpPadPage.clientHeight;
+            this.viewportDim.x = this.harmonicarium.html.dpPadContainer.clientWidth;
+            this.viewportDim.y = this.harmonicarium.html.dpPadContainer.clientHeight;
         }
         rotateView(value=false) {
             // Set
@@ -450,7 +227,8 @@ HUM.DpPad = function() {
             } else {
                 this.settings.orientation = this.settings.orientation === 'vertical' ? 'horizontal' : 'vertical';
                 for (let padSet of this.padSets) {
-                    padSet.uiElements.in.main_orientation.value = this.settings.orientation;
+                    padSet.parameters.main_orientation.value = this.settings.orientation;
+                    // padSet.parameters.main_orientation.uiElements.in.dppad_main_orientation.value = this.settings.orientation;
                 }
             }
             for (let padSet of this.padSets) {
@@ -471,11 +249,11 @@ HUM.DpPad = function() {
 
             for (let padSet of this.padSets) { 
                 let numberOfSets = this.settings.numberOfSets,
-                    padsRatio = padSet.settings.padsRatio;
+                    padsRatio = padSet.parameters.padsRatio;
                 // First calculate CSS dimensions
                 if (this.settings.orientation === 'vertical') {
 
-                    if (padSet.settings.toolbarOrientation === 'longitudinal') {
+                    if (padSet.parameters.toolbarOrientation.value === 'longitudinal') {
                         tbWidth = (this.viewportDim.x * padsRatio.tbLong) / numberOfSets;
                         tbHeight = this.viewportDim.y;
 
@@ -485,7 +263,7 @@ HUM.DpPad = function() {
                         htCnvHeight = Math.floor( this.viewportDim.y )-1;
 
                     
-                    } else if (padSet.settings.toolbarOrientation === 'transversal') {
+                    } else if (padSet.parameters.toolbarOrientation.value === 'transversal') {
                         tbWidth = this.viewportDim.x / numberOfSets;
                         tbHeight = this.viewportDim.y * padsRatio.tbLong;
 
@@ -497,7 +275,7 @@ HUM.DpPad = function() {
 
                 } else if (this.settings.orientation === 'horizontal') {
 
-                    if (padSet.settings.toolbarOrientation === 'longitudinal') {
+                    if (padSet.parameters.toolbarOrientation.value === 'longitudinal') {
                         tbWidth = this.viewportDim.x / numberOfSets;
                         tbHeight = this.viewportDim.y * padsRatio.tbLong;
 
@@ -506,7 +284,7 @@ HUM.DpPad = function() {
                         htCnvWidth = Math.floor( this.viewportDim.x )-1;
                         htCnvHeight = Math.floor( ((this.viewportDim.y - tbHeight)* padsRatio.ht) / numberOfSets )-1;
                     
-                    } else if (padSet.settings.toolbarOrientation === 'transversal') {
+                    } else if (padSet.parameters.toolbarOrientation.value === 'transversal') {
                         tbWidth = (this.viewportDim.x * padsRatio.tbLong) / numberOfSets;
                         tbHeight = this.viewportDim.y;
 
@@ -523,8 +301,8 @@ HUM.DpPad = function() {
                 padSet.toolbar.cssDimensions.width = Math.floor(tbWidth);
                 padSet.toolbar.cssDimensions.height = Math.floor(tbHeight);
                 
-                // Then write CSS dimensions and HIDPI scale reolution
-                if (padSet.settings.renderMode === 'classic') {
+                // Then write CSS dimensions and HIDPI scale resolution
+                if (padSet.parameters.renderMode.value === 'classic') {
 
                     padSet.ft.canvas.width = ftCnvWidth;
                     padSet.ft.canvas.height = ftCnvHeight;
@@ -536,7 +314,7 @@ HUM.DpPad = function() {
                     padSet.ht.cssDimensions.width = htCnvWidth;
                     padSet.ht.cssDimensions.height = htCnvHeight;
 
-                } else if (padSet.settings.renderMode === 'hidpi') {
+                } else if (padSet.parameters.renderMode.value === 'hidpi') {
 
                     padSet.ft.canvas.style.width = ftCnvWidth + 'px';
                     padSet.ft.canvas.style.height = ftCnvHeight + 'px';
@@ -575,15 +353,15 @@ HUM.DpPad = function() {
         }
 
         freqToPix(frequency, rangePreset, pxMaxLength) {
-            let freqMin = Math.log(rangePreset.min) / Math.log(10),
-                freqMax = Math.log(rangePreset.max) / Math.log(10),
+            let freqMin = Math.log(rangePreset.min.value) / Math.log(10),
+                freqMax = Math.log(rangePreset.max.value) / Math.log(10),
                 range = freqMax - freqMin,
                 pxPosition = (Math.log(frequency) / Math.log(10) - freqMin) / range * pxMaxLength;
             return pxPosition;
         }
         pixToFreq(pxPosition, rangePreset, pxMaxLength){
-            let freqMin = Math.log(rangePreset.min) / Math.log(10),
-                freqMax = Math.log(rangePreset.max) / Math.log(10),
+            let freqMin = Math.log(rangePreset.min.value) / Math.log(10),
+                freqMax = Math.log(rangePreset.max.value) / Math.log(10),
                 range = freqMax - freqMin,
                 frequency = Math.pow(10, pxPosition * (range / pxMaxLength) + freqMin);
             return frequency;
@@ -598,8 +376,11 @@ HUM.DpPad = function() {
      *  |_|   \__,_|\__,_|_____/ \___|\__|
      */
     DpPad.PadSet = class {
-        constructor(setKey, dpPadComponent, dhc=false) {
-            let appDiv = dpPadComponent.harmonicarium.html.dpPadPage,
+        // NOTE: If a dhc is passed, use that, else create its own dhc
+        // @todo: have to check empty/available keys in "harmonicarium.availableDHCs" the setKey
+        //        currently, it can create conflicts with the main app if the "dhc" is not provided
+        constructor(setKey, idx, dpPadComponent, dhc=new HUM.DHC(setKey)) {
+            let appDiv = dpPadComponent.harmonicarium.html.dpPadContainer,
                 
                 setDiv = document.createElement('div'),
                 ftDiv = document.createElement('div'),
@@ -637,8 +418,15 @@ HUM.DpPad = function() {
             
             // Create a new HTML element with UI backend and append it into the document
             let accordionTab = HUM.tmpl.accordionTab(setKey, 'dppad', 'Diphonic Pad ' + (dpPadComponent.padSets.length > 1 ? setKey : ''));
-            accordionTab.children[2].appendChild(HUM.tmpl.dpPadBox(setKey));
-            dpPadComponent.harmonicarium.html.dpPadAccordion.children[0].children[0].appendChild(accordionTab);
+            accordionTab.children[1].children[0].appendChild(HUM.tmpl.dpPadBox(setKey, dhc.harmonicarium.id));
+            dpPadComponent.harmonicarium.html.dpPadAccordion.children[0].appendChild(accordionTab);
+
+            this.id = setKey;
+            this._id = idx;
+            this.name = 'padSet';
+            this.dpPadComponent = dpPadComponent;
+
+            this.dhc = !dhc ? new HUM.DHC(setKey) : dhc;
 
             this.uiElements = {
                 fn: {
@@ -648,296 +436,87 @@ HUM.DpPad = function() {
                     ftDiv: ftDiv,
                     htDiv: htDiv,
                     tbarDiv: tbarDiv
-                },
-                in: {
-                    main_orientation: document.getElementById("HTMLi_dppad_main_orientation"+setKey),
-                    
-                    render_mode: document.getElementById("HTMLi_dppad_render_mode"+setKey),
-
-                    scale_display_ft: document.getElementById("HTMLi_dppad_scale_display_ft"+setKey),
-                    scale_display_ht: document.getElementById("HTMLi_dppad_scale_display_ht"+setKey),
-                    
-                    pads_order: document.getElementById("HTMLi_dppad_pads_order"+setKey),
-                    toolbar_orientation: document.getElementById("HTMLi_dppad_toolbar_orientation"+setKey),
-                    toolbar_position: document.getElementById("HTMLi_dppad_toolbar_position"+setKey),
-
-                    fontsize_hzMonitor_ft: document.getElementById("HTMLi_dppad_fontsize_hzMonitor_ft"+setKey),
-                    // fontsize_noteMonitor_ft: document.getElementById("HTMLi_dppad_fontsize_noteMonitor_ft"+setKey),
-                    // fontsize_lineLabel_ft: document.getElementById("HTMLi_dppad_fontsize_lineLabel_ft"+setKey),
-                    fontsize_keyLabel_ft: document.getElementById("HTMLi_dppad_fontsize_keyLabel_ft"+setKey),
-                    
-                    fontsize_hzMonitor_ht: document.getElementById("HTMLi_dppad_fontsize_hzMonitor_ht"+setKey),
-                    // fontsize_noteMonitor_ht: document.getElementById("HTMLi_dppad_fontsize_noteMonitor_ht"+setKey),
-                    fontsize_lineLabel_ht: document.getElementById("HTMLi_dppad_fontsize_lineLabel_ht"+setKey),
-                    fontsize_keyLabel_ht: document.getElementById("HTMLi_dppad_fontsize_keyLabel_ht"+setKey),
-                    
-                    scale_orientation_ft: document.getElementById("HTMLi_dppad_scale_orientation_ft"+setKey),
-                    scale_orientation_ht: document.getElementById("HTMLi_dppad_scale_orientation_ht"+setKey),
-                    
-                    freq_range_ft: document.getElementById("HTMLi_dppad_freq_range_ft"+setKey),
-                    freq_range_custom_min_ft: document.getElementById("HTMLi_dppad_freq_range_custom_min_ft"+setKey),
-                    freq_range_custom_max_ft: document.getElementById("HTMLi_dppad_freq_range_custom_max_ft"+setKey),
-                    freq_range_custom_save_ft: document.getElementById("HTMLi_dppad_freq_range_custom_save_ft"+setKey),
-                    
-                    freq_range_ht: document.getElementById("HTMLi_dppad_freq_range_ht"+setKey),
-                    freq_range_custom_min_ht: document.getElementById("HTMLi_dppad_freq_range_custom_min_ht"+setKey),
-                    freq_range_custom_max_ht: document.getElementById("HTMLi_dppad_freq_range_custom_max_ht"+setKey),
-                    freq_range_custom_save_ht: document.getElementById("HTMLi_dppad_freq_range_custom_save_ht"+setKey),
-                
-                    freq_range_copy_to_ht: document.getElementById("HTMLi_dppad_freq_range_copy_to_ht"+setKey),
-                    freq_range_copy_to_ft: document.getElementById("HTMLi_dppad_freq_range_copy_to_ft"+setKey),
-
-                },
-                out: {
-                    freq_range_custom_min_trad_ft: document.getElementById("HTMLo_dppad_freq_range_custom_min_trad_ft"+setKey),
-                    freq_range_custom_max_trad_ft: document.getElementById("HTMLo_dppad_freq_range_custom_max_trad_ft"+setKey),
-                    freq_range_custom_min_trad_ht: document.getElementById("HTMLo_dppad_freq_range_custom_min_trad_ht"+setKey),
-                    freq_range_custom_max_trad_ht: document.getElementById("HTMLo_dppad_freq_range_custom_max_trad_ht"+setKey),
-                },
+                }
             };
 
-            this.id = setKey;
-            this.dpPadComponent = dpPadComponent;
-            // If a dhc is passed, use that, else create its own dhc
-            // @todo: have to check empty/available keys in "harmonicarium.availableDHCs" the setKey
-            //        currently, it can create conflicts with the main app if the "dhc" is not provided
-            this.dhc = !dhc ? new HUM.DHC(setKey) : dhc;
-            this.settings = new PadSetDefaults(setKey, this.dhc);
+            this.parameters = new this.Parameters(this);
+
             this.ft = new DpPad.PadSet.FrequencyPad('ft', this, ftCanvas);
             this.ht = new DpPad.PadSet.FrequencyPad('ht', this, htCanvas);
             this.toolbar = new DpPad.PadSet.Toolbar(this, tbarSvg);
+            
+            this.parameters._init();
 
             this.arrangePads();
             // Tell to the DHC that a new app is using it
             this.dhc.registerApp(this, 'updatesFromDHC', 101);
-            this.initUI();
-            this.updatePadRangeUI('ft');
-            this.updatePadRangeUI('ht');
         }
 
-        initUI() {
-
-            /*  CREATE PAD RANGE PRESETS OPTS
-             * ==============================*/
-            for (let type of ['ft', 'ht']) {
-                for (const [id, ambitus] of Object.entries(this.settings.voiceAmbitus[type])) {
-                    let option = document.createElement("option");
-                    option.value = id;
-                    option.text = ambitus.name;
-                    this.uiElements.in['freq_range_'+type].add(option);
-                }
-                let optCustom = document.createElement("option");
-                optCustom.value = 'custom';
-                optCustom.text = 'Custom';
-                this.uiElements.in['freq_range_'+type].add(optCustom);
-            }
-
-            /*  UI DEFAULT SETTINGS
-             * ====================*/
-            this.uiElements.in.main_orientation.value = this.dpPadComponent.settings.orientation;
-            this.uiElements.in.render_mode.value = this.settings.renderMode ;
-            
-            this.uiElements.in.scale_display_ft.checked = this.settings.scaleDisplay.ft.includes('ht') ? true : false;
-            this.uiElements.in.scale_display_ht.checked = this.settings.scaleDisplay.ht.includes('ft') ? true : false;
-            
-            this.uiElements.in.pads_order.value = this.settings.padOrder[0] === 'ft' ? 'ftht' : 'htft';
-
-            this.uiElements.in.toolbar_orientation.value = this.settings.toolbarOrientation;
-            this.uiElements.in.toolbar_position.value = this.settings.toolbarPosition[this.settings.toolbarOrientation];
-            
-            this.uiElements.in.fontsize_hzMonitor_ft.value = this.settings.fonts.ft.hzMonitor.size;
-            // this.uiElements.in.fontsize_noteMonitor_ft.value = this.settings.fonts.ft.noteMonitor.size;
-            // this.uiElements.in.fontsize_lineLabel_ft.value = this.settings.fonts.ft.lineLabel.size;
-            this.uiElements.in.fontsize_keyLabel_ft.value = this.settings.fonts.ft.keyLabel.size;
-            
-            this.uiElements.in.fontsize_hzMonitor_ht.value = this.settings.fonts.ht.hzMonitor.size;
-            // this.uiElements.in.fontsize_noteMonitor_ht.value = this.settings.fonts.ht.noteMonitor.size;
-            this.uiElements.in.fontsize_lineLabel_ht.value = this.settings.fonts.ht.lineLabel.size;
-            this.uiElements.in.fontsize_keyLabel_ht.value = this.settings.fonts.ht.keyLabel.size;
-            
-            this.uiElements.in.scale_orientation_ft.value = this.settings.scaleOrientation.ft;
-            this.uiElements.in.scale_orientation_ht.value = this.settings.scaleOrientation.ht;
-
-            /*  UI EVENT LISTENERS
-             * ====================*/
-            this.uiElements.in.fontsize_hzMonitor_ft.addEventListener("change", (e) => {
-                this.ft.changeFontsize('hzMonitor', Number(e.target.value));
-            });
-            this.uiElements.in.fontsize_hzMonitor_ht.addEventListener("change", (e) => {
-                this.ht.changeFontsize('hzMonitor', Number(e.target.value));
-            });
-            // this.uiElements.in.fontsize_noteMonitor_ft.addEventListener("change", (e) => {
-            //     this.ft.changeFontsize('noteMonitor', Number(e.target.value));
-            // });
-            // this.uiElements.in.fontsize_noteMonitor_ht.addEventListener("change", (e) => {
-            //     this.ht.changeFontsize('noteMonitor', Number(e.target.value));
-            // });
-            // this.uiElements.in.fontsize_lineLabel_ft.addEventListener("change", (e) => {
-            //     this.ft.changeFontsize('lineLabel', Number(e.target.value));
-            // });
-            this.uiElements.in.fontsize_lineLabel_ht.addEventListener("change", (e) => {
-                this.ht.changeFontsize('lineLabel', Number(e.target.value));
-            });
-            this.uiElements.in.fontsize_keyLabel_ft.addEventListener("change", (e) => {
-                this.ft.changeFontsize('keyLabel', Number(e.target.value));
-            });
-            this.uiElements.in.fontsize_keyLabel_ht.addEventListener("change", (e) => {
-                this.ht.changeFontsize('keyLabel', Number(e.target.value));
-            });
-
-            this.uiElements.in.main_orientation.addEventListener("change", (e) => {
-                this.dpPadComponent.rotateView(e.target.value);
-            });
-            this.uiElements.in.render_mode.addEventListener("change", (e) => {
-                this.settings.renderMode = e.target.value;
-                this.dpPadComponent.windowResize();
-            });
-            this.uiElements.in.scale_display_ft.addEventListener("change", (e) => {
-                if (e.target.checked) {
-                    this.settings.scaleDisplay.ft = ['ft', 'ht'];
-                } else {
-                    this.settings.scaleDisplay.ft = ['ft'];
-                }
-                this.ht.refillFreqArrays();
-                this.ht.drawFreqUI();
-            });
-            this.uiElements.in.scale_display_ht.addEventListener("change", (e) => {
-                if (e.target.checked) {
-                    this.settings.scaleDisplay.ht = ['ht', 'ft'];
-                } else {
-                    this.settings.scaleDisplay.ht = ['ht'];
-                }
-                this.ft.refillFreqArrays();
-                this.ft.drawFreqUI();
-            });
-            this.uiElements.in.pads_order.addEventListener("change", (e) => {
-                if (this.settings.padOrder.join('') !== e.target.value) {
-                this.invertPads();
-                // this.settings.padOrder = e.target.value === 'ftht' ? ['ft', 'ht'] : ['ht', 'ft'];                
-                // this.arrangePads();
-                }
-            });
-            this.uiElements.in.toolbar_orientation.addEventListener("change", (e) => {
-                this.setToolbarOrientation(e.target.value);
-            });
-            this.uiElements.in.toolbar_position.addEventListener("change", (e) => {
-                this.settings.toolbarPosition[this.settings.toolbarOrientation] = e.target.value;
-                this.arrangePads();
-            });
-
-            this.uiElements.in.scale_orientation_ft.addEventListener("change", (e) => {
-                this.settings.scaleOrientation.ft = e.target.value;
-                this.ft.drawFreqUI();
-            });
-            this.uiElements.in.scale_orientation_ht.addEventListener("change", (e) => {
-                this.settings.scaleOrientation.ht = e.target.value;
-                this.ht.drawFreqUI();
-            });
-
-            this.uiElements.in.freq_range_ft.addEventListener("change", (e) => {
-                this.updatePadRangeUI('ft', e.target.value);
-            });
-            this.uiElements.in.freq_range_ht.addEventListener("change", (e) => {
-                this.updatePadRangeUI('ht', e.target.value);
-            });
-            
-            this.uiElements.in.freq_range_custom_min_ft.addEventListener("change", (e) => {
-                this.updatePadRangeUI('ft', 'custom', 'min', e.target.value);
-            });
-            this.uiElements.in.freq_range_custom_max_ft.addEventListener("change", (e) => {
-                this.updatePadRangeUI('ft', 'custom', 'max', e.target.value);
-            });
-            
-            this.uiElements.in.freq_range_custom_min_ht.addEventListener("change", (e) => {
-                this.updatePadRangeUI('ht', 'custom', 'min', e.target.value);
-            });
-            this.uiElements.in.freq_range_custom_max_ht.addEventListener("change", (e) => {
-                this.updatePadRangeUI('ht', 'custom', 'max', e.target.value);
-            });
-            
-            this.uiElements.in.freq_range_custom_save_ft.addEventListener("click", () => {
-                let min = Number(this.uiElements.in.freq_range_custom_min_ft.value),
-                    max = Number(this.uiElements.in.freq_range_custom_max_ft.value);
-                this.settings.voiceAmbitus.ft.custom = new VoiceAmbitus('ft', 'Custom', 'mc', min, max, this.dhc);
-            });
-            this.uiElements.in.freq_range_custom_save_ht.addEventListener("click", () => {
-                let min = Number(this.uiElements.in.freq_range_custom_min_ht.value),
-                    max = Number(this.uiElements.in.freq_range_custom_max_ht.value);
-                this.settings.voiceAmbitus.ht.custom = new VoiceAmbitus('ht', 'Custom', 'hz', min, max, this.dhc);
-            });
-
-            this.uiElements.in.freq_range_copy_to_ht.addEventListener("click", () => {
-                this.updatePadRangeUI('ht', 'custom', 'min', this.settings.freqRange.ft.min);
-                this.updatePadRangeUI('ht', 'custom', 'max', this.settings.freqRange.ft.max);
-            });
-            this.uiElements.in.freq_range_copy_to_ft.addEventListener("click", () => {
-                this.updatePadRangeUI('ft', 'custom', 'min', HUM.DHC.freqToMc(this.settings.freqRange.ht.min));
-                this.updatePadRangeUI('ft', 'custom', 'max',  HUM.DHC.freqToMc(this.settings.freqRange.ht.max));
-            });
-        }
         //                                     'min'|'max'
-        updatePadRangeUI(type, ambitus=false, target=false, value=false) {
+        updatePadRangeUI(type, ambitus=false, target=false, value=false, copy=false) {
             if (ambitus) {
-                this.settings.freqRange[type].ambitus = ambitus;
+                this.parameters.freqRange[type].ambitus._setValue(ambitus, false, false, true, false);
             } else {
                 // Init
-                ambitus = this.settings.freqRange[type].ambitus;
-                this.uiElements.in['freq_range_'+type].value = ambitus;
+                ambitus = this.parameters.freqRange[type].ambitus.value;
             }
             
             // Modify MAX or MIN range of the Custom preset slot
-            if (ambitus === 'custom' && !this.settings.voiceAmbitus[type].custom && target) {
-                this.uiElements.in['freq_range_'+type].value = 'custom';
-                this.uiElements.in['freq_range_custom_save_'+type].style.display = 'initial';
+            if ((ambitus === 'custom' && !this.parameters.freqRange[type].ambitus.presets.custom && target) || (ambitus === 'custom' && target)) {
+                this.parameters.freqRange[type].ambitus.uiElements.in['dppad_freq_range_'+type].value = 'custom';
+                this.parameters.freqRange[type].ambitus.uiElements.in['dppad_freq_range_custom_save_'+type].style.display = 'initial';
                 if (type === 'ft') {
                     let mcFT = Number(value);
                 
                     let ftStep = Math.round((mcFT % 1) * 10000000000) / 10000000000,
-                        fmStep = Math.round((this.dhc.settings.fm.mc % 1) * 10000000000) / 10000000000;
+                        fmStep = Math.round((this.dhc.settings.fm.mc.value % 1) * 10000000000) / 10000000000;
                     // FIT PAD RANGE: WORKS ONLY For 12-EDO
                     // @todo - make ET universal (different unit ad divisions)
-                    if (this.dhc.settings.ft.selected === 'nEDx' &&
-                        this.dhc.settings.ft.nEDx.unit === 2 &&
-                        this.dhc.settings.ft.nEDx.division === 12 &&
+                    if (this.dhc.settings.ft.selected.value === 'nEDx' &&
+                        this.dhc.settings.ft.nEDx.unit.value === 2 &&
+                        this.dhc.settings.ft.nEDx.division.value === 12 &&
                         ftStep === fmStep) {
                         // If the FT System is ET and the decimal part of the FM is the same as the
                         // input midicent value
                         let nEDxFixStepCent = (this.dhc.tables.ft[1].mc - this.dhc.tables.ft[0].mc) / 2;
                         // Add or remove 50 cents to draw the first/last FT key entirely
                         let mcFix = target === 'min' ? -nEDxFixStepCent : nEDxFixStepCent;
-                        this.settings.freqRange.ft[target] = this.addCentToHertz(HUM.DHC.mcToFreq(mcFT), mcFix);
+
+                        this.parameters.freqRange.ft[target]._setValue(this.addCentToHertz(HUM.DHC.mcToFreq(mcFT), mcFix), false, !copy, true, false);
                     
                     }  else {
-                        this.settings.freqRange.ft[target] = HUM.DHC.mcToFreq(mcFT);
+                        this.parameters.freqRange.ft[target]._setValue(HUM.DHC.mcToFreq(mcFT), false, !copy, true, false);
                     }
-
-                    this.uiElements.out['freq_range_custom_'+target+'_trad_ft'].innerText = this.dhc.mcToNameString(mcFT);
+                    
+                    this.parameters.freqRange.ft[target].mcValue = mcFT;
+                    this.parameters.freqRange.ft[target].uiElements.out['dppad_freq_range_custom_'+target+'_trad_ft'].innerText = this.dhc.mcToNameString(mcFT);
                 
 
                 } else if (type === 'ht') {
                     let hzHT = Number(value);
                     
-                    this.settings.freqRange.ht[target] = hzHT;
+                    this.parameters.freqRange.ht[target]._setValue(hzHT, false, false, true, false);
                     
-                    this.uiElements.out['freq_range_custom_'+target+'_trad_ht'].innerText = this.dhc.mcToNameString(HUM.DHC.freqToMc(hzHT));
+                    this.parameters.freqRange.ht[target].uiElements.out['dppad_freq_range_custom_'+target+'_trad_ht'].innerText = this.dhc.mcToNameString(HUM.DHC.freqToMc(hzHT));
                 }
             // If the CUSTOM ambitus PRESET is not saved/stored
-            } else if (ambitus === 'custom' && !this.settings.voiceAmbitus[type].custom && !target) {
-                this.uiElements.in['freq_range_custom_save_'+type].style.display = 'initial';
+            } else if (ambitus === 'custom' && !this.parameters.freqRange[type].ambitus.presets.custom && !target) {
+                this.parameters.freqRange[type].ambitus.uiElements.in['dppad_freq_range_custom_save_'+type].style.display = 'initial';
             // Load STORED ambitus PRESET (also the Custom, if it has been saved)
             } else {
-                let xtRange = this.settings.voiceAmbitus[type][ambitus];
-                this.uiElements.in['freq_range_custom_save_'+type].style.display = ambitus === 'custom' ? 'initial' : 'none';
+                let xtRange = this.parameters.freqRange[type].ambitus.presets[ambitus];
+                this.parameters.freqRange[type].ambitus.uiElements.in['dppad_freq_range_custom_save_'+type].style.display = 'none';
+                // this.parameters.freqRange[type].ambitus.uiElements.in['dppad_freq_range_custom_save_'+type].style.display = ambitus === 'custom' ? 'initial' : 'none';
                 
                 for (let presetTarget of ['min', 'max']) {
                     let ftStep = Math.round((xtRange.mc[presetTarget] % 1) * 10000000000) / 10000000000,
-                        fmStep = Math.round((this.dhc.settings.fm.mc % 1) * 10000000000) / 10000000000;
+                        fmStep = Math.round((this.dhc.settings.fm.mc.value % 1) * 10000000000) / 10000000000;
                     // FIT PAD RANGE: WORKS ONLY For 12-EDO
                     // @todo - make ET universal (different unit ad divisions)
                     if (type === 'ft' &&
-                        this.dhc.settings.ft.selected === 'nEDx' &&
-                        this.dhc.settings.ft.nEDx.unit === 2 &&
-                        this.dhc.settings.ft.nEDx.division === 12 &&
+                        this.dhc.settings.ft.selected.value === 'nEDx' &&
+                        this.dhc.settings.ft.nEDx.unit.value === 2 &&
+                        this.dhc.settings.ft.nEDx.division.value === 12 &&
                         ftStep === fmStep) {
                         
                             // If the FT System is ET and the decimal part of the FM is the same as the
@@ -945,19 +524,24 @@ HUM.DpPad = function() {
                             let nEDxFixStepCent = (this.dhc.tables.ft[1].mc - this.dhc.tables.ft[0].mc) / 2;
                             // Add or remove 50 cents to draw the first/last FT key entirely
                             let mcFix = presetTarget === 'min' ? -nEDxFixStepCent : nEDxFixStepCent;
-                            this.settings.freqRange.ft[presetTarget] = this.addCentToHertz(xtRange.hz[presetTarget], mcFix);
+                            
+                            this.parameters.freqRange.ft[presetTarget]._setValue(this.addCentToHertz(xtRange.hz[presetTarget], mcFix), false, true, true, false);
 
                     }  else {
-                            this.settings.freqRange[type].min = xtRange.hz.min;
-                            this.settings.freqRange[type].max = xtRange.hz.max;
-                            // this.settings.freqRange.ft[target] = HUM.DHC.mcToFreq(mcFT);
+                            this.parameters.freqRange[type][presetTarget]._setValue(xtRange.hz[presetTarget], false, true, true, false);
+                            // this.parameters.freqRange[type].min._setValue(xtRange.hz.min, false, true, true, false);
+                            // this.parameters.freqRange[type].max._setValue(xtRange.hz.max, false, true, true, false);
+
+                            // this.parameters.freqRange.ft[target].value = HUM.DHC.mcToFreq(mcFT);
+                    }
+                    
+                    if (type === 'ft') {
+                        this.parameters.freqRange.ft[presetTarget].mcValue = xtRange.mc[presetTarget];
                     }
 
                     let unit = type === 'ft' ? 'mc' : 'hz';
-                    this.uiElements.in[`freq_range_custom_${presetTarget}_${type}`].value = xtRange[unit][presetTarget];
-                    // this.uiElements.in[`freq_range_custom_${presetTarget}_+${type}`].value = xtRange[unit][presetTarget];
-                    this.uiElements.out[`freq_range_custom_${presetTarget}_trad_${type}`].innerText = this.dhc.mcToNameString(xtRange.mc[presetTarget]);
-                    // this.uiElements.out[`freq_range_custom_${presetTarget}_trad_+${type}`].innerText = this.dhc.mcToNameString(xtRange.mc[presetTarget]);
+                    this.parameters.freqRange[type][presetTarget].uiElements.in[`dppad_freq_range_custom_${presetTarget}_${type}`].value = xtRange[unit][presetTarget];
+                    this.parameters.freqRange[type][presetTarget].uiElements.out[`dppad_freq_range_custom_${presetTarget}_trad_${type}`].innerText = this.dhc.mcToNameString(xtRange.mc[presetTarget]);
                 }
             }
             this[type].refillFreqArrays();
@@ -986,7 +570,7 @@ HUM.DpPad = function() {
                 if (msg.type === 'ft') {
 
                     // For each target pad of the FT scale
-                    for (let targetPad of this.settings.scaleDisplay.ft) {
+                    for (let targetPad of this.parameters.scaleDisplay.ft.value) {
                         // Do stuff for FT changes
                         this[targetPad].refillFreqArrays();
                         this[targetPad].drawFreqUI();
@@ -1007,7 +591,7 @@ HUM.DpPad = function() {
 
 
                     // For each target pad of the HT scale
-                    for (let targetPad of this.settings.scaleDisplay.ht) {
+                    for (let targetPad of this.parameters.scaleDisplay.ht.value) {
                         // Do stuff for HT changes
                         this[targetPad].refillFreqArrays();
                         this[targetPad].drawFreqUI();
@@ -1024,7 +608,7 @@ HUM.DpPad = function() {
                     // this.ht.currentFreq = this.dhc.tables.ht[this.dhc.settings.ht.curr_ht].hz;
                     // this.ht.drawFreqMonitor();
 
-                    for (let targetPad of this.settings.scaleDisplay.ft) {
+                    for (let targetPad of this.parameters.scaleDisplay.ft.value) {
                         // Do stuff for HT changes
                         // this[targetPad].canvasObjects.key.current.ht = data;
                         this[targetPad].drawFreqUI();
@@ -1041,7 +625,7 @@ HUM.DpPad = function() {
                     //     this.ht.currentFreq = this.dhc.tables.ht[msg.xtNum].hz;
                     // }
 
-                    for (let targetPad of this.settings.scaleDisplay.ht) {
+                    for (let targetPad of this.parameters.scaleDisplay.ht.value) {
                         // Do stuff for HT changes
                         // this[targetPad].canvasObjects.key.current.ht = data;
                         this[targetPad].drawFreqUI();
@@ -1052,7 +636,7 @@ HUM.DpPad = function() {
             } else if (msg.cmd === 'tone-off') {
                 if (msg.type === 'ft') {
 
-                    for (let targetPad of this.settings.scaleDisplay.ft) {
+                    for (let targetPad of this.parameters.scaleDisplay.ft.value) {
                         // Do stuff for HT changes
                         // this[targetPad].canvasObjects.key.current.ht = false;
                         this[targetPad].drawFreqUI();
@@ -1071,7 +655,7 @@ HUM.DpPad = function() {
                        this.ht.currentFreq = 0; 
                     }
 
-                    for (let targetPad of this.settings.scaleDisplay.ht) {
+                    for (let targetPad of this.parameters.scaleDisplay.ht.value) {
                         // Do stuff for HT changes
                         // this[targetPad].canvasObjects.key.current.ht = false;
                         this[targetPad].drawFreqUI();
@@ -1089,13 +673,13 @@ HUM.DpPad = function() {
 
             tbarDiv = this.uiElements.fn.tbarDiv,
 
-            padOrder = this.settings.padOrder, // ['ft', 'ht']
-            tbOrientation = this.settings.toolbarOrientation,
-            tbPosition = this.settings.toolbarPosition[tbOrientation];
+            padsOrder = this.parameters.padsOrder.value, // ['ft', 'ht']
+            tbOrientation = this.parameters.toolbarOrientation.value,
+            tbPosition = this.parameters.toolbarPosition.value[tbOrientation];
                          //   longitudinal: 1, // 0, 1, 2 (pre, mid, post)
                          //   transversal: 0, // 0, 2 (pre, post)
             
-            let currentOrder = [ padsDiv[padOrder[0]], padsDiv[padOrder[1]] ];
+            let currentOrder = [ padsDiv[padsOrder[0]], padsDiv[padsOrder[1]] ];
             currentOrder.splice(tbPosition, 0, tbarDiv);
 
             for (let elem of currentOrder) {
@@ -1109,56 +693,972 @@ HUM.DpPad = function() {
             }
         }
         
-        invertPads() {
-            this.settings.padOrder = this.settings.padOrder[0] === 'ft' ? ['ht', 'ft'] : ['ft', 'ht'];
-            this.uiElements.in.pads_order.value = this.settings.padOrder[0] === 'ft' ? 'ftht' : 'htft';
+        invertPads(alreadyInverted) {
+            if (!alreadyInverted) {
+                let newValue = this.parameters.padsOrder.value[0] === 'ft' ? ['ht', 'ft'] : ['ft', 'ht'];
+                this.parameters.padsOrder._setValue(newValue, false, false, true, false);
+            }
+            // this.uiElements.in.pads_order.value = this.parameters.padsOrder.value[0] === 'ft' ? 'ftht' : 'htft';
             for (let type of ['ft', 'ht']) {
-                this.settings.canvasObjectsRatios[type].key.position = 1 - this.settings.canvasObjectsRatios[type].key.position;
+                this.parameters.canvasObjectsRatios[type].key.position = 1 - this.parameters.canvasObjectsRatios[type].key.position;
+                // Workaround to save the ObjectsRatios registry
+                this.parameters.canvasObjectsRatios._objValueModified();
                 this[type].drawFreqUI();
             }
             this.arrangePads();
         }
 
-        setToolbarOrientation(value) {
-            if (value !== this.settings.toolbarOrientation) {
-                this.settings.toolbarOrientation = value;
-                // Disable the 'mid' value if orientation is 'transversal'
-                this.uiElements.in.toolbar_position.options[1].disabled = value === 'transversal' ? true : false;
-                this.uiElements.in.toolbar_position.value = this.settings.toolbarPosition[value];
-                this.dpPadComponent.windowResize();
-                this.arrangePads();
-            } else {
-                return;
-            }
-        }
+        // setToolbarOrientation(value) {
+        //     if (value !== this.parameters.toolbarOrientation.value) {
+        //         this.parameters.toolbarOrientation.value = value;
+        //         // Disable the 'mid' value if orientation is 'transversal'
+        //         this.uiElements.in.toolbar_position.options[1].disabled = value === 'transversal' ? true : false;
+        //         this.uiElements.in.toolbar_position.value = this.parameters.toolbarPosition.value[value];
+        //         this.dpPadComponent.windowResize();
+        //         this.arrangePads();
+        //     } else {
+        //         return;
+        //     }
+        // }
 
         switchToolbarPosition() {
-            let tbPosLong = this.settings.toolbarPosition.longitudinal,
-                tbPosTras = this.settings.toolbarPosition.transversal;
-            if (this.settings.toolbarOrientation === 'longitudinal') {
+            let tbPosLong = this.parameters.toolbarPosition.value.longitudinal,
+                tbPosTras = this.parameters.toolbarPosition.value.transversal;
+            if (this.parameters.toolbarOrientation.value === 'longitudinal') {
                 if (tbPosLong < 2) {
-                    this.settings.toolbarPosition.longitudinal++;
+                    this.parameters.toolbarPosition.value.longitudinal++;
                 } else {
-                    this.settings.toolbarOrientation = 'transversal';
-                    this.settings.toolbarPosition.transversal = 0;
+                    this.parameters.toolbarOrientation.value = 'transversal';
+                    this.parameters.toolbarPosition.value.transversal = 0;
                 }
-            } else if (this.settings.toolbarOrientation === 'transversal') {
+            } else if (this.parameters.toolbarOrientation.value === 'transversal') {
 
                 if (tbPosTras === 0) {
-                    this.settings.toolbarPosition.transversal = 2;
+                    this.parameters.toolbarPosition.value.transversal = 2;
                 } else {
-                    this.settings.toolbarOrientation = 'longitudinal';
-                    this.settings.toolbarPosition.longitudinal = 0;
+                    this.parameters.toolbarOrientation.value = 'longitudinal';
+                    this.parameters.toolbarPosition.value.longitudinal = 0;
                 }
             }
-            this.uiElements.in.toolbar_orientation.value = this.settings.toolbarOrientation;
-            // Disable the 'mid' value if orientation is 'transversal'
-            this.uiElements.in.toolbar_position.options[1].disabled = this.settings.toolbarOrientation === 'transversal' ? true : false;
-            this.uiElements.in.toolbar_position.value = this.settings.toolbarPosition[this.settings.toolbarOrientation];
+            // Force the set method on the param since the value is an object
+            // that has just been modified above directly.
+            this.parameters.toolbarPosition._objValueModified();
             this.dpPadComponent.windowResize();
             this.arrangePads();
         }
     
+    };
+
+
+    /*  _____                               _                
+     * |  __ \                             | |               
+     * | |__) |_ _ _ __ __ _ _ __ ___   ___| |_ ___ _ __ ___ 
+     * |  ___/ _` | '__/ _` | '_ ` _ \ / _ \ __/ _ \ '__/ __|
+     * | |  | (_| | | | (_| | | | | | |  __/ ||  __/ |  \__ \
+     * |_|   \__,_|_|  \__,_|_| |_| |_|\___|\__\___|_|  |___/
+     */
+    DpPad.PadSet.prototype.Parameters = class {
+        constructor(padSet) {
+            this.padSet = padSet;
+            /*   __   ____  ____ 
+             *  / _\ (  _ \(  _ \
+             * /    \ ) __/ ) __/
+             * \_/\_/(__)  (__)
+             */
+            // NOTE: this is just a copy of the value on DpPad.PadSet.settings.orientation
+            this.main_orientation = new HUM.Param({
+                app:padSet,
+                idbKey:'padsetMainOrientation',
+                // restoreStage:'pre',
+                uiElements:{
+                    'dppad_main_orientation': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'selection',
+                    })
+                },
+                dataType:'string',
+                initValue: padSet.dpPadComponent.settings.orientation,
+                allowedValues: ['horizontal', 'vertical'],
+                postSet: (value) => {
+                    // Set the value on the dpPadComponent, that is where the
+                    // setting is actually read
+                    padSet.dpPadComponent.rotateView(value);
+                    return value;
+                }
+            });
+            this.renderMode = new HUM.Param({
+                app:padSet,
+                idbKey:'padsetRenderMode',
+                uiElements:{
+                    'dppad_render_mode': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'selection',
+                    })
+                },
+                dataType:'string',
+                initValue: 'hidpi',
+                allowedValues: ['classic', 'hidpi'],
+                postSet: (value) => {
+                    padSet.dpPadComponent.windowResize();
+                }
+            });
+            /*  ____  ____  ____ 
+             * / ___)(  __)(_  _)
+             * \___ \ ) _)   )(  
+             * (____/(____) (__)
+            */
+            // @todo: other sets' pads as target (eg. ft0, ft3, ht2) ??
+            this.scaleDisplay = {
+                ft: new HUM.Param({
+                    app:padSet,
+                    idbKey:'padsetScaleDisplayFT',
+                    uiElements:{
+                        'dppad_scale_display_ft': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'toggle',
+                            eventType: 'change',
+                            htmlTargetProp:'checked',
+                            widget:'checkbox',
+                            uiSet: (value, thisParam) => {
+                                thisParam.uiElements.in.dppad_scale_display_ft.checked = value.includes('ht') ? true : false;
+                            },
+                            eventListener: (evt) => {
+                                if (evt.target.checked) {
+                                    this.scaleDisplay.ft.valueUI = ['ft', 'ht'];
+                                } else {
+                                    this.scaleDisplay.ft.valueUI = ['ft'];
+                                }
+                            }
+                        })
+                    },
+                    dataType:'array',
+                    initValue:['ft'],
+                    postSet: (value, thisParam, init) => {
+                        if (!init) {
+                            padSet.ht.refillFreqArrays();
+                            padSet.ht.drawFreqUI();
+                        }
+                    }
+                }),
+                ht: new HUM.Param({
+                    app:padSet,
+                    idbKey:'padsetScaleDisplayHT',
+                    uiElements:{
+                        'dppad_scale_display_ht': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'toggle',
+                            eventType: 'change',
+                            htmlTargetProp:'checked',
+                            widget:'checkbox',
+                            uiSet: (value, thisParam) => {
+                                thisParam.uiElements.in.dppad_scale_display_ht.checked = value.includes('ft') ? true : false;
+                            },
+                            eventListener: (evt) => {
+                                if (evt.target.checked) {
+                                    this.scaleDisplay.ht.valueUI = ['ht', 'ft'];
+                                } else {
+                                    this.scaleDisplay.ht.valueUI = ['ht'];
+                                }
+                            }
+                        })
+                    },
+                    dataType:'array',
+                    initValue:['ht'],
+                    postSet: (value, thisParam, init) => {
+                        if (!init) {
+                            padSet.ft.refillFreqArrays();
+                            padSet.ft.drawFreqUI();
+                        }
+                    }
+                }),
+            };
+            this.padsOrder = new HUM.Param({
+                app:padSet,
+                idbKey:'padsetPadsOrder',
+                uiElements:{
+                    'dppad_pads_order': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'selection',
+                        uiSet: (value, thisParam) => {
+                            thisParam.uiElements.in.dppad_pads_order.value = thisParam.value[0] === 'ft' ? 'ftht' : 'htft';
+                        },
+                        eventListener: (evt) => {
+                            this.padsOrder.valueUI = evt.target.value === 'ftht' ? ['ft', 'ht'] : ['ht', 'ft'];
+                        }
+                    })
+                },
+                dataType:'array',
+                initValue: ['ft', 'ht'],
+                // allowedValues: (['ft', 'ht'], ['ht', 'ft']),
+                postSet: (value, thisParam, init, fromUI, oldValue) => {
+                    if (!init && (value[0] !== oldValue[0])) {
+                        padSet.invertPads(true);
+                    }
+                }
+            });
+            // @todo canvas FH/HT ratio calculator
+            this.padsRatio = {
+                    ft: 0.5,
+                    ht: 0.5,
+                    tbLong: 0.1,
+                    tbTran: 0.1
+            };
+
+            /* ____  __    __   __    ____   __   ____ 
+             *(_  _)/  \  /  \ (  )  (  _ \ / _\ (  _ \
+             *  )( (  O )(  O )/ (_/\ ) _ (/    \ )   /
+             * (__) \__/  \__/ \____/(____/\_/\_/(__\_)
+             */
+            this.toolbarPosition = new HUM.Param({
+                app:padSet,
+                idbKey:'padsetToolbarPosition',
+                uiElements:{
+                    'dppad_toolbar_position': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'selection',
+                        uiSet: (value) => {
+                            this.toolbarPosition.uiElements.in.dppad_toolbar_position.value = value[this.toolbarOrientation.value];
+                        },
+                        eventListener: (evt) => {
+                            this.toolbarPosition.value[this.toolbarOrientation.value] = Number(evt.target.value);
+                            this.toolbarPosition.valueUI = this.toolbarPosition.value;
+                        }
+                    })
+                },
+                dataType:'object',
+                initValue: {
+                    longitudinal: 1, // 0, 1, 2 (pre, mid, post)
+                    transversal: 2 // 0, 2 (pre, post)
+                },
+                init: false,
+                // allowedValues: [],
+                postSet: (value) => {
+                    // if (!init) {
+                        padSet.arrangePads();
+                    // }
+                }
+            });
+
+            // 'longitudinal' or 'transversal' (related to this.settings.orientation)
+            this.toolbarOrientation = new HUM.Param({
+                app:padSet,
+                idbKey:'padsetToolbarOrientation',
+                uiElements:{
+                    'dppad_toolbar_orientation': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'selection',
+                    })
+                },
+                dataType:'string',
+                initValue: 'longitudinal',
+                init: false,
+                allowedValues: ['longitudinal', 'transversal'],
+                postSet: (value, thisParam, init) => {
+                    // if (!init) {
+                        // Disable the 'mid' value if orientation is 'transversal'
+                        this.toolbarPosition.uiElements.in.dppad_toolbar_position.options[1].disabled = value === 'transversal' ? true : false;
+                        this.toolbarPosition.uiElements.in.dppad_toolbar_position.value = this.toolbarPosition.value[value];
+                        padSet.dpPadComponent.windowResize();
+                        padSet.arrangePads();
+                    // }
+                }
+            });
+            this.toolbarDefaultIcons = [
+                'menu',
+                'rotateView',
+                'toolbarPos',
+                'invertPads',
+                'rotateFT',
+                'rotateHT',
+                'textIncrease',
+                'textDecrease',
+                'piper',
+                'panic',
+                'openLog'
+            ];
+            this.toolbarIconOrder = new HUM.Param({
+                app:padSet,
+                idbKey:'padsetToolbarIconOrder',
+                uiElements: (() => {
+                    let res = {};
+                    this.toolbarDefaultIcons.forEach((iconName, iconIndex) => {
+                        res['toolbar_icon_'+iconName+'_switch'] = new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'toggle',
+                            eventType: 'change',
+                            htmlTargetProp:'checked',
+                            widget:'checkbox',
+                            uiSet: (value, thisParam) => {
+                                thisParam.uiElements.in['toolbar_icon_'+iconName+'_switch'].checked = value.includes(iconName) ? true : false;
+                            },
+                            eventListener: (evt) => {
+                                if (evt.target.checked) {
+                                    let hiddenIcons = this.toolbarDefaultIcons.filter(x => !this.toolbarIconOrder.value.includes(x));
+                                    hiddenIcons = hiddenIcons.filter(str => str !== iconName);
+                                    let newIcons = this.toolbarDefaultIcons.filter(x => !hiddenIcons.includes(x));
+                                    this.toolbarIconOrder.valueUI = newIcons;
+                                } else {
+                                    this.toolbarIconOrder.valueUI = this.toolbarIconOrder.value.filter(str => str !== iconName);
+                                }
+                            },
+                        });
+                    });
+                    return res;
+                })(),
+                dataType:'array',
+                initValue: JSON.parse(JSON.stringify(this.toolbarDefaultIcons)),
+                postSet: (value, thisParam, init) => {
+                    if (!init) {
+                        padSet.toolbar.drawIcons(true);
+                    }
+                },
+            });
+            /*  ____   __   ____ 
+             * (  _ \ / _\ (    \
+             *  ) __//    \ ) D (
+             * (__)  \_/\_/(____/
+             */
+            this.fonts = {
+                ft: {
+                    // PAD
+                    hzMonitor: new HUM.Param({
+                        app:padSet,
+                        idbKey:'padsetFontFTHzMonitor',
+                        uiElements:{
+                            'dppad_fontsize_hzMonitor_ft': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'change',
+                                htmlTargetProp:'value',
+                                paramTargetProp:'size',
+                                widget:'number',
+                                uiSet: null
+                            })
+                        },
+                        dataType:'object',
+                        initValue: new CssFont('italic', 'bold', 30, 'px', false, false),
+                        init:false,
+                        postInit: (thisParam) => {
+                            thisParam.size = thisParam.value.size;
+                        },
+                        postSet: (value, thisParam, init) => {
+                            if (!init) {
+                                padSet.ft.drawFreqUI();
+                            }
+                        },
+                        preRestore: value => {
+                            return new CssFont(...['style', 'weight', 'size', 'unit', 'family', 'color'].map(k => value[k]));
+                        },
+                        postRestore: value => {
+                            this.fonts.ft.hzMonitor.uiElements.in.dppad_fontsize_hzMonitor_ft.value = value.size;
+                        },
+                        customSetGet: {
+                            size: {
+                                set: (value) => {
+                                    this.fonts.ft.hzMonitor.value.size = value;
+                                    this.fonts.ft.hzMonitor.uiElements.in.dppad_fontsize_hzMonitor_ft.value = value;
+                                    this.fonts.ft.hzMonitor._objValueModified();
+                                },
+                                get: (value) => {
+                                    return this.fonts.ft.hzMonitor.value.size;
+                                },
+                            },
+                        }
+                    }),
+                    // noteMonitor: new HUM.Param({}),
+                    // SCALE
+                    // lineLabel: new HUM.Param({}),
+                    keyLabel: new HUM.Param({
+                        app:padSet,
+                        idbKey:'padsetFontFTKeyLabel',
+                        uiElements:{
+                            'dppad_fontsize_keyLabel_ft': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'change',
+                                htmlTargetProp:'value',
+                                paramTargetProp:'size',
+                                widget:'number',
+                                uiSet: null
+                            })
+                        },
+                        dataType:'object',
+                        initValue: new CssFont(false, 'bold', 100, '%', false, false),
+                        init:false,
+                        postInit: (thisParam) => {
+                            thisParam.size = thisParam.value.size;
+                        },
+                        postSet: (value, thisParam, init) => {
+                            if (!init) {
+                                padSet.ft.drawFreqUI();
+                            }
+                        },
+                        preRestore: value => {
+                            return new CssFont(...['style', 'weight', 'size', 'unit', 'family', 'color'].map(k => value[k]));
+                        },
+                        postRestore: value => {
+                            this.fonts.ft.keyLabel.uiElements.in.dppad_fontsize_keyLabel_ft.value = value.size;
+                        },
+                        customSetGet: {
+                            size: {
+                                set: (value) => {
+                                    this.fonts.ft.keyLabel.value.size = value;
+                                    this.fonts.ft.keyLabel.uiElements.in.dppad_fontsize_keyLabel_ft.value = value;
+                                    this.fonts.ft.keyLabel._objValueModified();
+                                },
+                                get: (value) => {
+                                    return this.fonts.ft.keyLabel.value.size;
+                                },
+                            },
+                        }
+                    }),
+                },
+                ht: {
+                    // PAD
+                    hzMonitor: new HUM.Param({
+                        app:padSet,
+                        idbKey:'padsetFontHTHzMonitor',
+                        uiElements:{
+                            'dppad_fontsize_hzMonitor_ht': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'change',
+                                htmlTargetProp:'value',
+                                paramTargetProp:'size',
+                                widget:'number',
+                                uiSet: null
+                            })
+                        },
+                        dataType:'object',
+                        initValue: new CssFont('italic', 'bold', 30, 'px', false, false),
+                        init:false,
+                        postInit: (thisParam) => {
+                            thisParam.size = thisParam.value.size;
+                        },
+                        postSet: (value, thisParam, init) => {
+                            if (!init) {
+                                padSet.ht.drawFreqUI();
+                            }
+                        },
+                        preRestore: value => {
+                            return new CssFont(...['style', 'weight', 'size', 'unit', 'family', 'color'].map(k => value[k]));
+                        },
+                        postRestore: value => {
+                            this.fonts.ht.hzMonitor.uiElements.in.dppad_fontsize_hzMonitor_ht.value = value.size;
+                        },
+                        customSetGet: {
+                            size: {
+                                set: (value) => {
+                                    this.fonts.ht.hzMonitor.value.size = value;
+                                    this.fonts.ht.hzMonitor.uiElements.in.dppad_fontsize_hzMonitor_ht.value = value;
+                                    this.fonts.ht.hzMonitor._objValueModified();
+                                },
+                                get: (value) => {
+                                    return this.fonts.ht.hzMonitor.value.size;
+                                },
+                            },
+                        }
+                    }),
+                    // noteMonitor: new HUM.Param({}),
+                    // SCALE
+                    lineLabel: new HUM.Param({
+                        app:padSet,
+                        idbKey:'padsetFontHTLineLabel',
+                        uiElements:{
+                            'dppad_fontsize_lineLabel_ht': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'change',
+                                htmlTargetProp:'value',
+                                paramTargetProp:'size',
+                                widget:'number',
+                                uiSet: null
+                            })
+                        },
+                        dataType:'object',
+                        initValue: new CssFont('italic', 'bold', 90, '%', false, false),
+                        init:false,
+                        postInit: (thisParam) => {
+                            thisParam.size = thisParam.value.size;
+                        },
+                        postSet: (value, thisParam, init) => {
+                            if (!init) {
+                                padSet.ht.drawFreqUI();
+                            }
+                        },
+                        preRestore: value => {
+                            return new CssFont(...['style', 'weight', 'size', 'unit', 'family', 'color'].map(k => value[k]));
+                        },
+                        postRestore: value => {
+                            this.fonts.ht.lineLabel.uiElements.in.dppad_fontsize_lineLabel_ht.value = value.size;
+                        },
+                        customSetGet: {
+                            size: {
+                                set: (value) => {
+                                    this.fonts.ht.lineLabel.value.size = value;
+                                    this.fonts.ht.lineLabel.uiElements.in.dppad_fontsize_lineLabel_ht.value = value;
+                                    this.fonts.ht.lineLabel._objValueModified();
+                                },
+                                get: (value) => {
+                                    return this.fonts.ht.lineLabel.value.size;
+                                },
+                            },
+                        }
+                    }),
+                    keyLabel: new HUM.Param({
+                        app:padSet,
+                        idbKey:'padsetFontHTKeyLabel',
+                        uiElements:{
+                            'dppad_fontsize_keyLabel_ht': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                widget:'number',
+                                eventType: 'change',
+                                htmlTargetProp:'value',
+                                paramTargetProp:'size',
+                                uiSet: null
+                            })
+                        },
+                        dataType:'object',
+                        initValue: new CssFont(false, 'bold', 100, '%', false, false),
+                        init:false,
+                        postInit: (thisParam) => {
+                            thisParam.size = thisParam.value.size;
+                        },
+                        postSet: (value, thisParam, init) => {
+                            if (!init) {
+                                padSet.ht.drawFreqUI();
+                            }
+                        },
+                        preRestore: value => {
+                            return new CssFont(...['style', 'weight', 'size', 'unit', 'family', 'color'].map(k => value[k]));
+                        },
+                        postRestore: value => {
+                            this.fonts.ht.keyLabel.uiElements.in.dppad_fontsize_keyLabel_ht.value = value.size;
+                        },
+                        customSetGet: {
+                            size: {
+                                set: (value) => {
+                                    this.fonts.ht.keyLabel.value.size = value;
+                                    this.fonts.ht.keyLabel.uiElements.in.dppad_fontsize_keyLabel_ht.value = value;
+                                    this.fonts.ht.keyLabel._objValueModified();
+                                },
+                                get: (value) => {
+                                    return this.fonts.ht.keyLabel.value.size;
+                                },
+                            },
+                        }
+                    }),
+                },
+            };
+            this.scaleOrientation = {
+                ft: new HUM.Param({
+                    app:padSet,
+                    idbKey:'padsetScaleOrientationFT',
+                    uiElements:{
+                        'dppad_scale_orientation_ft': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'change',
+                            htmlTargetProp:'value',
+                            widget:'selection',
+                        })
+                    },
+                    dataType:'string',
+                    initValue: 'vertical',
+                    allowedValues: ['horizontal', 'vertical'],
+                    postSet: (value, thisParam, init) => {
+                        if (!init) {
+                            padSet.ft.drawFreqUI();
+                        }
+                    }
+                }),
+                ht: new HUM.Param({
+                    app:padSet,
+                    idbKey:'padsetScaleOrientationHT',
+                    uiElements:{
+                        'dppad_scale_orientation_ht': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'change',
+                            htmlTargetProp:'value',
+                            widget:'selection',
+                        })
+                    },
+                    dataType:'string',
+                    initValue: 'vertical',
+                    allowedValues: ['horizontal', 'vertical'],
+                    postSet: (value, thisParam, init) => {
+                        if (!init) {
+                            padSet.ht.drawFreqUI();
+                        }
+                    }
+                }),
+            };
+            this.freqRange = {
+                ft: {
+                    ambitus: new HUM.Param({
+                        app:padSet,
+                        idbKey:'padsetFreqRangeFTAmbitus',
+                        uiElements:{
+                            'dppad_freq_range_ft': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'change',
+                                htmlTargetProp:'value',
+                                widget:'selection',
+                            }),
+                           'dppad_freq_range_custom_save_ft': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'click',
+                                htmlTargetProp:'checked',
+                                widget:'button', // "button" is like uiSet===null
+                                eventListener: (evt) => {
+                                    let min = this.freqRange.ft.min.value,
+                                        max = this.freqRange.ft.max.value;
+                                    this.freqRange.ft.ambitus.presets.custom = new VoiceAmbitus('ft', 'Custom', 'hz', min, max, padSet.dhc);
+                                    this.freqRange.ft.ambitus.uiElements.in.dppad_freq_range_custom_save_ft.style.display = 'none';
+                                    // Force the DB to store the param
+                                    this.padSet.dhc.harmonicarium.components.user.presetServiceDB.updateParam(
+                                        this.padSet.dhc.harmonicarium.components.user.session.id,
+                                        this.freqRange.ft.ambitus.idbKeyPath,
+                                        'live');
+                                }
+                            }),
+                           'dppad_freq_range_copy_to_ft': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'click',
+                                htmlTargetProp:'checked',
+                                widget:'button', // "button" is like uiSet===null
+                                eventListener: (evt) => {
+                                    padSet.updatePadRangeUI('ft', 'custom', 'min', HUM.DHC.freqToMc(this.freqRange.ht.min.value), true);
+                                    padSet.updatePadRangeUI('ft', 'custom', 'max',  HUM.DHC.freqToMc(this.freqRange.ht.max.value), true);
+                                    this.freqRange.ft.max.uiElements.in.dppad_freq_range_custom_max_ft.value = HUM.DHC.freqToMc(this.freqRange.ht.max.value);
+                                    this.freqRange.ft.min.uiElements.in.dppad_freq_range_custom_min_ft.value = HUM.DHC.freqToMc(this.freqRange.ht.min.value);
+                                }
+                            })
+                        },
+                        dataType:'string',
+                        restoreStage:'post',
+                        initValue: 'tenore', // 4 octaves + 3 tones
+                        init:false,
+                        allowedValues: ['soprano', 'mezzosoprano', 'contralto', 'controtenore', 'tenore', 'baritono', 'basso', 'bassoprofondo', 'custom'],
+                        preInit: (thisParam) => {
+                            this._freqRangeInit('ft', thisParam.uiElements.in.dppad_freq_range_ft);
+                        },
+                        postSet: (value, thisParam, init, fromUI) => {
+                            // if (!fromUI) {
+                                padSet.updatePadRangeUI('ft', value);
+                            // }
+                        },
+                        customPropertiesStore: () => {
+                            let customProperties = {presets:{}};
+                            for( const [vName, vAmb] of Object.entries(this.freqRange.ft.ambitus.presets)) {
+                                customProperties.presets[vName] = [vAmb.type, vAmb.name, 'scientific', vAmb.note.min, vAmb.note.max];
+                            }
+                            return customProperties;
+
+                        },
+                        customPropertiesRestore: (storedCustomProps) => {
+                            let customProperties = {presets:{}};
+                            for( const [vName, vAmb] of Object.entries(storedCustomProps.presets)) {
+                                customProperties.presets[vName] = new VoiceAmbitus(...vAmb, this.padSet.dhc);
+                            }
+                            return customProperties;
+                        },
+                        customProperties: {
+                            presets: {
+                                soprano: new VoiceAmbitus('ft', 'Soprano', 'scientific', 'C4', 'C6', padSet.dhc),
+                                mezzosoprano: new VoiceAmbitus('ft', 'Mezzo-soprano', 'scientific', 'A3', 'A5', padSet.dhc),
+                                contralto: new VoiceAmbitus('ft', 'Alto', 'scientific', 'F3', 'F5', padSet.dhc),
+                                controtenore: new VoiceAmbitus('ft', 'Countertenor', 'scientific', 'E3', 'E5', padSet.dhc),
+                                tenore: new VoiceAmbitus('ft', 'Tenor', 'scientific', 'C3', 'C5', padSet.dhc),
+                                baritono: new VoiceAmbitus('ft', 'Baritone', 'scientific', 'A2', 'A4', padSet.dhc),
+                                basso: new VoiceAmbitus('ft', 'Bass', 'scientific', 'E2', 'E4', padSet.dhc),
+                                bassoprofondo: new VoiceAmbitus('ft', 'Basso profondo', 'scientific', 'C2', 'C4', padSet.dhc),
+                            }
+                        }
+                    }),
+                    max: new HUM.Param({
+                        app:padSet,
+                        idbKey:'padsetFreqRangeFTMax',
+                        uiElements:{
+                            'dppad_freq_range_custom_max_ft': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'change',
+                                htmlTargetProp:'value',
+                                widget:'number',
+                            }),
+                            'dppad_freq_range_custom_max_trad_ft': {
+                                role: 'out'
+                            }
+                        },
+                        dataType:'float',
+                        // initValue: 340, // 460, // 460,// 1200,
+                        // preSet: (value) => {
+                        //     value = 
+                        // },
+                        postSet: (value, thisParam, init, fromUI, oldValue, fromRestore) => {
+                            if (!init || fromRestore) {
+                                padSet.updatePadRangeUI('ft', 'custom', 'max', value);
+                            }
+                        },
+                        presetGetValue: 'mcValue',
+                        presetSetValue: 'value',
+                        customProperties: {
+                            mcValue: false
+                        }
+                    }),
+                    min: new HUM.Param({
+                        app:padSet,
+                        idbKey:'padsetFreqRangeFTMin',
+                        uiElements:{
+                            'dppad_freq_range_custom_min_ft': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'change',
+                                htmlTargetProp:'value',
+                                widget:'number',
+                            }),
+                            'dppad_freq_range_custom_min_trad_ft': {
+                                role: 'out'
+                            }
+                        },
+                        dataType:'float',
+                        // initValue: 85, //62,
+                        postSet: (value, thisParam, init, fromUI, oldValue, fromRestore) => {
+                            if (!init || fromRestore) {
+                                padSet.updatePadRangeUI('ft', 'custom', 'min', value);
+                            }
+                        },
+                        presetGetValue: 'mcValue',
+                        presetSetValue: 'value',
+                        customProperties: {
+                            mcValue: false
+                        }
+                    }),
+                },
+                ht: {
+                    ambitus: new HUM.Param({
+                        app:padSet,
+                        idbKey:'padsetFreqRangeHTAmbitus',
+                        uiElements:{
+                            'dppad_freq_range_ht': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'change',
+                                htmlTargetProp:'value',
+                                widget:'selection',
+                            }),
+                           'dppad_freq_range_custom_save_ht': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'click',
+                                htmlTargetProp:'checked',
+                                widget:'button', // "button" is like uiSet===null
+                                eventListener: (evt) => {
+                                    let min = this.freqRange.ht.min.value,
+                                        max = this.freqRange.ht.max.value;
+                                    this.freqRange.ht.ambitus.presets.custom = new VoiceAmbitus('ht', 'Custom', 'hz', min, max, padSet.dhc);
+                                    this.freqRange.ht.ambitus.uiElements.in.dppad_freq_range_custom_save_ht.style.display = 'none';
+                                    // Force the DB to store the param
+                                    this.padSet.dhc.harmonicarium.components.user.presetServiceDB.updateParam(
+                                        this.padSet.dhc.harmonicarium.components.user.session.id,
+                                        this.freqRange.ht.ambitus.idbKeyPath,
+                                        'live');
+
+                                }
+                            }),
+                           'dppad_freq_range_copy_to_ht': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'click',
+                                htmlTargetProp:'checked',
+                                widget:'button', // "button" is like uiSet===null
+                                eventListener: (evt) => {
+                                    padSet.updatePadRangeUI('ht', 'custom', 'min', this.freqRange.ft.min.value, true);
+                                    padSet.updatePadRangeUI('ht', 'custom', 'max', this.freqRange.ft.max.value, true);
+                                }
+                            })
+                        },
+                        dataType:'string',
+                        initValue: 'normal', // 3 octaves + 1 tone
+                        init:false,
+                        restoreStage:'post',
+                        allowedValues: ['beginner', 'normal', 'extreme', 'custom'],
+                        preInit: (thisParam) => {
+                            this._freqRangeInit('ht', thisParam.uiElements.in.dppad_freq_range_ht);
+                        },
+                        postSet: (value, thisParam, init) => {
+                            // if (!init) {
+                                padSet.updatePadRangeUI('ht', value);
+                            // }
+                        },
+                        customPropertiesStore: () => {
+                            let customProperties = {presets:{}};
+                            for( const [vName, vAmb] of Object.entries(this.freqRange.ht.ambitus.presets)) {
+                                customProperties.presets[vName] = [vAmb.type, vAmb.name, 'hz', vAmb.hz.min, vAmb.hz.max];
+                            }
+                            return customProperties;
+                        },
+                        customPropertiesRestore: (storedCustomProps) => {
+                            let customProperties = {presets:{}};
+                            for( const [vName, vAmb] of Object.entries(storedCustomProps.presets)) {
+                                customProperties.presets[vName] = new VoiceAmbitus(...vAmb, this.padSet.dhc);
+                            }
+                            return customProperties;
+                        },
+                        customProperties: {
+                            presets: {
+                                beginner: new VoiceAmbitus('ht', 'Beginner', 'hz', 400, 2500, padSet.dhc),
+                                normal: new VoiceAmbitus('ht', 'Normal', 'hz', 350, 2700, padSet.dhc),
+                                extreme: new VoiceAmbitus('ht', 'Extreme', 'hz', 300, 3000, padSet.dhc),
+                            }
+                        }
+                    }),
+                    max: new HUM.Param({
+                        app:padSet,
+                        idbKey:'padsetFreqRangeHTMax',
+                        uiElements:{
+                            'dppad_freq_range_custom_max_ht': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'change',
+                                htmlTargetProp:'value',
+                                widget:'number',
+                            }),
+                            'dppad_freq_range_custom_max_trad_ht': {
+                                role: 'out'
+                            }
+                        },
+                        dataType:'float',
+                        // initValue: 2700, // 3000
+                        postSet: (value, thisParam, init) => {
+                            if (!init) {
+                                padSet.updatePadRangeUI('ht', 'custom', 'max', value);
+                            }
+                        }
+                    }),
+                    min: new HUM.Param({
+                        app:padSet,
+                        idbKey:'padsetFreqRangeHTMin',
+                        uiElements:{
+                            'dppad_freq_range_custom_min_ht': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'change',
+                                htmlTargetProp:'value',
+                                widget:'number',
+                            }),
+                            'dppad_freq_range_custom_min_trad_ht': {
+                                role: 'out'
+                            }
+                        },
+                        dataType:'float',
+                        // initValue: 350, // 300
+                        postSet: (value, thisParam, init) => {
+                            if (!init) {
+                                padSet.updatePadRangeUI('ht', 'custom', 'min', value);
+                            }
+                        }
+                    })
+                }
+            };
+            this.canvasObjectsRatios = new HUM.Param({
+                app:padSet,
+                idbKey:'padsetCanvasObjectsRatios',
+                dataType:'boolean',
+                role:'int',
+                restoreStage: 'pre',
+                // init:false,
+                initValue: true,
+                customProperties: {
+                    ft: {
+                        key: {
+                            // 0=0%, 0.5=50%, 1=100%
+                            length: 0.5,
+                            // 0=pre, 0.5=mid, 1=post
+                            position: 0,
+                        },
+                        keyText: {
+                            position: 0.6, // inside the key
+                            rotation: 0.5, // 0.5=90deg 1=180deg 
+                        },
+                        // lineText: {
+                        //     position: 0.5, // inside the canvas dimension
+                        //     rotation: 0.5, // 0.5=90deg 1=180deg 
+                        // }
+                        hzMonitor: {
+                            width: 1,
+                            height: 1
+                        }
+                    },
+                    ht: {
+                        key: {
+                            length: 0.5,
+                            position: 1,
+                            saturation: 65, // % hsl color
+                            lightness: 50, // % hsl color
+                        },
+                        keyText: {
+                            position: 0.7, // inside the key
+                            rotation: 0.5, // 0.5=90deg 1=180deg 
+                        },
+                        lineText: {
+                            position: 0.2, // inside the canvas dimension
+                            rotation: 0.5, // 0.5=90deg 1=180deg 
+                        },
+                        hzMonitor: {
+                            width: 1,
+                            height: 1
+                        }
+                    }
+                }
+            });
+        }
+        _init() {
+            this.fonts.ft.hzMonitor._init();
+            this.fonts.ft.keyLabel._init();
+            this.fonts.ht.hzMonitor._init();
+            this.fonts.ht.keyLabel._init();
+            this.fonts.ht.lineLabel._init();
+
+            this.toolbarPosition._init();
+            this.toolbarOrientation._init();
+            this.freqRange.ft.ambitus._init();
+            this.freqRange.ht.ambitus._init();
+        }
+        _freqRangeInit(type, elem) {
+            for (const [id, ambitus] of Object.entries(this.freqRange[type].ambitus.presets)) {
+                let option = document.createElement("option");
+                option.value = id;
+                option.text = ambitus.name;
+                elem.add(option);
+            }
+            let optCustom = document.createElement("option");
+            optCustom.value = 'custom';
+            optCustom.text = 'Custom';
+            elem.add(optCustom);
+        }
+
     };
 
     /*   _______          _ _                
@@ -1176,7 +1676,6 @@ HUM.DpPad = function() {
                 width: 0,
                 height: 0
             };
-
             this.icons = {};
             
             this.touchDown = false;
@@ -1193,42 +1692,42 @@ HUM.DpPad = function() {
             // }
 
             let hrmID = this.padSet.dpPadComponent.harmonicarium.id,
-                iconQty = this.padSet.settings.toolbarIconOrder.length,
-                tbLenghtX = 0,
-                tbLenghtY = 0,
+                iconQty = this.padSet.parameters.toolbarIconOrder.value.length,
+                tbLengthX = 0,
+                tbLengthY = 0,
                 useWidth = 0,
                 useHeight = 0,
                 preserveAspectRatio = '',
                 iconRotated = false;
 
             if (this.padSet.dpPadComponent.settings.orientation === 'vertical') {
-                if (this.padSet.settings.toolbarOrientation === 'longitudinal') {
-                    tbLenghtX = 0;
-                    tbLenghtY = this.cssDimensions.height;
+                if (this.padSet.parameters.toolbarOrientation.value === 'longitudinal') {
+                    tbLengthX = 0;
+                    tbLengthY = this.cssDimensions.height;
                     // Manual fix for the allignment  (started from 100% and 10%)
                     useWidth = '90%';
                     useHeight = '8%';
                     preserveAspectRatio = 'xMidYMin meet';
                     iconRotated = 0;
-                } else if (this.padSet.settings.toolbarOrientation === 'transversal') {
-                    tbLenghtX = this.cssDimensions.width;
-                    tbLenghtY = 0;
+                } else if (this.padSet.parameters.toolbarOrientation.value === 'transversal') {
+                    tbLengthX = this.cssDimensions.width;
+                    tbLengthY = 0;
                     useWidth = '8%';
                     useHeight = '90%';
                     preserveAspectRatio = 'xMinYMid meet';
                     iconRotated = 0;
                 }
             } else if (this.padSet.dpPadComponent.settings.orientation === 'horizontal') {
-                if (this.padSet.settings.toolbarOrientation === 'longitudinal') {
-                    tbLenghtX = this.cssDimensions.width;
-                    tbLenghtY = 0;
+                if (this.padSet.parameters.toolbarOrientation.value === 'longitudinal') {
+                    tbLengthX = this.cssDimensions.width;
+                    tbLengthY = 0;
                     useWidth = '8%';
                     useHeight = '90%';
                     preserveAspectRatio = 'xMinYMid meet';
                     iconRotated = 90;
-                } else if (this.padSet.settings.toolbarOrientation === 'transversal') {
-                    tbLenghtX = 0;
-                    tbLenghtY = this.cssDimensions.height;
+                } else if (this.padSet.parameters.toolbarOrientation.value === 'transversal') {
+                    tbLengthX = 0;
+                    tbLengthY = this.cssDimensions.height;
                     useWidth = '90%';
                     useHeight = '8%';
                     preserveAspectRatio = 'xMidYMin meet';
@@ -1236,14 +1735,20 @@ HUM.DpPad = function() {
                 }
             }
 
-            let spaceBetweenX = tbLenghtX / iconQty,
-                spaceBetweenY = tbLenghtY / iconQty,
+            let spaceBetweenX = tbLengthX / iconQty,
+                spaceBetweenY = tbLengthY / iconQty,
                 // Manual fix for the allignment (started from 0, 0)
                 currentSpaceX = 3,
                 currentSpaceY = 5;
 
             if (init) {
-                for (let iconName of this.padSet.settings.toolbarIconOrder) {
+                // Reset the svg container and the icons
+                while (this.svg.firstChild) {
+                    this.svg.removeChild(this.svg.firstChild);
+                }
+                this.icons = {};
+
+                for (let iconName of this.padSet.parameters.toolbarIconOrder.value) {
                     let useSvg = HUM.tmpl.useIcon(iconName, hrmID, this.svg, currentSpaceX, currentSpaceY);
 
                     useSvg.addEventListener('mousedown', (e) => this.playProxy(e), false);
@@ -1364,7 +1869,7 @@ HUM.DpPad = function() {
                     break;
                 case 'menu':
                     if (state === 0 ) {
-                        this.padSet.dhc.harmonicarium.components.backendUtils.showSidebar('settings', this.padSet.dhc.id);
+                        this.padSet.dhc.harmonicarium.components.backendUtils.showSidebar();
                     }
                     break;
                 case 'rotateView':
@@ -1374,7 +1879,7 @@ HUM.DpPad = function() {
                     break;
                 case 'openLog':
                     if (state === 0) {
-                        this.padSet.dhc.harmonicarium.components.backendUtils.toggleLogPanel();
+                        this.padSet.dhc.harmonicarium.components.backendUtils.showLogPanel();
                     }
                     break;
                 case 'toolbarPos':
@@ -1493,8 +1998,8 @@ HUM.DpPad = function() {
 
         }
         switchScaleOrientation() {
-            this.padSet.settings.scaleOrientation[this.type] = this.padSet.settings.scaleOrientation[this.type] === 'vertical' ? 'horizontal' : 'vertical';
-            this.padSet.uiElements.in['scale_orientation_'+this.type].value = this.padSet.settings.scaleOrientation[this.type];
+            this.padSet.parameters.scaleOrientation[this.type].value = this.padSet.parameters.scaleOrientation[this.type].value === 'vertical' ? 'horizontal' : 'vertical';
+            // this.padSet.uiElements.in['scale_orientation_'+this.type].value = this.padSet.parameters.scaleOrientation[this.type].value;
             this.drawFreqUI();
         }
         // ====================================================
@@ -1734,14 +2239,14 @@ HUM.DpPad = function() {
                     if (this.type === 'ft') {
                         // [ Now, all the target Pads of the HT scale are re-drawn ]
                         // If this FT Pad shouldn't show the HT scale (if the HT scale doesn't have to be shown in the FT Pads)
-                        if (!this.padSet.settings.scaleDisplay.ht.includes('ft')) {
+                        if (!this.padSet.parameters.scaleDisplay.ht.value.includes('ft')) {
                             // Redraw the UI of this Pad...
                             // because the 'PadSet.updatesFromDHC' method only updates the target Pads of the HT scale
                             // this.drawFreqUI();
                         }
 
                     } else if (this.type === 'ht') {
-                        if (!this.padSet.settings.scaleDisplay.ht.includes('ht')) {
+                        if (!this.padSet.parameters.scaleDisplay.ht.value.includes('ht')) {
 
                         }
                         // this.drawFreqUI();
@@ -1793,10 +2298,10 @@ HUM.DpPad = function() {
         // DRAWING ACTIONS
         // ====================================================
         getHTcolor(htNumber) {
-            let colRatio = (Math.log(Math.abs(htNumber))/Math.log(this.padSet.dhc.settings.ft.nEDx.unit)) % 1,
+            let colRatio = (Math.log(Math.abs(htNumber))/Math.log(this.padSet.dhc.settings.ft.nEDx.unit.value)) % 1,
                 colorH = 360 * colRatio,
-                colorS = this.padSet.settings.canvasObjectsRatios.ht.key.saturation,
-                colorL = this.padSet.settings.canvasObjectsRatios.ht.key.lightness;
+                colorS = this.padSet.parameters.canvasObjectsRatios.ht.key.saturation,
+                colorL = this.padSet.parameters.canvasObjectsRatios.ht.key.lightness;
             return [
              `hsl(${colorH}, ${colorS}%, ${colorL*1.6}%)`, // lighter
              `hsl(${colorH}, ${colorS}%, ${colorL}%)`, // color
@@ -1809,29 +2314,30 @@ HUM.DpPad = function() {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.ctx.beginPath();
         }
-        changeFontsize(target, value) {
-            this.padSet.settings.fonts[this.type][target].size = value;
-            this.drawFreqUI();
-        }
+        // changeFontsize(target, value) {
+        //     this.padSet.parameters.fonts[this.type][target].size = value;
+        //     this.padSet.parameters.fonts[this.type][target]._objValueModified();
+        //     this.drawFreqUI();
+        // }
         increaseFontsize() {
-            for (const [target, font] of Object.entries(this.padSet.settings.fonts[this.type])) {
-                let newValue = Math.round(this.padSet.settings.fonts[this.type][target].size / 0.9);
-                this.padSet.settings.fonts[this.type][target].size = newValue;
-                this.padSet.uiElements.in[`fontsize_${target}_${this.type}`].value = newValue;
+            for (const [target, font] of Object.entries(this.padSet.parameters.fonts[this.type])) {
+                let newValue = Math.round(this.padSet.parameters.fonts[this.type][target].size / 0.9);
+                this.padSet.parameters.fonts[this.type][target].size = newValue;
+                // this.padSet.uiElements.in[`fontsize_${target}_${this.type}`].value = newValue;
             }
             this.drawFreqUI();
         }
         decreaseFontsize() {
-            for (const [target, font] of Object.entries(this.padSet.settings.fonts[this.type])) {
-                let newValue = Math.round(this.padSet.settings.fonts[this.type][target].size * 0.9);
-                this.padSet.settings.fonts[this.type][target].size = newValue;
-                this.padSet.uiElements.in[`fontsize_${target}_${this.type}`].value = newValue;
+            for (const [target, font] of Object.entries(this.padSet.parameters.fonts[this.type])) {
+                let newValue = Math.round(this.padSet.parameters.fonts[this.type][target].size * 0.9);
+                this.padSet.parameters.fonts[this.type][target].size = newValue;
+                // this.padSet.uiElements.in[`fontsize_${target}_${this.type}`].value = newValue;
             }
             this.drawFreqUI();
         }
         drawFreqLine(pxPosition, close=true) {
             let ctx = this.ctx,
-                scaleOrientation = this.padSet.settings.scaleOrientation[this.type];
+                scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value;
 
             if (scaleOrientation === 'vertical') {
                 ctx.moveTo(0, pxPosition);
@@ -1850,8 +2356,8 @@ HUM.DpPad = function() {
 
         drawLinKey(pxPosition, type=false, xtNum=false, thickness=false, grdColors=false, zindex=false) {
             let ctx = this.ctx,
-                scaleOrientation = this.padSet.settings.scaleOrientation[this.type],
-                keyRatios = this.padSet.settings.canvasObjectsRatios.ft.key;
+                scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
+                keyRatios = this.padSet.parameters.canvasObjectsRatios.ft.key;
             let keyWidth, keyHeight, middleOffset, xBegin, yBegin, xEnd, yEnd = 0;
 
             if (scaleOrientation === 'vertical') {
@@ -1921,8 +2427,8 @@ HUM.DpPad = function() {
 
         // drawFreqKeyFT(pxPosition, ftNumber) {
         //     let ctx = this.ctx,
-        //         scaleOrientation = this.padSet.settings.scaleOrientation[this.type],
-        //         keyRatios = this.padSet.settings.canvasObjectsRatios.ft.key;
+        //         scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
+        //         keyRatios = this.padSet.parameters.canvasObjectsRatios.ft.key;
         //     let keyWidth, keyHeight, middleOffset, xBegin, yBegin = 0;
 
         //     if (scaleOrientation === 'vertical') {
@@ -1956,9 +2462,9 @@ HUM.DpPad = function() {
 
         drawFreqKeyHT(thisFreq, htNumber, arrIdx, grdColors, zindex) {
             let ctx = this.ctx,
-                freqRange = this.padSet.settings.freqRange[this.type],
-                scaleOrientation = this.padSet.settings.scaleOrientation[this.type],
-                keyRatios = this.padSet.settings.canvasObjectsRatios.ht.key;
+                freqRange = this.padSet.parameters.freqRange[this.type],
+                scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
+                keyRatios = this.padSet.parameters.canvasObjectsRatios.ht.key;
             // let thisPix = this.freqToPadPix(thisFreq);
             let keyWidth, keyHeight,
                 xBegin, yBegin, xEnd, yEnd,
@@ -1967,9 +2473,9 @@ HUM.DpPad = function() {
 
                 if (arrIdx === 0) {
                     follFreq = this.freqArrays.ht[arrIdx+1][1].hz;
-                    prevFreq = freqRange.min;
+                    prevFreq = freqRange.min.value;
                 } else if (arrIdx === this.freqArrays.ht.length-1){
-                    follFreq = freqRange.max;
+                    follFreq = freqRange.max.value;
                     prevFreq = this.freqArrays.ht[arrIdx-1][1].hz;
                 } else {
                     follFreq = this.freqArrays.ht[arrIdx+1][1].hz;
@@ -2002,7 +2508,7 @@ HUM.DpPad = function() {
                 if (grdColors) {
                     // Set the middle color where there is the key label
                     // (the middle color is supposed to be the best to contrast with the key label)
-                    let ratios = this.padSet.settings.canvasObjectsRatios.ht;
+                    let ratios = this.padSet.parameters.canvasObjectsRatios.ht;
                     let labelColorStop = ratios.key.position > 0.5 ? 1-ratios.keyText.position : ratios.keyText.position;
                     let grd = ctx.createLinearGradient(xBegin, yBegin, xEnd, yEnd);
                     grd.addColorStop(0, grdColors[0]);
@@ -2033,7 +2539,7 @@ HUM.DpPad = function() {
                 if (grdColors) {
                     // Set the middle color where there is the key label
                     // (the middle color is supposed to be the best to contrast with the key label)
-                    let ratios = this.padSet.settings.canvasObjectsRatios.ht;
+                    let ratios = this.padSet.parameters.canvasObjectsRatios.ht;
                     let labelColorStop = ratios.key.position > 0.5 ? 1-ratios.keyText.position : ratios.keyText.position;
                     let grd = ctx.createLinearGradient(xBegin, yBegin, xEnd, yEnd);
                     grd.addColorStop(0, grdColors[0]);
@@ -2062,9 +2568,9 @@ HUM.DpPad = function() {
 
         drawKeyLabelFT(pxPosition, note) {
             let ctx = this.ctx,
-                scaleOrientation = this.padSet.settings.scaleOrientation[this.type],
-                ratios = this.padSet.settings.canvasObjectsRatios.ft,
-                font = this.padSet.settings.fonts.ft.keyLabel;
+                scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
+                ratios = this.padSet.parameters.canvasObjectsRatios.ft,
+                font = this.padSet.parameters.fonts.ft.keyLabel.value;
             //        note name
             let text = note[0];
             if (note[2] !== 0.0) {
@@ -2113,10 +2619,10 @@ HUM.DpPad = function() {
         
         drawKeyLabelHT(pxPosition, note, htNumber) {
             let ctx = this.ctx,
-                scaleOrientation = this.padSet.settings.scaleOrientation[this.type],
-                ratios = this.padSet.settings.canvasObjectsRatios.ht,
-                fontKey = this.padSet.settings.fonts.ht.keyLabel,
-                fontLine = this.padSet.settings.fonts.ht.lineLabel,
+                scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
+                ratios = this.padSet.parameters.canvasObjectsRatios.ht,
+                fontKey = this.padSet.parameters.fonts.ht.keyLabel.value,
+                fontLine = this.padSet.parameters.fonts.ht.lineLabel.value,
                 x, y;
             //            note name
             let textNote = note[0];
@@ -2285,10 +2791,10 @@ HUM.DpPad = function() {
             if (curr_ft) {
                 ctx.save();
                 ctx.shadowColor = 'red';
-                if (this.padSet.settings.scaleOrientation.ft === 'vertical') {
-                    ctx.shadowOffsetX = this.padSet.settings.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
-                } else if (this.padSet.settings.scaleOrientation.ft === 'horizontal') {
-                    ctx.shadowOffsetY = this.padSet.settings.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
+                if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
+                    ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
+                } else if (this.padSet.parameters.scaleOrientation.ft.value === 'horizontal') {
+                    ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
                 }
                 ctx.shadowBlur = 20;
                 this.drawLinKey(curr_ft[0], 'ft', curr_ft[1], false, ['darksalmon', 'darksalmon', '#db9c57'], this.freqArrays.ft.length);
@@ -2368,29 +2874,29 @@ HUM.DpPad = function() {
                 let color = this.getHTcolor(ht[0]);
                 // if (this.padSet.dhc.settings.ht.curr_ht === ht[0]) { // Only the last played HT
                 //     ctx.shadowColor = color[2];
-                //     ctx.shadowOffsetX = this.padSet.settings.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
+                //     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
                 //     ctx.shadowBlur = 20;
                 // } // else if (this.padSet.dhc.playQueue.ht.findIndex(findIdxFn, ht[0]) > -1) { // All the played HTs
                 //     ctx.shadowColor = color[2];
-                //     ctx.shadowOffsetX = this.padSet.settings.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
+                //     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
                 //     ctx.shadowBlur = 20;
                 // }
                 // if (this.padSet.dhc.playQueue.ht.findIndex(findIdxFn, ht[0]) > -1) { // All the played HTs
                 if (this.padSet.dhc.settings.ht.curr_ht === ht[0]) { // Only the last played HT
                     ctx.shadowColor = color[2];
-                    if (this.padSet.settings.scaleOrientation.ht === 'vertical') {
-                        ctx.shadowOffsetX = this.padSet.settings.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
-                    } else if (this.padSet.settings.scaleOrientation.ht === 'horizontal') {
-                        ctx.shadowOffsetY = this.padSet.settings.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
+                    if (this.padSet.parameters.scaleOrientation.ht.value === 'vertical') {
+                        ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
+                    } else if (this.padSet.parameters.scaleOrientation.ht.value === 'horizontal') {
+                        ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
                     }
                     ctx.shadowBlur = 20;
                 }
                 if (this.padSet.dhc.playQueue.ht.findIndex(findIdxFn, ht[0]) > -1) {
                     ctx.shadowColor = color[2];
-                    if (this.padSet.settings.scaleOrientation.ht === 'vertical') {
-                        ctx.shadowOffsetX = this.padSet.settings.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
-                    } else if (this.padSet.settings.scaleOrientation.ht === 'horizontal') {
-                        ctx.shadowOffsetY = this.padSet.settings.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
+                    if (this.padSet.parameters.scaleOrientation.ht.value === 'vertical') {
+                        ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
+                    } else if (this.padSet.parameters.scaleOrientation.ht.value === 'horizontal') {
+                        ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
                     }
                     ctx.shadowBlur = 20;
                     // The 2nd color of the passed array is supposed to be the best to contrast with the key label
@@ -2430,10 +2936,10 @@ HUM.DpPad = function() {
         drawFreqMonitor() {
             if (this.currentFreq) {
                 let ctx = this.ctx,
-                    font = this.padSet.settings.fonts[this.type].hzMonitor.getCss,
-                    scaleOrientation = this.padSet.settings.scaleOrientation[this.type],
-                    ratios = this.padSet.settings.canvasObjectsRatios[this.type],
-                    text = this.currentFreq.toFixed(this.padSet.dhc.settings.global.hz_accuracy) + ' Hz',
+                    font = this.padSet.parameters.fonts[this.type].hzMonitor.value.getCss,
+                    scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
+                    ratios = this.padSet.parameters.canvasObjectsRatios[this.type],
+                    text = this.currentFreq.toFixed(this.padSet.dhc.settings.global.hz_accuracy.value) + ' Hz',
                     x, y;
 
                 ctx.save();
@@ -2476,21 +2982,21 @@ HUM.DpPad = function() {
         refillFreqArrays() {
             this.freqArrays.ft = new Array();
             this.freqArrays.ht = new Array();
-            let freqRange = this.padSet.settings.freqRange[this.type];
-            if (this.padSet.settings.scaleDisplay.ft.includes(this.type)) {
+            let freqRange = this.padSet.parameters.freqRange[this.type];
+            if (this.padSet.parameters.scaleDisplay.ft.value.includes(this.type)) {
                 // Takes only the frequencies inside the pad Hz range
                 for (const [ftNum, xtone] of Object.entries(this.padSet.dhc.tables.ft)) {
-                    if (xtone.hz >= freqRange.min && xtone.hz <= freqRange.max) {
+                    if (xtone.hz >= freqRange.min.value && xtone.hz <= freqRange.max.value) {
                         this.freqArrays.ft.push(Object.freeze([Number(ftNum), xtone]));                
                     }
                 }
                 // Sort ascending by Frequancy
                 this.freqArrays.ft.sort((a, b) => a[1].hz-b[1].hz);
             }
-            if (this.padSet.settings.scaleDisplay.ht.includes(this.type)) {
+            if (this.padSet.parameters.scaleDisplay.ht.value.includes(this.type)) {
                 // Takes only the frequencies inside the pad Hz range
                 for (const [htNum, xtone] of Object.entries(this.padSet.dhc.tables.ht)) {
-                    if (xtone.hz >= freqRange.min && xtone.hz <= freqRange.max) {
+                    if (xtone.hz >= freqRange.min.value && xtone.hz <= freqRange.max.value) {
                         if (htNum !== '-1') {
                             this.freqArrays.ht.push(Object.freeze([Number(htNum), xtone]));
                         }               
@@ -2504,8 +3010,8 @@ HUM.DpPad = function() {
         }
 
         freqToPadPix(frequency) {
-            let freqRange = this.padSet.settings.freqRange[this.type],
-                scaleOrientation = this.padSet.settings.scaleOrientation[this.type];
+            let freqRange = this.padSet.parameters.freqRange[this.type],
+                scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value;
             if (scaleOrientation === 'vertical') {
                 // Reverse the y coordinate (we need from bottom to top)
                 return (this.cssDimensions.height - this.padSet.dpPadComponent.freqToPix(frequency, freqRange, this.cssDimensions.height));
@@ -2517,8 +3023,8 @@ HUM.DpPad = function() {
             }
         }
         PadPixToFreq(pointer) {
-            let freqRange = this.padSet.settings.freqRange[this.type],
-                scaleOrientation = this.padSet.settings.scaleOrientation[this.type];
+            let freqRange = this.padSet.parameters.freqRange[this.type],
+                scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value;
             if (scaleOrientation === 'vertical') {
                 // Reverse the y coordinate (we need from bottom to top)
                 let pxPosition = this.cssDimensions.height - pointer.y;

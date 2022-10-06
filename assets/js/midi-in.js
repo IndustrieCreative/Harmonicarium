@@ -5,7 +5,7 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2020 by Walter Mantovani (http://armonici.it).
+ * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
  * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -70,16 +70,18 @@ HUM.midi.MidiIn = class {
         this.uiElements = {
             fn: {
                 receiveModeTsnapTolerance: document.getElementById("HTMLf_midiReceiveModeTsnapTolerance"+dhc.id),
-                receiveModeTsnapChan: document.getElementById("HTMLf_midiReceiveModeTsnapChan"+dhc.id),
-                receiveModeTsnapDivider: document.getElementById("HTMLf_midiReceiveModeTsnapDivider"+dhc.id),
+                receiveModeTsnapChanFT: document.getElementById("HTMLf_midiReceiveModeTsnapChanFT"+dhc.id),
+                receiveModeTsnapChanHT: document.getElementById("HTMLf_midiReceiveModeTsnapChanHT"+dhc.id),
+                receiveModeTsnapDividerKey: document.getElementById("HTMLf_midiReceiveModeTsnapDividerKey"+dhc.id),
+                receiveModeTsnapDividerChan: document.getElementById("HTMLf_midiReceiveModeTsnapDividerChan"+dhc.id),
             },
             in: {
                 receiveMode: document.getElementById("HTMLi_midiReceiveMode"+dhc.id),
                 receiveModeTsnapTolerance: document.getElementById("HTMLi_midiReceiveModeTsnapTolerance"+dhc.id),
-                receiveModeTsnapDivider: document.getElementById("HTMLi_midiReceiveModeTsnapDivider"+dhc.id),
                 receiveModeTsnapChanFT: document.getElementById("HTMLi_midiReceiveModeTsnapChanFT"+dhc.id),
                 receiveModeTsnapChanHT: document.getElementById("HTMLi_midiReceiveModeTsnapChanHT"+dhc.id),
-                receiveModeTsnapChanDivider: document.getElementById("HTMLi_midiReceiveModeTsnapChanDivider"+dhc.id),
+                receiveModeTsnapDividerKey: document.getElementById("HTMLi_midiReceiveModeTsnapDividerKey"+dhc.id),
+                receiveModeTsnapDividerChan: document.getElementById("HTMLi_midiReceiveModeTsnapDividerChan"+dhc.id),
             },
             out: {
                 monitor0_note: document.getElementById(`HTMLo_midiMonitor0_note${dhc.id}`),
@@ -611,21 +613,29 @@ HUM.midi.MidiIn = class {
     // @old icSwitchMidiReceiveMode
     switchReceiveModeUI(receive_mode) {
         let tsnap_tolerance = this.uiElements.fn.receiveModeTsnapTolerance,
-            tsnap_chan = this.uiElements.fn.receiveModeTsnapChan,
-            tsnap_divider = this.uiElements.fn.receiveModeTsnapDivider;
+            tsnap_chanFT = this.uiElements.fn.receiveModeTsnapChanFT,
+            tsnap_chanHT = this.uiElements.fn.receiveModeTsnapChanHT,
+            tsnap_divider_key = this.uiElements.fn.receiveModeTsnapDividerKey,
+            tsnap_divider_chan = this.uiElements.fn.receiveModeTsnapDividerChan;
         
         if (receive_mode === "keymap") {
             tsnap_tolerance.style.display = "none";
-            tsnap_chan.style.display = "none";
-            tsnap_divider.style.display = "none";
+            tsnap_chanFT.style.display = "none";
+            tsnap_chanHT.style.display = "none";
+            tsnap_divider_key.style.display = "none";
+            tsnap_divider_chan.style.display = "none";
         } else if (receive_mode === "tsnap-channel") {
-            tsnap_tolerance.style.display = "table-row";
-            tsnap_chan.style.display = "table-row";
-            tsnap_divider.style.display = "none";
+            tsnap_tolerance.style.display = "flex";
+            tsnap_chanFT.style.display = "flex";
+            tsnap_chanHT.style.display = "flex";
+            tsnap_divider_key.style.display = "none";
+            tsnap_divider_chan.style.display = "none";
         } else if (receive_mode === "tsnap-divider") {
-            tsnap_tolerance.style.display = "table-row";
-            tsnap_chan.style.display = "none";
-            tsnap_divider.style.display = "table-row";
+            tsnap_tolerance.style.display = "flex";
+            tsnap_chanFT.style.display = "none";
+            tsnap_chanHT.style.display = "none";
+            tsnap_divider_key.style.display = "flex";
+            tsnap_divider_chan.style.display = "flex";
         } else {
             let error = "The 'HTMLi_midiReceiveMode' HTML element has an unexpected value: " + receive_mode;
             throw error;
@@ -684,12 +694,12 @@ HUM.midi.MidiIn = class {
         // Default MIDI SETTINGS on UI textboxes
         this.uiElements.in.receiveMode.value = this.dhc.settings.controller.receive_mode;
         this.uiElements.in.receiveModeTsnapTolerance.value = this.dhc.settings.controller.tsnap.tolerance;
-        this.uiElements.in.receiveModeTsnapDivider.value = this.dhc.settings.controller.tsnap.divider;
         this.uiElements.in.receiveModeTsnapChanFT.value = this.dhc.settings.controller.tsnap.channel.ft;
         this.uiElements.in.receiveModeTsnapChanHT.options[this.dhc.settings.controller.tsnap.channel.ft].disabled = true;
         this.uiElements.in.receiveModeTsnapChanHT.value = this.dhc.settings.controller.tsnap.channel.ht;
         this.uiElements.in.receiveModeTsnapChanFT.options[this.dhc.settings.controller.tsnap.channel.ht].disabled = true;
-        this.uiElements.in.receiveModeTsnapChanDivider.value = this.dhc.settings.controller.tsnap.channel.divider;
+        this.uiElements.in.receiveModeTsnapDividerKey.value = this.dhc.settings.controller.tsnap.divider;
+        this.uiElements.in.receiveModeTsnapDividerChan.value = this.dhc.settings.controller.tsnap.channel.divider;
 
         // Set the FT/HT NUMBER RECEIVING MODE from UI HTML inputs
         this.uiElements.in.receiveMode.addEventListener("change", (event) => {
@@ -699,7 +709,7 @@ HUM.midi.MidiIn = class {
         this.uiElements.in.receiveModeTsnapTolerance.addEventListener("input", (event) => {
             this.dhc.settings.controller.tsnap.tolerance = event.target.value;
         });
-        this.uiElements.in.receiveModeTsnapDivider.addEventListener("input", (event) => {
+        this.uiElements.in.receiveModeTsnapDividerKey.addEventListener("input", (event) => {
             this.dhc.settings.controller.tsnap.divider = event.target.value;
         });
         this.uiElements.in.receiveModeTsnapChanFT.addEventListener("change", (event) => {
@@ -726,7 +736,7 @@ HUM.midi.MidiIn = class {
                 this.dhc.settings.controller.tsnap.channel.ht = event.target.value;
             }
         });
-        this.uiElements.in.receiveModeTsnapChanDivider.addEventListener("change", (event) => {
+        this.uiElements.in.receiveModeTsnapDividerChan.addEventListener("change", (event) => {
             this.dhc.settings.controller.tsnap.channel.divider = event.target.value;
         });
         // Set default FT/HT NUMBER RECEIVING MODE after the UI widgets are set-up

@@ -5,7 +5,7 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2020 by Walter Mantovani (http://armonici.it).
+ * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
  * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -29,24 +29,6 @@
 HUM.tmpl = {
     // parser: new DOMParser(),
     // arguments (id, cl=false, label=false, title=false, help=false)
-
-    appContainer(id) {
-        let template = document.createElement('div');
-        template.innerHTML = `
-            <div id="harmonicarium${id}" class="appContainer">
-
-            </div>`;
-        return template.firstElementChild;
-    },
-
-    dpPadPage(id) {
-        let template = document.createElement('div');
-        template.innerHTML = `
-            <div id="HTMLf_dpPad${id}" class="dpPadPage">
-
-            </div>`;
-        return template.firstElementChild;
-    },
 
     dpIcons(id) {
         let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -110,6 +92,39 @@ HUM.tmpl = {
                 d: "M 11.868 17.133 L 9.327 19.675 L 1.698 12.048 L 9.325 4.421 L 11.867 6.965 L 8.583 10.25 L 22.132 10.25 L 22.132 13.845 L 8.583 13.845 L 11.868 17.133 Z",
                 viewBox: "0 0 24 24"
             },
+
+            edit: {
+                d: "M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z",
+                viewBox: "0 0 16 16"
+            },
+            trash: {
+                d: "M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5Zm-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5ZM4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5Z",
+                viewBox: "0 0 16 16"
+            },
+            clear: {
+                d: "M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 2 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828l6.879-6.879zm.66 11.34L3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293l.16-.16z",
+                viewBox: "0 0 16 16"
+            },
+            upload: {
+                d: "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z",
+                viewBox: "0 0 16 16"
+            },
+            download: {
+                d: "M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z",
+                viewBox: "0 0 16 16"
+            },
+            save: {
+                d: "M8 5.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V10a.5.5 0 0 1-1 0V8.5H6a.5.5 0 0 1 0-1h1.5V6a.5.5 0 0 1 .5-.5z M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2z M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1z",
+                viewBox: "0 0 16 16"
+            },
+            load: {
+                d: "M8 11a.5.5 0 0 0 .5-.5V6.707l1.146 1.147a.5.5 0 0 0 .708-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L7.5 6.707V10.5a.5.5 0 0 0 .5.5z M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2z M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1z",
+                viewBox: "0 0 16 16"
+            },
+            sessions: {
+                d: "M4.5 6a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1ZM6 6a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1Zm2-.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0Z M12 1a2 2 0 0 1 2 2 2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2 2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h10ZM2 12V5a2 2 0 0 1 2-2h9a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1Zm1-4v5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8H3Zm12-1V5a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v2h12Z",
+                viewBox: "0 0 16 16"
+            },
         };
 
         for (const name of Object.keys(icons)) {
@@ -145,19 +160,39 @@ HUM.tmpl = {
         return use;
     },
 
+    appContainer(id) {
+        let template = document.createElement('div');
+        template.innerHTML = `
+            <div id="harmonicarium${id}">
+
+            </div>`;
+        return template.firstElementChild;
+    },
+
+    dpPadContainer(id) {
+        let template = document.createElement('div');
+        template.innerHTML = `
+            <div id="HTMLf_dpPad${id}" class="hum-dppad-container">
+
+            </div>`;
+        return template.firstElementChild;
+    },
+
     logTextBox(id) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div id="HTMLf_logPanel${id}" class="panelOverlay bottomPanel">
-                <div id="HTMLf_openLogBtn${id}" class="panelBtnContainer">
+            <div id="HTMLo_logPanel${id}" class="panelOverlay bottomPanel text-bg-dark" style="--bs-bg-opacity: .9;">
+                <!-- <div id="HTMLf_logCloseBtn${id}" class="panelBtnContainer">
                     <div class="panelBtnBar1"></div>
                     <div class="panelBtnBar2"></div>
                     <div class="panelBtnBar3"></div>
-                </div>
-                <div class="panelOverlay_content">
-                    <h1>Events Log</h1>
-                    <button type="button" id="HTMLf_logTest${id}" style="margin-bottom: 10px; position: absolute; right: 20px; top: 80px;">TEST</button>
-                    <div class="logText" id="HTMLo_logText${id}"></div>
+                </div> -->
+                <button id="HTMLf_logCloseBtn${id}" type="button" class="panelBtnContainer btn-close btn-close-white hum-circle-x mt-auto" aria-label="Close"></button>
+                <div class="panelOverlay_content h-100 logText">
+                    <h3>Events Log</h3>
+
+                    <button type="button" id="HTMLf_logTestBtn${id}" class="btn btn-secondary" style="margin-bottom: 10px; position: absolute; right: 20px; top: 80px;">TEST</button>
+                    <div class="logText h-100 overflow-scroll" id="HTMLo_logText${id}"></div>
                 </div>
             </div>`;
         return template.firstElementChild;
@@ -166,7 +201,7 @@ HUM.tmpl = {
     sidePanel(id) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div id="HTMLf_sidePanel${id}" class="panelOverlay rightPanel">
+            <div id="HTMLo_sidePanel${id}" class="panelOverlay rightPanel container-fluid p-0 d-flex flex-column">
 
             </div>`;
         return template.firstElementChild;
@@ -177,27 +212,44 @@ HUM.tmpl = {
     logoBox(id) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="sideTopBar" id="HTML_logo${id}">
-                <svg id="HTMLf_closeSidePanel${id}" class="panelBtnContainer" viewBox="0 0 60 24" preserveAspectRatio="xMinYMid meet" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                </svg> 
-                <div class="logoContainer">
-                    <img src="assets/img/logo.png" alt="The Harmonicarium logo">
-                    <div class="menuContainer">
-                        <span class="menuElement" id="HTMLf_openHelp${id}">HELP</span> &nbsp;&ndash; &nbsp;
-                        <span class="menuElement" id="HTMLf_openCredits${id}">Credits</span> &nbsp;&ndash; &nbsp;
-                        <span class="menuElement" id="HTMLf_openApp${id}">APP</span> &nbsp;&ndash; &nbsp;
-                        <span class="menuElement"><a href="https://github.com/IndustrieCreative/Harmonicarium" target="_blank">Source code</a></span>
+            <div class="row m-0" id="HTML_logo${id}">
+                <div class="sidePanelBtn col-auto h-100">
+                    <div class="vstack gap-1 h-100">
+                        <button id="HTMLf_sideCloseBtn${id}" type="button" class="btn-close btn-close-white hum-circle-x mt-auto" aria-label="Close"></button>
+                        <button id="HTMLf_sideHalfBtn${id}" type="button" class="btn-close btn-close-white hum-arrow-bar-right mb-auto" aria-label="Half screen"></button>
+                        <button id="HTMLf_sideFullBtn${id}" type="button" class="btn-close btn-close-white hum-arrow-bar-left mb-auto" aria-label="Full screen"></button>
                     </div>
                 </div>
-            </div>`;
-        return template.firstElementChild;
-    },
-
-    sideContents(id) {
-        let template = document.createElement('div');
-        template.innerHTML = `
-            <div id="HTMLf_sidePanel_content${id}" class="panelOverlay_content">
-
+                <div class="col px-1 px-sm-3">
+                    <div class="row hum-logo-container">
+                        <img src="assets/img/logo.png" alt="The Harmonicarium logo">
+                    </div>
+                    <div class="row">
+                          <ul class="nav nav-pills nav-fill flex-column flex-sm-row" role="tablist" id="HTMLo_sideNav${id}">
+                            <li class="nav-item border border-secondary rounded mx-1 mb-1">
+                              <a class="nav-link hum-nav-link active px-1 p-sm-2" data-bs-toggle="tab" href="#HTMLo_settingsObj${id}">SETTINGS</a>
+                            </li>
+                            <li class="nav-item dropdown border border-secondary rounded mx-1 mb-1">
+                                <a class="nav-link dropdown-toggle hum-nav-link px-1 p-sm-2" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Info</a>
+                                <ul class="dropdown-menu dropdown-menu-dark w-100">
+                                    <li class="nav-item">
+                                      <a class="dropdown-item py-2" data-bs-toggle="tab" href="#HTMLo_helpObj${id}">Help</a>
+                                    </li>
+                                    <li class="nav-item">
+                                      <a class="dropdown-item py-2" data-bs-toggle="tab" href="#HTMLo_creditsObj${id}">Credits</a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li class="nav-item">
+                                      <a class="dropdown-item py-2" data-bs-toggle="tab" href="#HTMLo_appObj${id}">App</a>
+                                    </li>
+                                    <li class="nav-item">
+                                      <a class="dropdown-item py-2 bi bi-box-arrow-up-right" href="https://github.com/IndustrieCreative/Harmonicarium" target="_blank" rel="noopener noreferrer">Source code</a>
+                                    </li>
+                                </ul>
+                            </li>
+                          </ul>
+                    </div>
+                </div>
             </div>`;
         return template.firstElementChild;
     },
@@ -207,101 +259,140 @@ HUM.tmpl = {
     sideMenu(id) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div id="HTML_side_menu${id}" class="sideMenu">
+            <div id="HTML_side_menu${id}" class="tab-content overflow-scroll">
                 
-                <div id="HTMLf_settingsObj${id}" class="settingsContainer"></div>
+                <div id="HTMLo_settingsObj${id}" class="hum-settings tab-pane fade show active"></div>
                 
-                <div id="HTMLf_helpObj${id}" class="help">
-                    <h1>Short Help</h1>
-                    <h2>This program currently under development.</h2>
-                    <h3>Tested only in Chromium (Google Chrome) browsers. With Opera it seems to work as well, but untested.</h3>
-                    <p>Since this program is still in beta, I cannot write an exhaustive guide at the moment. The functioning in a few words is as follows.</p>
-                    <h3>OVERVIEW</h3>
-                    <p>You have two pads (or keyboard layers):</p>
-                    <ul>
-                        <li>Fundamental Tones (FT): the<span class="monospace"> red pad</span>.</li>
-                        <li>Harmonic Tones (HT): the<span class="monospace"> blue pad</span>.</li>
-                    </ul>
-                    <p>You can play the Harmonic Series on the blue pad.</p>
-                    <p>You can change their fundamental by pressing  key onn the red pad; the harmonics on blue pad are instantly recalculated.</p>
+                <div id="HTMLo_helpObj${id}" class="hum-help tab-pane fade">
+                    <div class="container p-0 mt-3">
+                        <h1>Short Help</h1>
+                        <h2>This program currently under development.</h2>
+                        <h3>Tested only in Chromium (Google Chrome) browsers. With Opera it seems to work as well, but untested.</h3>
+                        <p>Since this program is still in beta, I cannot write an exhaustive guide at the moment. The functioning in a few words is as follows.</p>
+                        <h3 class="mt-3">OVERVIEW</h3>
+                        <p>You have two pads (or keyboard layers):</p>
+                        <ul>
+                            <li>Fundamental Tones (FT): the<span class="monospace"> red pad</span>.</li>
+                            <li>Harmonic Tones (HT): the<span class="monospace"> blue pad</span>.</li>
+                        </ul>
+                        <p>You can play the Harmonic Series on the blue pad.</p>
+                        <p>You can change their fundamental by pressing  key onn the red pad; the harmonics on blue pad are instantly recalculated.</p>
 
-                    <p>The program starts with the Harmonic Series of a <span class="monospace">C3</span> (<span class="monospace">130.81Hz</span>). This is the Fundamental Mother</p>
-                    <h3>KEYMAPS</h3>
-                    <p>If you want to use an external MIDI keyboard to play this app, you can also choice the position of the FTs and HTs on the keyboard. Under the Piano Keymap” tab in the Settings panel you can select one of the preset keymaps or create your own one.</p>
-                    <p>In the  <a href="https://github.com/IndustrieCreative/Harmonicarium/tree/master/keymaps/_mapping-tools" target="_blank">/keymaps/_mapping-tools/</a> folder there is the "<a href="https://github.com/IndustrieCreative/Harmonicarium/raw/master/keymaps/_mapping-tools/keymapping-tool.xlsx" target="_blank">keymapping-tool.xlsx</a>" that can be used to generate keymaps. Other maps can be found on the <a href="https://github.com/IndustrieCreative/Harmonicarium/tree/master/keymaps/n-edx" target="_blank">/keymaps/n-edx/</a> .</p>
-                    <p>You can also <a href="https://github.com/IndustrieCreative/Harmonicarium/zipball/master" target="_blank">download the "offline" app</a>.</p>
-                    <h3>FUNDAMENTAL TONES</h3>
-                    <p>The FT are like a palette of frequencies available to generate harmonics. The default FT are <span class="monospace">12</span> tone equally tempered (<span class="monospace">12-TET</span> or <span class="monospace">12-EDO</span>). In the Fundamental Tones box you can edit the FT tuning by choosing between equal temperaments and harmonics/subharmonics tones.</p>
-                    <p>Since at the moment I'm writing documentation on the <a href="http://harmonicarium.org/" target="_blank">project site</a> and many options are the same of the old Harmonync, you can read <a href="http://harmonync.harmonicarium.org" target="_blank">the old site project</a> to better understand the purpose and the functioning of this program.</p>
+                        <p>The program starts with the Harmonic Series of a <span class="monospace">C3</span> (<span class="monospace">130.81Hz</span>). This is the Fundamental Mother</p>
+                        <h3 class="mt-3">KEYMAPS</h3>
+                        <p>If you want to use an external MIDI keyboard to play this app, you can also choice the position of the FTs and HTs on the keyboard. Under the Piano Keymap” tab in the Settings panel you can select one of the preset keymaps or create your own one.</p>
+                        <p>In the  <a href="https://github.com/IndustrieCreative/Harmonicarium/tree/master/keymaps/_mapping-tools" target="_blank" rel="noopener noreferrer">/keymaps/_mapping-tools/</a> folder there is the "<a href="https://github.com/IndustrieCreative/Harmonicarium/raw/master/keymaps/_mapping-tools/keymapping-tool.xlsx" target="_blank" rel="noopener noreferrer">keymapping-tool.xlsx</a>" that can be used to generate keymaps. Other maps can be found on the <a href="https://github.com/IndustrieCreative/Harmonicarium/tree/master/keymaps/n-edx" target="_blank" rel="noopener noreferrer">/keymaps/n-edx/</a> .</p>
+                        <p>You can also <a href="https://github.com/IndustrieCreative/Harmonicarium/zipball/master" target="_blank" rel="noopener noreferrer">download the "offline" app</a>.</p>
+                        <h3 class="mt-3">FUNDAMENTAL TONES</h3>
+                        <p>The FT are like a palette of frequencies available to generate harmonics. The default FT are <span class="monospace">12</span> tone equally tempered (<span class="monospace">12-TET</span> or <span class="monospace">12-EDO</span>). In the Fundamental Tones box you can edit the FT tuning by choosing between equal temperaments and harmonics/subharmonics tones.</p>
+                        <p>Since at the moment I'm writing documentation on the <a href="http://harmonicarium.org/" target="_blank" rel="noopener noreferrer">project site</a> and many options are the same of the old Harmonync, you can read <a href="http://harmonync.harmonicarium.org" target="_blank" rel="noopener noreferrer">the old site project</a> to better understand the purpose and the functioning of this program.</p>
+                    </div>
                 </div>
                 
-                <div id="HTMLf_creditsObj${id}" class="credits">
-                    <h1>Credits</h1>
-                    <img src="assets/img/agpl.png">
-                    <h2>License</h2>
-                    <h3 style="margin-bottom: 0;">Harmonicarium</h2>
-                    <p style="margin-top: 0; margin-bottom: 0;">a Dynamic Harmonics Calculator</p>
-                    <p style="margin-top: 0;"><span class="monospace">ver. 0.7.1 (Kepler)</span></p>
-                    <h3>Copyright (C) 2017-2022 by Walter Mantovani</h3>
-                    <p>This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.</p>
-                    <p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.</p>
-                    <p>You should have received a copy of the GNU Affero General Public License along with this program. If not, see <a href="https://www.gnu.org/licenses/agpl.txt" target="_blank">http://www.gnu.org/licenses/</a>.</p>
-                    <p>armonici.it [at] gmail [dot] com</p>
-                    <h2>Acknowledgements</h2>
-                    <p>Thanks to the Internet Global Community.</p>
-                    <p>For their support and the long talks about sound, music and ICT, a special thanks goes to:</p>
-                    <ul>
-                        <li>Stefano Bersanetti (Sound & electrical engineer – Euterpe Synthesizer Laboratories)</li>
-                        <li>Giovanni Bortoluzzi (Overtone singer – Sherden Overtone Singing School)</li>
-                        <li>Alberto Ezzu (Musicoterapist)</li>
-                        <li>Marco Groppo (Software developer)</li>
-                        <li>Alessio Gerace (Software developer)</li>
-                    </ul>
-                    <p>To let me know about the <a href="http://harmonicarium.org/similar-works/#Amelia_Rosselli" target="_blank">work</a> of the young Amelia Rosselli, thanks to Deborah Ricetti.</p>
-                    <p>Thanks to the following people for their works across the music theory and technology:</p>
-                    <ul>
-                        <li>Carlo Serafini (thesis: Tecnologia e Sistemi di Accordatura)</li>
-                        <li>Jeff X. Scott (LMSO – Li’l Miss’ Scale Oven)</li>
-                        <li>Aaron Andrew Hunt (H-Pi Instruments)</li>
-                        <li>Manuel Op de Coul (SCALA)</li>
-                        <li>Miller S. Puckette (Pure Data)</li>
-                        <li>Victor Cerullo (Max Magic Microtuner)</li>
-                        <li>Benjamin Frederick Denckla (thesis: Dynamic Intonation for Synthesizer Performance)</li>
-                        <li>Jacky Ligon (Xen-Arts)</li>
-                        <li>Robert Walker (Tune Smithy)</li>
-                        <li>Mark Henning (TUN file format)</li>
-                        <li>Joe Monzo and Chris Wittmann (Tonescape / Tonalsoft Encyclopedia of Microtonal Music-theory)</li>
-                        <li>Bill Gannon and Shelly Kantrow (Justonic)</li>
-                    </ul>
-                    <p>For their works around the Web Audio and MIDI API, thanks to:</p>
-                    <ul>
-                        <li>Chris Wilson (Google, W3C – Web Audio/MIDI API evangelist)</li>
-                        <li>Stuart Memo (Qwerty Hancock)</li>
-                        <li>Evan Sonderegger (Web Audio Peak Meter)</li>
-                    </ul>
+                <div id="HTMLo_creditsObj${id}" class="hum-credits tab-pane fade">
+                    <div class="container p-0 mt-3">
+                        <img src="assets/img/agpl.png">
+                        <h1>Credits</h1>
+                        <h2>License</h2>
+                        <h3 style="margin-bottom: 0;">Harmonicarium</h2>
+                        <p style="margin-top: 0; margin-bottom: 0;">a Dynamic Harmonics Calculator</p>
+                        <p style="margin-top: 0;"><span class="monospace">ver. 0.8.0-beta (Mersenne)</span></p>
+                        <h3>Copyright (C) 2017-2022 by Walter G. Mantovani</h3>
+                        <p>This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.</p>
+                        <p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.</p>
+                        <p>You should have received a copy of the GNU Affero General Public License along with this program. If not, see <a href="https://www.gnu.org/licenses/agpl.txt" target="_blank" rel="noopener noreferrer">http://www.gnu.org/licenses/</a>.</p>
+                        <p>armonici.it [at] gmail [dot] com</p>
+                        <h2 class="mt-3">Acknowledgements</h2>
+                        <p>Thanks to the Internet Global Community.</p>
+                        <p>For their support and the long talks about sound, music and ICT, a special thanks goes to:</p>
+                        <ul>
+                            <li>Stefano Bersanetti (Sound & electrical engineer – Euterpe Synthesizer Laboratories)</li>
+                            <li>Giovanni Bortoluzzi (Overtone singer and musician)</li>
+                            <li>Simone Righini (goatseo.com)</li>
+                            <li>Alberto Ezzu (Musicoterapist and musician)</li>
+                            <li>Marco Groppo (Software developer)</li>
+                            <li>Alessio Gerace (Software developer)</li>
+                        </ul>
+                        <p>To let me know about the <a href="http://harmonicarium.org/similar-works/#Amelia_Rosselli" target="_blank" rel="noopener noreferrer">work</a> of the young Amelia Rosselli, thanks to Deborah Ricetti.</p>
+                        <p>Thanks to the following people for their works across the music theory and technology:</p>
+                        <ul>
+                            <li>Carlo Serafini (thesis: Tecnologia e Sistemi di Accordatura)</li>
+                            <li>Jeff X. Scott (LMSO – Li’l Miss’ Scale Oven)</li>
+                            <li>Aaron Andrew Hunt (H-Pi Instruments)</li>
+                            <li>Manuel Op de Coul (SCALA)</li>
+                            <li>Miller S. Puckette (Pure Data)</li>
+                            <li>Victor Cerullo (Max Magic Microtuner)</li>
+                            <li>Benjamin Frederick Denckla (thesis: Dynamic Intonation for Synthesizer Performance)</li>
+                            <li>Jacky Ligon (Xen-Arts)</li>
+                            <li>Robert Walker (Tune Smithy)</li>
+                            <li>Mark Henning (TUN file format)</li>
+                            <li>Joe Monzo and Chris Wittmann (Tonescape / Tonalsoft Encyclopedia of Microtonal Music-theory)</li>
+                            <li>Bill Gannon and Shelly Kantrow (Justonic)</li>
+                        </ul>
+                        <p>For their works around the Web Audio and MIDI API, thanks to:</p>
+                        <ul>
+                            <li>Chris Wilson (Google, W3C – Web Audio/MIDI API evangelist)</li>
+                            <li>g200kg (WebMidiLink - g200kg.com)</li>
+                            <li>Stuart Memo (Qwerty Hancock)</li>
+                            <li>Evan Sonderegger (Web Audio Peak Meter)</li>
+                        </ul>
+                    </div>
                 </div>
+
+                <div id="HTMLo_appObj${id}" class="appBox tab-pane fade">
+                    <div class="container text-center mt-3 px-xl-5">
+                        <p class="text-light mb-0">Under Chrome this App can be installed as a <a class="link-warning" href="https://en.wikipedia.org/wiki/Progressive_web_app" target="_blank" rel="noopener noreferrer">Progressive Web App (PWA)</a> for having a cleaner interface and using it offline.</p>
+                    </div>
+                    <div class="vstack gap-4 col-xl-6 mx-auto mt-2 mb-4">
+                        <button type="button" id="HTMLf_appInstall${id}" class="btn btn-success mx-3">Install this app</button>
+                        <a role="button" id="HTMLf_appOpen${id}" class="btn btn-info"
+                           href="${window.location.href}" target="_blank">Try to open the App</a>
+                        <div class="opacity-75 alert alert-dark text-dark mx-3 logText" role="alert">
+                            <h6 class="alert-heading">PWA status:</h6>
+                            <div id="HTMLo_appUpdateInfo${id}" style="font-size: 0.8em;"></div>
+                        </div>
+                        <img src="assets/img/pwa_logo_inverse.png" alt="PWA logo" class="w-50 mx-auto">
+                        <button type="button" id="HTMLf_appUpdate${id}" class="btn btn-outline-warning mx-3">
+                            Update the App
+                        </button>
+                        <button type="button"id="HTMLf_appReset${id}" class="btn btn-outline-danger mx-3">
+                            Reset the Cache &amp; Update the App
+                        </button>
+                    
+                        <div class="card text-bg-danger bg-opacity-50 mx-3 mt-5">
+                          <div class="card-header">Data factory reset</div>
+                          <div class="card-body">
+                            <h5 class="card-title">DELETE DATABASE</h5>
+                            <p class="card-text">If you delete the database, all the PRESETS (and sessions) will be erased.</p>
+                            <p class="card-text">The operation cannot be undone.</p>
+                            <p class="card-text">Make sure you BACKUP the presets before proceeding!</p>
+                          
+                            <button type="button"id="HTMLf_user_resetDB_openBtn${id}" class="btn btn-danger w-100">
+                                FACTORY RESET...
+                            </button>
+
+                          </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
             </div>`;
         return template.firstElementChild;
     },
 
     // - - - - - - - - - - - - - - - - - - - - 
 
-    appBox(id) {
+    userAccordion(id) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div id="HTMLf_appBox${id}" class="appBox">
-                <div>
+            <div class="userSideContainer" id="HTMLf_user_container${id}">
 
-                    <button id="HTMLf_appInstall${id}">Install this app</button>
-                    <a id="HTMLf_appOpen${id}" href="https://harmonicarium.org/app/" target="_blank">
-                        <button>Try to open the App</button>
-                    </a>
-                    <div id="HTMLf_appUpdateInfo${id}"></div>
-                    <button id="HTMLf_appUpdate${id}">Update the app</button>
-                    <button id="HTMLf_appReset${id}">Reset & Update the app</button>
-
+                <div class="accordion" id="HTMLf_accordion_user${id}">
 
                 </div>
+
             </div>`;
         return template.firstElementChild;
     },
@@ -311,10 +402,8 @@ HUM.tmpl = {
         template.innerHTML = `
             <div class="dpPadSideContainer" id="HTMLf_dppad_container${id}">
 
-                <div class="accordion">
-                    <div id="HTMLf_accordion_dppad${id}" class="accordionTabs">
+                <div class="accordion" id="HTMLf_accordion_dppad${id}">
 
-                    </div>
                 </div>
 
             </div>`;
@@ -326,10 +415,8 @@ HUM.tmpl = {
         template.innerHTML = `
             <div class="dhcSideContainer" id="HTMLf_dhc_container${id}">
 
-                <div class="accordion">
-                    <div id="HTMLf_accordion_dhc${id}" class="accordionTabs">
+                <div class="accordion" id="HTMLf_accordion_dhc${id}">
 
-                    </div>
                 </div>
 
             </div>`;
@@ -350,11 +437,21 @@ HUM.tmpl = {
     accordionTab(id, idName, title) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="accordionTab">
-                <input type="checkbox" id="HTML_accordionChkBox_${idName}${id}" class="accordionChkBox">
-                <label class="accordionTabLabel" for="HTML_accordionChkBox_${idName}${id}">${title}</label>
-                <div id="HTML_accordionTab_${idName}${id}" class="accordionTabContent">
+            <div class="accordion-item border-0 mt-2">
 
+                <h2 class="accordion-header" id="HTML_accordionHeading_${idName}${id}">
+                  <button class="accordion-button collapsed fw-bold hum-accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#HTML_accordionTab_${idName}${id}" aria-expanded="false" aria-controls="HTML_accordionTab_${idName}${id}">
+                    ${title}
+                  </button>
+                </h2>
+
+                <!-- <input type="checkbox" id="HTML_accordionChkBox_${idName}${id}" class="accordionChkBox">
+                <label class="accordionTabLabel" for="HTML_accordionChkBox_${idName}${id}">${title}</label> -->
+                
+                <div id="HTML_accordionTab_${idName}${id}" class="accordion-collapse collapse" aria-labelledby="HTML_accordionHeading_${idName}${id}">
+                    <!-- data-bs-parent="#accordionExample"> -->
+                    <div class="accordion-body p-1 p-sm-2 p-md-3">
+                    </div>
                 </div>
             </div>`;
         return template.firstElementChild;
@@ -362,43 +459,354 @@ HUM.tmpl = {
 
     // - - - - - - - - - - - - - - - - - - - - 
 
+    userManagePresets(id) {
+        let template = document.createElement('div');
+        template.innerHTML = `
+        <div id="HTMLo_user_managePreset_controls${id}">
+            <div class="position-relative">
+                <label for="HTMLi_user_managePreset_select${id}" class="form-label">Stored presets</label>
+                <select id="HTMLi_user_managePreset_select${id}" class="form-select" title="Choose a template" aria-label="Select the preset" required></select>
+                <div id="HTMLo_user_managePreset_SelectValidation${id}" class="invalid-feedback">
+                    *You cannot perform the operation on the "Default" or "Auto-save" presets.
+                </div>
+            </div>
+            <div id="HTMLo_user_managePreset_rename${id}" class="position-relative mt-3 d-none">
+                <label for="HTMLi_user_managePreset_newName${id}" class="form-label">New name</label>
+                <input id="HTMLi_user_managePreset_newName${id}" type="text" class="form-control" placeholder="Input the preset's new name" aria-label="Inputbox to type the name of the new preset." required>
+                <div id="HTMLo_user_managePreset_newNameValidation${id}" class="invalid-feedback">
+                    *Please choose a unique and valid name.
+                </div>
+            </div>
+            <button id="HTMLi_user_managePreset_actionBtn${id}" class="btn btn-outline-secondary mt-3 d-none" placeholder="Click to save the new preset" type="button">Perform action</button>
+            <div id="HTMLo_user_managePreset_toast${id}" class="toast hum-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position:fixed; bottom:10px; left:10px;">
+                <div class="toast-header bg-success bg-gradient text-light">
+                    <strong class="me-auto">Action result</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                </div>
+                <div id="HTMLo_user_managePreset_toastMsg${id}" class="toast-body">
+                    Action performed...
+                </div>
+            </div>
+
+        </div>`;
+        return template.firstElementChild;
+    },
+
+    userResetDB(id) {
+        let template = document.createElement('div');
+        template.innerHTML = `
+        <div id="HTMLo_user_resetDB_controls${id}" class="text-center">
+            <div class="mb-2">Are you really sure?</div>
+            <button id="HTMLi_user_resetDB_confirmBtn${id}" class="btn btn-outline-danger my-3" placeholder="Click to delete the database" type="button">
+                OK, RESET THE DB
+            </button>
+            <div id="HTMLo_user_resetDB_toast${id}" class="toast hum-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position:fixed; bottom:10px; left:10px;">
+                <div class="toast-header bg-success bg-gradient text-light">
+                    <strong class="me-auto">Action result</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                </div>
+                <div id="HTMLo_user_resetDB_toastMsg${id}" class="toast-body">
+                    Action performed?
+                </div>
+            </div>
+            <!-- <div class="mt-2">This session will be closed automatically at the end of the porcess.</div> -->
+            <div class="mt-2 text-danger"><b>WARNING</b>: If you proceed, all the concurrent sessions on different tabs/windows will be closed automatically. This session will be reloaded.</div>
+            <!-- <div class="mt-2">The database will be deleted after all active sessions are closed.</div> -->
+            <!-- <div class="mt-2">A request to close will appear in the other currently open sessions.</div> -->
+        </div>`;
+        return template.firstElementChild;
+    },
+
+    userBox(id) {
+        let template = document.createElement('div');
+        template.innerHTML = `
+            <div id="HTML_user${id}">
+                
+                <div class="list-group">
+
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-xl">
+                                <strong class="mb-2">Load</strong>
+                                <p class="text-muted mb-0">Select a preset and click "Load".</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <select id="HTMLi_user_preset_select${id}" class="form-select" aria-label="Select the preset">
+                                    </select>
+                                    <button id="HTMLi_user_preset_loadBtn${id}" class="btn btn-outline-secondary" aria-label="Click to load the selected preset" type="button">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
+                                            <use fill-rule="evenodd" href="#dpIcon-load${id}"/>
+                                        </svg>
+                                        Load
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item" id="HTMLo_user_preset_new${id}">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-xl">
+                                <strong class="mb-2">Save new</strong>
+                                <p class="text-muted mb-0">Input the name and click "Save new".</p>
+                            </div>
+                            <div class="col">
+                                <div class="input-group has-validation">
+                                    <input id="HTMLi_user_preset_newName${id}" type="text" class="form-control" placeholder="Input the new preset's name" aria-label="Inputbox to type the name of the new preset.">
+                                    <button id="HTMLi_user_preset_saveBtn${id}" class="btn btn-outline-secondary" placeholder="Click to save the new preset" type="button">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
+                                            <use fill-rule="evenodd" href="#dpIcon-save${id}"/>
+                                        </svg>
+                                        Save new
+                                    </button>
+                                    <div class="invalid-feedback">
+                                        The name must be unique and not empty.
+                                    </div>
+                                    <!-- <button id="HTMLi_user_preset_clearName${id}" class="btn btn-outline-secondary" type="button">Button</button> -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item" id="HTMLo_user_preset_manage${id}">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <strong class="mb-2">Manage</strong>
+                                <p class="text-muted mb-0">Rename or delete a preset.</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="vstack gap-2 mx-auto">
+                                    <button id="HTMLi_user_preset_renameBtn${id}" class="btn btn-secondary">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
+                                            <use fill-rule="evenodd" href="#dpIcon-edit${id}"/>
+                                        </svg>
+                                        Rename a preset
+                                    </button>
+                                    <button id="HTMLi_user_preset_deleteBtn${id}" class="btn btn-secondary">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
+                                            <use fill-rule="evenodd" href="#dpIcon-trash${id}"/>
+                                        </svg>
+                                        Delete a preset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item" id="HTMLo_user_preset_import${id}">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-xl">
+                                <strong class="mb-2">Import</strong>
+                                <p class="text-muted mb-0">Upload a presets file.</p>
+                            </div>
+                            <div class="col-auto">
+                                
+                                <div class="form-label" id="HTMLi_user_preset_importFileName${id}">
+                                    Import a JSON preset file
+                                </div>
+                                <input type="file" id="HTMLi_user_preset_importFile${id}" accept=".json" class="form-control" aria-label="Select and upload a JSON preset file">
+                                
+                                <div id="HTMLo_user_preset_import_options${id}" class="d-none">
+
+                                    <div id="HTMLo_user_preset_import_checks${id}" class="mt-2"></div>
+                                    <button id="HTMLi_user_preset_importBtn${id}" class="btn btn-outline-secondary mt-2" type="button" aria-label="Click to import the selected presets from JSON file">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
+                                            <use fill-rule="evenodd" href="#dpIcon-upload${id}"/>
+                                        </svg>
+                                        Import selected presets
+                                    </button>
+
+                                    <button id="HTMLi_user_preset_clearBtn${id}" class="btn btn-outline-secondary mt-2" type="button" aria-label="Click to clear and reset the import tool.">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
+                                            <use fill-rule="evenodd" href="#dpIcon-clear${id}"/>
+                                        </svg>
+                                        Clear
+                                    </button>
+
+                                    <!-- TOAST NOTIFICATION -->
+                                    <div id="HTMLo_user_preset_import_toast${id}" class="toast hum-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position:fixed; bottom:10px; left:10px;">
+                                        <div class="toast-header bg-success bg-gradient text-light">
+                                            <strong class="me-auto">Import results</strong>
+                                            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                                        </div>
+                                        <div id="HTMLo_user_preset_import_toastMsg${id}" class="toast-body">
+                                            Presets imported...
+                                        </div>
+                                    </div>
+
+                                    <div class="form-check form-control-lg form-switch pb-0">
+                                        <label for="HTMLi_user_preset_importReverb${id}" class="form-label fs-6" style="vertical-align: text-top;">
+                                            Import IR reverb <small>(use device memory)</small>
+                                        </label>
+                                        <input type="checkbox" id="HTMLi_user_preset_importReverb${id}"
+                                               class="form-check-input" role="switch">
+                                    </div>
+                                
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="list-group-item" id="HTMLo_user_preset_import${id}">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-lg">
+                                <strong class="mb-2">Export</strong>
+                                <p class="text-muted mb-0">Download the current presets on a file.</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="row mx-0">
+                                    <button id="HTMLi_user_preset_exportBtn${id}" class="btn btn-secondary">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16">
+                                            <use fill-rule="evenodd" href="#dpIcon-download${id}"/>
+                                        </svg>
+                                        <span id="HTMLo_user_preset_exportBtnSpinner${id}" class="spinner-border-sm mx-2" role="status" aria-hidden="true"></span>
+                                        Export JSON preset file
+                                    </button>
+                                </div>
+                                <div class="row mx-0">
+                                    <div class="form-check form-control-lg form-switch pb-0">
+                                        <label for="HTMLi_user_preset_exportReverb${id}" class="form-label fs-6" style="vertical-align: text-top;">
+                                            Export IR reverb <small>(larger file)</small>
+                                        </label>
+                                        <input type="checkbox" id="HTMLi_user_preset_exportReverb${id}"
+                                               class="form-check-input" role="switch">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+               <div class="accordion mt-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="accordionSessionHeading${id}">
+                          <button class="accordion-button collapsed hum-section-title" type="button" data-bs-toggle="collapse" data-bs-target="#accordionSession${id}" aria-expanded="false" aria-controls="accordionSession${id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
+                                <use fill-rule="evenodd" href="#dpIcon-sessions${id}"/>
+                            </svg>
+                            Sessions
+                          </button>
+                        </h2>
+
+                        <div id="accordionSession${id}" class="accordion-collapse collapse" aria-labelledby="accordionSessionHeading${id}">
+                          <div class="accordion-body p-1 p-sm-2 p-md-3">
+                            
+                            <ul class="list-group">
+                                
+                                <li class="list-group-item">
+                                    <div class="row align-items-center">
+                                        <div class="col col-12 col-xl">
+                                            <strong class="mb-2">Current session</strong>
+                                            <p class="text-muted mb-0">The session of this window/tab.</p>
+                                        </div>
+                                        <div class="col">
+                                            <div id="HTMLo_user_session_current${id}"></div>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li class="list-group-item">
+                                    <div class="row align-items-center">
+                                        <div class="col col-12 col-xxl">
+                                            <strong class="mb-2">Rename current session</strong>
+                                            <p class="text-muted mb-0">Change the name of this session.</p>
+                                        </div>
+                                        <div class="col">
+                                            <div class="input-group has-validation">
+                                                <input id="HTMLi_user_session_newName${id}" type="text" class="form-control" placeholder="Input the new session's name" aria-label="Inputbox to type the new name of the session.">
+                                                <button id="HTMLi_user_session_renameBtn${id}" class="btn btn-outline-secondary" placeholder="Click to save the new name" type="button">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
+                                                        <use fill-rule="evenodd" href="#dpIcon-edit${id}"/>
+                                                    </svg>
+                                                    Rename
+                                                </button>
+                                                <div class="invalid-feedback">
+                                                    The name must be unique and not empty.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                    
+                                <li class="list-group-item">
+                                    <div class="row align-items-center">
+                                        <div class="col col-12 col-xl">
+                                            <strong class="mb-2">Concurrent session</strong>
+                                            <p class="text-muted mb-0">Sessions currently open in another windows/tabs.</p>
+                                        </div>
+                                        <div class="col">
+                                            <div id="HTMLo_user_session_concurrent${id}"></div>
+                                        </div>
+                                    </div>
+                                </li>
+
+                            </ul>
+
+                          </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>`;
+        return template.firstElementChild;
+    },
+
     hstackBox(id) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="hstack" id="HTML_hstack${id}">
-                <div class="UIbox">
-                    <!-- <h1>H Stack</h1> -->
-                    <div class="hstack_zoom">
-                        <label for="HTMLi_hstack_fontsize${id}">Zoom</label>
-                        <input type="range" min="14" max="30" step="0.1" id="HTMLf_hstack_zoom${id}">
+            <div id="HTML_hstack${id}">
+
+                <div class="list-group mb-3">
+
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-sm">
+                                <strong class="mb-2">Zoom</strong>
+                                <p class="text-muted mb-0">The table font size.</p>
+                            </div>
+                            <div class="col-auto">
+                                <input type="range" min="14" max="30" step="0.1"
+                                       id="HTMLf_hstack_zoom${id}"
+                                       class="form-range">
+                            </div>
+                        </div>
                     </div>
-                    <button class="TODO" id="HTMLi_hstackDuplicate${id}">Add another H Stack</button>
-                    <div id="HTMLo_hstack_fontsize${id}">
-                        <div class="hstackHT" id="HTMLo_hstackHT${id}"></div>
-                        <div class="hstackFT">
-                            <table class="dataTable">
-                                <tr>
-                                    <th class="hstackDivisor" colspan="4"></th>
-                                </tr>
-                                <tr id="HTMLf_hstackFTrow${id}" class="FToff">
+
+                </div>
+
+                <button class="TODO" id="HTMLi_hstackDuplicate${id}">Add another H Stack</button>
+
+                <div id="HTMLo_hstack_fontsize${id}">
+                    <div id="HTMLo_hstackHT${id}" class="table-responsive"></div>
+                    
+                    <hr/>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr id="HTMLo_hstackFTrow${id}" class="hum-hstack-ft-off">
                                     <td width="12%"><span id="HTMLo_hstackFT_tone${id}"></span></td>
                                     <td width="20%"><span id="HTMLo_hstackFT_note${id}"></span></td>
                                     <td width="25%"><span id="HTMLo_hstackFT_cents${id}"></span></td>
                                     <td width="43%"><span id="HTMLo_hstackFT_hz${id}"></span></td>
                                 </tr>
-                                <tr class="hstackHeader">
-                                    <th class="hstackFT_h">FT</th>
-                                    <th class="hstackFT_note">note</th>
-                                    <th class="hstackFT_cents">cents</th>
-                                    <th class="hstackFT_hz">Hz</th>
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th>FT</th>
+                                    <th>note</th>
+                                    <th>cents</th>
+                                    <th>Hz</th>
                                 </tr>
                                 <tr>
                                     <th colspan="4">Fundamental</th>
                                 </tr>
-                            </table>
-                        </div>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
+
             </div>`;
         return template.firstElementChild;
     },
@@ -406,96 +814,225 @@ HUM.tmpl = {
     pianoBox(id) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="piano" id="HTML_piano${id}">
-                <div class="UIbox">
-                    <div class="controllerKeymap">
-                        <div class="keymapParam">
-                            <label for="HTMLi_controllerKeymapPresets${id}">Keymap</label>&nbsp;
-                            <select id="HTMLi_controllerKeymapPresets${id}" class="controllerKeymapSelect"></select>
-                        </div>
-                        <div class="keymapParam">
-                        <!-- Open the modal content-->
-                        <button id="HTMLf_controllerKeymapTableShow${id}">Show Keymap</button>
-                        <input type="file" accept=".hcmap" id="HTMLi_controllerKeymapFile${id}" class="controllerKeymapFileInput">
-                        </div>
-                        
-                        <!-- The Modal -->
-                        <div id="HTMLf_controllerKeymapModal${id}" class="modalOverlay">
-                        <!-- Modal content -->
-                            <div class="modalOverlay_content">
-                                <span id="HTMLf_controllerKeymapClose${id}" class="modalOverlay_close">&times;</span>
-                                <h1>Controller Keymap</h1>
-                                <div class="controllerKeymapTable" id="HTMLo_controllerKeymapTable${id}"></div>
+            <div id="HTML_piano${id}">
+    
+                <div>The <b>Keymap</b> is used to map FTs and HTs to the <b><i>MIDI controller</i></b>'s keys (input).
+                     There are some pre-built maps but you can write your own and upload them.</div>
+                <div>The <b>Virtual Piano</b> represents and emulates the current active keymap.</div>
+                
+                <div class="list-group mb-1 mt-3">
+
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-lg">
+                                <strong class="mb-2">Keymap</strong>
+                                <p class="text-muted mb-0">The controller's tones "palette".</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group">
+                                    <select id="HTMLi_controllerKeymapPresets${id}" class="form-select"></select>
+                                    <button id="HTMLf_controllerKeymapTableShow${id}" data-bs-toggle="modal" data-bs-target="#HTMLo_controllerKeymapModal${id}" class="btn btn-secondary">Show</button>
+                                </div>
+                                <input type="file" accept=".hcmap" id="HTMLi_controllerKeymapFile${id}" class="form-control mt-2">
                             </div>
                         </div>
                     </div>
-                    <!-- <h1>Virtual MIDI Controller</h1> -->
-                    <div class="pianoSettings1">
-                        <label for="HTMLi_piano_offset${id}">Offset</label>
-                        <!-- 119 (B9) is max startNote for Qwerty Hancock-->
-                        <input type="range" min="0" max="119" step="1" id="HTMLi_piano_offset${id}"><br>
-                        <label for="HTMLi_piano_range${id}">Range</label>
-                        <input type="range" min="1" max="10" step="1" id="HTMLi_piano_range${id}">
-                    </div>
-                    <details>
-                        <summary>Settings</summary>
-                        <div class="pianoSettings2">
-                            <table class="invisibleTable">
-                                <tr>
-                                    <td>
-                                        <label for="HTMLi_piano_velocity${id}">Velocity</label><br>
-                                        <input type="range" min="1" max="127" step="1" id="HTMLi_piano_velocity${id}">
-                                    </td>
-                                    <td>
-                                        <label for="HTMLi_piano_channel${id}">Channel</label><br>
-                                        <input type="number" min="1" max="16" step="1" id="HTMLi_piano_channel${id}">
-                                    </td>
-                                    <td>
-                                        <label for="HTMLi_piano_height${id}">Height</label><br>
-                                        <input type="range" min="40" max="400" step="20" id="HTMLi_piano_height${id}">
-                                    </td>
-                                    <td>
-                                        <label for="HTMLi_piano_width${id}">Width</label><br>
-                                        <input type="range" min="300" max="1000" step="50" id="HTMLi_piano_width${id}">
-                                    </td>
-                                </tr>
-                            </table>
+
+                    <div class="list-group-item">
+                        <div class="mb-2">
+                            <strong>Virtual Controller piano keyboard</strong>
                         </div>
-                    </details>
-                    <div id="HTMLo_hancockContainer${id}" class="hmHancockContainer"></div>
+
+                        <div class="list-group">
+
+                            <div class="list-group-item p-0 border-0 overflow-scroll">
+                                <div id="HTMLo_hancockContainer${id}" class="hmHancockContainer mb-5"></div>
+                            </div>
+
+                            <div class="list-group-item border-top">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-lg">
+                                        <strong class="mb-2">Keys interval</strong>
+                                        <p class="text-muted mb-0">Which notes to show.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="input-group mb-2">
+                                            <label for="HTMLi_piano_offset${id}" class="input-group-text bg-transparent border-0">Offset:</label>
+                                            <input type="range" min="0" max="119" step="1"
+                                                   id="HTMLi_piano_offset${id}"
+                                                   class="form-range h-auto"
+                                                   aria-label="...">
+                                            <!-- NOTE: 119 (B9) is max startNote for Qwerty Hancock-->
+                                        </div>
+
+                                        <div class="input-group">
+                                            <label for="HTMLi_piano_range${id}" class="input-group-text bg-transparent border-0">Range:</label>
+                                            <input type="range" min="1" max="10" step="1"
+                                                   id="HTMLi_piano_range${id}"
+                                                   class="form-range h-auto"
+                                                   aria-label="...">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-lg">
+                                        <strong class="mb-2">Dimensions</strong>
+                                        <p class="text-muted mb-0">How big is the virtual piano.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="input-group mb-2">
+                                            <label for="HTMLi_piano_height${id}" class="input-group-text bg-transparent border-0">Height</label>
+                                            <input type="range" min="40" max="400" step="20"
+                                                   id="HTMLi_piano_height${id}" class="form-range h-auto">
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="HTMLi_piano_width${id}" class="input-group-text bg-transparent border-0">Width</label>
+                                            <input type="range" min="300" max="2000" step="50"
+                                                   id="HTMLi_piano_width${id}" class="form-range h-auto">
+                                            <output name="ageOutputName" id="ageOutputId"></output>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-lg">
+                                        <strong class="mb-2">MIDI options</strong>
+                                        <p class="text-muted mb-0">For the notes generated by the virtual piano.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="input-group mb-2">
+                                            <label for="HTMLi_piano_velocity${id}" class="input-group-text bg-transparent border-0">Velocity</label>
+                                            <input type="range" min="1" max="127" step="1"
+                                                   id="HTMLi_piano_velocity${id}" class="form-range h-auto">
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="HTMLi_piano_channel${id}" class="input-group-text bg-transparent border-0">Channel</label>
+                                            <input type="number" min="1" max="16" step="1"
+                                                   id="HTMLi_piano_channel${id}" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
                 </div>
+
             </div>`;
         return template.firstElementChild;
     },
 
-    dhcBox(id) {
+    dhcBox(id, humID) {
         let template = document.createElement('div');
         template.innerHTML = `
             <div class="dhc" id="HTML_dhc${id}">
-                <div class="UIbox">
-                    <!-- <h1>DHC Settings</h1> -->
-                    <div class="dhcSettings">
-                        <div class="dhcParam">
-                            <label for="HTMLi_dhc_hzAccuracy${id}" title="Places of decimal precision">UI Hz accuracy</label>
-                            <input type="number" min="0" max="50" step="1" id="HTMLi_dhc_hzAccuracy${id}" title="Places of decimal precision">
+                <div>DHC stands for <b><i>Dynamic Harmonics Calculator</i></b>,
+                that is the computational engine that compiles the frequency tables.
+                These are the settings for the UI appearance and other features.</div>
+                <div class="list-group mt-3">
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-md">
+                                <strong class="mb-2">UI Hz accuracy</strong>
+                                <p class="text-muted mb-0">Places of decimal precision.</p>
+                            </div>
+                            <div class="col-auto">
+                                <input type="number" min="0" max="50" step="1"
+                                       id="HTMLi_dhc_hzAccuracy${id}"
+                                       class="form-control"
+                                       aria-label="Places of decimal precision">
+                            </div>
                         </div>
-                        <div class="dhcParam">
-                            <label for="HTMLi_dhc_mcAccuracy${id}" title="Places of decimal precision">UI Cents accuracy</label>
-                            <input type="number" min="0" max="50" step="1" id="HTMLi_dhc_mcAccuracy${id}" title="Places of decimal precision">
+                    </div>
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-md">
+                                <strong class="mb-2">UI Cents accuracy</strong>
+                                <p class="text-muted mb-0">Places of decimal precision.</p>
+                            </div>
+                            <div class="col-auto">
+                                <input type="number" min="0" max="50" step="1"
+                                       id="HTMLi_dhc_mcAccuracy${id}"
+                                       class="form-control"
+                                       aria-label="Places of decimal precision">
+                            </div>
                         </div>
-                        <div class="dhcParam">
-                            <label>Middle C octave</label>
-                            <label for="HTMLi_dhc_middleC${id}" class="dhcMiddleC">C
-                                <input type="number" id="HTMLi_dhc_middleC${id}">
-                            </label>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-md">
+                                <strong class="mb-2">Enharmonic note naming</strong>
+                                <p class="text-muted mb-0"># or <i>b</i>.</p>
+                            </div>
+                            <div class="col-auto">
+                                <select id="HTMLi_dhc_enharmonicNN${id}" class="form-select">
+                                    <option value="sharp">Sharp</option>
+                                    <option value="flat">Flat</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="dhcParam">
-                            <label for="HTMLi_dhc_pitchbendRange${id}" title="Cents">Ctrl PitchBend range</label>
-                            <input type="number" min="0" step="100" id="HTMLi_dhc_pitchbendRange${id}" title="Cents">
+                    </div>
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-md">
+                                <strong class="mb-2">Middle C octave</strong>
+                                <p class="text-muted mb-0">In which MIDI octave is the Middle C.</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group">
+
+                                    <label for="HTMLi_dhc_middleC${id}"
+                                           class="input-group-text">C</label>
+                                    <input type="number" min="-100" max="100" step="1"
+                                           id="HTMLi_dhc_middleC${id}"
+                                           class="form-control"
+                                           aria-label="In which MIDI octave is the Middle C">
+                                </div>
+                            </div>
                         </div>
-                        <div class="dhcParam">
-                            <label for="HTMLi_dhc_piperSteps${id}">Piper (HT0) steps</label>
-                            <input type="number" min="1" id="HTMLi_dhc_piperSteps${id}">
+                    </div>
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-md">
+                                <strong class="mb-2">Controller's PitchBend range</strong>
+                                <p class="text-muted mb-0">Sensitivity for MIDI Pitch Bend Change inputs.</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="input-group">
+
+                                    <input type="number" min="0" max=9600 step="100"
+                                           id="HTMLi_dhc_pitchbendRange${id}"
+                                           class="form-control"
+                                           aria-label="Pitch Bend input sensitivity">
+                                    <label for="HTMLi_dhc_middleC${id}"
+                                           class="input-group-text">cents</label>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="currentColor" viewBox="0 0 16 16">
+                                    <use fill-rule="evenodd" href="#dpIcon-piper${humID}"/>
+                                </svg>
+                                <strong class="mb-2">Piper (HT0) steps</strong>
+                                <p class="text-muted mb-0">Number of HTs the "manual arpeggiator" can store.</p>
+                            </div>
+                            <div class="col-auto">
+                                <input type="number" min="1" max=9999 step="1"
+                                       id="HTMLi_dhc_piperSteps${id}"
+                                       class="form-control"
+                                       aria-label="HTs stored">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -503,279 +1040,906 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
-    dpPadBox(id) {
+    dpPadBox(id, humID) {
         let template = document.createElement('div');
         template.innerHTML = `
             <div class="dpPadBackend" id="HTMLf_dpPadSettings${id}">
-                <div class="UIbox">
- 
-                    <div class="dpPadSettings">                        
-                        <details open>
-                            <summary>SCALES RANGE</summary>
-                            <div class="dpPadParam">
-                                <!-- freqRange -->
-                                <label for="HTMLi_dppad_freq_range_ft${id}">FT note range</label>
-                                <select id="HTMLi_dppad_freq_range_ft${id}"></select>
-                                <button id="HTMLi_dppad_freq_range_custom_save_ft${id}" style="display:none;">Save</button>
-                            </div>
-                            <div class="dpPadParam">
-                                <label for="HTMLi_dppad_freq_range_custom_min_ft${id}" title="Notes in scientific pitch nontation">Custom FT note range</label>
-                                mc Max: <input type="number" min="0" max="127" step="1" id="HTMLi_dppad_freq_range_custom_max_ft${id}" title="Note in midicents notation">&nbsp;
-                                        <span id="HTMLo_dppad_freq_range_custom_max_trad_ft${id}"></span><br/>
-                                mc Min: <input type="number" min="0" max="127" step="1" id="HTMLi_dppad_freq_range_custom_min_ft${id}" title="Note in midicents notation">&nbsp;
-                                        <span id="HTMLo_dppad_freq_range_custom_min_trad_ft${id}"></span>
-                            </div>
 
-                            <button id="HTMLi_dppad_freq_range_copy_to_ht${id}" class="dpPadCopyFreqRange">HT same as FT</button>
-                            <button id="HTMLi_dppad_freq_range_copy_to_ft${id}" class="dpPadCopyFreqRange">FT same as HT</button>
-                            
-                            <div class="dpPadParam">
-                                <!-- freqRange -->
-                                <label for="HTMLi_dppad_freq_range_ht${id}">HT frequency range</label>
-                                <select id="HTMLi_dppad_freq_range_ht${id}"></select>
-                                <button id="HTMLi_dppad_freq_range_custom_save_ht${id}" style="display:none;">Save</button>
+                <div class="list-group mb-3">
+                    <div class="list-group-item hum-section-title p-2 ps-3">
+                        FT Pad
+                    </div>
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-lg">
+                                <strong class="mb-2">FT note range</strong>
+                                <p class="text-muted mb-0">The ambitus of your voice.</p>
                             </div>
-                            <div class="dpPadParam">
-                                <label for="HTMLi_dppad_freq_range_custom_min_ht${id}" title="Frequencies in Hz">Custom HT frequecy range</label>
-                                Hz Max: <input type="number" min="1" step="1" id="HTMLi_dppad_freq_range_custom_max_ht${id}" title="Frequency in hertz">&nbsp;
-                                        <span id="HTMLo_dppad_freq_range_custom_max_trad_ht${id}"></span><br/>
-                                Hz Min: <input type="number" min="1" step="1" id="HTMLi_dppad_freq_range_custom_min_ht${id}" title="Frequency in hertz">&nbsp;
-                                        <span id="HTMLo_dppad_freq_range_custom_min_trad_ht${id}"></span>
+                            <div class="col-auto">
+
+                                <div class="input-group">
+                                    <select id="HTMLi_dppad_freq_range_ft${id}" class="form-select"></select>
+                                    <button id="HTMLi_dppad_freq_range_custom_save_ft${id}" class="btn btn-secondary" style="display:none;">Save</button>
+                                </div>
+
                             </div>
-                        </details>
+                        </div>
                     </div>
 
-                    <div class="dpPadSettings">
-                        <details>
-                            <summary>PADS</summary>
-                            <div class="dpPadParam">
-                                <!-- orientation -->
-                                <label for="HTMLi_dppad_main_orientation${id}">Pads orientation</label>
-                                <select id="HTMLi_dppad_main_orientation${id}">
-                                    <option value="vertical">Vertical</option>
-                                    <option value="horizontal">Horizontal</option>
-                                </select>
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-lg">
+                                <strong class="mb-2">Custom FT note range</strong>
+                                <p class="text-muted mb-0">Frequency expressed in MIDI units with decimals.</p>
                             </div>
-                            <div class="dpPadParam">
-                                <!-- scaleOrientation -->
-                                <label for="HTMLi_dppad_scale_orientation_ft${id}">FT scale orientation</label>
-                                <select id="HTMLi_dppad_scale_orientation_ft${id}">
-                                    <option value="vertical">Vertical</option>
-                                    <option value="horizontal">Horizontal</option>
-                                </select>
-                            </div>
-                            <div class="dpPadParam">
-                                <!-- scaleOrientation -->
-                                <label for="HTMLi_dppad_scale_orientation_ht${id}">HT scale orientation</label>
-                                <select id="HTMLi_dppad_scale_orientation_ht${id}">
-                                    <option value="vertical">Vertical</option>
-                                    <option value="horizontal">Horizontal</option>
-                                </select>
-                            </div>
+                            <div class="col-auto">
 
-                            <div class="dpPadParam">
-                                <!-- padOrder -->
-                                <label for="HTMLi_dppad_pads_order${id}">Pads order</label>
-                                <select id="HTMLi_dppad_pads_order${id}">
-                                    <option value="ftht">FT - HT</option>
-                                    <option value="htft">HT - FT</option>
-                                </select>
-                            </div>
+                                <div class="input-group mb-3">
+                                    <label for="HTMLi_dppad_freq_range_custom_max_ft${id}" class="input-group-text bg-transparent border-0">Max:</label>
+                                    <input type="number" min="0" max="127" step="1"
+                                           id="HTMLi_dppad_freq_range_custom_max_ft${id}"
+                                           class="form-control"
+                                           aria-label="Note in midicents notation">
+                                    <span class="input-group-text">midi#.&cent;</span>
+                                    <span id="HTMLo_dppad_freq_range_custom_max_trad_ft${id}" class="input-group-text bg-transparent border-0"></span>
+                                </div>
 
-                        </details>
+                                <div class="input-group mb-3">
+                                    <label for="HTMLi_dppad_freq_range_custom_min_ft${id}" class="input-group-text bg-transparent border-0">Min:</label>
+                                    <input type="number" min="0" max="127" step="1"
+                                           id="HTMLi_dppad_freq_range_custom_min_ft${id}"
+                                           class="form-control"
+                                           aria-label="Note in midicents notation"
+                                           title="Note in midicents notation">
+                                    <span class="input-group-text">midi#.&cent;</span>
+                                    <span id="HTMLo_dppad_freq_range_custom_min_trad_ft${id}" class="input-group-text bg-transparent border-0"></span>
+                                </div>
+
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="dpPadSettings">
-                        <details>
-                            <summary>TOOLBAR</summary>
-                            <div class="dpPadParam">
-                                <!-- toolbarOrientation -->
-                                <label for="HTMLi_dppad_toolbar_orientation${id}">Toolbar orient.</label>
-                                <select id="HTMLi_dppad_toolbar_orientation${id}">
-                                    <option value="longitudinal">Longitudinal</option>
-                                    <option value="transversal">Transversal</option>
-                                </select>
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-md">
+                                <strong class="mb-2">Range copy</strong>
+                                <p class="text-muted mb-0">Copy the range of HT pad to the FT one.</p>
                             </div>
-                            <div class="dpPadParam">
-                                <!-- toolbarPosition -->
-                                <label for="HTMLi_dppad_toolbar_position${id}">Toolbar position</label>
-                                <select id="HTMLi_dppad_toolbar_position${id}">
-                                    <option value="0">Pre</option>
-                                    <option value="1">Mid</option>
-                                    <option value="2">Post</option>
-                                </select>
+                            <div class="col-auto">
+                                <button id="HTMLi_dppad_freq_range_copy_to_ft${id}" class="btn btn-secondary">FT same as HT</button>
                             </div>
-                        </details>
+                        </div>
                     </div>
 
-                   <div class="dpPadSettings">
-                        <!-- FONTSIZE -->
-                        <details>
-                            <summary>FONTS</summary>
+                </div>
 
-                            <div class="dpPadParam">
-                                <label for="HTMLi_dppad_fontsize_hzMonitor_ft${id}" title="Pixels">FT Font size freq. monitor</label>
-                                <input type="number" min="1" step="1" id="HTMLi_dppad_fontsize_hzMonitor_ft${id}" title="Pixels">
-                            </div>
-                            <!-- <div class="dpPadParam">
-                                <label for="HTMLi_dppad_fontsize_noteMonitor_ft${id}" title="Pixels">FT Font size note monitor</label>
-                                <input type="number" min="1" max="100" step="1" id="HTMLi_dppad_fontsize_noteMonitor_ft${id}" title="Pixels">
-                            </div> -->
-                            <!-- <div class="dpPadParam">
-                                <label for="HTMLi_dppad_fontsize_lineLabel_ft${id}" title="Pixels">FT Font size Lines labels</label>
-                                <input type="number" min="1" max="100" step="1" id="HTMLi_dppad_fontsize_lineLabel_ft${id}" title="Pixels">
-                            </div> -->
-                            <div class="dpPadParam">
-                                <label for="HTMLi_dppad_fontsize_keyLabel_ft${id}" title="Pixels">FT Font size Keys labels</label>
-                                <input type="number" min="1" step="1" id="HTMLi_dppad_fontsize_keyLabel_ft${id}" title="Pixels">
-                            </div>
+                <div class="list-group mb-3">
 
-
-                            <div class="dpPadParam">
-                                <label for="HTMLi_dppad_fontsize_hzMonitor_ht${id}" title="Pixels">HT Font size freq. monitor</label>
-                                <input type="number" min="1" step="1" id="HTMLi_dppad_fontsize_hzMonitor_ht${id}" title="Pixels">
-                            </div>
-                            <!-- <div class="dpPadParam">
-                                <label for="HTMLi_dppad_fontsize_noteMonitor_ht${id}" title="Pixels">HT Font size note monitor</label>
-                                <input type="number" min="1" max="100" step="1" id="HTMLi_dppad_fontsize_noteMonitor_ht${id}" title="Pixels">
-                            </div> -->
-                            <div class="dpPadParam">
-                                <label for="HTMLi_dppad_fontsize_lineLabel_ht${id}" title="Pixels">HT Font size Lines labels</label>
-                                <input type="number" min="1" step="1" id="HTMLi_dppad_fontsize_lineLabel_ht${id}" title="Pixels">
-                            </div>
-                            <div class="dpPadParam">
-                                <label for="HTMLi_dppad_fontsize_keyLabel_ht${id}" title="Pixels">HT Font size Keys labels</label>
-                                <input type="number" min="1" step="1" id="HTMLi_dppad_fontsize_keyLabel_ht${id}" title="Pixels">
-                            </div>
-                        </details>
-
+                    <div class="list-group-item hum-section-title p-2 ps-3" style="--bs-bg-opacity: .1;">
+                        HT Pad
                     </div>
 
-                    <div class="dpPadSettings">
-
-                        <details>
-                            <summary>Experimental</summary>
-
-                            <div class="dpPadParam">
-                                <!-- scaleDisplay -->
-                                <label for="HTMLi_dppad_scale_display_ft${id}">FT scale on HT pad</label>
-                                <input type="checkbox" id="HTMLi_dppad_scale_display_ft${id}">
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-lg">
+                                <strong class="mb-2">HT frequency range</strong>
+                                <p class="text-muted mb-0">The range you can cover with the formant of your oral cavity..</p>
                             </div>
-                            <div class="dpPadParam">
-                                <!-- scaleDisplay -->
-                                <label for="HTMLi_dppad_scale_display_ht${id}">HT scale on FT pad</label>
-                                <input type="checkbox" id="HTMLi_dppad_scale_display_ht${id}">
-                            </div>
-                            
-                            <div class="dpPadParam">
-                                <!-- renderMode -->
-                                <label for="HTMLi_dppad_render_mode${id}">Render quality</label>
-                                <select id="HTMLi_dppad_render_mode${id}">
-                                    <option value="classic">Low resolution</option>
-                                    <option value="hidpi">High resolution</option>
-                                </select>
-                            </div>
+                            <div class="col-auto">
 
-                            <!-- canvasesRatio
-                            canvasObjectsRatio (keys width) -->
-                        </details>
+                                <div class="input-group">
+                                    <select id="HTMLi_dppad_freq_range_ht${id}" class="form-select"></select>
+                                    <button id="HTMLi_dppad_freq_range_custom_save_ht${id}" class="btn btn-secondary" style="display:none;">Save</button>
+                                </div>
 
+                            </div>
+                        </div>
                     </div>
+
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-lg">
+                                <strong class="mb-2">Custom HT frequecy range</strong>
+                                <p class="text-muted mb-0">Notes in scientific pitch nontation (midicents).</p>
+                            </div>
+                            <div class="col-auto">
+
+                                <div class="input-group mb-3">
+                                    <label for="HTMLi_dppad_freq_range_custom_max_ht${id}" class="input-group-text bg-transparent border-0">Max:</label>
+                                    <input type="number" min="1" max="99999" step="1"
+                                           id="HTMLi_dppad_freq_range_custom_max_ht${id}"
+                                           class="form-control"
+                                           aria-label="Frequency in hertz"
+                                           title="Frequency in hertz">
+                                    <span class="input-group-text">Hz</span>
+                                    <span id="HTMLo_dppad_freq_range_custom_max_trad_ht${id}" class="input-group-text bg-transparent border-0"></span>
+                                </div>
+
+                                <div class="input-group mb-3">
+                                    <label for="HTMLi_dppad_freq_range_custom_min_ht${id}" class="input-group-text bg-transparent border-0">Min:</label>
+                                    <input type="number" min="1" max="99999" step="1"
+                                           id="HTMLi_dppad_freq_range_custom_min_ht${id}"
+                                           class="form-control"
+                                           aria-label="Frequency in hertz"
+                                           title="Frequency in hertz">
+                                    <span class="input-group-text">Hz</span>
+                                    <span id="HTMLo_dppad_freq_range_custom_min_trad_ht${id}" class="input-group-text bg-transparent border-0"></span>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-md">
+                                <strong class="mb-2">Range copy</strong>
+                                <p class="text-muted mb-0">Copy the range of FT pad to the HT one.</p>
+                            </div>
+                            <div class="col-auto">
+
+                                <button id="HTMLi_dppad_freq_range_copy_to_ht${id}" class="btn btn-secondary">HT same as FT</button>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="accordion">
+
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="panelsStayOpen-headingTwo">
+                      <button class="accordion-button collapsed hum-section-title" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseTwo" aria-expanded="false" aria-controls="panelsStayOpen-collapseTwo">
+                        Pads position
+                      </button>
+                    </h2>
+
+                    <div id="panelsStayOpen-collapseTwo" class="accordion-collapse collapse" aria-labelledby="panelsStayOpen-headingTwo">
+                      <div class="accordion-body p-1 p-sm-2 p-md-3">
+                        <div class="list-group mb-2">
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="currentColor" viewBox="0 0 16 16">
+                                            <use fill-rule="evenodd" href="#dpIcon-rotateView${humID}"/>
+                                        </svg>
+                                        <strong class="mb-2">Pads orientation</strong>
+                                        <p class="text-muted mb-0">Rotate the entire viewport.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select id="HTMLi_dppad_main_orientation${id}" class="form-select">
+                                            <option value="vertical">Vertical</option>
+                                            <option value="horizontal">Horizontal</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="currentColor" viewBox="0 0 16 16">
+                                            <use fill-rule="evenodd" href="#dpIcon-rotateFT${humID}"/>
+                                        </svg>
+                                        <strong class="mb-2">FT scale orientation</strong>
+                                        <p class="text-muted mb-0">Rotate only the FT pad.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select id="HTMLi_dppad_scale_orientation_ft${id}" class="form-select">
+                                            <option value="vertical">Vertical</option>
+                                            <option value="horizontal">Horizontal</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="currentColor" viewBox="0 0 16 16">
+                                            <use fill-rule="evenodd" href="#dpIcon-rotateHT${humID}"/>
+                                        </svg>
+                                        <strong class="mb-2">HT scale orientation</strong>
+                                        <p class="text-muted mb-0">Rotate only the HT pad.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select id="HTMLi_dppad_scale_orientation_ht${id}" class="form-select">
+                                            <option value="vertical">Vertical</option>
+                                            <option value="horizontal">Horizontal</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" fill="currentColor" viewBox="0 0 16 16">
+                                            <use fill-rule="evenodd" href="#dpIcon-invertPads${humID}"/>
+                                        </svg>
+                                        <strong class="mb-2">Pads order</strong>
+                                        <p class="text-muted mb-0">Swap the pads.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select id="HTMLi_dppad_pads_order${id}" class="form-select">
+                                            <option value="ftht">FT - HT</option>
+                                            <option value="htft">HT - FT</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                      
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="panelsStayOpen-headingThree">
+                      <button class="accordion-button collapsed hum-section-title" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseThree" aria-expanded="false" aria-controls="panelsStayOpen-collapseThree">
+                        Toolbar
+                      </button>
+                    </h2>
+                    <div id="panelsStayOpen-collapseThree" class="accordion-collapse collapse" aria-labelledby="panelsStayOpen-headingThree">
+                      <div class="accordion-body">
+
+                        <div class="list-group mb-2">
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="currentColor" viewBox="0 0 16 16">
+                                            <use fill-rule="evenodd" href="#dpIcon-toolbarPos${humID}"/>
+                                        </svg>
+                                        <strong class="mb-2">Toolbar orientation</strong>
+                                        <p class="text-muted mb-0">Rotate the toolbar.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select id="HTMLi_dppad_toolbar_orientation${id}" class="form-select">
+                                            <option value="longitudinal">Longitudinal</option>
+                                            <option value="transversal">Transversal</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="currentColor" viewBox="0 0 16 16">
+                                            <use fill-rule="evenodd" href="#dpIcon-toolbarPos${humID}"/>
+                                        </svg>
+                                        <strong class="mb-2">Toolbar position</strong>
+                                        <p class="text-muted mb-0">Place the toolbar before, in between or after the pads.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select id="HTMLi_dppad_toolbar_position${id}" class="form-select">
+                                            <option value="0">Pre</option>
+                                            <option value="1">Mid</option>
+                                            <option value="2">Post</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-lg">
+                                        <strong class="mb-2">Toolbar icons</strong>
+                                        <p class="text-muted mb-0">Activate and deactivate the icons in the toolbar.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <ul class="list-group">
+                                            <li id="HTMLf_toolbar_icon_menu${id}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
+                                                    <use fill-rule="evenodd" href="#dpIcon-menu${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">Settings</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input disabled id="HTMLi_toolbar_icon_menu_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                            <li id="HTMLf_toolbar_icon_rotateView${id}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
+                                                    <use fill-rule="evenodd" href="#dpIcon-rotateView${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">Rotate viewport</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input id="HTMLi_toolbar_icon_rotateView_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                            <li id="HTMLf_toolbar_icon_toolbarPos${id}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
+                                                    <use fill-rule="evenodd" href="#dpIcon-toolbarPos${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">Toolbar position</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input id="HTMLi_toolbar_icon_toolbarPos_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                            <li id="HTMLf_toolbar_icon_invertPads${id}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
+                                                    <use fill-rule="evenodd" href="#dpIcon-invertPads${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">Swap/invert pads</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input id="HTMLi_toolbar_icon_invertPads_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                            <li id="HTMLf_toolbar_icon_rotateFT${id}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
+                                                    <use fill-rule="evenodd" href="#dpIcon-rotateFT${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">Rotate FT pad</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input id="HTMLi_toolbar_icon_rotateFT_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                            <li id="HTMLf_toolbar_icon_rotateHT${id}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
+                                                    <use fill-rule="evenodd" href="#dpIcon-rotateHT${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">Rotate HT pad</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input id="HTMLi_toolbar_icon_rotateHT_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                            <li id="HTMLf_toolbar_icon_textIncrease${id}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
+                                                    <use fill-rule="evenodd" href="#dpIcon-textIncrease${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">Increase fonts size</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input id="HTMLi_toolbar_icon_textIncrease_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                            <li id="HTMLf_toolbar_icon_textDecrease${id}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
+                                                    <use fill-rule="evenodd" href="#dpIcon-textDecrease${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">Decrease fonts size</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input id="HTMLi_toolbar_icon_textDecrease_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                            <li id="HTMLf_toolbar_icon_piper${id}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
+                                                    <use fill-rule="evenodd" href="#dpIcon-piper${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">Piper button</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input id="HTMLi_toolbar_icon_piper_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                            <li id="HTMLf_toolbar_icon_panic${id}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
+                                                    <use fill-rule="evenodd" href="#dpIcon-panic${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">Panic (all notes off)</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input id="HTMLi_toolbar_icon_panic_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                            <li id="HTMLf_toolbar_icon_openLog${id}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
+                                                    <use fill-rule="evenodd" href="#dpIcon-openLog${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">Open/close the log</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input id="HTMLi_toolbar_icon_openLog_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="panelsStayOpen-headingFour">
+                      <button class="accordion-button collapsed hum-section-title" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseFour" aria-expanded="false" aria-controls="panelsStayOpen-collapseThree">
+                        Fonts size
+                      </button>
+                    </h2>
+                    <div id="panelsStayOpen-collapseFour" class="accordion-collapse collapse" aria-labelledby="panelsStayOpen-headingFour">
+                      <div class="accordion-body">
+
+                        <div class="list-group mb-2">
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <strong class="mb-2">FT Font size freq. monitor</strong>
+                                        <p class="text-muted mb-0">The frequency at the bottom of the FT pad.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="input-group">
+                                            <input type="number" min="1" max="9999" step="1"
+                                                   id="HTMLi_dppad_fontsize_hzMonitor_ft${id}"
+                                                   class="form-control"
+                                                   aria-label="Size in Pixels"
+                                                   title="Size in Pixels">
+                                            <span class="input-group-text">px</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <strong class="mb-2">FT Font size Keys labels</strong>
+                                        <p class="text-muted mb-0">The note names on the FT keys.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="input-group">
+                                            <input type="number" min="1" max="9999" step="1"
+                                                   id="HTMLi_dppad_fontsize_keyLabel_ft${id}"
+                                                   class="form-control"
+                                                   aria-label="Size in percentage"
+                                                   title="Size in &percnt;">
+                                            <span class="input-group-text">&percnt;</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <strong class="mb-2">HT Font size freq. monitor</strong>
+                                        <p class="text-muted mb-0">The note names on the FT keys.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="input-group">
+                                            <input type="number" min="1" max="9999" step="1"
+                                                   id="HTMLi_dppad_fontsize_hzMonitor_ht${id}"
+                                                   class="form-control"
+                                                   aria-label="Size in Pixels"
+                                                   title="Size in Pixels">
+                                            <span class="input-group-text">px</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <strong class="mb-2">HT Font size Keys labels</strong>
+                                        <p class="text-muted mb-0">The note names on the FT keys.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="input-group">
+                                            <input type="number" min="1" max="9999" step="1"
+                                                   id="HTMLi_dppad_fontsize_keyLabel_ht${id}"
+                                                   class="form-control"
+                                                   aria-label="Size in percentage"
+                                                   title="Size in &percnt;">
+                                            <span class="input-group-text">&percnt;</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <strong class="mb-2">HT Font size Lines labels</strong>
+                                        <p class="text-muted mb-0">The note names on the FT keys.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="input-group">
+                                            <input type="number" min="1" max="9999" step="1"
+                                                   id="HTMLi_dppad_fontsize_lineLabel_ht${id}"
+                                                   class="form-control"
+                                                   aria-label="Size in percentage"
+                                                   title="Size in &percnt;">
+                                            <span class="input-group-text">&percnt;</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                    <!-- <div>
+                        <label for="HTMLi_dppad_fontsize_noteMonitor_ft${id}" title="Pixels">FT Font size note monitor</label>
+                        <input type="number" min="1" max="100" step="1" id="HTMLi_dppad_fontsize_noteMonitor_ft${id}" title="Pixels">
+                    </div> -->
+                    <!-- <div>
+                        <label for="HTMLi_dppad_fontsize_lineLabel_ft${id}" title="Pixels">FT Font size Lines labels</label>
+                        <input type="number" min="1" max="100" step="1" id="HTMLi_dppad_fontsize_lineLabel_ft${id}" title="Pixels">
+                    </div> -->
+                    <!-- <div>
+                        <label for="HTMLi_dppad_fontsize_noteMonitor_ht${id}" title="Pixels">HT Font size note monitor</label>
+                        <input type="number" min="1" max="100" step="1" id="HTMLi_dppad_fontsize_noteMonitor_ht${id}" title="Pixels">
+                    </div> -->
+
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="panelsStayOpen-headingFive">
+                      <button class="accordion-button collapsed hum-section-title" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseFive" aria-expanded="false" aria-controls="panelsStayOpen-collapseThree">
+                        Experimental
+                      </button>
+                    </h2>
+                    <div id="panelsStayOpen-collapseFive" class="accordion-collapse collapse" aria-labelledby="panelsStayOpen-headingFive">
+                      <div class="accordion-body">
+
+                        <div class="list-group mb-2">
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <strong class="mb-2">FT scale on HT pad</strong>
+                                        <p class="text-muted mb-0">Show the piano keys along the harmonic series.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="form-check form-control-lg form-switch">
+                                            <input type="checkbox" id="HTMLi_dppad_scale_display_ft${id}"
+                                                   class="form-check-input" role="switch">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <strong class="mb-2">HT scale on FT pad</strong>
+                                        <p class="text-muted mb-0">Show the harmonics series along the piano keys.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="form-check form-control-lg form-switch">
+                                            <input type="checkbox" id="HTMLi_dppad_scale_display_ht${id}"
+                                                   class="form-check-input" role="switch">
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-lg">
+                                        <strong class="mb-2">Render quality</strong>
+                                        <p class="text-muted mb-0">The resolution mode for rendering the HTML Canvas.</p>
+                                        <p class="text-muted mb-0"><i>NOTE: It applies only on HiDPI displays.</i></p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select id="HTMLi_dppad_render_mode${id}" class="form-select">
+                                            <option value="classic">Low resolution</option>
+                                            <option value="hidpi">High resolution</option>
+                                        </select>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
 
                 </div>
             </div>`;
         return template.firstElementChild;
     },
 
-    synthBox(id) {
+    synthBox(id, humID) {
         let template = document.createElement('div');
         template.innerHTML = `
             <div class="synth" id="HTML_synth${id}">
-                <div class="UIbox">
-                    <div class="synthColumn">
-                        <div class="synthRxPanel">
-                            <div class="synthParam">
-                                <label for="HTMLi_synth_attack${id}">&minus; &nbsp;&nbsp;Attack &nbsp;&nbsp;&plus;</label>
-                                <!-- time (sec) -->
-                                <input type="range" min="0.02" max="5" step="0.01" id="HTMLi_synth_attack${id}" data-tooltip="">
+
+                <div class="container-fluid px-0">
+                    <div class="row g-2">
+
+                        <div class="col-lg-4">
+
+                            <div class="card h-100">
+                              <div class="card-header">
+                                Main
+                              </div>
+                              <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-12 d-flex">
+                                        <div class="form-check form-control-lg form-switch mx-auto">
+                                            <label for="HTMLi_synth_power${id}" class="form-label">ON/OFF</label>
+                                            <input type="checkbox" name="synt" id="HTMLi_synth_power${id}" class="form-check-input" role="switch">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12 hum-range-param">
+                                        <label for="HTMLi_synth_volume${id}" class="hum-justify">&minus; &nbsp;&nbsp;MASTER &nbsp;VOLUME &nbsp;&nbsp;&plus;</label>
+                                        <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volume${id}" class="form-range">
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div id="HTMLo_synth_meter${id}" class="hmVUmeter mx-auto"></div>
+                                    </div>
+                                </div>
+                              </div>
                             </div>
-                            <div class="synthParam">
-                                <label for="HTMLi_synth_sustain${id}">&minus; &nbsp;&nbsp;Sustain &nbsp;&nbsp;&plus;</label>
-                                <!-- gain value amount (0 > 1) -->
-                                <input type="range" min="0.018" max="1" step="0.001" id="HTMLi_synth_sustain${id}">
-                            </div>
+                        
                         </div>
-                        <!-- <h1>Built-in Synth</h1> -->
-                        <div class="synthSxPanel">
-                            <div class="synthParam">
-                                <label for="HTMLi_synth_power${id}">ON/OFF</label>
-                                <input type="checkbox" name="synt" id="HTMLi_synth_power${id}">
+
+                        <div class="col-lg-8">
+
+                            <div class="row g-2">
+                                <div class="col-lg-12">
+                                    <div class="card mb-2">
+                                      <div class="card-header">
+                                        ADSR
+                                      </div>
+                                      <div class="card-body">
+
+                                        <div class="row">
+                                            <div class="col-lg-6 hum-range-param">
+                                                <label for="HTMLi_synth_attack${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Attack &nbsp;&nbsp;&plus;</label>
+                                                <!-- time (sec) -->
+                                                <input type="range" min="0.02" max="5" step="0.01" id="HTMLi_synth_attack${id}" class="form-range">
+                                            </div>
+                                            <div class="col-lg-6 hum-range-param">
+                                                <label for="HTMLi_synth_decay${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Decay &nbsp;&nbsp;&plus;</label>
+                                                <!-- time (timeconstant) -->
+                                                <input type="range" min="0.001" max="1" step="0.001" id="HTMLi_synth_decay${id}" class="form-range">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-lg-6 hum-range-param">
+                                                <label for="HTMLi_synth_sustain${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Sustain &nbsp;&nbsp;&plus;</label>
+                                                <!-- gain value amount (0 > 1) -->
+                                                <input type="range" min="0.018" max="1" step="0.001" id="HTMLi_synth_sustain${id}" class="form-range">
+                                            </div>
+                                            <div class="col-lg-6 hum-range-param">
+                                                <label for="HTMLi_synth_release${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Release &nbsp;&nbsp;&plus;</label>
+                                                <!-- time (sec) -->
+                                                <input type="range" min="0.02" max="5" step="0.01" id="HTMLi_synth_release${id}" class="form-range">
+                                            </div>
+                                        </div>
+
+                                      </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="synthParam">
-                                <label for="HTMLi_synth_portamento${id}">&minus; &nbsp;&nbsp;Portamento &nbsp;&nbsp;&plus;</label>
-                                <input type="range" min="0" max="0.20" step="0.01" id="HTMLi_synth_portamento${id}">
+
+                            <div class="row g-2">
+                                <div class="col-lg-6">
+
+                                    <div class="card">
+                                      <div class="card-header">
+                                        Fundamental Tone
+                                      </div>
+                                      <div class="card-body">
+
+                                        <div class="row">
+                                            <div class="col-lg-12 hum-range-param">
+                                                <label for="HTMLi_synth_volumeFT${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;FT Volume &nbsp;&nbsp;&plus;</label>
+                                                <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volumeFT${id}" class="form-range">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-lg-12">
+                                                <label for="HTMLi_synth_waveformFT${id}" class="form-label">FT Waveform</label>
+                                                <select id="HTMLi_synth_waveformFT${id}" class="form-select">
+                                                    <option value="sine">Sine</option>
+                                                    <option value="sawtooth">Sawtooth</option>
+                                                    <option value="square">Square</option>
+                                                    <option value="triangle">Triangle</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-lg-12 hum-range-param">
+                                                <label for="HTMLi_synth_portamento${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Portamento &nbsp;&nbsp;&plus;</label>
+                                                <input type="range" min="0" max="0.20" step="0.01" id="HTMLi_synth_portamento${id}" class="form-range">
+                                            </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                </div>
+                                <div class="col-lg-6">
+
+                                    <div class="card h-100">
+                                      <div class="card-header">
+                                        Harmonic Tones
+                                      </div>
+                                      <div class="card-body">
+
+                                        <div class="row">
+                                            <div class="col-lg-12 hum-range-param">
+                                                <label for="HTMLi_synth_volumeHT${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;HTs Volume &nbsp;&nbsp;&plus;</label>
+                                                <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volumeHT${id}" class="form-range">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-lg-12">
+                                                <label for="HTMLi_synth_waveformHT${id}" class="form-label">HTs Waveform</label>
+                                                <select id="HTMLi_synth_waveformHT${id}" class="form-select">
+                                                    <option value="sine">Sine</option>
+                                                    <option value="sawtooth">Sawtooth</option>
+                                                    <option value="square">Square</option>
+                                                    <option value="triangle">Triangle</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                      </div>
+                                    </div>
+
+                                </div>
                             </div>
-                        </div>
-                        <div class="synthTonePanel">
-                            <table class="invisibleTable">
-                                <tr>
-                                    <th>Fundamental Tone</th>
-                                    <th>Harmonic Tones</th>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <label for="HTMLi_synth_volumeFT${id}">&minus; &nbsp;&nbsp;FT Volume &nbsp;&nbsp;&plus;</label>
-                                        <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volumeFT${id}">
-                                    </td>
-                                    <td>
-                                        <label for="HTMLi_synth_volumeHT${id}">&minus; &nbsp;&nbsp;HTs Volume &nbsp;&nbsp;&plus;</label>
-                                        <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volumeHT${id}">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <label for="HTMLi_synth_waveformFT${id}">FT Waveform</label>
-                                        <select id="HTMLi_synth_waveformFT${id}">
-                                            <option value="sine">Sine</option>
-                                            <option value="sawtooth">Sawtooth</option>
-                                            <option value="square">Square</option>
-                                            <option value="triangle">Triangle</option>
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <label for="HTMLi_synth_waveformHT${id}">HTs Waveform</label>
-                                        <select id="HTMLi_synth_waveformHT${id}">
-                                            <option value="sine">Sine</option>
-                                            <option value="sawtooth">Sawtooth</option>
-                                            <option value="square">Square</option>
-                                            <option value="triangle">Triangle</option>
-                                        </select>
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="synthReverbPanel">
-                            <label for="HTMLi_synth_reverb${id}">DRY &nbsp;&ndash; &nbsp;Convolution Reverb &nbsp;&ndash; &nbsp;WET</label>
-                            <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_reverb${id}">
-                            <p></p>
-                            <input type="file" id="HTMLi_synth_irFile${id}" accept=".wav">
+
                         </div>
                     </div>
-                    <div class="synthColumn synthOut">
-                        <div class="synthParam">
-                            <label for="HTMLi_synth_decay${id}">&minus; &nbsp;&nbsp;Decay &nbsp;&nbsp;&plus;</label>
-                            <!-- time (timeconstant) -->
-                            <input type="range" min="0.001" max="1" step="0.001" id="HTMLi_synth_decay${id}">
+
+                    <div class="row g-2">
+
+                        <div class="col-lg-12">
+
+                            <div class="card mt-2">
+                              <div class="card-header">
+                                Convolution Reverb
+                              </div>
+                              <div class="card-body">
+
+                                <div class="row">
+                                    <div class="col-lg-4 hum-range-param">
+                                        <label for="HTMLi_synth_reverb${id}" class="form-label hum-justify">DRY &nbsp;&ndash; &nbsp;Reverb &nbsp;&ndash; &nbsp;WET</label>
+                                        <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_reverb${id}" class="form-range">
+                                    </div>
+                                    <div class="col-lg-8">
+                                      <div class="form-label d-flex align-items-center">IR wave file:&nbsp;
+                                        <span id="HTMLo_synth_irFileName${id}" class="fw-bold fst-italic"></span>
+                                        <button type="button" id="HTMLi_synth_irFileClearBtn${id}" class="btn btn-sm btn-outline-secondary ms-auto" title="Clear" aria-label="Clear. Restore the default reverb.">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
+                                                <use fill-rule="evenodd" href="#dpIcon-clear${humID}"/>
+                                            </svg>
+                                            <!-- <span class="align-middle">&nbsp;Settings...</span> -->
+                                        </button>
+                                    </div>
+                                      <input type="file" id="HTMLi_synth_irFile${id}" accept=".wav" class="form-control">
+                                    </div>
+                                </div>
+
+                              </div>
+                            </div>
+
                         </div>
-                        <div class="synthParam">
-                            <label for="HTMLi_synth_release${id}">&minus; &nbsp;&nbsp;Release &nbsp;&nbsp;&plus;</label>
-                            <!-- time (sec) -->
-                            <input type="range" min="0.02" max="5" step="0.01" id="HTMLi_synth_release${id}">
+
+                    </div>
+                </div>
+
+            </div>`;
+        return template.firstElementChild;
+    },
+
+    midiBox(id, humID) {
+        let template = document.createElement('div');
+        template.innerHTML = `
+            <div class="io" id="HTML_io${id}">
+
+                <div class="list-group px-0">
+                    
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#HTMLf_motPanelModal${id}" class="btn btn-secondary mx-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="2.2em" height="2.2em" fill="currentColor" viewBox="0 0 24 24">
+                            <use fill-rule="evenodd" href="#dpIcon-midi${humID}"/>
+                        </svg>
+                        <span class="align-middle">&nbsp;Settings...</span>
+                    </button>
+
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            MIDI-Input monitor
                         </div>
-                        <div id="HTMLo_synth_meter${id}" class="hmVUmeter"></div>
-                        <div class="rotatedElement">
-                            <label for="HTMLi_synth_volume${id}">&minus; &nbsp;&nbsp;MASTER &nbsp;VOLUME &nbsp;&nbsp;&plus;</label>
-                            <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volume${id}" class="hmMasterVolume">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th>Port</th>
+                                        <th>Channel</th>
+                                        <th>Note #</th>
+                                        <th>Velocity</th>
+                                    </tr>
+                                    <tr>
+                                        <td><span id="HTMLo_midiMonitor1_port${id}"></span></td>
+                                        <td><span id="HTMLo_midiMonitor1_channel${id}"></span></td>
+                                        <td><span id="HTMLo_midiMonitor1_note${id}"></span></td>
+                                        <td><span id="HTMLo_midiMonitor1_velocity${id}"></span></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            Last pressed keys
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <tr>
+                                        <th width="33%"></th>
+                                        <th width="33%">FT</th>
+                                        <th width="33%">HT</th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">#</th>
+                                        <td><span id="HTMLo_toneMonitorFT_tone${id}"></span></td>
+                                        <td><span id="HTMLo_toneMonitorHT_tone${id}"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Note</th>
+                                        <td><span id="HTMLo_toneMonitorFT_notename${id}"></span></td>
+                                        <td><span id="HTMLo_toneMonitorHT_notename${id}"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Hz</th>
+                                        <td><span id="HTMLo_toneMonitorFT_frequency${id}"></span></td>
+                                        <td><span id="HTMLo_toneMonitorHT_frequency${id}"></span></td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" title="MIDI.cent">m#.&cent;</th>
+                                        <td><span id="HTMLo_toneMonitorFT_midicents${id}"></span></td>
+                                        <td><span id="HTMLo_toneMonitorHT_midicents${id}"></span></td>
+                                    </tr>
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+                
+                </div>
+
+            </div>`;
+        return template.firstElementChild;
+    },
+
+    splashModal(id) {
+        let template = document.createElement('div');
+        template.innerHTML = `
+            <!-- The Modal -->
+            <div id="HTMLo_splashModal${id}" class="modal fade hum-splash-modal" tabindex="-1"
+                     aria-labelledby="Loading..." aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered d-flex justify-content-center">
+                    <div class="spinner-border text-light" role="status" style="width: 5rem; height: 5rem;">
+                    </div>
+                </div>
+            </div>`;
+        return template.firstElementChild;
+    },
+
+    dialogModal(id) {
+        let template = document.createElement('div');
+        template.innerHTML = `
+            <div id="HTMLo_dialogModalContainer${id}" class="modal fade" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+                <div id="HTMLo_dialogModal${id}" class="modal-dialog modal-dialog-centered d-flex justify-content-center">
+                    <div class="modal-content" id="HTMLo_dialogModalContent${id}">
+                        <div class="modal-header" id="HTMLo_dialogModalHeader${id}">
+                            <h5 class="modal-title" id="HTMLo_dialogModalHeaderTitle${id}">Modal title</h5>
+                            <button type="button" class="btn-close" id="HTMLo_dialogModalHeaderCancel${id}" data-bs-dismiss="modal" aria-label="Cancel"></button>
+                        </div>
+                        <div class="modal-body" id="HTMLo_dialogModalBody${id}"></div>
+                        <div class="modal-footer" id="HTMLo_dialogModalFooter${id}">
+                            <button type="button" class="btn btn-secondary" id="HTMLo_dialogModalFooterCancel${id}" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="HTMLo_dialogModalFooterOK${id}">OK</button>
                         </div>
                     </div>
                 </div>
@@ -783,206 +1947,311 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
-    midiBox(id) {
+    dialogModalContents(id) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="io" id="HTML_io${id}">
-                <div class="UIbox">
-                    <div class="midiPorts unselectableText">
-                        <!-- <h1>MIDI &nbsp;I/O</h1> -->
-                        <!-- Open the modal content-->
-                        <button id="HTMLf_motPanelModalShow${id}" style="margin-top:10px;">MIDI Settings...</button>
-                        <!-- The Modal -->
-                        <div id="HTMLf_motPanelModal${id}" class="modalOverlay">
-                        <!-- Modal content -->
-                            <div class="modalOverlay_content">
-                                <span id="HTMLf_motPanelClose${id}" class="modalOverlay_close">&times;</span>
-                                <div class="midiContainer">
-                                    <div class="midiColumn midiContainerLeft">
-                                        <h1>MIDI &nbsp;I/O</h1>
-                                        <div class="midiMonitor">
-                                            <table class="monitorTable">
-                                                <tr>
-                                                    <td class="monitorTableTitle" colspan="3">MIDI-Input monitor</td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Channel</th>
-                                                    <th>Note #</th>
-                                                    <th>Velocity</th>
-                                                </tr>
-                                                <tr>
-                                                    <td><span id="HTMLo_midiMonitor0_channel${id}"></span></td>
-                                                    <td><span id="HTMLo_midiMonitor0_note${id}"></span></td>
-                                                    <td><span id="HTMLo_midiMonitor0_velocity${id}"></span></td>
-                                                </tr>
-                                                <tr>
-                                                    <td colspan="3"><span id="HTMLo_midiMonitor0_port${id}"></span></td>
-                                                </tr>
-                                            </table>
+        <div id="HTMLo_dialogModalContents${id}" class="d-none">
+        </div>`;
+        return template.firstElementChild;
+    },
+
+    keymapModal(id) {
+        let template = document.createElement('div');
+        template.innerHTML = `
+            <!-- The Modal -->
+            <div id="HTMLo_controllerKeymapModal${id}" class="modal fade" tabindex="-1"
+                 aria-labelledby="Current Keymap table" aria-hidden="true">
+                <!-- Modal content -->
+                <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
+                    <!-- <span id="HTMLf_controllerKeymapClose${id}" class="modalOverlay_close">&times;</span> -->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Current Controller Keymap table</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="container-fluid" id="HTMLo_controllerKeymapTable${id}">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        return template.firstElementChild;
+    },
+
+    midiModal(id) {
+        let template = document.createElement('div');
+        template.innerHTML = `
+            <!-- The Modal -->
+            <div id="HTMLf_motPanelModal${id}" class="modal fade" tabindex="-1"
+                 aria-labelledby="MIDI Settings panel" aria-hidden="true">
+                <!-- Modal content -->
+                <div class="modal-dialog modal-xl modal-fullscreen-xl-down modal-dialog-centered modal-dialog-scrollable">
+                    <!-- <span id="HTMLf_motPanelClose${id}" class="modalOverlay_close">&times;</span> -->
+                    <div class="modal-content">
+
+                        <div class="modal-header">
+                            <h5 class="modal-title">MIDI Input/Output Settings</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="container-fluid">
+                                <div class="row g-3">
+                                    <div class="col-lg-4">
+                                        <h4>MIDI IN (controllers)</h4>
+
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                
+                                                <div class="card mb-3">
+                                                  <div class="card-header">
+                                                    Input ports
+                                                  </div>
+                                                  <div class="card-body">
+                                                    <div id="HTMLo_inputPorts${id}"></div>
+                                                  </div>
+                                                </div>
+
+                                                <div class="card mb-3">
+                                                  <div class="card-header">
+                                                    Receiving options
+                                                  </div>
+
+                                                    <div class="list-group list-group-flush">
+
+                                                        <label class="list-group-item">
+                                                            <div class="row row-cols-1 align-items-center">
+                                                                <div class="col">
+                                                                    <strong class="mb-2">Receiving mode</strong>
+                                                                    <p class="text-muted mb-0">How is it determined whether an input note should play as FT or HT.</p>
+                                                                </div>
+                                                                <div class="col mt-2">
+
+                                                                    <select id="HTMLi_midiReceiveMode${id}" class="form-select">
+                                                                        <option value="keymap">Controller Keymapped MIDI note #</option>
+                                                                        <option value="tsnap-channel">Tone snapping – Channel</option>
+                                                                        <option value="tsnap-divider">Tone snapping – Divider</option>
+                                                                        <!-- <option value="velocity1-1">Encoded into Velocity: 1-1</option> -->
+                                                                        <!-- <option value="velocity_lin">Encoded into Velocity: Full range linear</option> -->
+                                                                        <!-- <option value="velocity_log">Encoded into Velocity: Full range logarithmic</option> -->
+                                                                    </select>
+
+                                                                </div>
+                                                            </div>
+                                                        </label>
+
+                                                        <label class="list-group-item" id="HTMLf_midiReceiveModeTsnapTolerance${id}">
+                                                            <div class="row row-cols-1 align-items-center">
+                                                                <div class="col">
+                                                                    <strong class="mb-2">HT snap tolerance</strong>
+                                                                    <p class="text-muted mb-0">Maximum deviation from the frequency of a HT within which the incoming MIDI note is "snapped" to that HT.</p>
+                                                                </div>
+                                                                <div class="col">
+
+                                                                    <div class="input-group">
+                                                                        <input type="number" min="0" max="100" step="1" id="HTMLi_midiReceiveModeTsnapTolerance${id}"
+                                                                               class="form-control"
+                                                                               aria-label="MIDI cents delta (1 mc = 100 c)">
+                                                                        <span class="input-group-text">mc delta</span>
+                                                                    </div>
+
+                                                                </div>
+                                                            </div>
+                                                        </label>
+
+                                                        <label class="list-group-item" id="HTMLf_midiReceiveModeTsnapChanFT${id}">
+                                                            <div class="row row-cols-1 align-items-center">
+                                                                <div class="col">
+                                                                    <strong class="mb-2">FT channel</strong>
+                                                                    <p class="text-muted mb-0">Channel for receiving FT.</p>
+                                                                </div>
+                                                                <div class="col">
+
+                                                                    <select id="HTMLi_midiReceiveModeTsnapChanFT${id}" class="form-select"
+                                                                            aria-label="Channel for receiving FT">
+                                                                        <option value="0">1</option>
+                                                                        <option value="1">2</option>
+                                                                        <option value="2">3</option>
+                                                                        <option value="3">4</option>
+                                                                        <option value="4">5</option>
+                                                                        <option value="5">6</option>
+                                                                        <option value="6">7</option>
+                                                                        <option value="7">8</option>
+                                                                        <option value="8">9</option>
+                                                                        <option value="9">10</option>
+                                                                        <option value="10">11</option>
+                                                                        <option value="11">12</option>
+                                                                        <option value="12">13</option>
+                                                                        <option value="13">14</option>
+                                                                        <option value="14">15</option>
+                                                                        <option value="15">16</option>
+                                                                    </select>
+
+                                                                </div>
+                                                            </div>
+                                                        </label>
+
+                                                        <label class="list-group-item" id="HTMLf_midiReceiveModeTsnapChanHT${id}">
+                                                            <div class="row row-cols-1 align-items-center">
+                                                                <div class="col">
+                                                                    <strong class="mb-2">HTs channel</strong>
+                                                                    <p class="text-muted mb-0">Channel for receiving HTs.</p>
+                                                                </div>
+                                                                <div class="col">
+
+                                                                    <select id="HTMLi_midiReceiveModeTsnapChanHT${id}" class="form-select"
+                                                                            aria-label="Channel for receiving HTs">
+                                                                        <option value="0">1</option>
+                                                                        <option value="1">2</option>
+                                                                        <option value="2">3</option>
+                                                                        <option value="3">4</option>
+                                                                        <option value="4">5</option>
+                                                                        <option value="5">6</option>
+                                                                        <option value="6">7</option>
+                                                                        <option value="7">8</option>
+                                                                        <option value="8">9</option>
+                                                                        <option value="9">10</option>
+                                                                        <option value="10">11</option>
+                                                                        <option value="11">12</option>
+                                                                        <option value="12">13</option>
+                                                                        <option value="13">14</option>
+                                                                        <option value="14">15</option>
+                                                                        <option value="15">16</option>
+                                                                    </select>
+
+                                                                </div>
+                                                            </div>
+                                                        </label>
+
+                                                        <label class="list-group-item" id="HTMLf_midiReceiveModeTsnapDividerKey${id}">
+                                                            <div class="row row-cols-1 align-items-center">
+                                                                <div class="col">
+                                                                    <strong class="mb-2">Divider key</strong>
+                                                                    <p class="text-muted mb-0">The MIDI note you want to use as divider. Below is taken as FT; equal or above is taken as HT.</p>
+                                                                </div>
+                                                                <div class="col">
+
+                                                                    <input type="number" min="0" max="127" step="1" class="form-control" id="HTMLi_midiReceiveModeTsnapDividerKey${id}"
+                                                                           aria-label="MIDI note number">
+
+                                                                </div>
+                                                            </div>
+                                                        </label>
+
+                                                        <label class="list-group-item" id="HTMLf_midiReceiveModeTsnapDividerChan${id}">
+                                                            <div class="row row-cols-1 align-items-center">
+                                                                <div class="col">
+                                                                    <strong class="mb-2">Channel</strong>
+                                                                    <p class="text-muted mb-0">Channel to use for receiving in "divider" mode.</p>
+                                                                </div>
+                                                                <div class="col">
+
+                                                                    <select id="HTMLi_midiReceiveModeTsnapDividerChan${id}" class="form-select"
+                                                                            aria-label="Channel to use for receiving">
+                                                                        <option value="0">1</option>
+                                                                        <option value="1">2</option>
+                                                                        <option value="2">3</option>
+                                                                        <option value="3">4</option>
+                                                                        <option value="4">5</option>
+                                                                        <option value="5">6</option>
+                                                                        <option value="6">7</option>
+                                                                        <option value="7">8</option>
+                                                                        <option value="8">9</option>
+                                                                        <option value="9">10</option>
+                                                                        <option value="10">11</option>
+                                                                        <option value="11">12</option>
+                                                                        <option value="12">13</option>
+                                                                        <option value="13">14</option>
+                                                                        <option value="14">15</option>
+                                                                        <option value="15">16</option>
+                                                                    </select>
+
+                                                                </div>
+                                                            </div>
+                                                        </label>
+
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="card">
+                                                  <div class="card-header">
+                                                    Input Monitor
+                                                  </div>
+                                                  <div class="card-body">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm table-hover">
+                                                            <tr>
+                                                                <th>Port</th>
+                                                                <td><span id="HTMLo_midiMonitor0_port${id}"></span></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>Channel</th>
+                                                                <td><span id="HTMLo_midiMonitor0_channel${id}"></span></td>
+                                                            </tr>
+
+                                                            <tr>
+                                                                <th>Note #</th>
+                                                                <td><span id="HTMLo_midiMonitor0_note${id}"></span></td>
+                                                            </tr>
+
+                                                            <tr>
+                                                                <th>Velocity</th>
+                                                                <td><span id="HTMLo_midiMonitor0_velocity${id}"></span></td>
+                                                            </tr>
+
+                                                        </table>
+                                                    </div>
+                                                  </div>
+                                                </div>
+
+                                            </div>
                                         </div>
-                                        <h2>Input ports (controllers):</h2>
-                                        <div id="HTMLo_inputPorts${id}"></div>
 
-                                        <table class="invisibleTable midiParam">
-
-                                            <tr>
-                                                <td>
-                                                    <h3>Receiving mode</h3>
-                                                    <select id="HTMLi_midiReceiveMode${id}">
-                                                        <option value="keymap">Controller Keymapped MIDI note #</option>
-                                                        <option value="tsnap-channel">Tone snapping – Channel</option>
-                                                        <option value="tsnap-divider">Tone snapping – Divider</option>
-                                                        <!-- <option value="velocity1-1">Encoded into Velocity: 1-1</option> -->
-                                                        <!-- <option value="velocity_lin">Encoded into Velocity: Full range linear</option> -->
-                                                        <!-- <option value="velocity_log">Encoded into Velocity: Full range logarithmic</option> -->
-                                                    </select>
-                                                </td>
-                                            </tr>
-
-                                            <tr id="HTMLf_midiReceiveModeTsnapTolerance${id}">
-                                                <td>
-                                                    <div class="midiSubParam">
-                                                        <label for="HTMLi_midiReceiveModeTsnapTolerance${id}" title="Cents">Harmoninc snap tolerance</label>
-                                                        <input type="number" min="0" max="100" step="1" id="HTMLi_midiReceiveModeTsnapTolerance${id}" title="Cents">
-                                                    </div>
-                                                </td>
-                                            </tr>
-
-                                            <tr id="HTMLf_midiReceiveModeTsnapChan${id}">
-                                                <td>
-                                                    <div class="midiSubParam">
-                                                        <label for="HTMLi_midiReceiveModeTsnapChanFT${id}">FT channel</label>
-                                                        <select id="HTMLi_midiReceiveModeTsnapChanFT${id}">
-                                                            <option value="0">1</option>
-                                                            <option value="1">2</option>
-                                                            <option value="2">3</option>
-                                                            <option value="3">4</option>
-                                                            <option value="4">5</option>
-                                                            <option value="5">6</option>
-                                                            <option value="6">7</option>
-                                                            <option value="7">8</option>
-                                                            <option value="8">9</option>
-                                                            <option value="9">10</option>
-                                                            <option value="10">11</option>
-                                                            <option value="11">12</option>
-                                                            <option value="12">13</option>
-                                                            <option value="13">14</option>
-                                                            <option value="14">15</option>
-                                                            <option value="15">16</option>
-                                                        </select>
-
-                                                        <label for="HTMLi_midiReceiveModeTsnapChanHT${id}">HT channel</label>
-                                                        <select id="HTMLi_midiReceiveModeTsnapChanHT${id}">
-                                                            <option value="0">1</option>
-                                                            <option value="1">2</option>
-                                                            <option value="2">3</option>
-                                                            <option value="3">4</option>
-                                                            <option value="4">5</option>
-                                                            <option value="5">6</option>
-                                                            <option value="6">7</option>
-                                                            <option value="7">8</option>
-                                                            <option value="8">9</option>
-                                                            <option value="9">10</option>
-                                                            <option value="10">11</option>
-                                                            <option value="11">12</option>
-                                                            <option value="12">13</option>
-                                                            <option value="13">14</option>
-                                                            <option value="14">15</option>
-                                                            <option value="15">16</option>
-                                                        </select>
-                                                    </div>
-                                                </td>
-                                            </tr>
-
-                                            <tr id="HTMLf_midiReceiveModeTsnapDivider${id}">
-                                                <td>
-                                                    <div class="midiSubParam">
-                                                        <label for="HTMLi_midiReceiveModeTsnapDivider${id}" title="MIDI note number">Divider key</label>
-                                                        <input type="number" min="0" max="127" step="1" id="HTMLi_midiReceiveModeTsnapDivider${id}" title="MIDI note number">
-                                                        <label for="HTMLi_midiReceiveModeTsnapChanDivider${id}">Channel</label>
-                                                        <select id="HTMLi_midiReceiveModeTsnapChanDivider${id}">
-                                                            <option value="0">1</option>
-                                                            <option value="1">2</option>
-                                                            <option value="2">3</option>
-                                                            <option value="3">4</option>
-                                                            <option value="4">5</option>
-                                                            <option value="5">6</option>
-                                                            <option value="6">7</option>
-                                                            <option value="7">8</option>
-                                                            <option value="8">9</option>
-                                                            <option value="9">10</option>
-                                                            <option value="10">11</option>
-                                                            <option value="11">12</option>
-                                                            <option value="12">13</option>
-                                                            <option value="13">14</option>
-                                                            <option value="14">15</option>
-                                                            <option value="15">16</option>
-                                                        </select>
-                                                    </div>
-                                                </td>
-                                            </tr>
-
-                                        </table>
-
-                                        <h2>Output ports (instruments):</h2>
-                                        <div id="HTMLo_outputPorts${id}"></div>
-                                        <div id="HTMLf_webMidiLinkPorts${id}"></div>
                                     </div>
-                                    <div class="midiColumn midiContainerRight">
-                                        <h1>MIDI-Out Tuning &nbsp;&ndash; &nbsp;PitchBend method</h1>
-                                        <div id="HTMLf_motPanelContent${id}">
+
+                                    <div class="col-lg-8">
+                                        <h4>MIDI OUT (instruments)</h4>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="card mb-3">
+                                                  <div class="card-header">
+                                                    Output ports
+                                                  </div>
+                                                  <div class="card-body">
+                                                    <div id="HTMLo_outputPorts${id}"></div>
+                                                    <div id="HTMLf_webMidiLinkPorts${id}"></div>
+                                                  </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="card">
+                                                  <div class="card-header">
+                                                    MIDI-Out Tuning &nbsp;&ndash; &nbsp;PitchBend method
+                                                  </div>
+                                                  <div class="card-body">
+                                                    <div id="HTMLf_motPanelContent${id}">
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="monitors">
-                        <table class="monitorTable">
-                            <tr>
-                                <td class="monitorTableTitle" colspan="5">Last pressed keys</td>
-                            </tr>
-                            <tr>
-                                <th width="10%"></th>
-                                <th width="10%">#</th>
-                                <th width="30%">Note</th>
-                                <th width="30%">Hz</th>
-                                <th width="20%" title="MIDI.cent">m.&cent;</th>
-                            </tr>
-                            <tr>
-                                <td>HT</td>
-                                <td><span id="HTMLo_toneMonitorHT_tone${id}"></span></td>
-                                <td><span id="HTMLo_toneMonitorHT_notename${id}"></span></td>
-                                <td><span id="HTMLo_toneMonitorHT_frequency${id}"></span></td>
-                                <td><span id="HTMLo_toneMonitorHT_midicents${id}"></span></td>
-                            </tr>
-                            <tr>
-                                <td>FT</td>
-                                <td><span id="HTMLo_toneMonitorFT_tone${id}"></span></td>
-                                <td><span id="HTMLo_toneMonitorFT_notename${id}"></span></td>
-                                <td><span id="HTMLo_toneMonitorFT_frequency${id}"></span></td>
-                                <td><span id="HTMLo_toneMonitorFT_midicents${id}"></span></td>
-                            </tr>
-                        </table>
-                        <table class="monitorTable">
-                            <tr>
-                                <td class="monitorTableTitle" colspan="3">MIDI-Input monitor</td>
-                            </tr>
-                            <tr>
-                                <th>Channel</th>
-                                <th>Note #</th>
-                                <th>Velocity</th>
-                            </tr>
-                            <tr>
-                                <td><span id="HTMLo_midiMonitor1_channel${id}"></span></td>
-                                <td><span id="HTMLo_midiMonitor1_note${id}"></span></td>
-                                <td><span id="HTMLo_midiMonitor1_velocity${id}"></span></td>
-                            </tr>
-                            <tr>
-                                <td colspan="3"><span id="HTMLo_midiMonitor1_port${id}"></span></td>
-                            </tr>
-                        </table>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
+
                 </div>
             </div>`;
         return template.firstElementChild;
@@ -992,7 +2261,7 @@ HUM.tmpl = {
         let template = document.createElement('div');
         template.innerHTML = `
             <div class="visualiser TODO" id="HTML_visualiser${id}">
-                <div class="UIbox">
+                <div>
                     <div class="synthVisualiser">
                         <select id="HTMLi_visualiser${id}" name="visual">
                           <option value="sinewave">Sinewave</option>
@@ -1010,38 +2279,57 @@ HUM.tmpl = {
         let template = document.createElement('div');
         template.innerHTML = `
             <div class="fm" id="HTML_fm${id}">
-                <div class="UIbox">
-                    <!-- <h1>Fundamental Mother</h1> -->
-                    <table class="invisibleTable">
-                        <tr>
-                            <td>MIDI Note 0-127
-                                <br> (midi#.cents)</td>
-                            <td></td>
-                            <td>Frequency
-                                <br>(Hz)</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <span id="HTMLo_fm_mc${id}" class="hmFMout"></span>
-                            </td>
-                            <td></td>
-                            <td>
-                                <span id="HTMLo_fm_hz${id}" class="hmFMout"></span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input type="number" id="HTMLi_fm_mc${id}">
-                            </td>
-                            <td>
-                                <!-- Fake button. Useless due to 'onchange' on input textboxes but user-friendl -->
-                                <button>Set</button>
-                            </td>
-                            <td>
-                                <input type="number" min="1" id="HTMLi_fm_hz${id}">
-                            </td>
-                        </tr>
-                    </table>
+                <div>This is the <b><i>main root</i></b> tone on which all other tones are calculated.</div>
+                <div>You can set the FM by <b>MIDI note number</b> (with decimals, that are the cents) OR by <b>frequency</b>.</div>
+                <div class="list-group mt-3">
+
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md">
+                                <strong class="mb-2">MIDI Note 0-127</strong>
+                            </div>
+                            <div class="col-12 col-md-auto">
+                                <div class="row align-items-center">
+                                    <div class="col-12 col-lg">
+                                        <span id="HTMLo_fm_mc_monitor${id}" class="hmFMout"></span>
+                                    </div>
+                                    <div class="col-12 col-lg-auto">
+                                        <div class="input-group">
+                                            <input type="number" min="-9999" max="9999" step="1"
+                                                   id="HTMLi_fm_mc${id}"
+                                                   class="form-control"
+                                                   aria-label="Frequency expressed in MIDI units with decimals">
+                                            <span class="input-group-text">midi#.&cent;</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md">
+                                <strong class="mb-2">Frequency</strong>
+                            </div>
+                            <div class="col-12 col-md-auto">
+                                <div class="row align-items-center">
+                                    <div class="col-12 col-lg hmFMout">
+                                        <span id="HTMLo_fm_hz_monitor${id}"></span> Hz
+                                    </div>
+                                    <div class="col-12 col-lg-auto">
+                                        <div class="input-group">
+                                            <input type="number" min="1" max="99999" step="1"
+                                                   id="HTMLi_fm_hz${id}"
+                                                   class="form-control"
+                                                   aria-label="Note in hertz">
+                                            <span class="input-group-text">Hz</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>`;
         return template.firstElementChild;
@@ -1051,68 +2339,126 @@ HUM.tmpl = {
         let template = document.createElement('div');
         template.innerHTML = `
             <div class="ft" id="HTML_ft${id}">
-                <div class="UIbox">
-                    <!-- <h1>Fundamental Tones</h1> -->
-                    <div class="ftSettings">
-                        <h2><input type="radio" name="ftTuningSystem" value="n-edx" id="HTMLf_ftSys_NEDX${id}">n-EDx (ET)</h2>
-                        <div class="ftNEDX" id="HTMLf_ftNEDX${id}">
-                            <table class="invisibleTable">
-                                <tr>
-                                    <td width="40%">Ratio Unit</td>
-                                    <td width="20%"><span class="ftNEDX"><img src="assets/img/n-edx.png" alt="nth root of x"></span></td>
-                                    <td width="40%">Equal Divisions</td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <span class="ftNEDX_VarsTxt"> x = </span><input type="number" id="HTMLi_ftNEDX_unit${id}">
-                                    </td>
-                                    <td>
-                                        <button id="HTMLi_ftNEDX_ok${id}" class="hmSetButton">Set</button>
-                                    </td>
-                                    <td>
-                                        <span class="ftNEDX_VarsTxt"> n = </span><input type="number" id="HTMLi_ftNEDX_division${id}">
-                                    </td>
-                                </tr>
-                            </table>
+                <div>This is the <b><i>tuning system</i></b> on which the Fundamental Tones (FTs) "palette" is calculated.</div>
+                <div>You can calculate the FTs by <b>Equal Temperaments</b> method or by <b>Harmonic/Subharmonic</b> tones.</div>
+                <div>Remember that all computation are based on the <i>Fundamental Mother</i> (FM) frequency.</div>
+                <div class="card mt-3">
+                  <label class="card-header" for="HTMLf_ftSys_NEDX${id}">
+                    <h6 class="d-flex">
+                        <input class="me-2" type="radio" name="ftTuningSystem" value="n-edx" id="HTMLf_ftSys_NEDX${id}">
+                        <div class="fw-bold">n-EDx (Equal Temperaments)</div>
+                    </h6>
+                  </label>
+                  <div class="card-body" id="HTMLo_ftNEDX${id}">
+
+                    <div class="row align-items-center">
+
+                        <div class="col-md-4 mb-3 text-center">
+                            <img src="assets/img/n-edx_light.png" alt="nth root of x" style="width:70px;">
                         </div>
-                        <h2><input type="radio" name="ftTuningSystem" value="h_s-nat" id="HTMLf_ftSys_HSnat${id}">Harm./Sub. Natural</h2>
-                        <h2><input type="radio" name="ftTuningSystem" value="h_s-trans" id="HTMLf_ftSys_HStrans${id}">Harm./Sub. Same Octave</h2>
-                        <div class="ftHS" id="HTMLf_ftHS${id}">
-                            <table class="invisibleTable">
-                                <tr>
-                                    <td valign="top" width="50%" style="text-align: right;"><h2>Transpose</h2></td>
-                                    <td width="20%"><span class="htSettingsLabel">&divide;2</span></td>
-                                    <td width="10%">Octave</td>
-                                    <td width="20%"><span class="htSettingsLabel">&times;2</span></td>
-                                </tr>
-                                <tr>
-                                    <td style="text-align: right;">Harmonics</td>
-                                    <td>
-                                        <button id="HTMLi_ftHStranspose_h_minus${id}">&minus;</button>
-                                    </td>
-                                    <td>
-                                        <span id="HTMLo_ftHStranspose_h_ratio${id}"></span>
-                                    </td>
-                                    <td>
-                                        <button id="HTMLi_ftHStranspose_h_plus${id}">&plus;</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="text-align: right;">Subharmonics</td>
-                                    <td>
-                                        <button id="HTMLi_ftHStranspose_s_minus${id}">&minus;</button>
-                                    </td>
-                                    <td>
-                                        <span id="HTMLo_ftHStranspose_s_ratio${id}"></span>
-                                    </td>
-                                    <td>
-                                        <button id="HTMLi_ftHStranspose_s_plus${id}">&plus;</button>
-                                    </td>
-                                </tr>
-                            </table>
+                        <div class="col-md-8">
+
+                            <div class="list-group">
+
+                                <div class="list-group-item">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <strong class="mb-2">Ratio Unit</strong>
+                                        </div>
+                                        <div class="col-auto">
+                                            <div class="input-group">
+                                                <span class="ftNEDX_VarsTxt input-group-text"> x = </span>
+                                                <input type="number" min="0" max="9999" step="1"
+                                                       id="HTMLi_ftNEDX_unit${id}"
+                                                       class="form-control"
+                                                       aria-label="...">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="list-group-item">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <strong class="mb-2">Equal Divisions</strong>
+                                        </div>
+                                        <div class="col-auto">
+                                            <div class="input-group">
+                                                <span class="ftNEDX_VarsTxt input-group-text"> n = </span>
+                                                <input type="number" min="0" max="9999" step="1"
+                                                       id="HTMLi_ftNEDX_division${id}"
+                                                       class="form-control"
+                                                       aria-label="...">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            
+                            </div>
+
                         </div>
                     </div>
+
+                  </div>
                 </div>
+
+                <div class="card">
+                  <label class="card-header" for="HTMLf_ftSys_HSnat${id}">
+                    <h6 class="d-flex">
+                        <input class="me-2" type="radio" name="ftTuningSystem" value="h_s-nat" id="HTMLf_ftSys_HSnat${id}">
+                        <span class="fw-bold">Harm./Sub. Natural (for Diphonic Pad)</span>
+                    </h6>
+                  </label>
+                  <label class="card-header" for="HTMLf_ftSys_HStrans${id}">
+                    <h6 class="d-flex">
+                        <input class="me-2" type="radio" name="ftTuningSystem" value="h_s-trans" id="HTMLf_ftSys_HStrans${id}">
+                        <span class="fw-bold">Harm./Sub. Same Octave (for Keymap)</span>
+                    </h6>
+                  </label>
+                  <div class="card-body" id="HTMLo_ftHS${id}">
+
+                    <div class="row align-items-center">
+                        <div class="col col-md col-12 text-center text-md-start">
+                            <div class="form-label h6">Transpose</div>
+                        </div>
+                        <div class="col">
+                            <div class="input-group mb-3 align-items-center">
+                                <div><span>&divide;2</span></div>
+                                <div class="mx-auto">Octave (ratio)</div>
+                                <div><span>&times;2</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row align-items-center">
+                        <div class="col col-md col-12 text-center text-md-start">
+                            <label for="HTMLo_ftHStranspose_h_ratio${id}" class="form-label h6">Harmonics</label>
+                        </div>
+                        <div class="col">
+                            <div class="input-group mb-3 align-items-center">
+                                <button id="HTMLi_ftHStranspose_h_minus${id}" class="btn btn-secondary">&minus;</button>
+                                <span id="HTMLo_ftHStranspose_h_ratio${id}" class="form-control mx-auto text-center"></span>
+                                <button id="HTMLi_ftHStranspose_h_plus${id}" class="btn btn-secondary">&plus;</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row align-items-center">
+                        <div class="col col-md col-12 text-center text-md-start">
+                            <label for="HTMLo_ftHStranspose_s_ratio${id}" class="form-label h6">Subharmonics</label>
+                        </div>
+                        <div class="col">
+                            <div class="input-group mb-3 align-items-center">
+                                <button id="HTMLi_ftHStranspose_s_minus${id}" class="btn btn-secondary">&minus;</button>
+                                <span id="HTMLo_ftHStranspose_s_ratio${id}" class="form-control mx-auto text-center"></span>
+                                <button id="HTMLi_ftHStranspose_s_plus${id}" class="btn btn-secondary">&plus;</button>
+                            </div>
+                        </div>
+                    </div>
+
+                  </div>
+                </div>
+
             </div>`;
         return template.firstElementChild;
     },
@@ -1120,49 +2466,66 @@ HUM.tmpl = {
     htBox(id) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="ht" id="HTML_ht${id}">
-                <div class="UIbox">
-                    <!-- <h1>Harmonic Tones</h1> -->
-                    <div class="htSettings">
-                        <table class="invisibleTable">
-                            <tr>
-                                <td valign="top">
-                                    <h2>Transpose</h2>
-                                </td>
-                                <td>Octave
-                                    <br><span class="htSettingsLabel">&divide;2</span></td>
-                                <td>Ratio
-                                    <br><span class="htSettingsLabel">&times;r</span></td>
-                                <td>Octave
-                                    <br><span class="htSettingsLabel">&times;2</span></td>
-                            </tr>
-                            <tr>
-                                <td style="text-align: right;">Harmonics</td>
-                                <td>
-                                    <button id="HTMLi_htTranspose_h_minus${id}">&minus;</button>
-                                </td>
-                                <td>
-                                    <input type="number" min="0" id="HTMLi_htTranspose_h_ratio${id}">
-                                </td>
-                                <td>
-                                    <button id="HTMLi_htTranspose_h_plus${id}">&plus;</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="text-align: right;">Subharmonics</td>
-                                <td>
-                                    <button id="HTMLi_htTranspose_s_minus${id}">&minus;</button>
-                                </td>
-                                <td>
-                                    <input type="number" min="0" id="HTMLi_htTranspose_s_ratio${id}">
-                                </td>
-                                <td>
-                                    <button id="HTMLi_htTranspose_s_plus${id}">&plus;</button>
-                                </td>
-                            </tr>
-                        </table>
+            <div class="ht overflow-scroll" id="HTML_ht${id}">
+                <div>With this <b><i>transposition tool</i></b> you can move the Harmonic Tones (HTs) up or down by octaves.</div>
+                <div>The HTs table includes both <b>Harmonics</b> and <b>Subharmonics</b> tones
+                     (note that you may have to transpose up the subharmonics in order to hear them).
+                </div>
+                <div class="card mt-3">
+                    <div class="card-body">
+
+                        <div class="row align-items-center">
+                            <div class="col col-md col-12 text-center text-md-start">
+                                <div class="form-label h6">Transpose</div>
+                            </div>
+                            <div class="col">
+                                <div class="input-group mb-3 align-items-center">
+                                    <div>
+                                        <div>Octave</div>
+                                        <div>&divide;2</div>
+                                    </div>
+                                    <div class="mx-auto">
+                                        <div>Ratio</div>
+                                        <div>&times;r</div>
+                                    </div>
+                                    <div>
+                                        <div>Octave</div>
+                                        <div>&times;2</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row align-items-center">
+                            <div class="col col-md col-12 text-center text-md-start">
+                                <label for="HTMLi_htTranspose_h_ratio${id}" class="form-label h6">Harmonics</label>
+                            </div>
+                            <div class="col">
+                                <div class="input-group mb-3 align-items-center flex-nowrap">
+                                    <button id="HTMLi_htTranspose_h_minus${id}" class="btn btn-secondary">&minus;</button>
+                                    <input type="number" min="0" max="9999" step="1" id="HTMLi_htTranspose_h_ratio${id}"
+                                           class="form-control w-auto m-auto text-center" aria-label="...">
+                                    <button id="HTMLi_htTranspose_h_plus${id}" class="btn btn-secondary">&plus;</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row align-items-center">
+                            <div class="col col-md col-12 text-center text-md-start">
+                                <label for="HTMLi_htTranspose_s_ratio${id}" class="form-label h6">Subharmonics</label>
+                            </div>
+                            <div class="col">
+                                <div class="input-group mb-3 align-items-center flex-nowrap">
+                                    <button id="HTMLi_htTranspose_s_minus${id}" class="btn btn-secondary">&minus;</button>
+                                    <input type="number" min="0" max="9999" step="1" id="HTMLi_htTranspose_s_ratio${id}"
+                                           class="form-control w-auto m-auto text-center" aria-label="...">
+                                    <button id="HTMLi_htTranspose_s_plus${id}" class="btn btn-secondary">&plus;</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
             </div>`;
         return template.firstElementChild;
     },
@@ -1173,7 +2536,7 @@ HUM.tmpl = {
             <table id="HTMLf_webMidiLinkLoader${id}" class="invisibleTable midiParam" style="display:none;">
                 <tr>
                     <td colspan="2">
-                        <h3>WebMidiLink synth @ Port ${key}: &nbsp;&nbsp;<span id="HTMLf_webMidiLinkStatus${id}" class="webmidilinkNotLoaded">NOT LOADED</span></h3>
+                        <h5>WebMidiLink synth @ Port ${key}: &nbsp;&nbsp;<span id="HTMLf_webMidiLinkStatus${id}" class="webmidilinkNotLoaded">NOT LOADED</span></h5>
                     </td>
                 </tr>
 

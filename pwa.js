@@ -1,6 +1,12 @@
-/* globals caches */
+/* globals caches, humPWA, harmonicarium1 */
 
 "use strict";
+
+/*
+ * NOTE: The "keepOldCache" feature is currently not working.
+ *       A lot of code here about this feature is unused in "production".
+ *       Trying to give to the user the chance to decide if upgrade or not.
+ */
 
 // @see https://dev.to/zigabrencic/web-browser-local-storage-16jh
 function getLocalStorageStatus() {
@@ -57,7 +63,7 @@ if (window.location.protocol !== 'file:') {
 
 
         // GLOBAL PWA tools container/namespace
-        var humPWA = {
+        window.humPWA = {
             deferredPrompt: false,
             justInstalled: false,
             appCacheName: false,
@@ -180,67 +186,80 @@ if (window.location.protocol !== 'file:') {
 
             promptUserToRefresh: function(swRegistration, trigger) {
                 let localStorageOK = getLocalStorageStatus().status === 'available',
-                    promptMsg1 = 'New version available!\nINSTALL NOW ?\n\n',
-                    promptMsg2 = '';
-                promptMsg1 += 'Click OK to refresh the page and install the new version.\n';
-                promptMsg1 += 'or\n';
+                    promptMsg1 = '*** New version available! INSTALL NOW ? ***\n\n' +
+                                 "Click [OK] to refresh this page and all the app sessions' windows/tabs and INSTALL THE NEW VERSION.\n" +
+                                 'or\n' +
+                                 "Click [CANCEL] to POSTPONE/DELAY THE INSTALL when all the app sessions' windows/tabs will be closed. " +
+                                 'The new version will be available when you reopen the app.\n\n' +
+                                 'WARNING: If this is the only active session and you close this window/tab now, the update could apply.';
 
-                if (localStorageOK) {
-                    promptMsg1 += 'Click CANCEL to freeze the installation and choose whether to do it later or keep the current version.';
+                // [...]     promptMsg2 = '';
 
-                    promptMsg2 += 'Installation has been suspended.\nDO YOU WANT TO KEEP THIS VERISION ?\n\n';
-                    
-                    promptMsg2 += 'Click OK to stop installing the new version and keep the current version. ';
-                    promptMsg2 += 'Update notifications will be hidden until the next available update. ';
-                    promptMsg2 += 'To update the app before the next update, you will need to proceed manually by clicking on the appropriate button in the "APP" section.\n';
-                    promptMsg1 += 'or\n';
+                // [...] if (localStorageOK) {
+                // [...]     promptMsg1 += 'Click CANCEL to freeze the installation and choose whether to do it later or keep the current version.';
 
-                    promptMsg2 += 'Click CANCEL to postpone/delay the install when all windows of the app will be closed. ';
-                    promptMsg2 += 'The new version will be available when you reopen the app.\n\n';
-                    promptMsg2 += 'WARNING: If you close this windows now the update could apply!';
-                } else {
-                    promptMsg1 += 'Click CANCEL to postpone/delay the install when all windows of the app will be closed. ';
-                    promptMsg1 += 'The new version will be available when you reopen the app.\n\n';
-                    promptMsg1 += 'WARNING: If you close this windows now the update could apply!';
-                }
+                // [...]     promptMsg2 += 'Installation has been suspended.\nDO YOU WANT TO KEEP THIS VERISION ?\n\n' +
+
+                // [...]                   'Click OK to stop installing the new version and KEEP THE CURRENT VERSION. ' +
+                // [...]                   'Update notifications will be hidden until the next available update. ' +
+                // [...]                   'To update the app before the next update, you will need to proceed manually by clicking on the appropriate button in the "APP" section.\n' +
+                // [...]                   'or\n' +
+
+                // [...]                   'Click CANCEL to POSTPONE/DELAY THE INSTALL when all windows of the app will be closed. ' +
+                // [...]                   'The new version will be available when you reopen the app.\n\n' +
+                // [...]                   'WARNING: If you close this windows now the update could apply!';
+                // [...] } else {
+                // [...]     promptMsg1 += 'Click CANCEL to POSTPONE/DELAY THE INSTALL when all windows of the app will be closed. ' +
+                // [...]                   'The new version will be available when you reopen the app.\n\n' +
+                // [...]                   'WARNING: If you close this windows now the update could apply!';
+                // [...] }
 
                 // INSTALL
                 if (window.confirm(promptMsg1 +'\n\n'+ trigger)) {
                     console.info('The app UPDATE has been ACCEPTED by the user.');
-                    if (getLocalStorageStatus().write) {
-                        localStorage.removeItem('keepOldCache');
+
+                    // @todo: Implement registration!!
+                    //        (no hardcoded instance name!! argh...) 
+                    if (harmonicarium1 && harmonicarium1.broadcastChannel) {
+                        // Try to close all other concurrent sessions
+                        harmonicarium1.broadcastChannel.send('closeApp'); // , msgData);
                     }
-                    swRegistration.waiting.postMessage({
-                        action: 'keepOldCache',
-                        value: false
-                    });
-                    swRegistration.waiting.postMessage({action: 'skipWaiting'});
+                    setTimeout(() => {
+                        if (getLocalStorageStatus().write) {
+                            localStorage.removeItem('keepOldCache');
+                        }
+                        swRegistration.waiting.postMessage({
+                            action: 'keepOldCache',
+                            value: false
+                        });
+                        swRegistration.waiting.postMessage({action: 'skipWaiting'});
+                    }, 2000);
+
                 // SKIP INSTALL
                 } else {
                     if (localStorageOK) {
-                        // ABORT INSTALL - KEEP CURRET VERSION
-                        if (window.confirm(promptMsg2)) {
-                            console.info('The app UPDATE has been ABOTED by the user. The current version of the app is preserved.');
+                        // [...] ABORT INSTALL - KEEP CURRENT VERSION
+                        // [...] if (window.confirm(promptMsg2)) {
+                        // [...]     console.info('The app UPDATE has been ABOTED by the user. The current version of the app is preserved.');
 
-                            let oldCacheName = localStorage.getItem('keepOldCache');
-                                if (!oldCacheName) {
-                                    localStorage.setItem('keepOldCache', humPWA.appCacheName);
-                                }
-                            
-                            swRegistration.waiting.postMessage({
-                                action: 'keepOldCache',
-                                value: localStorage.getItem('keepOldCache')
-                            });
-                            
-                            swRegistration.waiting.postMessage({action: 'skipWaiting'});
+                        // [...]     let oldCacheName = localStorage.getItem('keepOldCache');
+                        // [...]         if (!oldCacheName) {
+                        // [...]             localStorage.setItem('keepOldCache', humPWA.appCacheName);
+                        // [...]         }
+                             
+                        // [...]     swRegistration.waiting.postMessage({
+                        // [...]         action: 'keepOldCache',
+                        // [...]         value: localStorage.getItem('keepOldCache')
+                        // [...]     });
+                             
+                        // [...]     swRegistration.waiting.postMessage({action: 'skipWaiting'});
                         
                         // POSTPONE UPDATE
-                        } else {
+                        // [...] } else {
                             console.info('The app UPDATE has been POSTPONED by the user.');
                             localStorage.removeItem('keepOldCache');
-                        }
+                        // [...] }
                     }
-
 
                     // swRegistration.waiting.postMessage({action: 'cacheServiceWorkerFile'});
                     // console.log(getLocalStorageStatus().write);
@@ -273,7 +292,7 @@ if (window.location.protocol !== 'file:') {
         // Add PWA MANIFEST meta element
         let link = document.createElement('link');
         link.setAttribute('rel', 'manifest');
-        link.setAttribute('href', '/app/manifest.webmanifest');
+        link.setAttribute('href', '/apps/0.7.0-dev/manifest.webmanifest');
         link.setAttribute('type', 'application/manifest+json');
         document.getElementsByTagName('head')[0].appendChild(link);
 
@@ -304,8 +323,17 @@ if (window.location.protocol !== 'file:') {
                 .then( reg => {
                     console.info('The registered ServiceWorker is ready.');
                     reg.active.postMessage({action: 'appCacheNameRequest'});
-                });
 
+                    // **** new start ****
+                    // if (localStorage.getItem('keepOldCache')) {
+                    //     reg.active.postMessage({
+                    //         action: 'keepOldCache',
+                    //         value: localStorage.getItem('keepOldCache')
+                    //     });
+                    // }
+                    // **** new stop ****
+
+                });
 
 
             // navigator.serviceWorker
@@ -338,6 +366,13 @@ if (window.location.protocol !== 'file:') {
 
             // });
         }
+    } else {
+        let msg = 'The PWA feature is available only on https:// protocol.';
+        window.humPWA = msg;
+        console.warn('HARMONICARIUM PWA: '+msg);
     }
+} else {
+    let msg = 'You are under file:/// protocol. The PWA feature is available only when the app is hosted on a web server and accessed by https:// protocol.';
+    window.humPWA = msg;
+    console.warn('HARMONICARIUM PWA: '+msg);
 }
-

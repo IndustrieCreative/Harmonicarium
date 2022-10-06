@@ -5,7 +5,7 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2020 by Walter Mantovani (http://armonici.it).
+ * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
  * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@ HUM.DHC = class {
      * @param {string} id            - The DHC id, in format harmonicariumID-dhcID (eg. '1-0')
      * @param {HUM}    harmonicarium - The HUM instance to which the this DHC must refer
      */
-    constructor(id, harmonicarium) {
+    constructor(id, idx, harmonicarium) {
         /**
         * The HUM instance
         *
@@ -49,13 +49,8 @@ HUM.DHC = class {
         * @member {string}
         */
         this.id = id;
-        /**
-         * DHC Settings
-         *
-         * @member {HUM.DHC#DHCsettings}
-         * 
-         */
-        this.settings = new this.DHCsettings();
+        this._id = idx;
+        this.name = 'dhc';
         /**
          * DHC Tables
          *
@@ -78,74 +73,6 @@ HUM.DHC = class {
             },
         };
         /**
-         * UI HTML elements
-         *
-         * @member {Object}
-         * 
-         * @property {Object.<string, HTMLElement>} fn  - Functional UI elements
-         * @property {Object.<string, HTMLElement>} in  - Input UI elements
-         * @property {Object.<string, HTMLElement>} out - Output UI elements
-         */
-        this.uiElements = {
-            fn: {
-                controllerKeymapClose: document.getElementById("HTMLf_controllerKeymapClose"+id),
-                controllerKeymapTableShow: document.getElementById("HTMLf_controllerKeymapTableShow"+id),
-                controllerKeymapModal: document.getElementById('HTMLf_controllerKeymapModal'+id),
-                ftHS: document.getElementById("HTMLf_ftHS"+id),
-                ftNEDX: document.getElementById("HTMLf_ftNEDX"+id),
-                ftSys_HSnat: document.getElementById("HTMLf_ftSys_HSnat"+id),
-                ftSys_HStrans: document.getElementById("HTMLf_ftSys_HStrans"+id),
-                ftSys_NEDX: document.getElementById("HTMLf_ftSys_NEDX"+id),
-                keymapTableShow: document.getElementById("HTMLf_keymapTableShow"+id),
-                motPanelClose: document.getElementById("HTMLf_motPanelClose"+id),
-                // checkboxMidi: this.harmonicarium.html.midiTab[id].children[0],
-                // checkboxDHC: this.harmonicarium.html.dhcTab[id].children[0],
-                // checkboxFM: this.harmonicarium.html.fmTab[id].children[0],
-                // checkboxFT: this.harmonicarium.html.ftTab[id].children[0],
-                // checkboxHT: this.harmonicarium.html.htTab[id].children[0],
-
-            },
-            in: {
-                controllerKeymapFile: document.getElementById('HTMLi_controllerKeymapFile'+id),
-                controllerKeymapPresets: document.getElementById('HTMLi_controllerKeymapPresets'+id),
-                dhc_hzAccuracy: document.getElementById("HTMLi_dhc_hzAccuracy"+id),
-                dhc_mcAccuracy: document.getElementById("HTMLi_dhc_mcAccuracy"+id),
-                dhc_middleC: document.getElementById("HTMLi_dhc_middleC"+id),
-                dhc_piperSteps: document.getElementById("HTMLi_dhc_piperSteps"+id),
-                dhc_pitchbendRange: document.getElementById("HTMLi_dhc_pitchbendRange"+id),
-                fm_hz: document.getElementById("HTMLi_fm_hz"+id),
-                fm_mc: document.getElementById("HTMLi_fm_mc"+id),
-                ftHStranspose_h_minus: document.getElementById("HTMLi_ftHStranspose_h_minus"+id),
-                ftHStranspose_h_plus: document.getElementById("HTMLi_ftHStranspose_h_plus"+id),
-                ftHStranspose_s_minus: document.getElementById("HTMLi_ftHStranspose_s_minus"+id),
-                ftHStranspose_s_plus: document.getElementById("HTMLi_ftHStranspose_s_plus"+id),
-                ftNEDX_division: document.getElementById("HTMLi_ftNEDX_division"+id),
-                ftNEDX_ok: document.getElementById("HTMLi_ftNEDX_ok"+id),
-                ftNEDX_unit: document.getElementById("HTMLi_ftNEDX_unit"+id),
-                htTranspose_h_minus: document.getElementById("HTMLi_htTranspose_h_minus"+id),
-                htTranspose_h_plus: document.getElementById("HTMLi_htTranspose_h_plus"+id),
-                htTranspose_h_ratio: document.getElementById("HTMLi_htTranspose_h_ratio"+id),
-                htTranspose_s_minus: document.getElementById("HTMLi_htTranspose_s_minus"+id),
-                htTranspose_s_plus: document.getElementById("HTMLi_htTranspose_s_plus"+id),
-                htTranspose_s_ratio: document.getElementById("HTMLi_htTranspose_s_ratio"+id),
-            },
-            out: {
-                controllerKeymapTable: document.getElementById("HTMLo_controllerKeymapTable"+id),
-                fm_hz: document.getElementById("HTMLo_fm_hz"+id),
-                fm_mc: document.getElementById("HTMLo_fm_mc"+id),
-                ftHStranspose_h_ratio: document.getElementById("HTMLo_ftHStranspose_h_ratio"+id),
-                ftHStranspose_s_ratio: document.getElementById("HTMLo_ftHStranspose_s_ratio"+id),
-                toneMonitorFT_frequency: document.getElementById("HTMLo_toneMonitorFT_frequency"+id),
-                toneMonitorFT_midicents: document.getElementById("HTMLo_toneMonitorFT_midicents"+id),
-                toneMonitorFT_notename: document.getElementById("HTMLo_toneMonitorFT_notename"+id),
-                toneMonitorFT_tone: document.getElementById("HTMLo_toneMonitorFT_tone"+id),
-                toneMonitorHT_frequency: document.getElementById("HTMLo_toneMonitorHT_frequency"+id),
-                toneMonitorHT_midicents: document.getElementById("HTMLo_toneMonitorHT_midicents"+id),
-                toneMonitorHT_notename: document.getElementById("HTMLo_toneMonitorHT_notename"+id),
-                toneMonitorHT_tone: document.getElementById("HTMLo_toneMonitorHT_tone"+id),
-            }
-        };
-        /**
          * Registered Apps<br>
          *     The <em>key</em> of each record is an app Object and the <em>value</em> is the metod that must be invoked
          *     to send messages towards the app. 
@@ -155,48 +82,7 @@ HUM.DHC = class {
         this.registeredApps = new Map();
         // @todo: Pass by constructor parameters
         //        and if false, no signals will be sent to the component
-        /**
-        * The Hstack instance
-        *
-        * @member {HUM.Hstack}
-        */
-        this.hstack = new HUM.Hstack(this);
-        /**
-        * The Synth instance
-        *
-        * @member {HUM.Synth}
-        */
-        this.synth = {}; // see this.init()
-        /**
-        * The MidiHub instance
-        *
-        * @member {HUM.midi.MidiHub}
-        */
-        this.midi = {}; // see this.init()
-        /**
-        * The Hstack instance
-        *
-        * @member {HUM.Hancock}
-        */
-        this.hancock = {}; // see this.init()
-        /**
-         * Piper's default settings
-         *
-         * @member {Object}
-         *
-         * @property {number}             maxLenght - How many steps has the Pipe
-         * @property {Array.<HUM.DHCmsg>} queue     - Last HT MIDI Note-ON messages received
-         * @property {Array.<HUM.DHCmsg>} pipe      - MIDI Note-ON messages stored into the Pipe
-         * @property {number}             currStep  - Last step played by the Piper
-         * @property {HUM.DHCmsg}         currTone  - Last fake MIDI Note-ON message send
-         */
-        this.pipe = {
-            maxLenght: 5,
-            queue: [],
-            pipe: [],
-            currStep: 5,
-            currTone: null
-        };
+
         /**
          * Queues for FT/HT playing and muting management
          *
@@ -210,42 +96,53 @@ HUM.DHC = class {
             ht: [],
         };
         /**
-         * The container for all the Controller keymap presets
-         *
-         * @member {HUM.CtrlKeymapPreset}
-         */
-        this.ctrlKeymapPreset = new HUM.CtrlKeymapPreset(this);
-        /**
         * The Backend Utils instance
         *
         * @member {BackendUtils}
         */
         this.backendUtils = this.harmonicarium.components.backendUtils;
-        this.backendUtils.uiElements.fn.settings[this.id] = document.getElementById("HTMLf_dhc_container"+this.id);
 
-        this._init();
+        /**
+         * DHC Settings
+         *
+         * @member {HUM.DHC#Parameters}
+         * 
+         */
+        this.settings = new this.Parameters(this);
+
+        /**
+        * The Hancock instance
+        *
+        * @member {HUM.Hancock}
+        */
+        this.hancock = new HUM.Hancock(this);
+
+        this.settings._init();
+
+        /**
+        * The Synth instance
+        *
+        * @member {HUM.Synth}
+        */
+        this.synth = new HUM.Synth(this);
+
+        /**
+        * The MidiHub instance
+        *
+        * @member {HUM.midi.MidiHub}
+        */
+        this.midi = new HUM.midi.MidiHub(this);
+
+        /**
+        * The Hstack instance
+        *
+        * @member {HUM.Hstack}
+        */
+        this.hstack = new HUM.Hstack(this);
         // =======================
     } // end class Constructor
     // ===========================
-
-    /**
-     * Initialize the new instance of DHC
-     */
-    _init() {
-        
-        this._initUI();
-        
-        this.settings.fm.hz = this.getFM(this.settings.fm.init);
-
-        this.synth = new HUM.Synth(this);
-        
-        this.hancock = new HUM.Hancock(this);
-
-        this.switchFTsys(this.settings.ft.selected, false, true); // initTables() + updateKeymapPreset()
-
-        this.midi = new HUM.midi.MidiHub(this);
-        
-    }
+    
     /**
      * Register a new App (module)
      * 
@@ -298,11 +195,11 @@ HUM.DHC = class {
         let fundamentalsTable = {},
             fundamentalsReverseTable = {};
         // Select current FT Tuning Systems
-        switch (this.settings.ft.selected) {
+        switch (this.settings.ft.selected.value) {
             // n-EDx EQUAL TEMPERAMENT
             case "nEDx":
                 for (let i = -this.settings.ft.steps; i <= this.settings.ft.steps; i++) {
-                    let freq = this.constructor.compute_nEDx(i, this.settings.ft.nEDx.unit, this.settings.ft.nEDx.division, this.settings.fm.hz);
+                    let freq = this.constructor.compute_nEDx(i, this.settings.ft.nEDx.unit.value, this.settings.ft.nEDx.division.value, this.settings.fm.hz.value);
                     let midicents = this.constructor.freqToMc(freq);
                     let ok_rev = false;
                     fundamentalsTable[i] = new this.Xtone(freq, midicents);
@@ -319,11 +216,11 @@ HUM.DHC = class {
                 break;
             // HARMONICS / SUBHARMONICS FT
             case "h_s":
-                if (this.settings.ft.h_s.selected === "natural") {
+                if (this.settings.ft.h_s.selected.value === "natural") {
                     // Compute the sub/harmonics naturally (NOT transposed to the Same Octave)
                     for (let i = 1; i <= this.settings.ft.steps; i++) {
-                        let sFreq = this.settings.fm.hz / i * this.settings.ft.h_s.natural.s_tr;
-                        let hFreq = this.settings.fm.hz * i * this.settings.ft.h_s.natural.h_tr;
+                        let sFreq = this.settings.fm.hz.value / i * this.settings.ft.h_s.natural.s_tr.value;
+                        let hFreq = this.settings.fm.hz.value * i * this.settings.ft.h_s.natural.h_tr.value;
                         let sMidicents = this.constructor.freqToMc(sFreq);
                         let hMidicents = this.constructor.freqToMc(hFreq);
                         let ok_rev_h = false;
@@ -347,10 +244,10 @@ HUM.DHC = class {
                         }
                     }
                     // FT0 is always the FM 
-                    fundamentalsTable[0] = new this.Xtone(this.settings.fm.hz, this.settings.fm.mc);
-                    fundamentalsReverseTable[Number(this.settings.fm.mc)] = 0;
+                    fundamentalsTable[0] = new this.Xtone(this.settings.fm.hz.value, this.settings.fm.mc.value);
+                    fundamentalsReverseTable[Number(this.settings.fm.mc.value)] = 0;
                 }
-                if (this.settings.ft.h_s.selected === "sameOctave") {
+                if (this.settings.ft.h_s.selected.value === "sameOctave") {
                     // Compute the sub/harmonics all transposed to the Same Octave
                     for (let i = 1; i <= this.settings.ft.steps; i++) {
                         let h_so_tr = null;
@@ -374,8 +271,8 @@ HUM.DHC = class {
                             h_so_tr = i / 32;
                             s_so_tr = 1 / i * 32;
                         }
-                        let hFreq = this.settings.fm.hz * h_so_tr * this.settings.ft.h_s.sameOctave.h_tr;
-                        let sFreq = this.settings.fm.hz * s_so_tr * this.settings.ft.h_s.sameOctave.s_tr;
+                        let hFreq = this.settings.fm.hz.value * h_so_tr * this.settings.ft.h_s.sameOctave.h_tr.value;
+                        let sFreq = this.settings.fm.hz.value * s_so_tr * this.settings.ft.h_s.sameOctave.s_tr.value;
                         let sMidicents = this.constructor.freqToMc(sFreq);
                         let hMidicents = this.constructor.freqToMc(hFreq);
                         let ok_rev_h = false;
@@ -399,8 +296,8 @@ HUM.DHC = class {
                         }
                     }
                     // FT0 is always the FM
-                    fundamentalsTable[0] = new this.Xtone(this.settings.fm.hz, this.settings.fm.mc); 
-                    fundamentalsReverseTable[Number(this.settings.fm.mc)] = 0;
+                    fundamentalsTable[0] = new this.Xtone(this.settings.fm.hz.value, this.settings.fm.mc.value); 
+                    fundamentalsReverseTable[Number(this.settings.fm.mc.value)] = 0;
                 }
                 break;
             // @todo - TUNING FILES FT
@@ -424,13 +321,13 @@ HUM.DHC = class {
         let harmonicsTable = {},
             harmonicsReverseTable = {};
         for (let i = -128; i < 0; i++) {
-            let freq = fundamental / -i * this.settings.ht.transpose.s;
+            let freq = fundamental / -i * this.settings.ht.transpose.s.value;
             let midicents = this.constructor.freqToMc(freq);
             harmonicsTable[i] = new this.Xtone(freq, midicents);
             harmonicsReverseTable[midicents] = i;
         }
         for (let i = 1; i < 129; i++) {
-            let freq = fundamental * i * this.settings.ht.transpose.h;
+            let freq = fundamental * i * this.settings.ht.transpose.h.value;
             let midicents = this.constructor.freqToMc(freq);
             harmonicsTable[i] = new this.Xtone(freq, midicents);
             harmonicsReverseTable[midicents] = i;
@@ -444,56 +341,6 @@ HUM.DHC = class {
     /*==============================================================================*
      * FM UI tools
      *==============================================================================*/
-
-    /**
-     * Get the Fundamental Mother (FM) from the UI input
-     *
-     * @param {('mc'|'hz')} method - Method to use to get the FM
-     *
-     * @return {hertz} - Frequency expressed in hertz (Hz)
-     */
-    // @old icGetFM
-    getFM(method) {
-        let freq = null,
-            midicents = null;
-        switch (method) {
-            case "mc":
-                let fmMC = this.uiElements.in.fm_mc.value;
-                midicents = fmMC;
-                freq = this.constructor.mcToFreq(fmMC);
-                // Store the midi.cents value
-                this.settings.fm.mc = fmMC;
-                break;
-            case "hz":
-                if (this.uiElements.in.fm_hz.value <= 0) {
-                    this.uiElements.in.fm_hz.value = 1;
-                }
-                let fmHZ = this.uiElements.in.fm_hz.value;
-                midicents = this.constructor.freqToMc(fmHZ);
-                // Store the midi.cents value
-                this.settings.fm.mc = midicents;
-                freq = fmHZ;
-                break;
-        }
-        // Change the 'init' for eventual icDHCinit
-        this.settings.fm.init = method;
-        // Return the frequency on the FM (Hz)
-        return freq;
-    }
-
-    /**
-     * Set the Fundamental Mother (FM) and re-init the tone tables
-     *
-     * @param {hertz} hz - Frequency expressed in hertz (Hz)
-     */
-    // @old icSetFM
-    setFM(hz) {
-        // Store the FM to the global variable
-        this.settings.fm.hz = hz;
-        // Recreate all tables
-        this.initTables();
-    }
-
     /**
      * Print the Fundamental Mother (FM) data to the UI output
      *
@@ -510,143 +357,31 @@ HUM.DHC = class {
             name = notename[0],
             sign = notename[1],
             cent = notename[2];
-        this.uiElements.out.fm_mc.innerText = bent_xtObj.mc.toFixed(this.settings.global.cent_accuracy + 2) + " = " + name + " " + sign + cent + "\u00A2";
-        this.uiElements.out.fm_hz.innerText = bent_xtObj.hz.toFixed(this.settings.global.hz_accuracy);
-    }
-
-    /*==============================================================================*
-     * FT UI tools
-     *==============================================================================*/
-
-    /**
-     * Switch the FT TUNING SYSTEM (called when UI is updated)
-     *
-     * @param {('nedx'|'hs')}             sys    - FTs tuning method; 'nedx' (equal temperament) or 'hs' (harm/subharm)
-     * @param {('natural'|'sameOctave')=} sys_hs - FTs Harm/Subharm tuning method; 'natural' (no transposition) or 'sameOctave' (to the same octave)
-     * @param {boolean}                   init   - If the method has been called by the ._init() method
-     */
-    // @old icSwitchFTsys
-    switchFTsys(sys, sys_hs=false, init=false) {
-        if (sys === "nEDx") {
-            if (init) {
-                this.uiElements.fn.ftSys_NEDX.checked = true;
-            }
-            this.uiElements.fn.ftNEDX.style.display = "initial";
-            this.uiElements.fn.ftHS.style.display = "none";
-            this.settings.ft.selected = "nEDx";
-        } else if (sys === "h_s") {
-            this.uiElements.fn.ftNEDX.style.display = "none";
-            this.uiElements.fn.ftHS.style.display = "initial";
-            this.settings.ft.selected = "h_s";
-            if (sys_hs === "natural") {
-                if (init) {
-                    this.uiElements.fn.ftSys_HSnat.checked = true;                        
-                }
-                this.settings.ft.h_s.selected = "natural";
-                this.uiElements.out.ftHStranspose_h_ratio.innerText = this.settings.ft.h_s.natural.h_tr;
-                this.uiElements.out.ftHStranspose_s_ratio.innerText = this.settings.ft.h_s.natural.s_tr;
-            } else if (sys_hs === "sameOctave") {
-                if (init) {
-                    this.uiElements.fn.ftSys_HStrans.checked = true;                        
-                }
-                this.settings.ft.h_s.selected = "sameOctave";
-                this.uiElements.out.ftHStranspose_h_ratio.innerText = this.settings.ft.h_s.sameOctave.h_tr;
-                this.uiElements.out.ftHStranspose_s_ratio.innerText = this.settings.ft.h_s.sameOctave.s_tr;
-            }
-        }
-        this.updateKeymapPreset();
-    }
-
-    /**
-     * Set the nEDx (called when UI is updated)
-     */
-    // @old icSetNEDX
-    setNEDX() {
-        if (this.uiElements.in.ftNEDX_unit.value < 1) {
-            this.uiElements.in.ftNEDX_unit.value = 1;
-        }
-        if (this.uiElements.in.ftNEDX_division.value < 1) {
-            this.uiElements.in.ftNEDX_division.value = 1;
-        }
-        this.settings.ft.nEDx.unit = Number(this.uiElements.in.ftNEDX_unit.value);
-        this.settings.ft.nEDx.division = Number(this.uiElements.in.ftNEDX_division.value);
-        // Recreate all tables
-        this.initTables();
-
-    }
-    /**
-     * Transpose FT under harmonics/subharmonics Tuning System (called when UI is updated)
-     *
-     * @param {tratio}   ratio - The ratio for the transposition
-     * @param {tonetype} type  - The tone type
-     */
-     // @old icFThsTranspose
-    transposeFThs(ratio, type) {
-        if (this.settings.ft.h_s.selected === "natural") {
-            this.settings.ft.h_s.natural[type+"_tr"] *= ratio;
-            this.uiElements.out[`ftHStranspose_${type}_ratio`].innerText = this.settings.ft.h_s.natural[type+"_tr"];
-        } else if (this.settings.ft.h_s.selected === "sameOctave") {
-            this.settings.ft.h_s.sameOctave[type+"_tr"] *= ratio;
-            this.uiElements.out[`ftHStranspose_${type}_ratio`].innerText = this.settings.ft.h_s.sameOctave[type+"_tr"];
-        }
-        this.initTables();
-    }
-
-    /*==============================================================================*
-     * HT UI tools
-     *==============================================================================*/
-
-    /**
-     * Transpose HT (sub)harmonics (called when UI is updated)
-     *
-     * @param  {tratio}    ratio  - The ratio with which to compute the transposition
-     * @param  {('h'|'s')} type   - Type of transposition; 'h' for harmonics or 's' for subharmonics
-     * @param  {boolean}   octave - If it's an octave transposition or not.<br>
-     *                              If it's true, the 'ratio' should be 2 (for octave up) or 0.5 (for octave down).
-     */
-     // @old icHTtranspose
-    transposeHT(ratio, type, octave) {
-        // If it's an octave transpose
-        if (octave === true) {
-            // Multiply the current transpose ratio by the input ratio
-            this.settings.ht.transpose[type] *= ratio;
-            // Update the new computed transpose ratio to the UI
-            this.uiElements.in[`htTranspose_${type}_ratio`].value = this.settings.ht.transpose[type];
-        } else if (octave === false) {
-            // Check if the ratio is > 0
-            if (ratio > 0) {
-                // Set the new transpose ratio
-                this.settings.ht.transpose[type] = ratio;
-            // If it's not, restore the last valid ratio
-            } else {
-                this.uiElements.in[`htTranspose_${type}_ratio`].value = this.settings.ht.transpose[type];
-                // Stop executing the rest of the function
-                return;
-            }
-        }
-        // Recreate the HT table on the last FT
-        this.createHTtable(this.tables.ft[this.settings.ht.curr_ft].hz);
+        this.settings.fm.mc.uiElements.out.fm_mc_monitor.innerText = bent_xtObj.mc.toFixed(this.settings.global.cent_accuracy.value + 2) + " = " + name + " " + sign + cent + "\u00A2";
+        this.settings.fm.hz.uiElements.out.fm_hz_monitor.innerText = bent_xtObj.hz.toFixed(this.settings.global.hz_accuracy.value);
     }
 
     /*==============================================================================*
      * KEYMAP HANDLING METHODS
      *==============================================================================*/
-
     /**
      * Update the preset list according to the selected FTs Tuning System
      */
     // @old icUpdateKeymapPreset
     updateKeymapPreset() {
-        let htmlElem = this.uiElements.in.controllerKeymapPresets;
-        let lastValue = this.ctrlKeymapPreset.current[this.settings.ft.selected];
+        let htmlElem = this.settings.keymap.presets.uiElements.in.controllerKeymapPresets;
+        let lastValue = this.settings.keymap.presets.value[this.settings.ft.selected.value];
         let changeEvent = {target: {value: lastValue}};
-        let keymaps = Object.keys(this.ctrlKeymapPreset[this.settings.ft.selected]);
+        let keymaps = Object.keys(this.settings.keymap.presets.ctrlKeymapPreset[this.settings.ft.selected.value]);
         let optionFile = document.createElement("option");
-        htmlElem.innerHTML = "";
+        // htmlElem.innerHTML = "";
+        while (htmlElem.firstChild) {
+            htmlElem.removeChild(htmlElem.firstChild);
+        }
         for (let key of keymaps) {
             let option = document.createElement("option");
             option.value = key;
-            option.text = this.ctrlKeymapPreset[this.settings.ft.selected][key].notes;
+            option.text = this.settings.keymap.presets.ctrlKeymapPreset[this.settings.ft.selected.value][key].notes;
             htmlElem.add(option);
         }
         optionFile.text = "Load from file...";
@@ -665,10 +400,12 @@ HUM.DHC = class {
     loadKeymapPreset(changeEvent) {
         let indexValue = changeEvent.target.value;
         if (indexValue != 99) {
-            let keymap = this.ctrlKeymapPreset[this.settings.ft.selected][indexValue].map;
+            let keymap = this.settings.keymap.presets.ctrlKeymapPreset[this.settings.ft.selected.value][indexValue].map;
             
             // Store the current Keymap <option> value in a global slot
-            this.ctrlKeymapPreset.current[this.settings.ft.selected] = indexValue;
+            this.settings.keymap.presets.value[this.settings.ft.selected.value] = indexValue;
+            this.settings.keymap.presets._objValueModified();
+
             // Write the Controller Keymap into the global object
             this.tables.ctrl = keymap;
 
@@ -679,26 +416,9 @@ HUM.DHC = class {
 
             this.sendMessageToApps(HUM.DHCmsg.ctrlmapUpd('dhc'));
 
-            this.uiElements.in.controllerKeymapFile.style.visibility = "hidden";
+            this.settings.keymap.keymapFile.uiElements.in.controllerKeymapFile.style.visibility = "hidden";
         } else {
-            this.uiElements.in.controllerKeymapFile.style.visibility = "initial";
-        }
-    }
-
-    /**
-     * On loading the Controller Keymap file
-     *
-     * @param {Event} changeEvent - HTML change event on 'input' element (ctrl keymap file uploader)
-     */
-    // @old icHandleKeymapFile
-    handleKeymapFile(changeEvent) {
-        // Check for the various File API support.
-        if (window.File && window.FileReader && window.FileList && window.Blob) {
-            // Great success! All the File APIs are supported.
-            // Access to the file and send it to read function
-            this.readKeymapFile(changeEvent.target.files[0]);
-        } else {
-            alert('The File APIs are not fully supported in this browser.');
+            this.settings.keymap.keymapFile.uiElements.in.controllerKeymapFile.style.visibility = "initial";
         }
     }
 
@@ -731,7 +451,7 @@ HUM.DHC = class {
     // @old icProcessKeymapData
     processKeymapData(data, name) {
         // Get the key for the new slot
-        let optionValue = this.uiElements.in.controllerKeymapPresets.length;
+        let optionValue = this.settings.keymap.presets.uiElements.in.controllerKeymapPresets.length;
         // Split by lines
         let allTextLines = data.split(/\r\n|\n/);
         let lines = {};
@@ -741,12 +461,12 @@ HUM.DHC = class {
             let elements = allTextLines[i].split(/\s\s*/);
             lines[parseInt(elements[0])] = { ft: parseInt(elements[1]), ht: parseInt(elements[2]) };
         }
-        // Write the Controller Keymap into a new slot in this.ctrlKeymapPreset
-        this.ctrlKeymapPreset[this.settings.ft.selected][optionValue] = {};
-        this.ctrlKeymapPreset[this.settings.ft.selected][optionValue].map = lines;
-        this.ctrlKeymapPreset[this.settings.ft.selected][optionValue].name = name;
-        this.ctrlKeymapPreset[this.settings.ft.selected][optionValue].notes = "FILE: " + name;
-        this.ctrlKeymapPreset.current[this.settings.ft.selected] = optionValue;
+        // Write the Controller Keymap into a new slot in this.settings.keymap.presets.ctrlKeymapPreset
+        this.settings.keymap.presets.ctrlKeymapPreset[this.settings.ft.selected.value][optionValue] = {};
+        this.settings.keymap.presets.ctrlKeymapPreset[this.settings.ft.selected.value][optionValue].map = lines;
+        this.settings.keymap.presets.ctrlKeymapPreset[this.settings.ft.selected.value][optionValue].name = name;
+        this.settings.keymap.presets.ctrlKeymapPreset[this.settings.ft.selected.value][optionValue].notes = "FILE: " + name;
+        this.settings.keymap.presets.value[this.settings.ft.selected.value] = optionValue;
         // Update the dropdown (and the UI monitors)
         this.updateKeymapPreset();
     }
@@ -758,7 +478,7 @@ HUM.DHC = class {
     keymap2Html() {
         let txt = "";
         let map = this.tables.ctrl;
-        txt += '<table class="dataTable"><tr><th>MIDI #</th><th>FT</th><th>HT</th></tr>';
+        txt += '<table class="table table-sm table-striped table-hover"><tr><th>MIDI #</th><th>FT</th><th>HT</th></tr>';
         for (let key of Object.keys(map)) {
             let ft, ht = "";
             if (map[key].ft === 129) {
@@ -774,29 +494,7 @@ HUM.DHC = class {
             txt += "<tr><td>" + key + "</td><td>" + ft + "</td><td>" + ht + "</td></tr>";
         }
         txt += "<tr><th>MIDI #</th><th>FT</th><th>HT</th></tr></table>";
-        this.uiElements.out.controllerKeymapTable.innerHTML = txt;
-
-        // Get the modal element
-        let modal = this.uiElements.fn.controllerKeymapModal;
-        // Get the <span> element that closes the modal element
-        let close = this.uiElements.fn.controllerKeymapClose;
-        // When the user clicks the button, open the modal element
-        modal.style.display = "block";
-        // When the user clicks on <span> (x), close the modal element
-        close.onclick = function() {
-            modal.style.display = "none";
-        };
-        // window.addEventListener("click", function(event) {
-        //     if (event.target == modal) {
-        //         modal.style.display = "none";
-        //     }
-        // });
-        // When the user clicks anywhere outside of the modal element, close it
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        };
+        this.settings.keymap.modalTable.uiElements.out.controllerKeymapTable.innerHTML = txt;
     }
 
     /*==============================================================================*
@@ -855,7 +553,8 @@ HUM.DHC = class {
         this.sendMessageToApps(dhcMsg);
 
         // Update the UI
-        this.dhcMonitor("ft", dhcMsg.xtNum);
+        // this.dhcMonitor("ft", dhcMsg.xtNum);
+        this.settings.global.monitor.value = ["ft", dhcMsg.xtNum];
     }
 
     /**
@@ -889,7 +588,7 @@ HUM.DHC = class {
                     this.sendMessageToApps(nextTone);
 
                     // Update the UI
-                    this.dhcMonitor("ft", nextTone.xtNum);
+                    this.settings.global.monitor.value = ["ft", nextTone.xtNum];
 
                 }
             }
@@ -960,7 +659,7 @@ HUM.DHC = class {
             }
             
             // Update the UI
-            this.dhcMonitor("ht", dhcMsg.xtNum);
+            this.settings.global.monitor.value = ["ht", dhcMsg.xtNum];
         
         // If HT0 is pressed, it's the Piper feature!
         } else if (dhcMsg.xtNum === 0) {
@@ -1035,15 +734,15 @@ HUM.DHC = class {
         // Prepare the fake MIDI message
         // let pack = [statusByte, ctrlNum, velocity];
         // If the pipe is not full
-        if (this.pipe.queue.length < this.pipe.maxLenght) {
+        if (this.settings.piper.queue.length < this.settings.piper.maxLength.value) {
             // Insert the message at the beginning of the queue
-            this.pipe.queue.push(dhcMsg);
+            this.settings.piper.queue.push(dhcMsg);
         // Else, if the pipe is full
         } else {
             // Remove the oldest message in the pipe
-            this.pipe.queue.shift();
+            this.settings.piper.queue.shift();
             // Insert in the pipe a new message
-            this.pipe.queue.push(dhcMsg);
+            this.settings.piper.queue.push(dhcMsg);
         }
     }
 
@@ -1055,69 +754,69 @@ HUM.DHC = class {
      */
     piping(state) {
         // Get the index (current step)
-        let i = this.pipe.currStep;
+        let i = this.settings.piper.currStep;
         // If there are notes in the queue
-        if (this.pipe.queue.length > 0) {
+        if (this.settings.piper.queue.length > 0) {
             // Inject the queue into the pipe at the current step position
-            this.pipe.pipe.splice.apply(this.pipe.pipe, [i, this.pipe.queue.length].concat(this.pipe.queue));
-            // If the final pipe is longer than the maxLenght
-            if (this.pipe.pipe.length > this.pipe.maxLenght) {
-                // Cut the pipe according to the maxLenght
-                this.pipe.pipe.splice(0, (this.pipe.pipe.length - this.pipe.maxLenght));
+            this.settings.piper.pipe.splice.apply(this.settings.piper.pipe, [i, this.settings.piper.queue.length].concat(this.settings.piper.queue));
+            // If the final pipe is longer than the maxLength
+            if (this.settings.piper.pipe.length > this.settings.piper.maxLength.value) {
+                // Cut the pipe according to the maxLength
+                this.settings.piper.pipe.splice(0, (this.settings.piper.pipe.length - this.settings.piper.maxLength.value));
             }
             // Increase current step and index in order to start playing
             // after the notes that have just been inserted
-            this.pipe.currStep += this.pipe.queue.length;
-            i += this.pipe.queue.length;
+            this.settings.piper.currStep += this.settings.piper.queue.length;
+            i += this.settings.piper.queue.length;
             // Empty the queue
-            this.pipe.queue = [];
+            this.settings.piper.queue = [];
         }
         // If there are notes in the pipe
-        if (this.pipe.pipe.length > 0) {
+        if (this.settings.piper.pipe.length > 0) {
             // If step count is not at the end of the pipe
-            if (i < this.pipe.maxLenght) {
+            if (i < this.settings.piper.maxLength.value) {
                 // Note ON
                 if (state === 1) {
                     // If there is some message at the current step in the pipe
-                    if (this.pipe.pipe[i]) {
+                    if (this.settings.piper.pipe[i]) {
                         // Create the special-marked fake MIDI message
                         // in order to not to be confused with a normal MIDI message
-                        // let hancock = this.pipe.pipe[i][3];
+                        // let hancock = this.settings.piper.pipe[i][3];
                         // if (this.settings.controller.receive_mode !== 'keymap') {
                         //     hancock = 'hancock';
                         // }
                         // let midievent = {
-                        //     data: [this.pipe.pipe[i][0], this.pipe.pipe[i][1], this.pipe.pipe[i][2], hancock, "piper"]
+                        //     data: [this.settings.piper.pipe[i][0], this.settings.piper.pipe[i][1], this.settings.piper.pipe[i][2], hancock, "piper"]
                         // };
-                        this.pipe.pipe[i].piper = true;
-                        this.playHT(this.pipe.pipe[i]);
+                        this.settings.piper.pipe[i].piper = true;
+                        this.playHT(this.settings.piper.pipe[i]);
                         
                         // Send the fake MIDI message
                         // this.midi.in.midiMessageReceived(midievent);
                         // Store the last sent MIDI message in 'currTone'
-                        this.pipe.currTone = this.pipe.pipe[i];
+                        this.settings.piper.currTone = this.settings.piper.pipe[i];
                     } else {
-                        this.pipe.currTone = null;
+                        this.settings.piper.currTone = null;
                     }
                 // Note OFF
                 } else if (state === 0) {
                     // If there is a stored MIDI message in 'currTone'
-                    if (this.pipe.currTone) {
-                        let currToneOFF = HUM.DHCmsg.copyOFF(this.pipe.currTone);
-                        // this.pipe.currTone.cmd = "tone-off";
+                    if (this.settings.piper.currTone) {
+                        let currToneOFF = HUM.DHCmsg.copyOFF(this.settings.piper.currTone);
+                        // this.settings.piper.currTone.cmd = "tone-off";
                         // Set the velocity to zero (Note OFF)
-                        // this.pipe.currTone.data[2] = 0;
+                        // this.settings.piper.currTone.data[2] = 0;
                         // Send the fake MIDI message
-                        // this.midi.in.midiMessageReceived(this.pipe.currTone);
+                        // this.midi.in.midiMessageReceived(this.settings.piper.currTone);
                         this.muteHT(currToneOFF);
                     }
                     // Go to the next step in the pipe
-                    this.pipe.currStep++;
+                    this.settings.piper.currStep++;
                 }
             // If step count is at the end (or out) of the pipe
             } else {
                 // Reset the step counter                
-                this.pipe.currStep = 0;
+                this.settings.piper.currStep = 0;
                 // Retry to execute the icPiping (itself) again
                 this.piping(state);
             }
@@ -1143,8 +842,8 @@ HUM.DHC = class {
         for (let tone of melodies[type]) {
             msgsQueue.push(HUM.DHCmsg.htON('dhc', tone, 120, false, true));
         }
-        this.pipe.maxLenght = this.uiElements.in.dhc_piperSteps.value = msgsQueue.length;
-        this.pipe.queue = msgsQueue;
+        this.settings.piper.maxLength.value = msgsQueue.length;
+        this.settings.piper.queue = msgsQueue;
     }
 
     /*==============================================================================*
@@ -1161,7 +860,7 @@ HUM.DHC = class {
     // @old icArrayPitchbender
     bendXtone(xtObj) {
         // Compute the Controller Pitchbend amount in cents
-        let pitchbend = this.settings.controller.pb.amount * this.settings.controller.pb.range,
+        let pitchbend = this.settings.controller.pb.amount * this.settings.controller.pb.range.value,
         // Apply the controller pitchbend if present
             hz = Math.pow(2, pitchbend / 1200) * xtObj.hz,
             mc = (xtObj.mc + pitchbend / 100);
@@ -1175,231 +874,15 @@ HUM.DHC = class {
     // @old icMONITORSinit
     initUImonitors() {
         // Compile the FM monitors
-        this.printFundamentalMother(this.settings.fm.hz, this.settings.fm.mc);
+        this.printFundamentalMother(this.settings.fm.hz.value, this.settings.fm.mc.value);
         // Compile the FT monitors
-        this.dhcMonitor("ft", this.settings.ht.curr_ft);
+        this.settings.global.monitor.value = ["ft", this.settings.ht.curr_ft];
         // If a HT has been already pressed
         if (this.settings.ht.curr_ht) {
             // Compile the HT monitor
-            this.dhcMonitor("ht", this.settings.ht.curr_ht);
+            this.settings.global.monitor.value = ["ht", this.settings.ht.curr_ht];
         }
         this.sendMessageToApps(HUM.DHCmsg.init('dhc'));
-    }
-
-    /**
-     * Monitor UI
-     *
-     * @param  {tonetype} type  - If the tone is a FT or HT
-     * @param  {xtnum}    xtNum - FT or HT relative tone number
-     */
-    // @old icDHCmonitor
-    dhcMonitor(type, xtNum) {
-        let xtObj = this.tables[type][xtNum];
-        // Apply the controller pitchbend (if present) to the array 
-        xtObj = this.bendXtone(xtObj);
-        let notename = this.mcToName(xtObj.mc),
-            name = notename[0],
-            sign = notename[1],
-            cent = notename[2],
-            hzAccuracy = this.settings.global.hz_accuracy,
-            mcAccuracy = this.settings.global.cent_accuracy;
-        if (type === "ft") {
-            // Update the log on MONITOR FT info on the UI
-            this.uiElements.out.toneMonitorFT_tone.innerText = xtNum;
-            this.uiElements.out.toneMonitorFT_midicents.innerText = xtObj.mc.toFixed(mcAccuracy + 2);
-            this.uiElements.out.toneMonitorFT_notename.innerText = name + " " + sign + cent + "\u00A2";
-            this.uiElements.out.toneMonitorFT_frequency.innerText = xtObj.hz.toFixed(hzAccuracy);
-        } else if (type === "ht") {
-            // Update the log on MONITOR HT info on the UI
-            this.uiElements.out.toneMonitorHT_tone.innerText = xtNum;
-            this.uiElements.out.toneMonitorHT_midicents.innerText = xtObj.mc.toFixed(mcAccuracy + 2);
-            this.uiElements.out.toneMonitorHT_notename.innerText = name + " " + sign + cent + "\u00A2";
-            this.uiElements.out.toneMonitorHT_frequency.innerText = xtObj.hz.toFixed(hzAccuracy);
-        }
-    }
-
-    /*==============================================================================*
-     * DHC UI INIT
-     *==============================================================================*/
-
-    /**
-     * Initialize the DHC UI controllers
-     */
-    // @old icUIinit
-    _initUI() {
-        /*  UI DEFAULT SETTINGS
-         * ====================*/
-
-        // Default UI FM
-        if (this.settings.fm.init === "mc") {
-            // If the FM 'init' value is 'mc'
-            // Set UI midicents FM from this.settings.fm.mc
-            this.uiElements.in.fm_mc.value = this.settings.fm[this.settings.fm.init];
-        } else if (this.settings.fm.init === "hz") {
-            // If the FM 'init' value is 'hz'
-            // Set UI Hz FM from this.settings.fm.hz
-            this.uiElements.in.fm_hz.value = this.settings.fm[this.settings.fm.init];
-        } else {
-            console.log("The 'DHC.settings.fm.init' attribute has an unexpected value: " + this.settings.fm.init);
-        }
-        // Default FT nED-x on UI textboxes
-        this.uiElements.in.ftNEDX_unit.value = this.settings.ft.nEDx.unit;
-        this.uiElements.in.ftNEDX_division.value = this.settings.ft.nEDx.division;
-        // Default HT TRANSPOSE on UI textboxes
-        this.uiElements.in.htTranspose_h_ratio.value = this.settings.ht.transpose.h;
-        this.uiElements.in.htTranspose_s_ratio.value = this.settings.ht.transpose.s;
-        // Default DHC SETTINGS on UI textboxes
-        this.uiElements.in.dhc_hzAccuracy.value = this.settings.global.hz_accuracy;
-        this.uiElements.in.dhc_mcAccuracy.value = this.settings.global.cent_accuracy;
-        this.uiElements.in.dhc_middleC.value = this.settings.global.middle_c + 5;
-        this.uiElements.in.dhc_pitchbendRange.value = this.settings.controller.pb.range;
-        this.uiElements.in.dhc_piperSteps.value = this.pipe.maxLenght;
-
-        /*  UI EVENT LISTENERS
-         * ====================*/
-
-        //------------------------
-        // UI GENERAL DHC settings
-        //------------------------
-        // Set the UI HZ DECIMAL PRECISION from UI HTML inputs
-        this.uiElements.in.dhc_hzAccuracy.addEventListener("change", (event) => {
-            // Store the Hz accuracy in the global slot
-            this.settings.global.hz_accuracy = Number(event.target.value);
-            // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
-            this.initUImonitors();
-            // icDHCinit();
-        });
-        // Set the UI MIDI.CENTS DECIMAL PRECISION from UI HTML inputs
-        this.uiElements.in.dhc_mcAccuracy.addEventListener("change", (event) => {
-            // Store the mc accuracy in the global slot
-            this.settings.global.cent_accuracy = Number(event.target.value);
-            // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
-            this.initUImonitors();
-            // icDHCinit();
-        });
-        // Set the MIDDLE C OCTAVE from UI HTML inputs
-        this.uiElements.in.dhc_middleC.addEventListener("change", (event) => {
-            // Beginning octave = Middle C octave - 5   (-1 => C4)
-            this.settings.global.middle_c = event.target.value - 5;
-            // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
-            this.initUImonitors();
-            // icDHCinit();
-        });
-        // Set the CONTROLLER PITCHBEND RANGE from UI HTML inputs
-        this.uiElements.in.dhc_pitchbendRange.addEventListener("change", (event) => {
-            this.settings.controller.pb.range = event.target.value;
-        });
-        // Set the PIPER HT0 FEATURE from UI HTML inputs
-        this.uiElements.in.dhc_piperSteps.addEventListener("change", (event) => {
-            this.pipe.maxLenght = event.target.value;
-        });
-
-        //-------------------
-        // UI FM DHC settings
-        //-------------------
-        // Set the Fundamental Mother (FM) from UI HTML inputs
-        this.uiElements.in.fm_mc.addEventListener("change", () => {
-            this.setFM(this.getFM("mc"));
-            this.uiElements.in.fm_hz.value = "";
-        });
-        this.uiElements.in.fm_hz.addEventListener("change", () => {
-            this.setFM(this.getFM("hz"));
-            this.uiElements.in.fm_mc.value = "";
-        });
-
-        //-------------------
-        // UI FT DHC settings
-        //-------------------
-        // Set the RADIO BUTTONS for FT TUNING SYSTEM
-        // Radio NEDX system
-        this.uiElements.fn.ftSys_NEDX.addEventListener("click", (event) => {
-            if (event.target.checked) {
-                this.switchFTsys("nEDx");
-            }
-        });
-        // Radio HS Natural system
-        this.uiElements.fn.ftSys_HSnat.addEventListener("click", (event) => {
-            if (event.target.checked) {
-                this.switchFTsys("h_s", "natural");
-            }
-        });
-        // Radio HS Transposed Same Octave system
-        this.uiElements.fn.ftSys_HStrans.addEventListener("click", (event) => {
-            if (event.target.checked) {
-                this.switchFTsys("h_s", "sameOctave");
-            }
-        });
-        // Set default FT Tuning System after the radio buttons are set-up
-        // this.uiElements.fn.ftSys_NEDX.click();
-        // Get and set the FT NEDX UI HTML inputs
-        this.uiElements.in.ftNEDX_unit.addEventListener("change", this.setNEDX.bind(this));
-        this.uiElements.in.ftNEDX_division.addEventListener("change", this.setNEDX.bind(this));
-        this.uiElements.in.ftNEDX_ok.addEventListener("click", this.setNEDX.bind(this));
-
-        // Get and set the FT HARM/SUBHARM UI HTML inputs
-        // Harmonic Tones transposition
-        // + Octave
-        this.uiElements.in.ftHStranspose_h_plus.addEventListener("click", () => {
-            this.transposeFThs(2, "h");
-        });
-        // - Octave
-        this.uiElements.in.ftHStranspose_h_minus.addEventListener("click", () => {
-            this.transposeFThs(0.5, "h");
-        });
-
-        // Subharmonic Tones transposition
-        // + Octave
-        this.uiElements.in.ftHStranspose_s_plus.addEventListener("click", () => {
-            this.transposeFThs(2, "s");
-        });
-        // - Octave
-        this.uiElements.in.ftHStranspose_s_minus.addEventListener("click", () => {
-            this.transposeFThs(0.5, "s");
-        });
-
-        //-------------------
-        // UI HT DHC settings
-        //-------------------
-        // Get and set the HT UI HTML inputs
-        // Harmonic Tones transposition
-        // + Octave
-        this.uiElements.in.htTranspose_h_plus.addEventListener("click", () => {
-            this.transposeHT(2, "h", true);
-        });
-        // – Octave
-        this.uiElements.in.htTranspose_h_minus.addEventListener("click", () => {
-            this.transposeHT(0.5, "h", true);
-        });
-        // Free ratio
-        this.uiElements.in.htTranspose_h_ratio.addEventListener("change", (e) => {
-            this.transposeHT(e.target.value, "h", false);
-        });
-
-        // Subharmonic Tones transposition
-        // + Octave
-        this.uiElements.in.htTranspose_s_plus.addEventListener("click", () => {
-            this.transposeHT(2, "s", true);
-        });
-        // – Octave
-        this.uiElements.in.htTranspose_s_minus.addEventListener("click", () => {
-            this.transposeHT(0.5, "s", true);
-        });
-        // Free ratio
-        this.uiElements.in.htTranspose_s_ratio.addEventListener("change", (e) => {
-            this.transposeHT(e.target.value, "s", false);
-        });
-        //-------------------
-        // UI of the Controller KEYMAP readers
-        //-------------------
-        // @old icKeymapsUIinit
-        // Add an EventListener to the (on)change event of the Controller Keymap File <input> tag
-        this.uiElements.in.controllerKeymapFile.addEventListener('change', this.handleKeymapFile.bind(this), false);
-        // Add an EventListener to the (on)change event of the Controller Keymap File <select> tag
-        this.uiElements.in.controllerKeymapPresets.addEventListener('change', this.loadKeymapPreset.bind(this));
-
-        // Get the button that opens the modal controller keymap table
-        this.uiElements.fn.controllerKeymapTableShow.addEventListener("click", this.keymap2Html.bind(this));
-
     }
 
     /*==============================================================================*
@@ -1412,7 +895,7 @@ HUM.DHC = class {
      * @example
      * 'hancock' C0 == 0 midicent == 0 midinnum
      * 'scientific' C0 == 12 midicent == 12 midinnum
-     * 'ui' C0 == // depends on Middle C setting ({@link DHCsettings.global.middle_c}) 
+     * 'ui' C0 == // depends on Middle C setting ({@link Parameters.global.middle_c}) 
      * 
      * @param {('hancock'|'ui'|'scientific')} mode - The method in which the 'note' should be interpreted.
      * @param {string}                        note - The note name in format <em>[A-G]#?-?\d+</em>. E.g. C0, A#4, G-3, D#-1  
@@ -1446,7 +929,7 @@ HUM.DHC = class {
                 // Return the MIDI note number 
                 return ref[note] + (12 * octave);
             } else if (mode === 'ui') {
-                return ref[note] + (12 * (octave + (this.settings.global.middle_c * -1)));
+                return ref[note] + (12 * (octave + ((this.settings.global.middle_c.value-5) * -1)));
             } else if (mode === 'scientific') {
                 return ref[note] + (12 * (octave + 1));
             }
@@ -1464,20 +947,40 @@ HUM.DHC = class {
      */
     // @old icMidiToHancock
     midiNumberToNames(midikey) {
-        let ref = {
-            0: ['C', false],
-            1: ['C#', true],
-            2: ['D', false],
-            3: ['D#', true],
-            4: ['E', false],
-            5: ['F', false],
-            6: ['F#', true],
-            7: ['G', false],
-            8: ['G#', true],
-            9: ['A', false],
-            10:['A#', true],
-            11:['B', false],
-        };
+        let ref = {};
+        if (this.settings.global.enharmonic_nn.value === 'sharp') {
+            ref = {
+                0: ['C', false],
+                1: ['C#', true],
+                2: ['D', false],
+                3: ['D#', true],
+                4: ['E', false],
+                5: ['F', false],
+                6: ['F#', true],
+                7: ['G', false],
+                8: ['G#', true],
+                9: ['A', false],
+                10:['A#', true],
+                11:['B', false],
+            };
+        } else if (this.settings.global.enharmonic_nn.value === 'flat') {
+            ref = {
+                0: ['C', false],
+                1: ['Db', true],
+                2: ['D', false],
+                3: ['Eb', true],
+                4: ['E', false],
+                5: ['F', false],
+                6: ['Gb', true],
+                7: ['G', false],
+                8: ['Ab', true],
+                9: ['A', false],
+                10:['Bb', true],
+                11:['B', false],
+            };
+        } else {
+            alert('The parameter "DHC.settings.global.enharmonic_nn" has unexpected value!');
+        }
         // If positive - Higher than midikey 0 / 8.1758 Hz (C-1 in scientific pitch notation)
         if (midikey >= 0) {
             // Compute the quotient and remainder of the MIDI note number
@@ -1487,7 +990,7 @@ HUM.DHC = class {
             // String concatenation: Hancock note name
             let hancockNotename = ref[remainder][0] + quotient;
             // String concatenation: UI note name 
-            let uiNotename = ref[remainder][0] + (quotient + this.settings.global.middle_c);
+            let uiNotename = ref[remainder][0] + (quotient + this.settings.global.middle_c.value - 5);
             let sciNotename = ref[remainder][0] + (quotient - 1);
             let isBlack = ref[remainder][1];
             // Return an array with both, Hancock and UI note name
@@ -1502,7 +1005,7 @@ HUM.DHC = class {
             // String concatenation: Hancock note name
             let hancockNotename = ref[remainder][0] + quotient;
             // String concatenation: UI note name 
-            let uiNotename = ref[remainder][0] + (quotient + this.settings.global.middle_c);
+            let uiNotename = ref[remainder][0] + (quotient + this.settings.global.middle_c.value - 5);
             let sciNotename = ref[remainder][0] + (quotient - 1);
             let isBlack = ref[remainder][1];
             // Return an array with both, Hancock and UI note name
@@ -1542,7 +1045,7 @@ HUM.DHC = class {
         // Get the note names
         let noteNames = this.midiNumberToNames(noteNumber);
         // Convert the cents in decimal notation to unit
-        noteCents = (noteCents.toFixed(this.settings.global.cent_accuracy + 2) * 100).toFixed(this.settings.global.cent_accuracy); 
+        noteCents = (noteCents.toFixed(this.settings.global.cent_accuracy.value + 2) * 100).toFixed(this.settings.global.cent_accuracy.value); 
         let noteCentsUI = Number(noteCents, 10);
         // Remove the centSign if cents are zero
         centSign = (noteCentsUI === 0) ? "" : centSign;
@@ -1640,13 +1143,13 @@ HUM.DHC.prototype.Xtone = class {
 };
 
 /** 
- * The main Dynamic Harmonics Calculator class
+ * Dynamic Harmonics Calculator Settings class
  */
-HUM.DHC.prototype.DHCsettings = class {
+HUM.DHC.prototype.Parameters = class {
      /**
      * @param {string} preset - A JSON string containing...
      */
-    constructor(preset=false) {
+    constructor(dhc) {
         /**
          * Global settings
          *
@@ -1658,11 +1161,151 @@ HUM.DHC.prototype.DHCsettings = class {
          * @property {number}                      middle_c      - Middle C octave (-1 = from octave -1 >> Middle C = 60) - Starting octave
          */
         this.global = {
-            hz_accuracy: 2,
-            cent_accuracy: 0,
-            // @todo - Enharmonic note naming
-            enharmonic_nn: "sharp",
-            middle_c: -1,
+            hz_accuracy: new HUM.Param({
+                app:dhc,
+                idbKey:'dhcHzAccuracy',
+                uiElements:{
+                    'dhc_hzAccuracy': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'number',
+                    })
+                },                
+                dataType:'integer',
+                initValue:2,
+                postSet: (value, param, init) => {
+                    if (!init) {
+                        // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
+                        dhc.initUImonitors();
+                    }
+                }
+            }),
+            cent_accuracy: new HUM.Param({
+                app:dhc,
+                idbKey:'dhcCentAccuracy',
+                uiElements:{
+                    'dhc_mcAccuracy': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'number',
+                    })
+                },
+                dataType:'integer',
+                initValue:0,
+                postSet: (value, param, init) => {
+                    if (!init) {
+                        // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
+                        dhc.initUImonitors();
+                    }
+                }
+            }),
+            enharmonic_nn: new HUM.Param({
+                app:dhc,
+                idbKey:'dhcEnharmonicNN',
+                uiElements:{
+                    'dhc_enharmonicNN': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'selection',
+                    })
+                },
+                dataType:'string',
+                initValue:'sharp',
+                allowedValues: ['sharp', 'flat'],
+                postSet: (value, param, init) => {
+                    if (!init) {
+                        // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
+                        dhc.initUImonitors();
+                    }
+                }
+            }),
+            middle_c: new HUM.Param({
+                app:dhc,
+                idbKey:'dhcMiddleC',
+                uiElements:{
+                    'dhc_middleC': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'number',
+                    })
+                },
+                dataType:'integer',
+                initValue:4,
+                postSet: (value, param, init) => {
+                    if (!init) {
+                        // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
+                        dhc.initUImonitors();
+                    }
+                }
+            }),
+            monitor: new HUM.Param({
+                app:dhc,
+                idbKey:'dhcMonitor',
+                uiElements:{
+                    'toneMonitorFT_frequency': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                    'toneMonitorFT_midicents': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                    'toneMonitorFT_notename': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                    'toneMonitorFT_tone': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                    'toneMonitorHT_frequency': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                    'toneMonitorHT_midicents': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                    'toneMonitorHT_notename': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                    'toneMonitorHT_tone': new HUM.Param.UIelem({
+                        role: 'out',
+                    })
+                },
+                init:false,
+                dataType:'array',
+                presetStore: false,
+                presetRestore: false,
+                // initValue:4,
+                postSet: (value, thisParam, init) => {
+                    const [type, xtNum] = value;
+                    let xtObj = dhc.tables[type][xtNum];
+                    // Apply the controller pitchbend (if present) to the array 
+                    xtObj = dhc.bendXtone(xtObj);
+                    let notename = dhc.mcToName(xtObj.mc),
+                        name = notename[0],
+                        sign = notename[1],
+                        cent = notename[2],
+                        hzAccuracy = this.global.hz_accuracy.value,
+                        mcAccuracy = this.global.cent_accuracy.value;
+                    if (type === "ft") {
+                        // Update the log on MONITOR FT info on the UI
+                        thisParam.uiElements.out.toneMonitorFT_tone.innerText = xtNum;
+                        thisParam.uiElements.out.toneMonitorFT_midicents.innerText = xtObj.mc.toFixed(mcAccuracy + 2);
+                        thisParam.uiElements.out.toneMonitorFT_notename.innerText = name + " " + sign + cent + "\u00A2";
+                        thisParam.uiElements.out.toneMonitorFT_frequency.innerText = xtObj.hz.toFixed(hzAccuracy);
+                    } else if (type === "ht") {
+                        // Update the log on MONITOR HT info on the UI
+                        thisParam.uiElements.out.toneMonitorHT_tone.innerText = xtNum;
+                        thisParam.uiElements.out.toneMonitorHT_midicents.innerText = xtObj.mc.toFixed(mcAccuracy + 2);
+                        thisParam.uiElements.out.toneMonitorHT_notename.innerText = name + " " + sign + cent + "\u00A2";
+                        thisParam.uiElements.out.toneMonitorHT_frequency.innerText = xtObj.hz.toFixed(hzAccuracy);
+                    }
+                }
+            }),
         };
         /**
          * Controller settings
@@ -1688,7 +1331,21 @@ HUM.DHC.prototype.DHCsettings = class {
          */
         this.controller = {
             pb: {
-                range: 100,
+                range: new HUM.Param({
+                    app:dhc,
+                    idbKey:'dhcPitchbendRange',
+                    uiElements:{
+                        'dhc_pitchbendRange': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'change',
+                            htmlTargetProp:'value',
+                            widget:'number',
+                        })
+                    },                    
+                    dataType:'integer',
+                    initValue:100,
+                }),
                 amount: 0.0
             },
             receive_mode: "keymap",
@@ -1712,10 +1369,91 @@ HUM.DHC.prototype.DHCsettings = class {
          * @property {('mc'|'hz')} init - What unit to use to initialize, 'hz' or 'mc'
          */
         this.fm = {
-            hz: false, // 130.8127826502993,
-            mc: 48,
-            init: "mc"
+            hz: new HUM.Param({
+                app:dhc,
+                idbKey:'dhcFMhz',
+                uiElements:{
+                    'fm_hz': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'number',
+                    }),
+                    'fm_hz_monitor': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                },
+                dataType:'float',
+                initValue:false, // 130.8127826502993,
+                preSet: (value, thisParam) => {
+                    if (value <= 0) {
+                        value = 1;
+                        thisParam.uiElements.in.fm_hz.value = 1;
+                    }
+                    return value;
+                },
+                postSet: (value, thisParam, init) => {
+                    // Change the 'init' for eventual icDHCinit
+                    if (!init) {
+                        this.fm.init.value = 'hz';
+                    }
+                },
+            }),
+            mc: new HUM.Param({
+                app:dhc,
+                idbKey:'dhcFMmc',
+                uiElements:{
+                    'fm_mc': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'number',
+                    }),
+                    'fm_mc_monitor': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                },
+                dataType:'float',
+                initValue:48, // C3
+                postSet: (value, thisParam, init) => {
+                    // Change the 'init' for eventual icDHCinit
+                    if (!init) {
+                        this.fm.init.value = 'mc';
+                    }
+                },
+            })
         };
+        this.fm.init = new HUM.Param({
+            app:dhc,
+            idbKey:'dhcFMinit',
+            dataType:'string',
+            role:'int',
+            initValue:'mc',
+            init:false,
+            postSet: (value, thisParam, init) => {
+                if (value === 'hz') {
+                    let midicents = dhc.constructor.freqToMc(this.fm.hz.value);
+                    this.fm.mc._setValue(midicents, true);
+                    // if (!init) {
+                        // Recreate all tables
+                        dhc.initTables();
+                    // }
+                    this.fm.mc.uiElements.in.fm_mc.value = "";
+                } else if (value === 'mc') {
+                    let freq = dhc.constructor.mcToFreq(this.fm.mc.value);
+                    this.fm.hz._setValue(freq, true);
+                    // if (!init) {
+                        // Recreate all tables
+                        dhc.initTables();
+                    // }
+                    this.fm.hz.uiElements.in.fm_hz.value = "";
+                } else {
+                    alert("The 'DHC.settings.fm.init' attribute has an unexpected value: " + this.fm.init.value);
+                }
+            }
+        });
         /**
          * Fundamental Tones (FTs) scale tuning method settings
          * 
@@ -1743,19 +1481,250 @@ HUM.DHC.prototype.DHCsettings = class {
          */
         this.ft = {           
             nEDx: {
-                unit: 2,
-                division: 12
+                unit: new HUM.Param({
+                    app:dhc,
+                    idbKey:'dhcFTnEDxUnit',
+                    uiElements:{
+                        'ftNEDX_unit': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'change',
+                            htmlTargetProp:'value',
+                            widget:'number',
+                        })
+                    },
+                    dataType:'integer',
+                    initValue:2,
+                    preSet: (value, thisParam) => {
+                        if (value <= 1) {
+                            value = 2;
+                            thisParam.uiElements.in.ftNEDX_unit.value = 2;
+                        }
+                        return value;
+                    },
+                    postSet: (value, thisParam, init) => {
+                        if (!init) {
+                            // Recreate all tables
+                            dhc.initTables();
+                        }
+                    },
+                }),
+                division: new HUM.Param({
+                    app:dhc,
+                    idbKey:'dhcFTnEDxDivision',
+                    uiElements:{
+                        'ftNEDX_division': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'change',
+                            htmlTargetProp:'value',
+                            widget:'number',
+                        })
+                    },
+                    dataType:'integer',
+                    initValue:12,
+                    preSet: (value, thisParam) => {
+                        if (value < 1) {
+                            value = 12;
+                            thisParam.uiElements.in.ftNEDX_division.value = 12;
+                        }
+                        return value;
+                    },
+                    postSet: (value, thisParam, init) => {
+                        if (!init) {
+                            // Recreate all tables
+                            dhc.initTables();
+                        }
+                    },
+                }),
             },
             h_s: {
+                selected: new HUM.Param({
+                    app:dhc,
+                    idbKey:'dhcFThsSelected',
+                    dataType:'string',
+                    role:'int',
+                    initValue:'sameOctave',
+                    allowedValues: ['natural', 'sameOctave'],
+                }),
                 natural: {
-                    h_tr: 1,
-                    s_tr: 16
+                    h_tr: new HUM.Param({
+                        app:dhc,
+                        idbKey:'dhcFThsNaturalHtr',
+                        uiElements:{
+                            'ftHStranspose_h_plus': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'click',
+                                htmlTargetProp:'checked',
+                                widget:'button', // "button" is like uiSet===null
+                                eventListener: (evt) => {
+                                    if (this.ft.h_s.selected.value === "natural") {
+                                        this.ft.h_s.natural.h_tr.value *= 2;
+                                    }
+                                }
+                            }),
+                            'ftHStranspose_h_minus': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'click',
+                                htmlTargetProp:'checked',
+                                widget:'button', // "button" is like uiSet===null
+                                eventListener: (evt) => {
+                                    if (this.ft.h_s.selected.value === "natural") {
+                                        this.ft.h_s.natural.h_tr.value *= 0.5;
+                                    }
+                                }
+                            }),
+                            'ftHStranspose_h_ratio': new HUM.Param.UIelem({
+                                role: 'out',
+                            }),
+                        },
+                        dataType:'float',
+                        // role:'int',
+                        initValue:1,
+                        // init:false, 
+                        postSet: (value, thisParam, init) => {
+                            if (!init) {
+                                if (this.ft.h_s.selected.value === "natural") {
+                                    thisParam.uiElements.out.ftHStranspose_h_ratio.innerText = value;
+                                }
+                                dhc.initTables();
+                            }
+                        }
+                    }),
+                    s_tr: new HUM.Param({
+                        app:dhc,
+                        idbKey:'dhcFThsNaturalStr',
+                        uiElements: {
+                            'ftHStranspose_s_plus': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'click',
+                                htmlTargetProp:'checked',
+                                widget:'button', // "button" is like uiSet===null
+                                eventListener: (evt) => {
+                                    if (this.ft.h_s.selected.value === "natural") {
+                                        this.ft.h_s.natural.s_tr.value *= 2;
+                                    }
+                                }
+                            }),
+                            'ftHStranspose_s_minus': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'click',
+                                htmlTargetProp:'checked',
+                                widget:'button', // "button" is like uiSet===null
+                                eventListener: (evt) => {
+                                    if (this.ft.h_s.selected.value === "natural") {
+                                        this.ft.h_s.natural.s_tr.value *= 0.5;
+                                    }
+                                }
+                            }),
+                            'ftHStranspose_s_ratio': new HUM.Param.UIelem({
+                                role: 'out',
+                            })
+                        },
+                        dataType:'float',
+                        initValue:16,
+                        postSet: (value, thisParam, init) => {
+                            if (!init) {
+                                if (this.ft.h_s.selected.value === "natural") {
+                                    thisParam.uiElements.out.ftHStranspose_s_ratio.innerText = value;
+                                }
+                                dhc.initTables();
+                            }
+                        }
+                    })
                 },
                 sameOctave: {
-                    h_tr: 1,
-                    s_tr: 2
+                    h_tr: new HUM.Param({
+                        app:dhc,
+                        idbKey:'dhcFThsSameOctaveHtr',
+                        uiElements:{
+                            'ftHStranspose_h_plus': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'click',
+                                htmlTargetProp:'checked',
+                                widget:'button', // "button" is like uiSet===null
+                                eventListener: (evt) => {
+                                    if (this.ft.h_s.selected.value === "sameOctave") {
+                                        this.ft.h_s.sameOctave.h_tr.value *= 2;
+                                    }
+                                }
+                            }),
+                            'ftHStranspose_h_minus': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'click',
+                                htmlTargetProp:'checked',
+                                widget:'button', // "button" is like uiSet===null
+                                eventListener: (evt) => {
+                                    if (this.ft.h_s.selected.value === "sameOctave") {
+                                        this.ft.h_s.sameOctave.h_tr.value *= 0.5;
+                                    }
+                                }
+                            }),
+                            'ftHStranspose_h_ratio': new HUM.Param.UIelem({
+                                role: 'out',
+                            }),
+                        },
+                        dataType:'float',
+                        initValue:1,
+                        postSet: (value, thisParam, init) => {
+                            if (!init) {
+                                if (this.ft.h_s.selected.value === "sameOctave") {
+                                    thisParam.uiElements.out.ftHStranspose_h_ratio.innerText = value;
+                                }
+                                dhc.initTables();
+                            }
+                        }
+                    }),
+                    s_tr: new HUM.Param({
+                        app:dhc,
+                        idbKey:'dhcFThsSameOctaveStr',
+                        uiElements: {
+                            'ftHStranspose_s_plus': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'click',
+                                htmlTargetProp:'checked',
+                                widget:'button', // "button" is like uiSet===null
+                                eventListener: (evt) => {
+                                    if (this.ft.h_s.selected.value === "sameOctave") {
+                                        this.ft.h_s.sameOctave.s_tr.value *= 2;
+                                    }
+                                }
+                            }),
+                            'ftHStranspose_s_minus': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType:'set',
+                                eventType: 'click',
+                                htmlTargetProp:'checked',
+                                widget:'button', // "button" is like uiSet===null
+                                eventListener: (evt) => {
+                                    if (this.ft.h_s.selected.value === "sameOctave") {
+                                        this.ft.h_s.sameOctave.s_tr.value *= 0.5;
+                                    }
+                                }
+                            }),
+                            'ftHStranspose_s_ratio': new HUM.Param.UIelem({
+                                role: 'out',
+                            })
+                        },
+                        dataType:'float',
+                        initValue:2,
+                        postSet: (value, thisParam, init) => {
+                            if (!init) {
+                                if (this.ft.h_s.selected.value === "sameOctave") {
+                                    thisParam.uiElements.out.ftHStranspose_s_ratio.innerText = value;
+                                }
+                                dhc.initTables();
+                            }
+                        }
+                    })
                 },
-                selected: "sameOctave"
             },
             /** @todo - Tuning file formats */ 
             file: {
@@ -1765,7 +1734,107 @@ HUM.DHC.prototype.DHCsettings = class {
                 lmso: {},
                 selected: "scl"
             },
-            selected: "nEDx",
+            selected: new HUM.Param({
+                app:dhc,
+                idbKey:'dhcFTselected',
+                uiElements:{
+                    'ftSys_NEDX': new HUM.Param.UIelem({
+                        role: 'fn',
+                        opType:'set',
+                        eventType: 'click',
+                        htmlTargetProp:'checked',
+                        widget:'number',
+                        uiSet: (value, thisParam, init) => {
+                            if (value === 'nEDx') {
+                                thisParam.uiElements.fn.ftSys_NEDX.checked = true;
+                            }
+                        },
+                        eventListener: (evt) => {
+                            if (event.target.checked) {
+                                dhc.settings.ft.selected.valueUI = 'nEDx';
+                            }
+                        }
+                    }),
+                    'ftSys_HSnat': new HUM.Param.UIelem({
+                        role: 'fn',
+                        opType:'set',
+                        eventType: 'click',
+                        htmlTargetProp:'checked',
+                        widget:'number',
+                        uiSet: (value, thisParam, init) => {
+                            if (value === 'h_s') {
+                                if (this.ft.h_s.selected.value === 'natural') {
+                                    thisParam.uiElements.fn.ftSys_HSnat.checked = true;
+                                }
+                            }
+                        },
+                        eventListener: (evt) => {
+                            if (event.target.checked) {
+                                dhc.settings.ft.h_s.selected.valueUI = 'natural';
+                                dhc.settings.ft.selected.valueUI = 'h_s';
+                            }
+                        }
+                    }),
+                    'ftSys_HStrans': new HUM.Param.UIelem({
+                        role: 'fn',
+                        opType:'set',
+                        eventType: 'click',
+                        htmlTargetProp:'checked',
+                        widget:'number',
+                        uiSet: (value, thisParam, init) => {
+                            if (value === 'h_s') {
+                                if (this.ft.h_s.selected.value === 'sameOctave') {
+                                    thisParam.uiElements.fn.ftSys_HStrans.checked = true;
+                                }
+                            }
+                        },
+                        eventListener: (evt) => {
+                            if (event.target.checked) {
+                                dhc.settings.ft.h_s.selected.valueUI = 'sameOctave';
+                                dhc.settings.ft.selected.valueUI = 'h_s';
+                            }
+                        }
+                    }),
+                    'ftHS': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                    'ftNEDX': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                    'ftHStranspose_h_ratio': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                    'ftHStranspose_s_ratio': new HUM.Param.UIelem({
+                        role: 'out',
+                    })
+                },
+                dataType:'string',
+                initValue:'nEDx',
+                init:false,
+                allowedValues: ['nEDx', 'h_s'],
+                // restoreStage: 'pre',
+                // restoreSequence: 32,
+                postSet: (value, thisParam, init) => {
+                    if (value === 'nEDx') {
+                        thisParam.uiElements.out.ftNEDX.style.display = "initial";
+                        thisParam.uiElements.out.ftHS.style.display = "none";
+                    } else if (value === 'h_s') {
+                        thisParam.uiElements.out.ftNEDX.style.display = "none";
+                        thisParam.uiElements.out.ftHS.style.display = "initial";
+                        if (dhc.settings.ft.h_s.selected.value === 'natural') {
+                            thisParam.uiElements.out.ftHStranspose_h_ratio.innerText = this.ft.h_s.natural.h_tr.value;
+                            thisParam.uiElements.out.ftHStranspose_s_ratio.innerText = this.ft.h_s.natural.s_tr.value;
+                        }
+                        if (dhc.settings.ft.h_s.selected.value === 'sameOctave') {
+                            thisParam.uiElements.out.ftHStranspose_h_ratio.innerText = this.ft.h_s.sameOctave.h_tr.value;
+                            thisParam.uiElements.out.ftHStranspose_s_ratio.innerText = this.ft.h_s.sameOctave.s_tr.value;
+                        }
+                    }
+                    // if (!init) {
+                        dhc.updateKeymapPreset();
+                    // }
+                },
+            }),
             steps: 64
         };
         /**
@@ -1781,29 +1850,271 @@ HUM.DHC.prototype.DHCsettings = class {
          */
         this.ht = {
             transpose: {
-                h: 1,
-                s: 1 // 16
+                h: new HUM.Param({
+                    app:dhc,
+                    idbKey:'dhcHTtransposeH',
+                    uiElements:{
+                        'htTranspose_h_plus': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'click',
+                            htmlTargetProp:'checked',
+                            widget:'button', // "button" is like uiSet===null
+                            eventListener: (evt) => {
+                                this.ht.transpose.h.value *= 2;
+                                // dhc.transposeHT(2, "h", true);
+                            }
+                        }),
+                        'htTranspose_h_minus': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'click',
+                            htmlTargetProp:'checked',
+                            widget:'button', // "button" is like uiSet===null
+                            eventListener: (evt) => {
+                                this.ht.transpose.h.value *= 0.5;
+                                // dhc.transposeHT(0.5, "h", true);
+                            }
+                        }),
+                        'htTranspose_h_ratio': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'change',
+                            htmlTargetProp:'value',
+                            widget:'number',
+                        })
+                    },     
+                    dataType:'float',
+                    initValue:1,
+                    restoreStage: 'pre',
+                    preSet: (value) => {
+                        // Check if the ratio is > 0
+                        return value > 0 ? value : 1;
+                    },
+                    postSet: (value, thisParam, init) => {
+                        if (!init) {
+                            // Recreate the HT table on the last FT
+                            dhc.createHTtable(dhc.tables.ft[this.ht.curr_ft].hz);
+                        }
+                        // dhc.transposeHT(value, "h", false);
+                    }
+                }),
+                s: new HUM.Param({
+                    app:dhc,
+                    idbKey:'dhcHTtransposeS',
+                    uiElements:{
+                        'htTranspose_s_plus': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'click',
+                            htmlTargetProp:'checked',
+                            widget:'button', // "button" is like uiSet===null
+                            eventListener: (evt) => {
+                                // Multiply the current transpose ratio by 2
+                                this.ht.transpose.s.value *= 2;
+                                // dhc.transposeHT(2, "s", true);
+                            }
+                        }),
+                        'htTranspose_s_minus': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'click',
+                            htmlTargetProp:'checked',
+                            widget:'button', // "button" is like uiSet===null
+                            eventListener: (evt) => {
+                                this.ht.transpose.s.value *= 0.5;
+                                // dhc.transposeHT(0.5, "s", true);
+                            }
+                        }),
+                        'htTranspose_s_ratio': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'change',
+                            htmlTargetProp:'value',
+                            widget:'number',
+                        })
+
+                    },    
+                    dataType:'float',
+                    initValue:1, // 16,
+                    restoreStage: 'pre',
+                    preSet: (value) => {
+                        // Check if the ratio is > 0
+                        return value > 0 ? value : 1;
+                    },
+                    postSet: (value, thisParam, init) => {
+                        if (!init) {
+                            // Recreate the HT table on the last FT
+                            dhc.createHTtable(dhc.tables.ft[this.ht.curr_ft].hz);
+                        }
+                        // dhc.transposeHT(value, "s", false);
+                    }
+                }),
             },
             curr_ft: 0,
             curr_ht: null
         };
+        /**
+         * Piper's default settings
+         *
+         * @member {Object}
+         *
+         * @property {number}             maxLength - How many steps has the Pipe
+         * @property {Array.<HUM.DHCmsg>} queue     - Last HT MIDI Note-ON messages received
+         * @property {Array.<HUM.DHCmsg>} pipe      - MIDI Note-ON messages stored into the Pipe
+         * @property {number}             currStep  - Last step played by the Piper
+         * @property {HUM.DHCmsg}         currTone  - Last fake MIDI Note-ON message send
+         */
+        this.piper = {
+            maxLength: new HUM.Param({
+                app:dhc,
+                idbKey:'dhcPiperMaxLength',
+                uiElements:{
+                    'dhc_piperSteps': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'number',
+                    })
+                },
+                dataType:'integer',
+                initValue:5,
+            }),
+            queue: [],
+            pipe: [],
+            currStep: 5,
+            currTone: null
+        };
 
+        this.keymap = {
+            presets: new HUM.Param({
+                app:dhc,
+                idbKey:'dhcCtrlKeymapPresets',
+                uiElements:{
+                    'controllerKeymapPresets': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'selection',
+                        uiSet: (value, thisParam) => {
+                            thisParam.uiElements.in.controllerKeymapPresets.value = value[this.ft.selected.value];
+                        },
+                        eventListener: evt => {
+                            dhc.loadKeymapPreset(evt);
+                        }
+                    })
+                },
+                dataType:'object',
+                restoreStage: 'pre',
+                // restoreSequence: 64,
+                initValue:{
+                    nEDx: 0,
+                    h_s: 0,
+                    // tsnap: 0
+                },
+                // postSet: (value, param, init) => {
+                //     if (!init) {
+                //         // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
+                //         dhc.initUImonitors();
+                //     }
+                // },
+                // postInit: () => {
+                //     dhc.updateKeymapPreset();
+                // },
+                customProperties: {        
+                    /**
+                     * The container for all the Controller keymap presets
+                     *
+                     * @member {HUM.CtrlKeymapPreset}
+                     */
+                    ctrlKeymapPreset: new HUM.CtrlKeymapPreset(this)
+                }
+            }),
+            keymapFile: new HUM.Param({
+                app:dhc,
+                idbKey:'dhcCtrlKeymapFile',
+                uiElements:{
+                    'controllerKeymapFile': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'files',
+                        widget:'file',
+                        eventListener: evt => {
+                            // Check for the various File API support.
+                            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                                // Access to the file and send it to read function
+                                dhc.readKeymapFile(evt.target.files[0]);
+                            } else {
+                                alert('The File APIs are not fully supported in this browser.');
+                            }
+                        }
+                    })
+                },
+                dataType:'file',
+                // initValue:'default', // NOTE: 'default' is a special value
+            }),
+            modalTable: new HUM.Param({
+                app:dhc,
+                idbKey:'dhcCtrlKeymapModalTable',
+                uiElements:{
+                    'controllerKeymapTable': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                    'controllerKeymapModal': new HUM.Param.UIelem({
+                        role: 'out',
+                        eventType: 'show.bs.modal',
+                        eventListener: evt => {
+                            dhc.keymap2Html();
+                        }
+                    }),
+                },
+            }),
+        };
+
+        this.bsAccordion = new HUM.Param({
+            app:dhc,
+            idbKey:'dhcAccordion',
+            uiElements:{
+                'accordion_dhc': new HUM.Param.UIelem({
+                    role: 'out',
+                    htmlID: dhc.harmonicarium.html.accordion[dhc.id].children[0].id,
+                    eventType: 'shown.bs.collapse',
+                    eventListener: evt => {
+                        // @todo: TO-FIX! Temporary harcoded behaviour for auto-scrolling
+                        //        when open accordion tab. First test.
+                        //        @see: https://www.codeply.com/p/wTY0TBuliy
+                        let tmp = evt.target.offsetTop - evt.target.previousElementSibling.offsetTop,
+                            margin = parseInt(getComputedStyle(evt.target.parentElement).marginTop, 10);
+                        dhc.harmonicarium.html.sideMenu.scroll({
+                            top: evt.target.previousElementSibling.offsetTop - tmp*2 + margin*2,
+                            left: 0, 
+                            behavior: 'smooth'
+                        });
+                    }
+                }),
+            },
+            init:false,
+            // dataType:'array',
+            // initValue:[],
+            // postSet: (value, thisParam, init) => {
+            //     // backendUtils.showSidebar(value);
+            // }
+        });
+
+    }
+    _init() {
+        this.ft.selected._init();
+        this.fm.init._init();
+        // this.ft.nEDx.unit._init();
+        // this.ft.nEDx.division._init();
     }
 };
 
 /**
  * DHC Message class
- *
- * @property {string}                                         #source   - Name of the App component that generated the message
- * @property {('init'|'panic'|'update'|'tone-on'|'tone-off')} #cmd      - Command code of the message
- * @property {tonetype}                                       #type     - The tone typeto which the message is directed; FT or HT
- * @property {xtnum}                                          #xtNum    - The FT or HT number
- * @property {velocity}                                       #velocity - The intensity of the sound to be generated in MIDI velocity format
- * @property {midinnum}                                       #ctrlNum  - The MIDI Note Number corresponding to the FT or HT on the keymap (if present)
- * @property {boolean}                                        #piper    - If the message is generated by the Piper feature
- * @property {boolean}                                        #panic    - Only in case of `cmd` 'note-off', it tells that the message has been generated by a "hard" All-Notes-Off request
- * @property {boolean}                                        #tsnap    - If the message has been converted by the Tone-Snap receiving mode
- * 
  */
 HUM.DHCmsg = class {
      /**

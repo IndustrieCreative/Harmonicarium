@@ -5,7 +5,7 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2020 by Walter Mantovani (http://armonici.it).
+ * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
  * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -38,6 +38,9 @@ HUM.Hstack = class {
     * @param {HUM.DHC} dhc - The DHC instance to which it belongs
     */
     constructor(dhc) {
+        this.id = dhc.id;
+        this._id = dhc._id;
+        this.name = 'hstack';
         /**
         * The DHC instance
         *
@@ -45,44 +48,15 @@ HUM.Hstack = class {
         */
         this.dhc = dhc;
         /**
-        * H-Stack table font size
-        *
-        * @member {integer}
-        */
-        this.fontSize = 20;
-        /**
          * An array containing all the used Harmonic/Subharmonic in the controller Keymap
          *
          * @member {Array.<xtnum>}
          */
         this.usedHT = [];
-        /**
-         * The state of the H-Stack; if `false`, it is turned off.
-         *
-         * @member {boolean}
-         */
-        this.active = false;
-        /**
-         * UI HTML elements
-         *
-         * @member {Object}
-         * 
-         * @property {Object.<string, HTMLElement>} fn  - Functional UI elements
-         * @property {Object.<string, HTMLElement>} out - Output UI elements
-         */
-        this.uiElements = {
-            fn: {
-                checkboxHstack: this.dhc.harmonicarium.html.hstackTab[dhc.id].children[0],
-                hstackFTrow: document.getElementById("HTMLf_hstackFTrow"+dhc.id),
-                hstack_zoom: document.getElementById("HTMLf_hstack_zoom"+dhc.id),
-            },
-            out: {
-                hstack_fontsize: document.getElementById("HTMLo_hstack_fontsize"+dhc.id),
-                hstackHT: document.getElementById("HTMLo_hstackHT"+dhc.id),
-                rowsHT: {}
-            }
-        };
-        this._initUI();
+
+        this.parameters = new this.Parameters(this);
+
+        this.parameters._init();
 
         // Tell to the DHC that a new app is using it
         this.dhc.registerApp(this, 'updatesFromDHC', 102);
@@ -91,42 +65,6 @@ HUM.Hstack = class {
     } // end class Constructor
     // ===========================
 
-    /**
-     * Initialize the UI elements
-     */
-    _initUI() {
-        let zoomVal = this.fontSize;
-        // Init H Stack zoom with default value
-        this.uiElements.fn.hstack_zoom.value = zoomVal;
-        this.uiElements.out.hstack_fontsize.style.fontSize = zoomVal + "px";
-        this.uiElements.fn.hstack_zoom.setAttribute("data-tooltip", zoomVal + "px" );
-
-        // Add an EventListener to the zoom slider
-        this.uiElements.fn.hstack_zoom.addEventListener("input", (e) => {
-            window.requestAnimationFrame( () => {
-                this.fontSize = e.target.value;
-                this.uiElements.out.hstack_fontsize.style.fontSize = e.target.value + "px";
-                this.uiElements.fn.hstack_zoom.setAttribute("data-tooltip", e.target.value + "px");
-            });
-        });
-
-        // Disable the hstack fill & animation if the accordion Synth tab is closed
-        this.uiElements.fn.checkboxHstack.addEventListener('change', (e) => {
-            if (e.target.checked === true) {
-                this.active = true;
-                this.fillin();
-                this.ftMonitor(this.dhc.settings.ht.curr_ft);
-            } else {
-                this.active = false;
-                // Turn off all the tones currently active, if there are
-                for (let htNum of this.usedHT) {
-                    this.playFx("ht", 0, htNum);
-                }
-                this.playFx("ft", 0, this.dhc.settings.ht.curr_ft);
-            }
-        });
-
-    }
     /**
      * Manage and route an incoming message
      *
@@ -145,16 +83,16 @@ HUM.Hstack = class {
         if (msg.cmd === 'update') {
             if (msg.type === 'ft') {
 
-            } else if (msg.type === 'ht' && this.active) {
+            } else if (msg.type === 'ht' && this.parameters.active.value) {
                 
                 this.fillin();
 
             } else if (msg.type === 'ctrlmap') {
                 
-                this.create();
+                this.parameters.hstack._init();
             }
 
-        } else if (msg.cmd === 'tone-on' && this.active) {
+        } else if (msg.cmd === 'tone-on' && this.parameters.active.value) {
             if (msg.type === 'ft') {
                 
                 // this.fillin();
@@ -168,7 +106,7 @@ HUM.Hstack = class {
 
             }
 
-        } else if (msg.cmd === 'tone-off' && this.active) {
+        } else if (msg.cmd === 'tone-off' && this.parameters.active.value) {
             if (msg.type === 'ft') {
                 
                 this.playFx("ft", 0, msg.xtNum);
@@ -185,42 +123,6 @@ HUM.Hstack = class {
     /*==============================================================================*
      * UI HSTACK
      *==============================================================================*/
-    /**
-     * Create the H-Stack HTML table 
-     */
-    // @old icHSTACKcreate
-    create() {
-        let dhcID = this.dhc.id,
-            hstackContainer = this.uiElements.out.hstackHT,
-            hstackTable = document.createElement("table");
-        
-        hstackTable.className = "dataTable";
-        hstackTable.innerHTML = `
-                    <tr>
-                        <th colspan="4">Harmonics</th>
-                    </tr>
-                    <tr class="hstackHeader">
-                        <th width="13%" class="hstackHT_h">HT</th>
-                        <th width="15%" class="hstackHT_note">note</th>
-                        <th width="30%" class="hstackHT_cents">cents</th>
-                        <th width="42%" class="hstackHT_hz">Hz</th>
-                    </tr>
-                    <!-- Here the HT rows -->`;
-        this.updateUsedHT();
-        
-        this.uiElements.out.rowsHT = {};
-        for (let htNum of this.usedHT) {
-            let newRow = new this.HstackRow(htNum, dhcID);
-            this.uiElements.out.rowsHT[htNum] = newRow;
-            hstackTable.append(newRow.elemRow);
-        }
-        if (hstackContainer.firstChild) {
-            hstackContainer.removeChild(hstackContainer.firstChild);
-        }
-        hstackContainer.appendChild(hstackTable);
-        
-        this.fillin();
-    }
     /**
      * Update the {@link HUM.Hstack#usedHT} property
      */
@@ -267,10 +169,10 @@ HUM.Hstack = class {
                     sign = notename[1],
                     cent = notename[2];
                 // Print the infos to the UI HStack
-                this.uiElements.out.rowsHT[htNum].elemHtNum.innerText = htNum;
-                this.uiElements.out.rowsHT[htNum].elemNote.innerText = name;
-                this.uiElements.out.rowsHT[htNum].elemCents.innerText = sign + cent;
-                this.uiElements.out.rowsHT[htNum].elemHz.innerText = htObj.hz.toFixed(this.dhc.settings.global.hz_accuracy);
+                this.parameters.hstack.uiElements.out.rowsHT[htNum].elemHtNum.innerText = htNum;
+                this.parameters.hstack.uiElements.out.rowsHT[htNum].elemNote.innerText = name;
+                this.parameters.hstack.uiElements.out.rowsHT[htNum].elemCents.innerText = sign + cent;
+                this.parameters.hstack.uiElements.out.rowsHT[htNum].elemHz.innerText = htObj.hz.toFixed(this.dhc.settings.global.hz_accuracy);
             }
         }
     }
@@ -310,14 +212,14 @@ HUM.Hstack = class {
             if (state === 1) {
 
                 // Recreate the element to force the css animation
-                let old = this.uiElements.fn.hstackFTrow;
+                let old = this.parameters.frow.uiElements.out.hstackFTrow;
                 let parent = old.parentNode;
                 let clone = old.cloneNode(true);
                 parent.insertBefore(clone, old);
                 old.remove();
-                this.uiElements.fn.hstackFTrow = clone;
-                this.uiElements.fn.hstackFTrow.classList.add("FTon");
-                this.uiElements.fn.hstackFTrow.classList.remove("FToff");
+                this.parameters.frow.uiElements.out.hstackFTrow = clone;
+                this.parameters.frow.uiElements.out.hstackFTrow.classList.add("hum-hstack-ft-on");
+                this.parameters.frow.uiElements.out.hstackFTrow.classList.remove("hum-hstack-ft-off");
 
                 // Write the FM at the bottom of the hstack
                 this.ftMonitor(xtNum);
@@ -325,8 +227,8 @@ HUM.Hstack = class {
             // Note OFF
             } else if (state === 0) {
                 if (this.dhc.settings.ht.curr_ft === xtNum) {
-                    this.uiElements.fn.hstackFTrow.classList.add("FToff");
-                    this.uiElements.fn.hstackFTrow.classList.remove("FTon");
+                    this.parameters.frow.uiElements.out.hstackFTrow.classList.add("hum-hstack-ft-off");
+                    this.parameters.frow.uiElements.out.hstackFTrow.classList.remove("hum-hstack-ft-on");
                 }
             }
         } else if (type === "ht") {
@@ -334,16 +236,16 @@ HUM.Hstack = class {
             if (xtNum !== 0) {
                 // Only if the HT is mapped in the keymap
                 if (this.usedHT.includes(xtNum)) {
-                    let htmlElem = this.uiElements.out.rowsHT[xtNum].elemRow;
+                    let htmlElem = this.parameters.hstack.uiElements.out.rowsHT[xtNum].elemRow;
                     // let htmlElem = document.getElementById("HTMLf_hstackHTrow_h"+xtNum+"_"+dhcID);
                     // Note ON
                     if (state === 1) {
-                        htmlElem.classList.add("HTon");
-                        htmlElem.classList.remove("HToff");
+                        htmlElem.classList.add("hum-hstack-ht-on");
+                        htmlElem.classList.remove("hum-hstack-ht-off");
                     // Note OFF
                     } else if (state === 0) {
-                        htmlElem.classList.add("HToff");
-                        htmlElem.classList.remove("HTon");
+                        htmlElem.classList.add("hum-hstack-ht-off");
+                        htmlElem.classList.remove("hum-hstack-ht-on");
                     }
                 }
             }
@@ -374,11 +276,7 @@ HUM.Hstack.prototype.HstackRow = class {
         this.elemCents = document.createElement("td");
         this.elemHz = document.createElement("td");
 
-        this.elemRow.className = "HToff";
-        this.elemHtNum.className = "hstackHT_h";
-        this.elemNote.className = "hstackHT_note";
-        this.elemCents.className = "hstackHT_cents";
-        this.elemHz.className = "hstackHT_hz";
+        this.elemRow.className = "hum-hstack-ht-off";
         
         this.elemRow.id = `HTMLf_hstackHTrow_h${htNum}_${dhcID}`;
         this.elemHtNum.id = `HTMLo_hstackHT_h${htNum}_${dhcID}`;
@@ -389,4 +287,185 @@ HUM.Hstack.prototype.HstackRow = class {
 
         this.elemRow.append(this.elemHtNum, this.elemNote, this.elemCents, this.elemHz);
     }
+};
+
+
+HUM.Hstack.prototype.Parameters = class {
+    constructor(hstack) {
+        /**
+         * The state of the H-Stack; if `false`, it is turned off.
+         *
+         * @member {boolean}
+         */
+        this.active = new HUM.Param({
+            app:hstack,
+            idbKey:'hstackActive',
+            uiElements:{
+                'hstackTabShown': new HUM.Param.UIelem({
+                    htmlID: hstack.dhc.harmonicarium.html.hstackTab[hstack.dhc.id].children[1].id,
+                    role: 'fn',
+                    opType: 'toggle',
+                    widget:'collapse',
+                    eventType: 'show.bs.collapse',
+                    uiSet: (value) => {
+                        if (value) {
+                            this.active.bsCollapse.show();
+                        } else {
+                            this.active.bsCollapse.hide();
+                        }
+                    },
+                    eventListener: evt => {
+                        this.active.valueUI = true;
+                    }
+                }),
+                'hstackTabHidden': new HUM.Param.UIelem({
+                    htmlID: hstack.dhc.harmonicarium.html.hstackTab[hstack.dhc.id].children[1].id,
+                    role: 'fn',
+                    opType: 'toggle',
+                    widget:'collapse',
+                    eventType: 'hidden.bs.collapse',
+                    uiSet: null,
+                    eventListener: evt => {
+                        this.active.valueUI = false;
+                    }
+                }),
+            },
+            init:false,
+            dataType:'boolean',
+            initValue:false,
+            presetStore:false,
+            presetAutosave:false,
+            presetRestore:false,
+            preInit: () => {
+                // Create a Bootstrap collapsible controller
+                this.active.bsCollapse = new bootstrap.Collapse('#'+hstack.dhc.harmonicarium.html.hstackTab[hstack.dhc.id].children[1].id, {
+                    toggle: this.active.value
+                });
+            },
+            postSet: (value, thisParam, init) => {
+                if (value) {
+                    hstack.fillin();
+                    hstack.ftMonitor(hstack.dhc.settings.ht.curr_ft);
+                } else {
+                    // Turn off all the tones currently active, if there are
+                    for (let htNum of hstack.usedHT) {
+                        hstack.playFx("ht", 0, htNum);
+                    }
+                    hstack.playFx("ft", 0, hstack.dhc.settings.ht.curr_ft);
+                }
+
+            }
+        });
+        /**
+        * H-Stack table font size
+        *
+        * @member {integer}
+        */
+        this.fontSize = new HUM.Param({
+            app:hstack,
+            idbKey:'hstackZoom',
+            uiElements:{
+                'hstack_zoom': new HUM.Param.UIelem({
+                    role: 'fn',
+                    opType:'set',
+                    eventType: 'input',
+                    htmlTargetProp:'value',
+                    widget:'range',
+                }),
+                'hstack_fontsize': new HUM.Param.UIelem({
+                    role: 'out',
+                })
+            },
+            dataType:'float',
+            initValue:20,
+            postSet: (value, thisParam) => {
+                thisParam.uiElements.out.hstack_fontsize.style.fontSize = value + "px";
+                thisParam.uiElements.fn.hstack_zoom.setAttribute("data-tooltip", value + "px");
+            }
+        });
+
+        this.frow = new HUM.Param({
+            app:hstack,
+            idbKey:'hstackFtable',
+            uiElements:{
+                'hstackFTrow': new HUM.Param.UIelem({
+                    role: 'out',
+                }),
+            },
+            init:false,
+            dataType:'array',
+            // initValue:4,
+            postInit: (thisParam) => {
+
+            },
+            postSet: (value, thisParam, init) => {
+
+            }
+        });
+
+        this.hstack = new HUM.Param({
+            app:hstack,
+            idbKey:'hstackHtable',
+            uiElements:{
+                'hstackHT': new HUM.Param.UIelem({
+                    role: 'out',
+                }),
+                'rowsHT': new HUM.Param.UIelem({
+                    role: 'out',
+                    namespace: true,
+                }),
+            },
+            init:false,
+            dataType:'array',
+            // initValue:4,
+            postInit: (thisParam) => {
+                /**
+                 * Create the H-Stack HTML table 
+                 */
+                let dhcID = hstack.dhc.id,
+                    hstackContainer = thisParam.uiElements.out.hstackHT,
+                    hstackTable = document.createElement("table");
+                
+                hstackTable.className = "table table-sm";
+                hstackTable.innerHTML = `
+                    <thead class="table-light">
+                        <tr>
+                            <th colspan="4">Harmonics</th>
+                        </tr>
+                        <tr>
+                            <th width="12%">HT</th>
+                            <th width="20%">note</th>
+                            <th width="25%">cents</th>
+                            <th width="43%">Hz</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Here the HT rows -->
+                    </tbody>`;
+                hstack.updateUsedHT();
+                
+                thisParam.uiElements.out.rowsHT = {};
+                for (let htNum of hstack.usedHT) {
+                    let newRow = new hstack.HstackRow(htNum, dhcID);
+                    thisParam.uiElements.out.rowsHT[htNum] = newRow;
+                    hstackTable.children[1].appendChild(newRow.elemRow);
+                }
+                if (hstackContainer.firstChild) {
+                    hstackContainer.removeChild(hstackContainer.firstChild);
+                }
+                hstackContainer.appendChild(hstackTable);
+                
+                hstack.fillin();
+
+            },
+            postSet: (value, thisParam, init) => {
+
+            }
+        });
+    }
+    _init() {
+        this.active._init();
+        this.hstack._init();
+    }
+
 };

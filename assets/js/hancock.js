@@ -5,7 +5,7 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2020 by Walter Mantovani (http://armonici.it).
+ * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
  * Written by Walter Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -38,84 +38,26 @@ HUM.Hancock = class {
     * @param {HUM.DHC} dhc - The DHC instance to which it belongs
     */
     constructor(dhc) {
+        this.id = dhc.id;
+        this._id = dhc._id;
+        this.name = 'hancock';
         /**
         * The DHC instance
         *
         * @member {HUM.DHC}
         */
         this.dhc = dhc;
-        /**
-         * The state of the Hancock; if `false`, it is turned off.
-         *
-         * @member {boolean}
-         */
-        this.active = false;
-        /**
-         * Default Qwerty Hancock settings
-         *
-         * @see {@link https://stuartmemo.com/qwerty-hancock/}
-         *
-         * @member {Object}
-         *
-         * @property {string}   id               - Id of the htmlElement in which to put the keyboard
-         * @property {number}   width            - Width of the keyboard in pixels
-         * @property {number}   height           - Height of the keyboard in pixels
-         * @property {number}   octaves          - How many octaves to show
-         * @property {string}   startNote        - The note name (hancock numbering) of the first key to show
-         * @property {string}   whiteNotesColour - Default released key color for white keys (bypassed by classes & css)
-         * @property {string}   blackNotesColour - Default released key color for black keys (bypassed by classes & css)
-         * @property {string}   hoverColour      - Default pressed-key color for all the keys (bypassed by classes & css)
-         * @property {velocity} velocity         - The velocity value to be used when sending messages; an integer between 1 and 127
-         * @property {midichan} channel          - The Channel to be used when sending messages; an integer between 0 and 15
-         */
-        // @old icHancockCurrSets
-        this.settings = {
-            id: 'HTMLo_hancockContainer'+dhc.id,
-            width: 600,
-            height: 80,
-            // octaves: 4, // default 3
-            // startNote: 'F3', // default 'A3'
-            // whiteNotesColour: 'white', // default '#fff'
-            // blackNotesColour: 'black', // default '#000'
-            // hoverColour: '#f3e939', // default 'yellow'
-            // borderColour: 'black', // default '#000'
-            
-            // Added properties (non Hancock natives)
-            velocity: 120,
-            channel: 1
-        };
-        /**
-         * UI HTML elements
-         *
-         * @member {Object}
-         * 
-         * @property {Object.<string, HTMLElement>} fn  - Functional UI elements
-         * @property {Object.<string, HTMLElement>} in  - Input UI elements
-         * @property {Object.<string, HTMLElement>} out - Output UI elements
-         */
-        this.uiElements = {
-            fn: {
-                checkboxPiano: this.dhc.harmonicarium.html.pianoTab[dhc.id].children[0],
-            },
-            in: {
-                velocity: document.getElementById("HTMLi_piano_velocity"+dhc.id),
-                channel: document.getElementById("HTMLi_piano_channel"+dhc.id),
-                keyboardOffset: document.getElementById("HTMLi_piano_offset"+dhc.id),
-                keyboardRange: document.getElementById("HTMLi_piano_range"+dhc.id),
-                keyboardWidth: document.getElementById("HTMLi_piano_width"+dhc.id),
-                keyboardHeight: document.getElementById("HTMLi_piano_height"+dhc.id),
-            },
-            out: {
-                pianoContainer: document.getElementById(this.settings.id),
-            },
-        };
+
+        this.parameters = new this.Parameters(this);
+        this.parameters._init();
+
         /**
          * The instance of Qwerty Hancock piano keyboard
          *
          * @member {QwertyHancock}
          */
         // @old icKeyboard
-        this.keyboard = new QwertyHancock(this.settings);
+        this.keyboard = new QwertyHancock(this._getSettings());
         /**
          * The method invoked when a key is pressed on Hanckock
          *
@@ -132,14 +74,42 @@ HUM.Hancock = class {
         // @old icKeyboard.keyUp
         this.keyboard.keyUp = (note) => this.sendMidiNote(note, 0);            
 
-        this._initUI();
-
         // Tell to the DHC that a new app is using it
         this.dhc.registerApp(this, 'updatesFromDHC', 100);
 
         // =======================
     } // end class Constructor
     // ===========================
+
+    /**
+     * Create a Qwerty Hancock settings object
+     *
+     * @see {@link https://stuartmemo.com/qwerty-hancock/}
+     *
+     * @member {Object}
+     *
+     * @property {string}   id               - Id of the htmlElement in which to put the keyboard
+     * @property {number}   width            - Width of the keyboard in pixels
+     * @property {number}   height           - Height of the keyboard in pixels
+     * @property {number}   octaves          - How many octaves to show
+     * @property {string}   startNote        - The note name (hancock numbering) of the first key to show
+     * @property {string}   whiteNotesColour - Default released key color for white keys (bypassed by classes & css)
+     * @property {string}   blackNotesColour - Default released key color for black keys (bypassed by classes & css)
+     * @property {string}   hoverColour      - Default pressed-key color for all the keys (bypassed by classes & css)
+     */
+    _getSettings() {
+        return {
+            id: this.parameters.pianoContainer._uiElements.hancockContainer.htmlID,
+            width: this.parameters.width.value,
+            height: this.parameters.height.value,
+            octaves: this.parameters.range.value,
+            startNote: this.parameters.offset.startNote,
+            // whiteNotesColour: 'white', // default '#fff'
+            // blackNotesColour: 'black', // default '#000'
+            // hoverColour: '#f3e939', // default 'yellow'
+            // borderColour: 'black', // default '#000'
+        }
+    }
 
     /**
      * Manage and route an incoming message
@@ -161,7 +131,7 @@ HUM.Hancock = class {
                 this.fitToKeymap();
             }
         // Play keys only if the accordion Piano tab is open
-        } else if ( (['tone-on', 'tone-off']).includes(msg.cmd) && this.active) {
+        } else if ( (['tone-on', 'tone-off']).includes(msg.cmd) && this.parameters.active.value) {
             let ctrlNum = msg.ctrlNum,
                 mcXT;
             if (ctrlNum === false) {
@@ -191,14 +161,14 @@ HUM.Hancock = class {
         // Note ON
         let cmd = 9;
         // Channel (change offset to 0-15)
-        let channel = this.settings.channel - 1;
+        let channel = this.parameters.channel.value - 1;
         // Compose the Status Byte
         // Bitwise shift to the left 0x9 for 4 bits to get 0x90 (Note ON)
         // Add the channel (0-15) to complete the byte (0x90, 0x91... 0x9F)
         let statusbyte = (cmd << 4) + channel;
         // Create a fake MIDI event for midiMessageReceived
         let midievent = {
-            data: [statusbyte, this.dhc.nameToMidiNumber('hancock', note), this.settings.velocity * state, "hancock", false],
+            data: [statusbyte, this.dhc.nameToMidiNumber('hancock', note), this.parameters.velocity.value * state, "hancock", false],
             srcElement: {
                 id: "952042271",
                 manufacturer : "Industrie Creative",
@@ -231,7 +201,7 @@ HUM.Hancock = class {
                     // If the key is mapped to a Fundamental Tone only
                     if (ft !== 129 && ht === 129) {
                         // If is a sharp key
-                        if (note.match(/#/)) {
+                        if (note.match(/[#b]/)) {
                             // Use a darker color
                             key.classList.add("FTbKey", "releasedKey");
                             // Write the key-number
@@ -248,7 +218,7 @@ HUM.Hancock = class {
                     // If the key is mapped to a Harmonic Tone only
                     else if (ht !== 129 && ht !== 0 && ft === 129) {
                         // If is a sharp key
-                        if (note.match(/#/)) {
+                        if (note.match(/[#b]/)) {
                             // Use a darker color
                             key.classList.add("HTbKey", "releasedKey");
                             // Write the key-number
@@ -264,7 +234,7 @@ HUM.Hancock = class {
                     // If is HT0
                     } else if (ht === 0 && ft === 129) {                    
                         // If is a sharp key
-                        if (note.match(/#/)) {
+                        if (note.match(/[#b]/)) {
                             // Use a darker color
                             key.classList.add("HT0bKey", "releasedKey");
                             // Write a "P"
@@ -280,7 +250,7 @@ HUM.Hancock = class {
                 // If the key is not mapped
                 } else {
                     // If is a sharp key
-                    if (note.match(/#/)) {
+                    if (note.match(/[#b]/)) {
                         // Use a darker color
                         key.classList.add("bKey", "releasedKey");
                     // Else is a normal key
@@ -308,11 +278,9 @@ HUM.Hancock = class {
         }
         
         // Update the range
-        this.changeRange(keyOctaves);
-        this.uiElements.in.keyboardRange.value = keyOctaves;
+        this.parameters.range.value = keyOctaves;
         // Update the offset
-        this.changeOffset(keysArray[0]);
-        this.uiElements.in.keyboardOffset.value = keysArray[0];
+        this.parameters.offset.value = keysArray[0];
     }
     /**
      * Bypass the Qwerty Hancock default key colors and set the right color for Note-ON message.
@@ -361,111 +329,227 @@ HUM.Hancock = class {
      */
     // @old icHancockUpdate
     update() {
-        this.uiElements.out.pianoContainer.innerHTML = "";
-        this.keyboard = new QwertyHancock(this.settings);
+        let htmlElem = this.parameters.pianoContainer.uiElements.out.hancockContainer;
+        while (htmlElem.firstChild) {
+            htmlElem.removeChild(htmlElem.firstChild);
+        }
+        // this.parameters.pianoContainer.uiElements.out.hancockContainer.innerHTML = "";
+        this.keyboard = new QwertyHancock(this._getSettings());
         // @todo - Why it work without reset 'this.keyboard.keyDown' 'this.keyboard.keyUp' ??
         // Start the style wrapper
         this.drawKeymap();
     }
-    /**
-     * Set the offset of the Qwerty Hancock and update the UI.
-     *     The piano keyboard will start from the given note to the right.
-     *
-     * @param {midinnum} midikey - MIDI note number representing a piano key
-     */
-    // @old icHancockChangeOffset
-    changeOffset(midikey) {
-        let note =  this.dhc.midiNumberToNames(midikey)[0];
-        if (!note.match(/#/)) {
-            this.settings.startNote = note;
-            this.update();
-        }
-    }
-    /**
-     * Set the octave-range of Qwerty Hancock and update the UI
-     *
-     * @param  {number} octaves - Number of octaves to show
-     */
-    // @old icHancockChangeRange
-    changeRange(octaves) {
-            this.settings.octaves = octaves;
-            this.update();
-    }
-    /**
-     * Modify the size of Qwerty Hancock and update the UI
-     *
-     * @param {number}    pixels - Number of pixels
-     * @param {('w'|'h')} dim    - The dimension to change; 'w' is for weight, 'h' is for height 
-     */
-    // @old icHancockChangeSize
-    changeSize(pixels, dim) {
-        if (dim === "w") {
-            this.settings.width = pixels;
-        } else if (dim === "h") {
-            this.settings.height = pixels;
-        } else {
-            console.log("Hancock changeSize: wrong 'dim' parameter: " + dim);
-        }
-        this.update();
-    }
+};
 
-    /*==============================================================================*
-     * KEYBOARD UI INITS
-     *==============================================================================*/
-    /**
-     * Initialize the UI of the Hancock instance
-     */
-    // @old icKeyboardUIinit
-    _initUI() {
-
-        this.uiElements.in.velocity.value = this.settings.velocity;
-        this.uiElements.in.channel.value = this.settings.channel;
-        this.uiElements.in.keyboardWidth.value = this.settings.width;
-        this.uiElements.in.keyboardHeight.value = this.settings.height;
-
-        // @todo - set the "min", "max", "step" using a config file, like the user settings file...
-        // this.uiElements.in.keyboardOffset.value = 
-        // this.uiElements.in.keyboardRange.value = 
-
-        // Disable the keyboard animation if the accordion Piano tab is closed
-        this.uiElements.fn.checkboxPiano.addEventListener('change', (e) => {
-            if (e.target.checked === true) {
-                this.active = true;
-
-            } else {
-                this.active = false;
-                // Turn off all the tones currently active, if there are
-                this.allNotesOff();
+HUM.Hancock.prototype.Parameters = class {
+    constructor(hancock) {
+        /**
+         * The state of the Hancock; if `false`, it is turned off.
+         *
+         * @member {boolean}
+         */
+        this.active = new HUM.Param({
+            app:hancock,
+            idbKey:'hancockActive',
+            uiElements:{
+                'hancockTabShown': new HUM.Param.UIelem({
+                    htmlID: hancock.dhc.harmonicarium.html.pianoTab[hancock.dhc.id].children[1].id,
+                    role: 'fn',
+                    opType: 'toggle',
+                    widget:'collapse',
+                    eventType: 'show.bs.collapse',
+                    uiSet: (value) => {
+                        if (value) {
+                            this.active.bsCollapse.show();
+                        } else {
+                            this.active.bsCollapse.hide();
+                        }
+                    },
+                    eventListener: evt => {
+                        this.active.valueUI = true;
+                    }
+                }),
+                'hancockTabHidden': new HUM.Param.UIelem({
+                    htmlID: hancock.dhc.harmonicarium.html.pianoTab[hancock.dhc.id].children[1].id,
+                    role: 'fn',
+                    opType: 'toggle',
+                    widget:'collapse',
+                    eventType: 'hidden.bs.collapse',
+                    uiSet: null,
+                    eventListener: evt => {
+                        this.active.valueUI = false;
+                    }
+                }),
+            },
+            init:false,
+            dataType:'boolean',
+            initValue:false,
+            presetStore:false,
+            presetAutosave:false,
+            presetRestore:false,
+            preInit: () => {
+                // Create a Bootstrap collapsible controller
+                this.active.bsCollapse = new bootstrap.Collapse('#'+hancock.dhc.harmonicarium.html.pianoTab[hancock.dhc.id].children[1].id, {
+                    toggle: this.active.value
+                });
+            },
+            postSet: (value, thisParam, init) => {
+                if (!value) {
+                    // Turn off all the tones currently active, if there are
+                    hancock.allNotesOff();
+                }
             }
         });
-
-        // Update the channel of the Qwerty Hancock on UI changes
-        this.uiElements.in.channel.addEventListener("input", (e) => {
-            this.settings.channel = Number(e.target.value);
+        this.pianoContainer = new HUM.Param({
+            app:hancock,
+            idbKey:'hancockPianoContainer',
+            uiElements:{
+                'hancockContainer': new HUM.Param.UIelem({
+                    role: 'out',
+                }),
+            },
         });
-        // Update the velocity of the Qwerty Hancock on UI changes
-        this.uiElements.in.velocity.addEventListener("input", (e) => {
-            this.settings.velocity = e.target.value;
+        // @property {velocity} velocity         - The velocity value to be used when sending messages; an integer between 1 and 127
+        this.velocity = new HUM.Param({
+            app:hancock,
+            idbKey:'hancockVelocity',
+            uiElements:{
+                'piano_velocity': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    widget:'range',
+                    htmlTargetProp:'value',
+                    eventType: 'input',
+                }),
+            },
+            dataType:'integer',
+            initValue:120,
+            postSet: (value, thisParam, init) => {
+                thisParam.uiElements.in.piano_velocity.setAttribute('data-tooltip', value);
+            }
         });
-        // Update the offset of the Qwerty Hancock on UI changes
-        this.uiElements.in.keyboardOffset.addEventListener("input", (e) => {
-            this.changeOffset(e.target.value);
+        // * @property {midichan} channel          - The Channel to be used when sending messages; an integer between 0 and 15
+        this.channel = new HUM.Param({
+            app:hancock,
+            idbKey:'hancockChannel',
+            uiElements:{
+                'piano_channel': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    widget:'number',
+                    htmlTargetProp:'value',
+                    eventType: 'change',
+                }),
+            },
+            dataType:'integer',
+            initValue:1,
         });
-
-        // Update the octave range of the Qwerty Hancock on UI changes
-        this.uiElements.in.keyboardRange.addEventListener("input", (e) => {
-            this.changeRange(e.target.value);
+        /**
+         * Set the offset of the Qwerty Hancock and update the UI.
+         *     The piano keyboard will start from the given note to the right.
+         *
+         * @prop {midinnum} value     - MIDI note number representing a piano key
+         * @prop {string}   startNote - Note name
+         */
+        this.offset = new HUM.Param({
+            app:hancock,
+            idbKey:'hancockOffset',
+            uiElements:{
+                'piano_offset': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    widget:'range',
+                    htmlTargetProp:'value',
+                    eventType: 'input',
+                }),
+            },
+            dataType:'integer',
+            init:false, // NOTE: It will be initialized when the keymap is loaded
+            // initValue:120,
+            restoreStage: 'post',
+            postSet: (value, thisParam, init) => {
+                let note =  hancock.dhc.midiNumberToNames(value)[0];
+                if (!note.match(/[#b]/)) {
+                    thisParam.startNote = note;
+                    hancock.update();
+                }
+                thisParam.uiElements.in.piano_offset.setAttribute('data-tooltip', value);
+            },
+            customProperties: {startNote:''}
         });
-
-        // Update the width of the Qwerty Hancock on UI changes
-        this.uiElements.in.keyboardWidth.addEventListener("input", (e) => {
-            this.changeSize(e.target.value, "w");
+        /**
+         * Set the octave-range of Qwerty Hancock and update the UI
+         *
+         * @prop  {number} value - Number of octaves to show
+         */
+        this.range = new HUM.Param({
+            app:hancock,
+            idbKey:'hancockRange',
+            uiElements:{
+                'piano_range': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    widget:'range',
+                    htmlTargetProp:'value',
+                    eventType: 'input',
+                }),
+            },
+            dataType:'integer',
+            // initValue:120,
+            init:false, // NOTE: It will be initialized when the keymap is loaded
+            restoreStage: 'post',
+            postSet: (value, thisParam, init) => {
+                hancock.update();
+                thisParam.uiElements.in.piano_range.setAttribute('data-tooltip', value);
+            },
         });
-
-        // Update the height of the Qwerty Hancock on UI changes
-        this.uiElements.in.keyboardHeight.addEventListener("input", (e) => {
-            this.changeSize(e.target.value, "h");
+        this.width = new HUM.Param({
+            app:hancock,
+            idbKey:'hancockWidth',
+            uiElements:{
+                'piano_width': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    widget:'range',
+                    htmlTargetProp:'value',
+                    eventType: 'input',
+                }),
+            },
+            dataType:'integer',
+            initValue:600,
+            restoreStage: 'mid',
+            postSet: (value, thisParam, init) => {
+                if (!init) {
+                    hancock.update();
+                }
+                thisParam.uiElements.in.piano_width.setAttribute('data-tooltip', value);
+            },
         });
+        this.height = new HUM.Param({
+            app:hancock,
+            idbKey:'hancockHeight',
+            uiElements:{
+                'piano_height': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    widget:'range',
+                    htmlTargetProp:'value',
+                    eventType: 'input',
+                }),
+            },
+            dataType:'integer',
+            initValue:80,
+            restoreStage: 'mid',
+            postSet: (value, thisParam, init) => {
+                if (!init) {
+                    hancock.update();
+                }
+                thisParam.uiElements.in.piano_height.setAttribute('data-tooltip', value);
+            },
+        });
+    }
+    _init() {
+        this.active._init();
     }
 
 };

@@ -1,5 +1,6 @@
  /**
  * Web Audio Peak Meters by Evan Sonderegger
+ * Modded by Walter G. Mantovani
  * https://github.com/esonderegger/web-audio-peak-meter
  * https://github.com/esonderegger/web-audio-peak-meter/blob/master/LICENSE
  */
