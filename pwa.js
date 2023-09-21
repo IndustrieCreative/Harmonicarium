@@ -1,14 +1,18 @@
-/* globals caches, humPWA, harmonicarium1 */
-
 "use strict";
 
 /*
  * NOTE: The "keepOldCache" feature is currently not working.
  *       A lot of code here about this feature is unused in "production".
- *       Trying to give to the user the chance to decide if upgrade or not.
+ *       This is for trying to give to the user the chance to decide if upgrade or not.
  */
 
-// @see https://dev.to/zigabrencic/web-browser-local-storage-16jh
+/**
+ * Check if the `localStorage` is available.
+ * 
+ * @see {@link https://dev.to/zigabrencic/web-browser-local-storage-16jh}
+ *
+ * @return {localStorageStatus} - An object that describes the `localStorage` useful infos.
+ */  
 function getLocalStorageStatus() {
     let test = 'test';
     try {
@@ -61,13 +65,30 @@ if (window.location.protocol !== 'file:') {
     // If it's on https:// protocol
     if (window.location.protocol === 'https:') {
 
-
-        // GLOBAL PWA tools container/namespace
+        /**
+         * Global PWA tools container/namespace.
+         * NOTE: It's available only if the app is served under the `https://` protocol.
+         * @name humPWA
+         * @namespace
+         * @global
+         * 
+         * @property {BeforeInstallPromptEvent} deferredPrompt - If the user deverred the install prompt, here is stored the "beforeinstallprompt" event to resume.
+         * @property {boolean}                  justInstalled  - If the app has been just installed.
+         * @property {string}                   appCacheName   - The name of the current Cache.
+         */
         window.humPWA = {
             deferredPrompt: false,
             justInstalled: false,
             appCacheName: false,
 
+            /**
+             * Perform the ServiceWorker post-registration actions.
+             * Add the eventListeners to "updatefound" and "statechange" events.
+             * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration}
+             * @memberof humPWA
+             * 
+             * @param {ServiceWorkerRegistration} reg - The ServiceWorkerRegistration object.
+             */
             swPostRegistration: function(reg) {
                 console.info('ServiceWorker registered with scope: ', reg.scope);
                 // reg.installing; // the installing worker, or undefined
@@ -81,13 +102,13 @@ if (window.location.protocol !== 'file:') {
                 // if (reg.installing) {
                 //     reg.installing.addEventListener('statechange', (evt) => {
                 //         if (evt.target.state === 'installed') {
-                //             humPWA.promptUserToRefresh(reg, 28);
+                //             humPWA.promptUserToRefresh(reg, 'swPostRegistration - installing');
                 //         }
                 //     });
                 // }
                 
                 if (reg.waiting) {
-                    humPWA.promptUserToRefresh(reg, 34);
+                    humPWA.promptUserToRefresh(reg, 'swPostRegistration - waiting');
                 }
 
                 reg.addEventListener('updatefound', () => {
@@ -110,7 +131,7 @@ if (window.location.protocol !== 'file:') {
                         if (evt.target.state === 'installed') {
                             // Ask to the user only if there is an active ServiceWorker
                             if (navigator.serviceWorker.controller) {
-                                humPWA.promptUserToRefresh(reg, 55);
+                                humPWA.promptUserToRefresh(reg, 'swPostRegistration - installed');
                             }
                         }
 
@@ -127,6 +148,10 @@ if (window.location.protocol !== 'file:') {
                 });
             },
 
+            /**
+             * Check for ServiceWorker updates.
+             * @memberof humPWA
+             */
             checkUpdates: function() {
                 console.info('Checking for updates...');
                 navigator.serviceWorker.getRegistration('./')
@@ -139,7 +164,7 @@ if (window.location.protocol !== 'file:') {
                                 humPWA.swPostRegistration(newReg);
                             } else {
                                 if (oldReg.waiting) {
-                                    humPWA.promptUserToRefresh(oldReg, 78);
+                                    humPWA.promptUserToRefresh(oldReg, 'checkUpdates - waiting');
                                 } else {
                                     console.info('Nothing to update.');
                                 }
@@ -147,6 +172,7 @@ if (window.location.protocol !== 'file:') {
                         });
                 });
             },
+            
             // unregister: function() {
             //     humPWA.registrationSW
             //         .uregister()
@@ -156,12 +182,17 @@ if (window.location.protocol !== 'file:') {
             //             }
             //         });
             // },
+            
+            /**
+             * Perform the ServiceWorker App reset.
+             * @memberof humPWA
+             */
             swAppReset: function() {
                 if (getLocalStorageStatus().write) {
                     localStorage.removeItem('keepOldCache');
                 }
                 navigator.serviceWorker.getRegistration('./')
-                .then( swRegistration => {
+                .then(swRegistration => {
                     if (swRegistration) {
                         swRegistration.unregister()
                         .then( bool => {
@@ -183,7 +214,13 @@ if (window.location.protocol !== 'file:') {
                     }
                 });
             },            
-
+            /**
+             * Ask the user to refresh and install the update or postpone it.
+             * @memberof humPWA
+             * 
+             * @param {ServiceWorkerRegistration} swRegistration - The ServiceWorkerRegistration object.
+             * @param {number}                    trigger        - Label for debug (showed on the popup prompt message).
+             */
             promptUserToRefresh: function(swRegistration, trigger) {
                 let localStorageOK = getLocalStorageStatus().status === 'available',
                     promptMsg1 = '*** New version available! INSTALL NOW ? ***\n\n' +
@@ -215,7 +252,7 @@ if (window.location.protocol !== 'file:') {
                 // [...] }
 
                 // INSTALL
-                if (window.confirm(promptMsg1 +'\n\n'+ trigger)) {
+                if (window.confirm(promptMsg1 +'\n\n['+ trigger +']')) {
                     console.info('The app UPDATE has been ACCEPTED by the user.');
 
                     // @todo: Implement registration!!
@@ -269,9 +306,10 @@ if (window.location.protocol !== 'file:') {
 
                 }
             }
-
-        };
-
+            // =======================
+        } // end humPWA
+        // ===========================
+    
         // DEFERRED INSTALL notice
         window.addEventListener('beforeinstallprompt', (evt) => {
             // Prevent the mini-infobar from appearing on mobile
@@ -335,7 +373,6 @@ if (window.location.protocol !== 'file:') {
 
                 });
 
-
             // navigator.serviceWorker
             //     .getRegistration('./')
             //     .then( registration => {
@@ -343,7 +380,6 @@ if (window.location.protocol !== 'file:') {
             //             document.querySelector('#status').textContent = 'ServiceWorkerRegistration found.';  
             //         }
             //     });
-
 
             var refreshing; // Avoid infinite loop when using the Chrome Dev Tools “Update on Reload” feature
             navigator.serviceWorker.addEventListener('controllerchange', () => {

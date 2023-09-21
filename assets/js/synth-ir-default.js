@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -27,8 +27,6 @@
  *     The IR .wav file is encoded in Base64
  */
 
-/* globals HUM */
-
 "use strict";
 
 /**
@@ -39,15 +37,15 @@
  * @see Voxengo_LICENSE in the ./ir/ directory
  *
  * @example
- * <caption>To make a Base64 file with OpenSSL</caption>
+ * <caption>To make a Base64 file with OpenSSL:</caption>
  * #openssl base64 -in /path/ir.wav -out /path/ir.base64 
  *
  * @memberof HUM.Synth
  * 
  * @type {Object}
  *
- * @property {string} name - Filename
- * @property {string} data - The WAV audio file encoded in Base64
+ * @property {string} name - Filename.
+ * @property {string} data - The WAV audio file encoded in Base64.
  */
 HUM.Synth.defaultReverb = {
     // The IR file name or description

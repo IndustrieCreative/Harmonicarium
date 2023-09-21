@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,9 +22,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals HUM */
-/* globals QwertyHancock */
-
 "use strict";
 
 /** 
@@ -35,12 +32,25 @@
  */
 HUM.Hancock = class {
     /**
-    * @param {HUM.DHC} dhc - The DHC instance to which it belongs
+    * @param {HUM.DHC} dhc - The DHC instance to which this Hancock belongs
     */
     constructor(dhc) {
+        /**
+        * The id of the DHC instance.
+        *
+        * @member {string}
+        */
         this.id = dhc.id;
         this._id = dhc._id;
+
+        /**
+        * The name of the `HUM.Hancock`, useful for group the parameters on the DB.
+        * Currently hard-coded as `"hancock"`.
+        *
+        * @member {string}
+        */
         this.name = 'hancock';
+
         /**
         * The DHC instance
         *
@@ -48,30 +58,41 @@ HUM.Hancock = class {
         */
         this.dhc = dhc;
 
+        /**
+        * Instance of `HUM.Hancock#Parameters`.
+        *
+        * @member {HUM.BackendUtils.prototype.Parameters}
+        */
         this.parameters = new this.Parameters(this);
         this.parameters._init();
 
         /**
-         * The instance of Qwerty Hancock piano keyboard
+         * The instance of Qwerty Hancock piano keyboard.
          *
          * @member {QwertyHancock}
          */
-        // @old icKeyboard
         this.keyboard = new QwertyHancock(this._getSettings());
+
         /**
-         * The method invoked when a key is pressed on Hanckock
-         *
-         * @param {string} note - Hancock note name (e.g. G#5)
-         */
-        // @old icKeyboard.keyDown
-        this.keyboard.keyDown = (note) => this.sendMidiNote(note, 1);
-        /**
-         * The method invoked when a key is released on Hanckock
-         * 
+         * The method invoked when a key is pressed on Hanckock.
          * @function
-         * @param {string} note - Hancock note name (e.g. G#5)
+         * @instance
+         * @name keyDown
+         * @memberof QwertyHancock
+         *
+         * @param {string} note - Hancock note name (e.g. G#5).
          */
-        // @old icKeyboard.keyUp
+        this.keyboard.keyDown = (note) => this.sendMidiNote(note, 1);
+
+        /**
+         * The method invoked when a key is released on Hanckock.
+         * @function
+         * @instance
+         * @name keyUp
+         * @memberof QwertyHancock
+         * 
+         * @param {string} note - Hancock note name (e.g. G#5).
+         */
         this.keyboard.keyUp = (note) => this.sendMidiNote(note, 0);            
 
         // Tell to the DHC that a new app is using it
@@ -88,15 +109,16 @@ HUM.Hancock = class {
      *
      * @member {Object}
      *
-     * @property {string}   id               - Id of the htmlElement in which to put the keyboard
-     * @property {number}   width            - Width of the keyboard in pixels
-     * @property {number}   height           - Height of the keyboard in pixels
-     * @property {number}   octaves          - How many octaves to show
-     * @property {string}   startNote        - The note name (hancock numbering) of the first key to show
-     * @property {string}   whiteNotesColour - Default released key color for white keys (bypassed by classes & css)
-     * @property {string}   blackNotesColour - Default released key color for black keys (bypassed by classes & css)
-     * @property {string}   hoverColour      - Default pressed-key color for all the keys (bypassed by classes & css)
+     * @property {string} id        - Id of the htmlElement in which to put the keyboard
+     * @property {number} width     - Width of the keyboard in pixels
+     * @property {number} height    - Height of the keyboard in pixels
+     * @property {number} octaves   - How many octaves to show
+     * @property {string} startNote - The note name (hancock numbering) of the first key to show
      */
+     // * @property {string} whiteNotesColour - Default released key color for white keys (bypassed by classes & css)
+     // * @property {string} blackNotesColour - Default released key color for black keys (bypassed by classes & css)
+     // * @property {string} hoverColour      - Default pressed-key color for all the keys (bypassed by classes & css)
+     // * @property {string} borderColour     - Default border color for all the keys (bypassed by classes & css)
     _getSettings() {
         return {
             id: this.parameters.pianoContainer._uiElements.hancockContainer.htmlID,
@@ -112,9 +134,9 @@ HUM.Hancock = class {
     }
 
     /**
-     * Manage and route an incoming message
+     * Manage and route an incoming message.
      *
-     * @param {HUM.DHCmsg} msg - The incoming message
+     * @param {HUM.DHCmsg} msg - The incoming message.
      */
     updatesFromDHC(msg) {
 
@@ -150,13 +172,12 @@ HUM.Hancock = class {
         }
     }
     /**
-     * Send a fake MIDI event note ON/OFF directly to midi.in
-     * in order to input Qwerty Hancock as a virtual MIDI device
+     * Send a fake MIDI event note ON/OFF directly to `midi.in`
+     * in order to input Qwerty Hancock as a virtual MIDI device.
      *
      * @param {string} note  - Hancock note name (e.g. G#5)
      * @param {(0|1)}  state - 0 is Note-OFF | 1 is Note-ON
      */
-    // @old icFakeMidiNote
     sendMidiNote(note, state) {
         // Note ON
         let cmd = 9;
@@ -184,9 +205,8 @@ HUM.Hancock = class {
      *==============================================================================*/
     /**
      * Bypass the Qwerty Hancock default key colors (released).
-     *     Write the key-numbers according to the keymap.
+     * Write the key-numbers according to the keymap.
      */
-    // @old icHancockKeymap
     drawKeymap() {
         for (var i = 0; i < 128; i++) {
             let note = this.dhc.midiNumberToNames(i)[0];
@@ -287,7 +307,6 @@ HUM.Hancock = class {
      *
      * @param {midinnum} ctrlNum - MIDI note number
      */
-    // @old icKeyON
     keyON(ctrlNum) {
         if (ctrlNum !== false) {
             let key = this.dhc.midiNumberToNames(ctrlNum)[0];
@@ -302,7 +321,6 @@ HUM.Hancock = class {
      *
      * @param {midinnum} ctrlNum - MIDI note number
      */
-    // @old icKeyOFF
     keyOFF(ctrlNum) {
         if (ctrlNum !== false) {
             let key = this.dhc.midiNumberToNames(ctrlNum)[0];
@@ -327,7 +345,6 @@ HUM.Hancock = class {
     /**
      * Update the Qwerty Hancock keyboard on UI setting changes
      */
-    // @old icHancockUpdate
     update() {
         let htmlElem = this.parameters.pianoContainer.uiElements.out.hancockContainer;
         while (htmlElem.firstChild) {
@@ -341,19 +358,36 @@ HUM.Hancock = class {
     }
 };
 
+/** 
+ * Instance class-container used to create all the `HUM.Param` objects for the `HUM.Hancock` instance.
+ */
 HUM.Hancock.prototype.Parameters = class {
+    /**
+     * @param {HUM.Hancock} hancock - The Hancock instance in which this class is being used.
+     */
     constructor(hancock) {
-        /**
-         * The state of the Hancock; if `false`, it is turned off.
+        /**  
+         * This property controls the state of the Hancock; if `false`, it's turned off in order to avoid
+         * unuseful computations and uptates of the UI when the panel is closed.
+         * It also initialises the eventListener of the UIelems related to it.
+         * It's not stored on the DB.
+         * NOTE: These uiElements are the same object because, given the current implementation of
+         * Param.UIelem, it's not possible to set more event listeners using a single UIelem.
          *
-         * @member {boolean}
+         * @member {HUM.Param}
+         * 
+         * @property {boolean}     value                          - The visibility one wants to achieve. If `false` the tab will be collapsed.
+         * @property {Object}      uiElements                     - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.fn                  - Namespace for the "fn" HTML elements.
+         * @property {HTMLElement} uiElements.fn.hancockTabShown  - The HTML of the Hancock tab.
+         * @property {HTMLElement} uiElements.fn.hancockTabHidden - The HTML of the Hancock tab.
          */
         this.active = new HUM.Param({
             app:hancock,
             idbKey:'hancockActive',
             uiElements:{
                 'hancockTabShown': new HUM.Param.UIelem({
-                    htmlID: hancock.dhc.harmonicarium.html.pianoTab[hancock.dhc.id].children[1].id,
+                    htmlID: hancock.dhc.harmonicarium.html.pianoTabs[hancock.dhc.id].children[1].id,
                     role: 'fn',
                     opType: 'toggle',
                     widget:'collapse',
@@ -370,7 +404,7 @@ HUM.Hancock.prototype.Parameters = class {
                     }
                 }),
                 'hancockTabHidden': new HUM.Param.UIelem({
-                    htmlID: hancock.dhc.harmonicarium.html.pianoTab[hancock.dhc.id].children[1].id,
+                    htmlID: hancock.dhc.harmonicarium.html.pianoTabs[hancock.dhc.id].children[1].id,
                     role: 'fn',
                     opType: 'toggle',
                     widget:'collapse',
@@ -385,11 +419,10 @@ HUM.Hancock.prototype.Parameters = class {
             dataType:'boolean',
             initValue:false,
             presetStore:false,
-            presetAutosave:false,
             presetRestore:false,
             preInit: () => {
                 // Create a Bootstrap collapsible controller
-                this.active.bsCollapse = new bootstrap.Collapse('#'+hancock.dhc.harmonicarium.html.pianoTab[hancock.dhc.id].children[1].id, {
+                this.active.bsCollapse = new bootstrap.Collapse('#'+hancock.dhc.harmonicarium.html.pianoTabs[hancock.dhc.id].children[1].id, {
                     toggle: this.active.value
                 });
             },
@@ -400,6 +433,16 @@ HUM.Hancock.prototype.Parameters = class {
                 }
             }
         });
+        /**  
+         * This property it's just a proxy for the HTML container of the Hancock piano.
+         * It's not stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {Object}      uiElements                      - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.out                  - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.out.hancockContainer - The HTML Hancock piano container.
+         */
         this.pianoContainer = new HUM.Param({
             app:hancock,
             idbKey:'hancockPianoContainer',
@@ -409,7 +452,18 @@ HUM.Hancock.prototype.Parameters = class {
                 }),
             },
         });
-        // @property {velocity} velocity         - The velocity value to be used when sending messages; an integer between 1 and 127
+        /**  
+         * This property controls the velocity amount for the Hancock piano and initialises the
+         * eventListener of the UIelems related to it.
+         * It's stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {velocity}    value                        - The velocity value to be used when sending messages; an integer between 1 and 127.
+         * @property {Object}      uiElements                   - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.in                - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.in.piano_velocity - The HTML of the input slider widget for setting the velocity amount.
+         */
         this.velocity = new HUM.Param({
             app:hancock,
             idbKey:'hancockVelocity',
@@ -428,7 +482,18 @@ HUM.Hancock.prototype.Parameters = class {
                 thisParam.uiElements.in.piano_velocity.setAttribute('data-tooltip', value);
             }
         });
-        // * @property {midichan} channel          - The Channel to be used when sending messages; an integer between 0 and 15
+        /**  
+         * This property controls the Channel to be used when sending messages through the Hancock piano
+         * and initialises the eventListener of the UIelems related to it.
+         * It's stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {midichan}    value                       - The Channel to be used when sending messages; an integer between 0 and 15.
+         * @property {Object}      uiElements                  - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.in               - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.in.piano_channel - The HTML of the input slider widget for setting the output channel.
+         */
         this.channel = new HUM.Param({
             app:hancock,
             idbKey:'hancockChannel',
@@ -444,12 +509,21 @@ HUM.Hancock.prototype.Parameters = class {
             dataType:'integer',
             initValue:1,
         });
-        /**
-         * Set the offset of the Qwerty Hancock and update the UI.
-         *     The piano keyboard will start from the given note to the right.
+        
+        /**  
+         * This property sets the offset of the Qwerty Hancock and update the UI.
+         * The piano keyboard will start from the given note to the right.
+         * It also initialises the eventListener of the UIelems related to it.
+         * It's stored on the DB.
          *
-         * @prop {midinnum} value     - MIDI note number representing a piano key
-         * @prop {string}   startNote - Note name
+         * @member {HUM.Param}
+         * 
+         * @property {midinnum}    value                      - MIDI note number representing a piano key.
+         * @property {string}      startNote                 - The effective note name of the key set in the "value".
+         *                                                      Do not set it directly because it's for internal use only.
+         * @property {Object}      uiElements                 - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.in              - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.in.piano_offset - The HTML of the input slider widget for setting the offset.
          */
         this.offset = new HUM.Param({
             app:hancock,
@@ -477,10 +551,17 @@ HUM.Hancock.prototype.Parameters = class {
             },
             customProperties: {startNote:''}
         });
-        /**
-         * Set the octave-range of Qwerty Hancock and update the UI
+        /**  
+         * This property sets the octave-range of Qwerty Hancock and update the UI.
+         * It also initialises the eventListener of the UIelems related to it.
+         * It's stored on the DB.
          *
-         * @prop  {number} value - Number of octaves to show
+         * @member {HUM.Param}
+         * 
+         * @property {number}      value                     - Number of octaves to show.
+         * @property {Object}      uiElements                - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.in             - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.in.piano_range - The HTML of the input slider widget for setting the range number.
          */
         this.range = new HUM.Param({
             app:hancock,
@@ -503,6 +584,18 @@ HUM.Hancock.prototype.Parameters = class {
                 thisParam.uiElements.in.piano_range.setAttribute('data-tooltip', value);
             },
         });
+        /**  
+         * This property sets the width of the Qwerty Hancock and update the UI.
+         * It also initialises the eventListener of the UIelems related to it.
+         * It's stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {number}      value                     - The width expressed in pixels.
+         * @property {Object}      uiElements                - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.in             - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.in.piano_width - The HTML of the input slider widget for setting the width.
+         */
         this.width = new HUM.Param({
             app:hancock,
             idbKey:'hancockWidth',
@@ -525,6 +618,18 @@ HUM.Hancock.prototype.Parameters = class {
                 thisParam.uiElements.in.piano_width.setAttribute('data-tooltip', value);
             },
         });
+        /**  
+         * This property sets the height of the Qwerty Hancock and update the UI.
+         * It also initialises the eventListener of the UIelems related to it.
+         * It's stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {number}      value                     - The height expressed in pixels.
+         * @property {Object}      uiElements                - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.in             - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.in.piano_width - The HTML of the input slider widget for setting the height.
+         */
         this.height = new HUM.Param({
             app:hancock,
             idbKey:'hancockHeight',
@@ -548,6 +653,9 @@ HUM.Hancock.prototype.Parameters = class {
             },
         });
     }
+    /**
+     * Initializes the parameter "active".
+     */
     _init() {
         this.active._init();
     }

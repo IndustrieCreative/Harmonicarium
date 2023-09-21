@@ -17,8 +17,8 @@
         <div id="harmonicaria" class="container-fluid p-0"></div>
 
         <!-- CSS -->
-        <link rel="stylesheet" type="text/css" href="assets/css/lib/bootstrap.min.css">
-        <!-- <link rel="stylesheet" type="text/css" href="assets/css/lib/darkly/bootstrap.min.css"> -->
+        <!-- <link rel="stylesheet" type="text/css" href="assets/css/lib/bootstrap.min.css"> -->
+        <link rel="stylesheet" type="text/css" href="assets/css/lib/bootstrap.min_new.css">
         <link rel="stylesheet" type="text/css" href="assets/css/styles.css">
 
         <!-- Main App -->
@@ -47,7 +47,8 @@
         <!-- <script type="text/javascript" src='assets/js/lib/web-audio-peak-meter-2.1.0.min.js'></script> -->
         <script type="text/javascript" src='assets/js/lib/web-audio-peak-meter_v2.js'></script>
         <script type="text/javascript" src='assets/js/lib/qwerty-hancock-dist.js'></script>
-        <script type="text/javascript" src="assets/js/lib/bootstrap.bundle.min.js"></script>
+        <!-- <script type="text/javascript" src="assets/js/lib/bootstrap.bundle.min.js"></script> -->
+        <script type="text/javascript" src="assets/js/lib/bootstrap.bundle.min_new.js"></script>
 
         <!-- Original WebMidiLink synthlist JSONP from g200kg -->
         <!-- <script type="text/javascript" src="assets/js/lib/synthlist.js"></script> -->
@@ -59,22 +60,11 @@
             window.addEventListener('load', (evt) => {
                 let ctx = 'mainDev';
                 window.harmonicarium1 = new HUM(1, ctx);
-                window.harmonicarium1._init();
+                window.harmonicarium1.init();
                 // window.harmonicarium2 = new HUM(2, ctx);
-                // window.harmonicarium2._init();
+                // window.harmonicarium2.init();
             });
         </script>
-   
-        <!-- Global site tag (gtag.js) - Google Analytics -->
-        <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=UA-40509595-4"></script> -->
-        <!-- <script>
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-
-          gtag('config', 'UA-40509595-4', { 'anonymize_ip': true });
-        </script> -->
-
 
     </body>
 </html>

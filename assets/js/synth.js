@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,34 +22,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals AudioContext */
-/* globals HUM */
-/* globals webAudioPeakMeter */
-/* globals bootstrap */
-
 "use strict";
 
 // Patch up the AudioContext prefixes
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 /** 
- * The Synth class
- *    A tool for listen the tones computed by the DHC.<br>
+ * The Synth class.
+ *    A tool for listen the tones computed by the DHC.
  *    Provide a simple basic synth useful as reference sound.
  */
-// @old icSYNTH
 HUM.Synth = class {
     /**
-    * @param {HUM.DHC} dhc - The DHC instance to which it belongs
+    * @param {HUM.DHC} dhc - The DHC instance to which it belongs.
     */
     constructor(dhc) {
-        /**
-        * The AudioContext instance from Web Audio API
-        *
-        * @member {AudioContext}
-        */
         try {
-            // @old icAudioContext
+            /**
+            * The AudioContext instance from Web Audio API.
+            *
+            * @member {AudioContext}
+            */
             this.audioContext = new AudioContext();
         }
         catch(error) {
@@ -57,12 +50,18 @@ HUM.Synth = class {
             return undefined;
         }            
         /**
-        * The id of this Synth instance (same as the DHC id)
+        * The id of this Synth instance (same as the DHC id).
         *
         * @member {string}
         */
         this.id = dhc.id;
         this._id = dhc._id;
+        /**
+        * The name of the `HUM.PwaManager`, useful for group the parameters on the DB.
+        * Currently hard-coded as `"synth"`.
+        *
+        * @member {string}
+        */
         this.name = 'synth';
         /**
         * The DHC instance
@@ -72,28 +71,27 @@ HUM.Synth = class {
         this.dhc = dhc;
 
         /**
-         * Namespace for FT and HT voices slots
+         * Namespace for FT and HT voices slots.
          *
          * @member {Object}
          *
-         * @property {HUM.Synth#SynthVoice}                 ft - FT slot for a SynthVoice object
-         * @property {Object.<xtnum, HUM.Synth#SynthVoice>} ht - HT slot for a register of SynthVoice objects
+         * @property {HUM.Synth#SynthVoice}                 ft - FT slot for a SynthVoice object.
+         * @property {Object.<xtnum, HUM.Synth#SynthVoice>} ht - HT slot for a register of SynthVoice objects.
          */
-        // @old icVoices
         this.voices = {
             ft: null,
             ht: {}
         };
 
         /**
-         * Namespace for Gain nodes
+         * Namespace for Gain nodes.
          *
          * @member {Object}
          *
-         * @property {GainNode} master       - Final gain out node
-         * @property {GainNode} mix          - FT+HT mixer gain
-         * @property {GainNode} ft           - FT gain
-         * @property {GainNode} ht           - HT gain
+         * @property {GainNode} master - Final gain out node.
+         * @property {GainNode} mix    - FT+HT mixer gain.
+         * @property {GainNode} ft     - FT gain.
+         * @property {GainNode} ht     - HT gain.
          */
         this.gains = {
             // Prepare the MASTER, MIX FT and HT gain out nodes
@@ -104,13 +102,13 @@ HUM.Synth = class {
         };
 
         /**
-         * Namespace for convolver Reverb and wet/dry mixer gains
+         * Namespace for convolver Reverb and wet/dry mixer gains.
          *
          * @member {Object}
          *
-         * @property {ConvolverNode} convolver    - Slot for convolver reverb node
-         * @property {GainNode}      wet          - Reverberated gain bus/carrier node
-         * @property {GainNode}      dry          - Dry gain bus/carrier node
+         * @property {ConvolverNode} convolver - Slot for convolver reverb node.
+         * @property {GainNode}      wet       - Reverberated gain bus/carrier node.
+         * @property {GainNode}      dry       - Dry gain bus/carrier node.
          */
         this.reverb = {
             // Prepare the REVERB and the wet/dry gain nodes
@@ -120,23 +118,27 @@ HUM.Synth = class {
         };
 
         /**
-        * The compressor node
+        * The compressor node.
         * 
         * @member {DynamicsCompressorNode}
         */
         this.compressor = this.audioContext.createDynamicsCompressor();
         
         /**
-        * The vumeter from "webAudioPeakMeter" lib
-        *     NB: the `{@link ScriptProcessorNode}` is deprecated but still working.
+        * The vumeter from "webAudioPeakMeter" lib.
+        * NB: the `{@link ScriptProcessorNode}` is deprecated but still working.
+        * @todo Use AudioWorkletNode {@link https://bit.ly/audio-worklet}.
         * 
         * @member {ScriptProcessorNode}
         */
         this.vumeter = webAudioPeakMeter.createMeterNode(this.gains.master, this.audioContext);
 
-
+        /**
+        * Instance of `HUM.Synth#Parameters`.
+        *
+        * @member {HUM.Synth.prototype.Parameters}
+        */
         this.parameters = new this.Parameters(this);
-
         this.parameters._init();
 
         // Tell to the DHC that a new app is using it            
@@ -147,9 +149,9 @@ HUM.Synth = class {
     // ===========================
 
     /**
-     * Manage and route an incoming message
+     * Manage and route an incoming message.
      *
-     * @param {HUM.DHCmsg} msg - The incoming message
+     * @param {HUM.DHCmsg} msg - The incoming message.
      */
     updatesFromDHC(msg) {
 
@@ -199,13 +201,12 @@ HUM.Synth = class {
     }
 
     /**
-     * Create a new voice of the synth
+     * Create a new voice of the synth.
      *
-     * @param {tonetype} type     - If the voice will be a FTs or HTs
-     * @param {xtnum}    toneID   - The ID of the new voice; the FT/HT tone number
-     * @param {velocity} velocity - MIDI Velocity amount (from 0 to 127) of the MIDI-IN message from the controller
+     * @param {tonetype} type     - If the voice will be a FTs or HTs.
+     * @param {xtnum}    toneID   - The ID of the new voice; the FT/HT tone number.
+     * @param {velocity} velocity - MIDI Velocity amount (from 0 to 127) of the MIDI-IN message from the controller.
      */
-    // @old icVoiceON
     voiceON(type, toneID, velocity) {
         let freq = this.dhc.tables[type][toneID].hz;
         // If the synth is turned-on
@@ -240,13 +241,12 @@ HUM.Synth = class {
         }
     }
     /**
-     * Destroy a voice of the synth
+     * Destroy a voice of the synth.
      *
-     * @param {tonetype} type   - If you need to destroy a FT or HT voice
-     * @param {xtnum}    toneID - The ID of the voice to be destroy; the FT/HT tone number
+     * @param {tonetype} type   - If you need to destroy a FT or HT voice.
+     * @param {xtnum}    toneID - The ID of the voice to be destroy; the FT/HT tone number.
      * @param {boolean}  panic  - If `true` tells that the message has been generated by a "hard" All-Notes-Off request.
      */
-    // @old icVoiceOFF
     voiceOFF(type, toneID, panic=false) {
         if (this.parameters.status.value === true) {
            
@@ -288,7 +288,7 @@ HUM.Synth = class {
         }
     }
     /**
-     * Turns off all the active voices
+     * Turns off all the active voices.
      */
     allNotesOff() {
         // Prevent HT stuck notes
@@ -306,9 +306,8 @@ HUM.Synth = class {
     }
     /**
      * Update the frequency of the current playing FT oscillator
-     * (on UI setting changes)
+     * (on UI setting changes).
      */
-    // @old icUpdateSynthFTfrequency
     updateFTfrequency() {
         if (this.voices.ft !== null) {
             var ftObj = this.dhc.tables.ft[this.dhc.settings.ht.curr_ft];
@@ -318,9 +317,8 @@ HUM.Synth = class {
     }
     /**
      * Update the frequencies of the current playing HT oscillators
-     * (when the FT is changing or on other UI setting changes)
+     * (when the FT is changing or on other UI setting changes).
      */
-    // @old icUpdateSynthHTfrequency
     updateHTfrequency() {
         for (const [toneID, voice] of Object.entries(this.voices.ht)) {
             // Get the data about the HT from the ht table
@@ -332,9 +330,8 @@ HUM.Synth = class {
     }
 
     /**
-     * Apply the current Pitch Bend amount (from the controller) to every already active synth voices
+     * Apply the current Pitch Bend amount (from the controller) to every already active synth voices.
      */
-    // @old icSynthPitchBend
     updatePitchBend() {
         // If the synth is turned-on
         if (this.parameters.status.value === true) {
@@ -344,7 +341,7 @@ HUM.Synth = class {
                     // If the osc exist
                     if (this.voices.ht[i].osc){
                         // Detune the osc: "value" and "range" are in cents, "amount" is normalized to -1 > 0 > 0.99987792968750
-                        this.voices.ht[i].osc.detune.value = this.dhc.settings.controller.pb.amount * this.dhc.settings.controller.pb.range.value;
+                        this.voices.ht[i].osc.detune.value = this.dhc.midi.in.parameters.pitchbend.amount * this.dhc.midi.in.parameters.pitchbend.range.value;
                     }
                 }
             }
@@ -353,7 +350,7 @@ HUM.Synth = class {
                 // If the osc exist
                 if (this.voices.ft.osc){
                     // Detune the osc: "value" and "range" are in cents, "amount" is normalized to -1 > 0 > 0.99987792968750
-                    this.voices.ft.osc.detune.value = this.dhc.settings.controller.pb.amount * this.dhc.settings.controller.pb.range.value;
+                    this.voices.ft.osc.detune.value = this.dhc.midi.in.parameters.pitchbend.amount * this.dhc.midi.in.parameters.pitchbend.range.value;
                 }
             }
         }
@@ -363,11 +360,11 @@ HUM.Synth = class {
      * REVERB HANDLING
      *==============================================================================*/
     /**
-     * Try to create a convolver node
+     * Try to create a convolver node.
      *
-     * @return {ConvolverNode} - The new instance of a ConvolverNode (from Web Audio API)
+     * @return {ConvolverNode} - The new instance of a ConvolverNode (from Web Audio API).
      *
-     * @throws Open an alert warning that the browser does not support convolution reverberation
+     * @throws Open an alert warning that the browser does not support convolution reverberation.
      */
     tryCreateConvolver() {
         // If the convolver is not supported by the browser, create a normal gain node
@@ -380,11 +377,10 @@ HUM.Synth = class {
         }
     }
     /**
-     * Initialize the reading process of the IR Reverb file
+     * Initialize the reading process of the IR Reverb file.
      *
-     * @param {File}     file      - The file to be read
+     * @param {File} file - The file to be read.
      */
-    // @old icReadIrFile
     readIrFile(file) {
         let reader = new FileReader();
         // Handle loading errors
@@ -399,12 +395,11 @@ HUM.Synth = class {
         }
     }
     /**
-     * Load the IR Reverb wav file on the convolver
+     * Load the IR Reverb wav file on the convolver.
      *
-     * @param {ArrayBuffer}  data      - The raw binary data of the file
-     * @param {string}       fileName  - The filename
+     * @param {ArrayBuffer} data     - The raw binary data of the file.
+     * @param {string}      fileName - The filename.
      */
-    // @old icProcessIrData
     loadIrFile(data, fileName) {
         this.audioContext.decodeAudioData(data, (function(buffer) {
             if (this.reverb.convolver) {
@@ -416,18 +411,19 @@ HUM.Synth = class {
         }).bind(this));
     }
     /**
-     * Convert Base64 data held in a string into raw binary blob
+     * Convert Base64 data held in a string into raw binary blob.
      * 
-     * @see {@link https://gist.github.com/fupslot/5015897|Based on this snippet}
+     * @see {@link https://gist.github.com/fupslot/5015897|Based on this snippet.}
+     * 
+     * @todo Rewrite lookin here: {@link https://stackoverflow.com/questions/35940290/how-to-convert-base64-string-to-javascript-file-object-like-as-from-file-input-f}
+     *       Way 2: Maybe make it works with standard url to wave files too.
      *
-     * @param {Object} file      - A File-like object
-     * @param {Object} file.name - Filename
-     * @param {Object} file.data - Data content in Base64
+     * @param {Object} file      - A File-like object.
+     * @param {string} file.name - Filename.
+     * @param {string} file.data - Data content in Base64.
      *
-     * @return {Blob}             - The decoded file in a Blob object
-     */
-    // @todo: Rewrite lookin here: https://stackoverflow.com/questions/35940290/how-to-convert-base64-string-to-javascript-file-object-like-as-from-file-input-f
-    //        Way 2: Maybe make it works with standard url to wave files too.
+     * @return {Blob} - The decoded file in a Blob object.
+     */  
     static base64ToFile(file) {
         // Note: doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
         let byteString = atob(file.data.split(',')[1]);
@@ -462,53 +458,52 @@ HUM.Synth = class {
  * SYNTH VOICE
  *==============================================================================*/
 /**
- * Class for a single voice of the Synth
+ * Class for a single voice of the Synth.
  */
-// @old ICvoice
 HUM.Synth.prototype.SynthVoice = class {
     /**
-     * @param {Synth}    synth    - The Synth instance to which it belongs
-     * @param {hertz}    freq     - Frequency expressed in hertz (Hz)
-     * @param {velocity} velocity - MIDI Velocity amount (from 0 to 127)
-     * @param {tonetype} type     - If the voice will be a FTs or HTs
+     * @param {Synth}    synth    - The Synth instance to which it belongs.
+     * @param {hertz}    freq     - Frequency expressed in hertz (Hz).
+     * @param {velocity} velocity - MIDI Velocity amount (from 0 to 127).
+     * @param {tonetype} type     - If the voice will be a FTs or HTs.
      */
     constructor(synth, freq, velocity, type) {
         /**
-         * The Synth instance
+         * The Synth instance.
          *
          * @member {Synth}
          */
         this.synth = synth;
         /**
-         * The tone type of the SynthVoice
+         * The tone type of the SynthVoice.
          * Type of the voice; FT or HT
          *
-         * @member {Synth}
+         * @member {tonetype}
          */
         this.type = type;
         /**
-         * Initial frequency expressed in hertz (Hz)
+         * Initial frequency expressed in hertz (Hz).
          *
-         * @member {hz}
+         * @member {hertz}
          */
         this.initFrequency = freq;
         /**
-         * The oscillator
+         * The oscillator.
          *
          * @member {OscillatorNode}
          */
         this.osc = this.synth.audioContext.createOscillator();
         /**
-         * The gain/volume to implement the Envelope Generator
+         * The gain/volume to implement the Envelope Generator.
          *
-         * @member {OscillatorNode}
+         * @member {GainNode}
          */
         this.envelope = this.synth.audioContext.createGain();
         /**
-         * The gain/volume to implement the Velocity
-         * A gain to manage the final voice volume if needed (currently not used)
+         * The gain/volume to implement the Velocity.
+         * A gain to manage the final voice volume if needed (currently not used).
          *
-         * @member {OscillatorNode}
+         * @member {GainNode}
          */
         this.volume = this.synth.audioContext.createGain();
 
@@ -567,9 +562,9 @@ HUM.Synth.prototype.SynthVoice = class {
     // ===========================
     
     /**
-     * Set/update the voice waveform
+     * Set/update the voice waveform.
      *
-     * @param {('sine'|'square'|'sawtooth'|'triangle')} waveform - Waveform type
+     * @param {('sine'|'square'|'sawtooth'|'triangle')} waveform - Waveform type.
      */
     setWaveform(waveform) {
         this.osc.type = waveform;
@@ -577,7 +572,7 @@ HUM.Synth.prototype.SynthVoice = class {
     /**
      * Set/update the voice frequency
      *
-     * @param {boolean} update - `false`: The voice must be created.<br>
+     * @param {boolean} update - `false`: The voice must be created.
      *                           `true `: The voice must be updated.
      */
     setFrequency(update) {
@@ -595,12 +590,11 @@ HUM.Synth.prototype.SynthVoice = class {
             this.osc.frequency.setTargetAtTime( this.initFrequency, 0, this.synth.parameters.portamento.value);
         }
         // APPLY CURRENT DETUNING (if present): "value" and "range" are in cents, "amount" is normalized to -1 > 0 > 0.99987792968750
-        this.osc.detune.setValueAtTime((this.synth.dhc.settings.controller.pb.amount * this.synth.dhc.settings.controller.pb.range.value), 0);
+        this.osc.detune.setValueAtTime((this.synth.dhc.midi.in.parameters.pitchbend.amount * this.synth.dhc.midi.in.parameters.pitchbend.range.value), 0);
     }
     /**
-     * Turn off the sound of the Voice (release)
+     * Turn off the sound of the Voice (release).
      */
-    // @old noteOff
     voiceMute() {
         // Shutdown the envelope before stopping the oscillator (release)
         // To avoid sound artifact in case the Attack or Release are still running...
@@ -620,9 +614,25 @@ HUM.Synth.prototype.SynthVoice = class {
     }
 };
 
-
+/** 
+ * Instance class-container used to create all the `HUM.Param` objects for the `HUM.Synth` instance.
+ */
 HUM.Synth.prototype.Parameters = class {
+    /**
+     * @param {HUM.Synth} synth - The Synth instance in which this class is being used.
+     */
     constructor(synth) {
+        /**  
+         * This property controls the state of the VU Meter animation (Web Audio Peak Meters).
+         * It's not stored on the DB.
+         * 
+         * @member {HUM.Param}
+         * 
+         * @property {boolean}     value                      - VU Meter meter ON/OFF. If `false` the meter is disabled.
+         * @property {Object}      uiElements                 - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.out             - Namespace for the "fn" HTML elements.
+         * @property {HTMLElement} uiElements.out.synth_meter - The HTML of the VU Meter.
+         */
         this.synthMeter = new HUM.Param({
             app:synth,
             idbKey:'synthMeter',
@@ -664,15 +674,30 @@ HUM.Synth.prototype.Parameters = class {
             initValue:false,
             restoreStage: 'mid',
             presetStore:false,
-            presetAutosave:false,
             presetRestore:false,
         });
+        /**  
+         * This property controls the visibility of the Synth tab; if `false`, it's the VU Meter is
+         * turned off in order to avoid unuseful computations and uptates of the UI when the panel is closed.
+         * It also initialises the eventListener of the UIelems related to it.
+         * It's not stored on the DB.
+         * NOTE: These uiElements are the same object because, given the current implementation of
+         * Param.UIelem, it's not possible to set more event listeners using a single UIelem.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {boolean}     value                        - The visibility one wants to achieve. If `false` the tab will be collapsed.
+         * @property {Object}      uiElements                   - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.fn                - Namespace for the "fn" HTML elements.
+         * @property {HTMLElement} uiElements.fn.synthTabShown  - The HTML of the Synth tab.
+         * @property {HTMLElement} uiElements.fn.synthTabHidden - The HTML of the Synth tab.
+         */
         this.synthTab = new HUM.Param({
             app:synth,
             idbKey:'synthTab',
             uiElements:{
                 'synthTabShown': new HUM.Param.UIelem({
-                    htmlID: synth.dhc.harmonicarium.html.synthTab[synth.dhc.id].children[1].id,
+                    htmlID: synth.dhc.harmonicarium.html.synthTabs[synth.dhc.id].children[1].id,
                     role: 'fn',
                     eventType: 'shown.bs.collapse',
                     opType: 'toggle',
@@ -689,7 +714,7 @@ HUM.Synth.prototype.Parameters = class {
                     }
                 }),
                 'synthTabHidden': new HUM.Param.UIelem({
-                    htmlID: synth.dhc.harmonicarium.html.synthTab[synth.dhc.id].children[1].id,
+                    htmlID: synth.dhc.harmonicarium.html.synthTabs[synth.dhc.id].children[1].id,
                     role: 'fn',
                     eventType: 'hidden.bs.collapse',
                     opType: 'toggle',
@@ -709,7 +734,7 @@ HUM.Synth.prototype.Parameters = class {
             presetRestore:false,
             preInit: () => {
                 // Create a Bootstrap collapsible controller
-                this.synthTab.bsCollapse = new bootstrap.Collapse('#'+synth.dhc.harmonicarium.html.synthTab[synth.dhc.id].children[1].id, {
+                this.synthTab.bsCollapse = new bootstrap.Collapse('#'+synth.dhc.harmonicarium.html.synthTabs[synth.dhc.id].children[1].id, {
                     toggle: this.synthTab.value
                 });
             },
@@ -722,11 +747,16 @@ HUM.Synth.prototype.Parameters = class {
                 }
             }
         });
-
-        /**
-         * The state of the Synth (Power ON/OFF); if `false`, it is turned off.
-         *
-         * @member {boolean}
+        /**  
+         * This property controls the state of the Synth (Power ON/OFF); if `false`, it is turned off.
+         * It's stored on the DB.
+         * 
+         * @member {HUM.Param}
+         * 
+         * @property {boolean}     value                     - Power ON/OFF. If `false` the synth is disabled.
+         * @property {Object}      uiElements                - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.in             - Namespace for the "fn" HTML elements.
+         * @property {HTMLElement} uiElements.in.synth_power - The HTML of the VU Meter.
          */
         this.status = new HUM.Param({
             app:synth,
@@ -747,16 +777,26 @@ HUM.Synth.prototype.Parameters = class {
             postSet:synth.allNotesOff
         });
         /**
-         * Namespace for the Volume controls
-         *
+         * Namespace for the Volume controls for the the MASTER, MIX FT and HT gain out nodes.
+         * @instance
+         * 
          * @member {Object}
-         *
-         * @property {HUM.Parameter} master   - Final gain out node
-         * @property {HUM.Parameter} ft       - FT gain
-         * @property {HUM.Parameter} ht       - HT gain
+         * @namespace
          */
         this.volume = {
-            // Prepare the MASTER, MIX FT and HT gain out nodes
+            /**  
+             * This property controls the volume of the final gain out node of the Synth
+             * and initialises the eventListener of the UIelems related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {number}      value                       - The main out volume; a float-point number from 0 to 1.
+             * @property {Object}      uiElements                  - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in               - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.synth_volume - The HTML of the input slider widget for setting the volume.
+             */
             master: new HUM.Param({
                 app:synth,
                 idbKey:'synthVolumeMaster',
@@ -790,6 +830,19 @@ HUM.Synth.prototype.Parameters = class {
                     thisParam.uiElements.in.synth_volume.setAttribute('data-tooltip', value);
                 }
             }),
+            /**  
+             * This property controls the volume of the FT gain out node of the Synth
+             * and initialises the eventListener of the UIelems related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {number}      value                        - The FT out volume; a float-point number from 0 to 1.
+             * @property {Object}      uiElements                   - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in                - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.synth_volumeFT - The HTML of the input slider widget for setting the volume.
+             */
             ft: new HUM.Param({
                 app:synth,
                 idbKey:'synthVolumeFT',
@@ -823,6 +876,19 @@ HUM.Synth.prototype.Parameters = class {
                     thisParam.uiElements.in.synth_volumeFT.setAttribute('data-tooltip', value);
                 }
             }),
+            /**  
+             * This property controls the volume of the HT gain out node of the Synth
+             * and initialises the eventListener of the UIelems related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {number}      value                        - The HT out volume; a float-point number from 0 to 1.
+             * @property {Object}      uiElements                   - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in                - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.synth_volumeFT - The HTML of the input slider widget for setting the volume.
+             */
             ht: new HUM.Param({
                 app:synth,
                 idbKey:'synthVolumeHT',
@@ -850,16 +916,26 @@ HUM.Synth.prototype.Parameters = class {
             })
         };
         /**
-         * Namespace for the ADSR envelope parameters
-         *
+         * Namespace for the ADSR envelope parameters.
+         * @instance
+         * 
          * @member {Object}
-         *
-         * @property {number} attack  - Attack time (seconds)
-         * @property {number} decay   - Decay time (time-constant)
-         * @property {number} sustain - Sustain gain value (amount from 0.0 to 1.0)
-         * @property {number} release - Release time (seconds)
+         * @namespace
          */
         this.envelope = {
+            /**  
+             * This property controls the Attack amount the Synth
+             * and initialises the eventListener of the UIelems related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {number}      value                      - Attack time (seconds).
+             * @property {Object}      uiElements                 - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in              - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.synth_attack - The HTML of the input slider widget for setting the Attack.
+             */
             attack: new HUM.Param({
                 app:synth,
                 idbKey:'synthAttack',
@@ -878,8 +954,20 @@ HUM.Synth.prototype.Parameters = class {
                     // Update the UI slider's tooltip
                     thisParam.uiElements.in.synth_attack.setAttribute('data-tooltip', value + ' s');
                 },
-                customProperties: {lastFreqFT: null}
             }),
+            /**  
+             * This property controls the Decay amount the Synth
+             * and initialises the eventListener of the UIelems related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {number}      value                     - Decay time (time-constant).
+             * @property {Object}      uiElements                - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in             - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.synth_decay - The HTML of the input slider widget for setting the Decay.
+             */
             decay: new HUM.Param({
                 app:synth,
                 idbKey:'synthDecay',
@@ -899,6 +987,19 @@ HUM.Synth.prototype.Parameters = class {
                     thisParam.uiElements.in.synth_decay.setAttribute('data-tooltip', value + ' s(tc)');
                 }
             }),
+            /**  
+             * This property controls the Sustain gain amount the Synth
+             * and initialises the eventListener of the UIelems related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {number}      value                       - Sustain gain value (amount from 0.0 to 1.0).
+             * @property {Object}      uiElements                  - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in               - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.synth_sustain - The HTML of the input slider widget for setting the Sustain.
+             */
             sustain: new HUM.Param({
                 app:synth,
                 idbKey:'synthSustain',
@@ -918,6 +1019,19 @@ HUM.Synth.prototype.Parameters = class {
                     thisParam.uiElements.in.synth_sustain.setAttribute('data-tooltip', value + ' gain');
                 }
             }),
+            /**  
+             * This property controls the Release time the Synth
+             * and initialises the eventListener of the UIelems related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {number}      value                       - Release time (seconds).
+             * @property {Object}      uiElements                  - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in               - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.synth_release - The HTML of the input slider widget for setting the Release.
+             */
             release: new HUM.Param({
                 app:synth,
                 idbKey:'synthRelease',
@@ -939,14 +1053,26 @@ HUM.Synth.prototype.Parameters = class {
             })
         };
         /**
-         * Namespace for FT and HT waveform parameters
-         *
+         * Namespace for FT and HT waveform parameters.
+         * @instance
+         * 
          * @member {Object}
-         *
-         * @property {('sine'|'square'|'sawtooth'|'triangle')} ft - FTs waveform
-         * @property {('sine'|'square'|'sawtooth'|'triangle')} ht - HTs waveform
+         * @namespace
          */
         this.waveform = {
+            /**  
+             * This property controls waveform for the FTs
+             * and initialises the eventListener of the UIelems related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {('sine'|'square'|'sawtooth'|'triangle')} value                          - FTs waveform.
+             * @property {Object}                                  uiElements                     - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}                                  uiElements.in                  - Namespace for the "in" HTML elements.
+             * @property {HTMLElement}                             uiElements.in.synth_waveformFT - The HTML of the input selection widget for setting the FT waveform.
+             */
             ft: new HUM.Param({
                 app:synth,
                 idbKey:'synthWaveformFT',
@@ -970,6 +1096,19 @@ HUM.Synth.prototype.Parameters = class {
 
                 }
             }),
+            /**  
+             * This property controls waveform for the HTs
+             * and initialises the eventListener of the UIelems related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {('sine'|'square'|'sawtooth'|'triangle')} value                          - HTs waveform.
+             * @property {Object}                                  uiElements                     - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}                                  uiElements.in                  - Namespace for the "in" HTML elements.
+             * @property {HTMLElement}                             uiElements.in.synth_waveformHT - The HTML of the input selection widget for setting the HT waveform.
+             */
             ht: new HUM.Param({
                 app:synth,
                 idbKey:'synthWaveformHT',
@@ -995,13 +1134,18 @@ HUM.Synth.prototype.Parameters = class {
                 }
             })
         };
-        /**
-         * Portamento/Glide parameters for monophonic FT and FT/HT osc frequency updates.
-         *
-         * @member {Object}
-         *
-         * @property {number} value      - Portamento time (time-constant)
-         * @property {number} lastFreqFT - Last FT frequency expressed in hertz (Hz); init value should be `null`
+        /**  
+         * This property controls the Portamento/Glide parameters for monophonic FT and FT/HT osc frequency updates.
+         * It initialises the eventListener of the UIelems related to it.
+         * It's stored on the DB.
+         * 
+         * @member {HUM.Param}
+         * 
+         * @property {number}      value                          - Portamento time (time-constant).
+         * @property {number}      lastFreqFT                     - Last FT frequency expressed in hertz (Hz); init value should be `null`.
+         * @property {Object}      uiElements                     - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.in                  - Namespace for the "fn" HTML elements.
+         * @property {HTMLElement} uiElements.in.synth_portamento - The HTML of the input slider widget for setting the Portamento.
          */
         this.portamento = new HUM.Param({
             app:synth,
@@ -1020,10 +1164,30 @@ HUM.Synth.prototype.Parameters = class {
             postSet: (value, thisParam) => {
                 // Update the UI slider's tooltip
                 thisParam.uiElements.in.synth_portamento.setAttribute('data-tooltip', value + ' s(tc)');
-            }
+            },
+            customProperties: {lastFreqFT: null}
         });
+        /**
+         * Namespace for reverb parameters.
+         * @instance
+         * 
+         * @member {Object}
+         * @namespace
+         */
         this.reverb = {
-            // @param {number} value - Reverb (wet) amount (normalized to 0.0 > 1.0)
+            /**  
+             * This property controls the Reverb amount.
+             * It initialises the eventListener of the UIelems related to it.
+             * It's stored on the DB.
+             * @instance
+             * 
+             * @member {HUM.Param}
+             * 
+             * @property {number}      value                      - Reverb (wet) amount, normalized to 0.0 (dry) > 1.0 (wet).
+             * @property {Object}      uiElements                 - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in              - Namespace for the "fn" HTML elements.
+             * @property {HTMLElement} uiElements.in.synth_reverb - The HTML of the input slider widget for setting the Reverb amount.
+             */
             amount: new HUM.Param({
                 app:synth,
                 idbKey:'synthReverb',
@@ -1058,6 +1222,22 @@ HUM.Synth.prototype.Parameters = class {
                     thisParam.uiElements.in.synth_reverb.setAttribute('data-tooltip', value);
                 }
             }),
+            /**  
+             * This property sets the IR Reverb wave file.
+             * It initialises the eventListener of the UIelems related to it.
+             * It's stored on the DB.
+             * @instance
+             * 
+             * @member {HUM.Param}
+             * 
+             * @property {(File|'default')} value                               - The reverb wave file object.
+             * @property {Object}           uiElements                          - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}           uiElements.in                       - Namespace for the "fn" HTML elements.
+             * @property {Object}           uiElements.out                      - Namespace for the "fn" HTML elements.
+             * @property {HTMLElement}      uiElements.in.synth_irFile          - The HTML of the input file widget for uploading the reverb wave file.
+             * @property {HTMLElement}      uiElements.in.synth_irFileName      - The HTML of the output text box for showing the reverb file name.
+             * @property {HTMLElement}      uiElements.out.synth_irFileClearBtn - The HTML of the input button that restores the default reverb.
+             */
             irFile: new HUM.Param({
                 app:synth,
                 idbKey:'synthIrFile',
@@ -1089,6 +1269,7 @@ HUM.Synth.prototype.Parameters = class {
                         widget:'button',
                         eventListener: evt => {
                             this.reverb.irFile.value = 'default';
+                            this.reverb.irFile.uiElements.in.synth_irFile.value = '';
                         }
                     })
                 },
@@ -1099,6 +1280,7 @@ HUM.Synth.prototype.Parameters = class {
                     if (value === 'default') {
                         // Load the Base64-coded default IR Reverb
                         synth.readIrFile(synth.constructor.base64ToFile(synth.constructor.defaultReverb));
+                        // fileNameElem.innerText = synth.constructor.defaultReverb.name;
                         fileNameElem.innerText = 'Default reverb';
                     } else if (value) {
                         // Load the file from the UI file input 
@@ -1114,7 +1296,12 @@ HUM.Synth.prototype.Parameters = class {
                 },
             })
         };
-    }
+        // =======================
+    } // end class Constructor
+    // ===========================
+    /**
+     * Initializes the parameter "synthTab".
+     */
     _init() {
         this.synthTab._init();
     }

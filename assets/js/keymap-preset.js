@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2018 by Walter Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,38 +22,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals HUM */
-
 "use strict";
 
 /** 
- * The CtrlKeymapPreset class
- *     A container for the Controller Keymaps Preset
+ * The CtrlKeymapPreset class.
+ *     A container for the Controller Keymaps Preset.
  */
-HUM.CtrlKeymapPreset = class {
-     /**
-     * @param {HUM.DHC} dhc - The DHC instance to which it belongs
-     */
-    constructor(){ // dhc) {
-        /**
-        * The DHC instance
-        *
-        * @member {HUM.DHC}
-        */
-        // this.dhc = dhc;
-        /**
-         * Slots for storing the current selected Controller keymap for each Tuning System 
-         *
-         * @member {Object}
-         * 
-         * @property {number} eEDx - Current selected Controller keymap for the n-EDx FT Tuning System 
-         * @property {number} h_s  - Current selected Controller keymap for the Harmonic/Subharmonic FT Tuning System 
-         */
-        // this.current = {
-        //     nEDx: 0,
-        //     h_s: 0,
-        //     // tsnap: 0
-        // };
+HUM.CtrlKeymapPresets = class {
+    constructor() {
         /**
         * Controller keymaps presets for the n-EDx FT Tuning System
         *
@@ -63,7 +39,7 @@ HUM.CtrlKeymapPreset = class {
             /**
              * A Controller keymap preset
              * 
-             * @typedef  {Object} CtrlKeymapPreset
+             * @typedef {Object} CtrlKeymapPreset
              *
              * @global
              *
@@ -83,7 +59,7 @@ HUM.CtrlKeymapPreset = class {
                     /**
                      * A single key of the Controller keymap
                      * 
-                     * @typedef  {Object} CtrlKeymapKey
+                     * @typedef {Object} CtrlKeymapKey
                      *
                      * @property {xtnum} ft - Fundamental Tone (FT) relative number; +/-64, FT0 is the FM, 129 is no FT
                      * @property {xtnum} ht - Harmonic/Subharmonic Tone (HT) relative number; +/-128, 0 is Piper feature, 129 is no HT

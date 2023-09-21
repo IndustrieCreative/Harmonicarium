@@ -9,6 +9,10 @@
  * http://stuartmemo.com/qwerty-hancock
  */
 
+/**
+ * The QwertyHancock module.
+ * @exports QwertyHancock
+ */
 (function () {
     var root = this;
     /* In <script> context, `this` is the window.
@@ -524,6 +528,9 @@
 
     /**
      * Qwerty Hancock constructor.
+     * @class
+     * @global
+     * 
      * @param {object} settings Optional user settings.
      */
     var QwertyHancock = function (settings) {

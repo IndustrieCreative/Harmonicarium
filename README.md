@@ -117,10 +117,11 @@ See also [the **contact page**](https://harmonicarium.org/contacts/) on the proj
 
 ## Older versions
 * Open version 0.6.0 (Galilei): [App](https://harmonicarium.org/apps/galilei/) – [Source code](https://github.com/IndustrieCreative/Harmonicarium/tree/v0.6.0)
+* Open version 0.7.0 (Kepler): [App](https://harmonicarium.org/apps/kepler/) – [Source code](https://github.com/IndustrieCreative/Harmonicarium/tree/v0.7.0)
 
 ## License
 Harmonicarium – a Dynamic Harmonics Calculator
-Copyright (C) 2017-2022 by Walter Mantovani
+Copyright (C) 2017-2023 by Walter G. Mantovani
 
 This program is free software: you can redistribute it and/or modify it under the terms of the
 **GNU Affero General Public License** as published by the Free Software Foundation, either version 3 of the

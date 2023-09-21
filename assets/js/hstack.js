@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,7 +22,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals HUM */
 
 "use strict";
 
@@ -30,16 +29,27 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 /** 
  * The H-Stack class<br>
- *    A tool for visualize the Harmonic Series in the UI
+ *    A tool for visualizing the Harmonic Series in the UI.
  */
-// @old icSYNTH
 HUM.Hstack = class {
     /**
     * @param {HUM.DHC} dhc - The DHC instance to which it belongs
     */
     constructor(dhc) {
+        /**
+        * The id of this Hstack instance (same as the DHC id)
+        *
+        * @member {string}
+        */
         this.id = dhc.id;
         this._id = dhc._id;
+
+        /**
+        * The name of the `HUM.Hstack`, useful for group the parameters on the DB.
+        * Currently hard-coded as `"hstack"`.
+        *
+        * @member {string}
+        */
         this.name = 'hstack';
         /**
         * The DHC instance
@@ -54,6 +64,11 @@ HUM.Hstack = class {
          */
         this.usedHT = [];
 
+        /**
+        * Instance of `HUM.Hstack#Parameters`.
+        *
+        * @member {HUM.Hstack.prototype.Parameters}
+        */
         this.parameters = new this.Parameters(this);
 
         this.parameters._init();
@@ -66,9 +81,9 @@ HUM.Hstack = class {
     // ===========================
 
     /**
-     * Manage and route an incoming message
+     * Manage and route an incoming message.
      *
-     * @param {HUM.DHCmsg} msg - The incoming message
+     * @param {HUM.DHCmsg} msg - The incoming message.
      */
     updatesFromDHC(msg) {
         if (msg.cmd === 'init') {
@@ -124,7 +139,7 @@ HUM.Hstack = class {
      * UI HSTACK
      *==============================================================================*/
     /**
-     * Update the {@link HUM.Hstack#usedHT} property
+     * Update the {@link HUM.Hstack#usedHT} property.
      */
     updateUsedHT() {
         let usedHT = [];
@@ -140,7 +155,7 @@ HUM.Hstack = class {
         this.usedHT = this.dhc.constructor.uniqArray(usedHT);
     }
     /**
-     * Turns off all the rows
+     * Turns off all the rows.
      */
     allNotesOff() {
         for (let htNum of this.usedHT) {
@@ -149,9 +164,8 @@ HUM.Hstack = class {
         this.playFx("ft", 0, this.dhc.settings.ht.curr_ft);
     }
     /**
-     * Fill-in the H-Stack table data 
+     * Fill-in the H-Stack table data.
      */
-    // @old icHSTACKfillin
     fillin() {
         // Empty object to store the HTn data
         let htObj = {};
@@ -177,9 +191,9 @@ HUM.Hstack = class {
         }
     }
     /**
-     * Print the data about the FT at the bottom of the H-Stack
+     * Print the data about the FT at the bottom of the H-Stack.
      * 
-     * @param {xtnum} ftNum - The FT number
+     * @param {xtnum} ftNum - The FT number.
      */
     ftMonitor(ftNum) {
         let dhcID = this.dhc.id;
@@ -198,13 +212,12 @@ HUM.Hstack = class {
         document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = ftObj.hz.toFixed(hzAccuracy);
     }
     /**
-     * Turn ON or OFF the rows of the H-Stack
+     * Turn ON or OFF the rows of the H-Stack.
      *
-     * @param {tonetype} type  - If the note to turn ON/OFF is a FT or HT
-     * @param {0|1}      state - Note ON/OFF; 0 is OFF, 1 is ON 
-     * @param {xtnum}    xtNum - FT or HT number
+     * @param {tonetype} type  - If the note to turn ON/OFF is a FT or HT.
+     * @param {0|1}      state - Note ON/OFF; 0 is OFF, 1 is ON.
+     * @param {xtnum}    xtNum - FT or HT number.
      */
-    // @old icHSTACKmonitor
     playFx(type, state, xtNum) {
         let dhcID = this.dhc.id;
         if (type === "ft") {
@@ -240,12 +253,12 @@ HUM.Hstack = class {
                     // let htmlElem = document.getElementById("HTMLf_hstackHTrow_h"+xtNum+"_"+dhcID);
                     // Note ON
                     if (state === 1) {
-                        htmlElem.classList.add("hum-hstack-ht-on");
+                        htmlElem.classList.add("hum-hstack-ht-on", "bg-warning");
                         htmlElem.classList.remove("hum-hstack-ht-off");
                     // Note OFF
                     } else if (state === 0) {
                         htmlElem.classList.add("hum-hstack-ht-off");
-                        htmlElem.classList.remove("hum-hstack-ht-on");
+                        htmlElem.classList.remove("hum-hstack-ht-on", "bg-warning");
                     }
                 }
             }
@@ -255,25 +268,45 @@ HUM.Hstack = class {
 
 
 /**
- * A HTML table's row for the H-Stack
+ * A HTML table's row for the H-Stack.
  */
 HUM.Hstack.prototype.HstackRow = class {
     /**
-     * @property {xtnum}  htNum - The number of HT
-     * @property {string} dhcID - The DHC instance id
+     * @property {xtnum}  htNum - The number of HTs.
+     * @property {string} dhcID - The DHC instance ID.
      */
     constructor(htNum, dhcID) {
         this.htNum = htNum;
         this.dhcID = dhcID;
         /**
-        * The HTML row element
+        * The HTML row element.
         *
         * @member {HTMLElement}
         */
         this.elemRow = document.createElement("tr");
+        /**
+        * The HTML cell for the HT number.
+        *
+        * @member {HTMLElement}
+        */
         this.elemHtNum = document.createElement("td");
+        /**
+        * The HTML cell for the note name.
+        *
+        * @member {HTMLElement}
+        */
         this.elemNote = document.createElement("td");
+        /**
+        * The HTML cell for the +/- cent amount.
+        *
+        * @member {HTMLElement}
+        */
         this.elemCents = document.createElement("td");
+        /**
+        * The HTML cell for the hertz amount.
+        *
+        * @member {HTMLElement}
+        */
         this.elemHz = document.createElement("td");
 
         this.elemRow.className = "hum-hstack-ht-off";
@@ -289,23 +322,36 @@ HUM.Hstack.prototype.HstackRow = class {
     }
 };
 
-
+/** 
+ * Instance class-container used to create all the `HUM.Param` objects for the `HUM.Hstack` instance.
+ */
 HUM.Hstack.prototype.Parameters = class {
     constructor(hstack) {
-        /**
-         * The state of the H-Stack; if `false`, it is turned off.
+        /**  
+         * This property controls the state of the H-Stack; if `false`, it is turned off in order to avoid
+         * unuseful computations and uptates of the UI when the panel is closed.
+         * It also initialises the eventListener of the UIelems related to it.
+         * It's not stored on the DB.
+         * NOTE: These uiElements are the same object because, given the current implementation of
+         * Param.UIelem, it's not possible to set more event listeners using a single UIelem.
          *
-         * @member {boolean}
+         * @member {HUM.Param}
+         * 
+         * @property {boolean}     value                         - The visibility one wants to achieve. If `false` the tab will be collapsed.
+         * @property {Object}      uiElements                    - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.fn                 - Namespace for the "fn" HTML elements.
+         * @property {HTMLElement} uiElements.fn.hstackTabShown  - The HTML of the H-Stack tab.
+         * @property {HTMLElement} uiElements.fn.hstackTabHidden - The HTML of the H-Stack tab.
          */
         this.active = new HUM.Param({
-            app:hstack,
-            idbKey:'hstackActive',
-            uiElements:{
+            app: hstack,
+            idbKey: 'hstackActive',
+            uiElements: {
                 'hstackTabShown': new HUM.Param.UIelem({
-                    htmlID: hstack.dhc.harmonicarium.html.hstackTab[hstack.dhc.id].children[1].id,
+                    htmlID: hstack.dhc.harmonicarium.html.hstackTabs[hstack.dhc.id].children[1].id,
                     role: 'fn',
                     opType: 'toggle',
-                    widget:'collapse',
+                    widget: 'collapse',
                     eventType: 'show.bs.collapse',
                     uiSet: (value) => {
                         if (value) {
@@ -319,10 +365,10 @@ HUM.Hstack.prototype.Parameters = class {
                     }
                 }),
                 'hstackTabHidden': new HUM.Param.UIelem({
-                    htmlID: hstack.dhc.harmonicarium.html.hstackTab[hstack.dhc.id].children[1].id,
+                    htmlID: hstack.dhc.harmonicarium.html.hstackTabs[hstack.dhc.id].children[1].id,
                     role: 'fn',
                     opType: 'toggle',
-                    widget:'collapse',
+                    widget: 'collapse',
                     eventType: 'hidden.bs.collapse',
                     uiSet: null,
                     eventListener: evt => {
@@ -330,15 +376,14 @@ HUM.Hstack.prototype.Parameters = class {
                     }
                 }),
             },
-            init:false,
-            dataType:'boolean',
-            initValue:false,
-            presetStore:false,
-            presetAutosave:false,
-            presetRestore:false,
+            init: false,
+            dataType: 'boolean',
+            initValue: false,
+            presetStore: false,
+            presetRestore: false,
             preInit: () => {
                 // Create a Bootstrap collapsible controller
-                this.active.bsCollapse = new bootstrap.Collapse('#'+hstack.dhc.harmonicarium.html.hstackTab[hstack.dhc.id].children[1].id, {
+                this.active.bsCollapse = new bootstrap.Collapse('#'+hstack.dhc.harmonicarium.html.hstackTabs[hstack.dhc.id].children[1].id, {
                     toggle: this.active.value
                 });
             },
@@ -356,57 +401,82 @@ HUM.Hstack.prototype.Parameters = class {
 
             }
         });
-        /**
-        * H-Stack table font size
-        *
-        * @member {integer}
-        */
+        /**  
+         * This property controls the font size of the H-Stack table and initialises the
+         * eventListener of the UIelems related to it.
+         * It's stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {number}     value                          - The font size in pixels.
+         * @property {Object}      uiElements                     - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.fn                  - Namespace for the "fn" HTML elements.
+         * @property {Object}      uiElements.out                 - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.fn.hstack_zoom      - The HTML of the input slider widget for setting the font size.
+         * @property {HTMLElement} uiElements.out.hstack_fontsize - The HTML of the output text showing the current font size.
+         */
         this.fontSize = new HUM.Param({
-            app:hstack,
-            idbKey:'hstackZoom',
-            uiElements:{
+            app: hstack,
+            idbKey: 'hstackZoom',
+            uiElements: {
                 'hstack_zoom': new HUM.Param.UIelem({
                     role: 'fn',
-                    opType:'set',
+                    opType: 'set',
                     eventType: 'input',
-                    htmlTargetProp:'value',
-                    widget:'range',
+                    htmlTargetProp: 'value',
+                    widget: 'range',
                 }),
                 'hstack_fontsize': new HUM.Param.UIelem({
                     role: 'out',
                 })
             },
-            dataType:'float',
-            initValue:20,
+            dataType: 'float',
+            initValue: 20,
             postSet: (value, thisParam) => {
                 thisParam.uiElements.out.hstack_fontsize.style.fontSize = value + "px";
                 thisParam.uiElements.fn.hstack_zoom.setAttribute("data-tooltip", value + "px");
             }
         });
 
+        /**  
+         * This property it's just a proxy for the HTML container of the FT row of the H-Stack.
+         * It's not stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {Object}      uiElements                 - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.out             - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.out.hstackFTrow - The HTML of the H-Stack FT row.
+         */
         this.frow = new HUM.Param({
-            app:hstack,
-            idbKey:'hstackFtable',
-            uiElements:{
+            app: hstack,
+            idbKey: 'hstackFtable',
+            uiElements: {
                 'hstackFTrow': new HUM.Param.UIelem({
                     role: 'out',
                 }),
             },
-            init:false,
-            dataType:'array',
-            // initValue:4,
-            postInit: (thisParam) => {
-
-            },
-            postSet: (value, thisParam, init) => {
-
-            }
+            init: false,
+            dataType: 'array',
+            presetStore: false,
+            presetRestore: false,
         });
 
+        /**  
+         * This property it's just a proxy for the HTML containers of HT table and its rows.
+         * It's not stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {Object}      uiElements              - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.out          - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.out.hstackHT - The HTML of the H-Stack HT table.
+         * @property {HTMLElement} uiElements.out.rowsHT   - The HTML of the H-Stack HT rows.
+         */
         this.hstack = new HUM.Param({
-            app:hstack,
-            idbKey:'hstackHtable',
-            uiElements:{
+            app: hstack,
+            idbKey: 'hstackHtable',
+            uiElements: {
                 'hstackHT': new HUM.Param.UIelem({
                     role: 'out',
                 }),
@@ -415,9 +485,10 @@ HUM.Hstack.prototype.Parameters = class {
                     namespace: true,
                 }),
             },
-            init:false,
-            dataType:'array',
-            // initValue:4,
+            init: false,
+            dataType: 'array',
+            presetStore: false,
+            presetRestore: false,
             postInit: (thisParam) => {
                 /**
                  * Create the H-Stack HTML table 
@@ -458,11 +529,11 @@ HUM.Hstack.prototype.Parameters = class {
                 hstack.fillin();
 
             },
-            postSet: (value, thisParam, init) => {
-
-            }
         });
     }
+    /**
+     * Initializes the parameter "active" and "hstack".
+     */
     _init() {
         this.active._init();
         this.hstack._init();

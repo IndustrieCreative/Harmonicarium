@@ -1,20 +1,44 @@
-/* globals self */
-/* globals caches */
-
 // version: 0.28
 
 "use strict";
 
-/*
+/* globals self, caches */
+
+/**
+ * This module/namespace is the service worker.
+ *
+ * @module 'sw.js'
+ * @type {ServiceWorkerGlobalScope}
+ */
+
+/**
+ * If the user wants to keep the old version of the cache, avoiding to upgrade the App.
+ * 
  * NOTE: The "keepOldCache" feature is currently not working.
  *       A lot of code here about this feature is unused in "production".
  *       Trying to give to the user the chance to decide if upgrade or not.
+ * @name keepOldCache
+ * 
+ * @member {boolean}
  */
-
 var keepOldCache = false;
 
+/**
+ * The current Cache's name.
+ * @name appCacheName
+ * @constant
+ * 
+ * @member {string}
+ */
 const appCacheName = 'kepler-cache-beta-v28';
 
+/**
+ * The current Cache's name.
+ * @name deprecatedCaches
+ * @constant
+ * 
+ * @member {Array.<string>}
+ */
 const deprecatedCaches = [
     // 'kepler-cache',
     // 'kepler-cache-v1',
@@ -58,6 +82,13 @@ const deprecatedCaches = [
     'kepler-cache-beta-v27',
 ];
 
+/**
+ * The list of the files to be cached.
+ * @name staticAssets
+ * @constant
+ * 
+ * @member {Array.<string>}
+ */
 const staticAssets = [
     // # find /.../appdir -type f
     './',

@@ -5,9 +5,9 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
- * 
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
+ *  
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
@@ -22,20 +22,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals HUM */
-
 "use strict";
 
 /** 
- * The MidiOut class
- *     Prepare the MIDI-OUT message and send them to the MIDI-OUT ports.
+ * The MidiOut class.
+ *     Prepare the MIDI Output messages and send them to the MIDI-OUT ports.
  */
 HUM.midi.MidiOut = class MidiOut {
     /**
-    * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs
-    * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs
+    * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
+    * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
     */
     constructor(dhc, midi) {
+        /**
+        * The id of this MidiOut instance (same as the DHC id).
+        *
+        * @member {string}
+        */
+        this.id = dhc.id;
+        this._id = dhc._id;
+        /**
+        * The name of the `HUM.MidiOut`, useful for group the parameters on the DB.
+        * Currently hard-coded as `"midiOut"`.
+        *
+        * @member {string}
+        */
+        this.name = 'midiOut';
         /**
         * The DHC instance
         *
@@ -54,14 +66,12 @@ HUM.midi.MidiOut = class MidiOut {
          *
          * @member {Object.<string, HUM.midi.MidiOut#InstrumentSettings>}
          */
-        // @old icMIDIoutSettings
         this.settings = {};
         /**
          * Get the "MIDI-OUT Tuning" HTML element and store to global
          *
          * @member {HTMLElement}
          */
-        // @old icHTMLmotModalContent
         this.htmlMotModalContent = document.getElementById("HTMLf_motPanelContent"+dhc.id);
 
         // Tell to the DHC that a new app is using it
@@ -72,8 +82,9 @@ HUM.midi.MidiOut = class MidiOut {
     // ===========================
 
     /**
-     * Manage and route an incoming message
-     * @param {HUM.DHCmsg} msg - The incoming message
+     * Manage and route an incoming DHC message.
+     * 
+     * @param {HUM.DHCmsg} msg - The incoming message.
      */
     updatesFromDHC(msg) {
 
@@ -127,14 +138,12 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * Update the MIDI-OUT Tuning UI
-     * Create the UI to manage the MIDI port channels assignment
+     * Update the MIDI-OUT Tuning UI.
+     * Create the UI to manage the MIDI port channels assignment.
      */
-     // @old icUpdateMOT
     updateMidiOutUI() {
         let dhcID = this.dhc.id;
         // Init the container
-        // this.htmlMotModalContent.innerHTML = "";
         while (this.htmlMotModalContent.firstChild) {
             this.htmlMotModalContent.removeChild(this.htmlMotModalContent.firstChild);
         }
@@ -155,8 +164,8 @@ HUM.midi.MidiOut = class MidiOut {
             let tablePortRowHeaderBottom = document.createElement('tr');
             let tablePortRowFT = document.createElement('tr');
             let tablePortRowHT = document.createElement('tr');
-            let tdLabFT = document.createElement('th');
-            let tdLabHT = document.createElement('th');
+            let tdLabFT = document.createElement('td');
+            let tdLabHT = document.createElement('td');
             // Set ids
             divPort.id = "HTMLf_motPort" + key + "_" + dhcID;
             // Set classes
@@ -168,11 +177,11 @@ HUM.midi.MidiOut = class MidiOut {
             tablePortRowHeaderBottom.className = "mot-pb-row4";
             tdLabFT.className = tdLabHT.className = "mot-pb-typeHeader";
             // Write the title (Port Name)
-            divPort.innerHTML = "<h2>" + value.name + "</h2>";
+            divPort.innerHTML = '<h4 class="mb-0">' + value.name + "</h4>";
             tdLabFT.innerHTML = "FTs";
             tdLabHT.innerHTML = "HTs";
-            tdLabFT.rowSpan = "2";
-            tdLabHT.rowSpan = "2";
+            tdLabFT.rowSpan = 2;
+            tdLabHT.rowSpan = 2;
             // First Column
             tablePortRowHeader.appendChild(tdLabHT);
             tablePortRowFT.appendChild(tdLabFT);
@@ -189,10 +198,12 @@ HUM.midi.MidiOut = class MidiOut {
                 let labelFT = document.createElement("label");
                 let labelHT = document.createElement("label");
                 // Set the htmlElements
-                tdChFT.className = "mot-pb-portChannel_ft";
-                tdChHT.className = "mot-pb-portChannel_ht";
-                labelFT.setAttribute("for", key + "_" + ch + "_ft" + dhcID);
-                labelHT.setAttribute("for", key + "_" + ch + "_ht" + dhcID);
+                tdChFT.className = "mot-pb-portChannel_ft text-center";
+                tdChHT.className = "mot-pb-portChannel_ht text-center";
+                labelFT.setAttribute("for", key + "_" + ch + "_ft" + "_" + dhcID);
+                labelHT.setAttribute("for", key + "_" + ch + "_ht" + "_" + dhcID);
+                tdLabChFT.className = "text-center align-top";
+                tdLabChHT.className = "text-center align-bottom";
                 labelFT.innerHTML = labelHT.innerHTML = ch + 1  ;
                 checkboxFT.type = checkboxHT.type = 'checkbox';
                 /**
@@ -213,12 +224,14 @@ HUM.midi.MidiOut = class MidiOut {
                 checkboxFT.id = key + "_" + ch + "_ft"+ "_" + dhcID;
                 checkboxHT.id = key + "_" + ch + "_ht"+ "_" + dhcID;
                 if (ch === 9) {
-                    tdChFT.className = "mot-pb-portChannel_ft gmCh10";
-                    tdChHT.className = "mot-pb-portChannel_ht gmCh10";
-                    tdLabChFT.className = "gmCh10";
-                    tdLabChHT.className = "gmCh10";
+                    tdChFT.className = "mot-pb-portChannel_ft gmCh10 text-center";
+                    tdChHT.className = "mot-pb-portChannel_ht gmCh10 text-center";
+                    tdLabChFT.className = "gmCh10 text-center align-top";
+                    tdLabChHT.className = "gmCh10 text-center align-bottom";
                 }
-                //Inputs and labels in cells
+                tdLabChHT.style.width = '23px';
+
+                // Inputs and labels in cells
                 tdLabChHT.appendChild(labelHT);
                 tdLabChFT.appendChild(labelFT);
                 tdChHT.appendChild(checkboxHT);
@@ -238,8 +251,8 @@ HUM.midi.MidiOut = class MidiOut {
             }
             // **PORT PARAMETERS**
             // Create the HTML elements
-            let tdPortPBrangeHeader = document.createElement('th');
-            let tdPortPBdelayHeader = document.createElement('th');
+            let tdPortPBrangeHeader = document.createElement('td');
+            let tdPortPBdelayHeader = document.createElement('td');
             let tdPortPBrangeFT = document.createElement('td');
             let tdPortPBrangeHT = document.createElement('td');
             let tdPortPBdelayFT = document.createElement('td');
@@ -251,11 +264,24 @@ HUM.midi.MidiOut = class MidiOut {
             let inputDelayFT = document.createElement('input');
             let inputDelayHT = document.createElement('input');
             // Set the htmlElements
-            tablePort.className = "invisibleTable";
-            tdPortPBrangeFT.className = "mot-pb-rangeFT";
-            tdPortPBrangeHT.className = "mot-pb-rangeHT";
-            tdPortPBdelayFT.className = "mot-pb-delayFT";
-            tdPortPBdelayHT.className = "mot-pb-delayHT";
+            tablePort.className = "table table-sm";
+            tdPortPBrangeFT.className = "input-group input-group-sm justify-content-end flex-nowrap";
+            tdPortPBrangeHT.className = "input-group input-group-sm justify-content-end flex-nowrap";
+            tdPortPBdelayFT.className = "text-end";
+            tdPortPBdelayHT.className = "text-end";
+            inputRangeFT.className = "form-control";
+            inputRangeHT.className = "form-control";
+            inputRangeFT.style.minWidth = '50px';
+            inputRangeFT.style.maxWidth = '54px';
+            inputRangeHT.style.minWidth = '50xpx';
+            inputRangeHT.style.maxWidth = '54px';
+            tdPortPBrangeHeader.className = "text-md-end text-sm-center fw-semibold";
+            tdPortPBdelayHeader.className = "text-end fw-semibold";
+
+            btnRangeFT.className = "btn btn-outline-secondary";
+            btnRangeHT.className = "btn btn-outline-secondary";
+            inputDelayFT.className = "btn btn-outline-secondary";
+            inputDelayHT.className = "btn btn-outline-secondary";
             tdPortPBrangeHeader.innerHTML = "PitchBend Range";
             tdPortPBdelayHeader.innerHTML = "Delay (ms)";
             btnRangeFT.innerHTML = ">Send";
@@ -312,8 +338,8 @@ HUM.midi.MidiOut = class MidiOut {
             tablePortRowHeaderBottom.appendChild(tdPortPBrangeHeader.cloneNode(true));
             tablePortRowHeaderBottom.appendChild(tdPortPBdelayHeader.cloneNode(true));
             // Final Column
-            tablePortRowHeader.appendChild(tdLabHT.cloneNode(true));
-            tablePortRowFT.appendChild(tdLabFT.cloneNode(true));
+            // tablePortRowHeader.appendChild(tdLabHT.cloneNode(true));
+            // tablePortRowFT.appendChild(tdLabFT.cloneNode(true));
             // Rows in <table>
             tablePort.appendChild(tablePortRowHeader);
             tablePort.appendChild(tablePortRowHT);
@@ -327,15 +353,14 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * What to do if a MIDI channel is selected in the MIDI-OUT PitchBend Method UI
+     * What to do if a MIDI channel is selected in the MIDI-OUT PitchBend Method UI.
      *
-     * @param {Event}          event              - OnClick event on the MIDI-OUT PitchBend Method channel checkboxes
-     * @param {Object}         event.target       - The event's target HTML element (could be just a namespace)
-     * @param {ChanAssignment} event.target.value - JSON string containing the informations about the assignment of the channel
+     * @param {Event}          event              - OnClick Event on the MIDI-OUT PitchBend Method channel checkboxes.
+     * @param {Object}         event.target       - The event's target HTML element (could be just a namespace).
+     * @param {ChanAssignment} event.target.value - JSON string containing the informations about the assignment of the channel.
      */
-    // @old icChanSelect
     chanSelect(event) {
-        console.log(event);
+        // console.log(event);
         // Parse the JSON from the checkbox value
         let chanSet = JSON.parse(event.target.value);
         // Find and index the current channel in the arrays
@@ -379,7 +404,7 @@ HUM.midi.MidiOut = class MidiOut {
     /**
      * Try turning off all currently instruments' playing notes across all output used MIDI ports.
      * 
-     * @param {('soft'|'hard')} mode - The way the command must be executed
+     * @param {('soft'|'hard')} mode - The way the command must be executed.
      */
     allNotesOff(mode) {
         this.midi.port.selectedOutputs.forEach((port, portID) => {
@@ -387,10 +412,10 @@ HUM.midi.MidiOut = class MidiOut {
         });
     }
     /**
-     * Try turning off all currently instruments' playing notes on the given MIDI Channel.
+     * Try turning off all currently instruments' playing-notes on the given MIDI Port.
      * 
-     * @param {string}          portID - The MIDI output Port id
-     * @param {('soft'|'hard')} mode   - The way the command must be executed
+     * @param {string}          portID - The MIDI output Port ID.
+     * @param {('soft'|'hard')} mode   - The way the command must be executed.
      */
     allNotesOffPort(portID, mode) {
         // Get all used ports (used + held)
@@ -418,11 +443,11 @@ HUM.midi.MidiOut = class MidiOut {
         // this.settings[portID].pb.channels.ht.held = [];
     }
     /**
-     * Try turning off all currently instruments' playing notes on the given MIDI Channel.
+     * Try turning off all currently instruments' playing-notes on the given MIDI Channel of a MIDI Port.
      * 
-     * @param {string}          portID  - The MIDI output Port id
-     * @param {midichan}        channel - The Channel on that MIDI Port
-     * @param {('soft'|'hard')} mode    - The way the command must be executed
+     * @param {string}          portID  - The MIDI output Port ID.
+     * @param {midichan}        channel - The Channel on that MIDI Port.
+     * @param {('soft'|'hard')} mode    - The way the command must be executed.
      */
     allNotesOffChannel(portID, channel, mode) {
         let midiOutput = this.midi.port.selectedOutputs.get(portID),
@@ -447,16 +472,14 @@ HUM.midi.MidiOut = class MidiOut {
                 }
             }
         }
-
     }
 
     /**
-     * Send the MIDI Pitch Bend Sensitivity (range) message over all the ports of a given Tone Type and MIDI Port
+     * Send the MIDI Pitch Bend Sensitivity (range) message over all the ports of a given Tone Type and MIDI Port.
      *
-     * @param {string}   portID - The MIDI-OUT port on which to send the message
-     * @param {tonetype} type   - If the ports to which the message should be sent are assigned to FTs or HTs
+     * @param {string}   portID - The MIDI-OUT port on which to send the message.
+     * @param {tonetype} type   - If the ports to which the message should be sent are assigned to FTs or HTs.
      */
-    // @old icSendMIDIoutPBrange
     sendMIDIoutPBrange(portID, type) {
         let midiOutput = this.midi.port.selectedOutputs.get(portID);
         // If the user is not playing
@@ -486,16 +509,15 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * Create a MIDI Note ON/OFF message
+     * Create a MIDI Note ON/OFF message.
      *
-     * @param  {midichan} ch       - MIDI Channel to which the message should be sent
-     * @param  {(0|1)}    state    - Note ON or OFF; 1 is Note-ON, 0 is Note-OFF
-     * @param  {midinnum} note     - MIDI Note number (from 0 to 127)
-     * @param  {velocity} velocity - MIDI Velocity amount (from 0 to 127)
+     * @param {midichan} ch       - MIDI Channel to which the message should be sent.
+     * @param {(0|1)}    state    - Note ON or OFF; 1 is Note-ON, 0 is Note-OFF.
+     * @param {midinnum} note     - MIDI Note number (from 0 to 127).
+     * @param {velocity} velocity - MIDI Velocity amount (from 0 to 127).
      *
-     * @return {Array} - The MIDI Note ON/OFF message
+     * @return {Array} - The MIDI Note ON/OFF message.
      */
-    // @old icMakeMIDIoutNoteMsg
     makeMIDIoutNoteMsg(ch, state, note, velocity) {
         let msg = [];
         if (state === 1) {
@@ -507,14 +529,13 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * Create a MIDI Pitch Bend Change message
+     * Create a MIDI Pitch Bend Change message.
      *
-     * @param  {midichan} ch     - MIDI Channel to which the message should be sent (from 0 to 15)
-     * @param  {number}   amount - Pitch Bend amount (from 0 to 16383)
+     * @param {midichan} ch     - MIDI Channel to which the message should be sent (from 0 to 15).
+     * @param {number}   amount - Pitch Bend amount (from 0 to 16383).
      *
-     * @return {Array} - The MIDI Pitch Bend Change message
+     * @return {Array} - The MIDI Pitch Bend Change message.
      */
-    // @old icMakeMIDIoutPitchBendMsg
     makeMIDIoutPitchBendMsg(ch, amount) {
         let lsb = amount & 0x7F;
         let msb = amount >> 7;
@@ -528,11 +549,10 @@ HUM.midi.MidiOut = class MidiOut {
      */
 
     /**
-     * Update the frequency of every sill pending Note-ON
+     * Update the frequency of every sill pending Note-ON.
      *
      * @param {tonetype} type - If the notes/channels to be updated are the FT or HT ones.
      */
-    // @old icUpdateMIDInoteON
     updateMIDInoteON(type) {
         // For each selected MIDI-OUT ports
         this.midi.port.selectedOutputs.forEach((value, portID) => {
@@ -592,17 +612,16 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * For each selected MIDI-OUT Port,
-     * prepare and send the MIDI-OUT message according to the selected MIDI-OUT Tuning Method of the port
+     * For each selected MIDI-OUT Port, prepare and send the MIDI-OUT message according
+     * to the selected MIDI-OUT Tuning Method of the Port.
      *
-     * @param {midinnum} ctrlNum  - MIDI Note number of the original MIDI-IN message from the controller
-     * @param {xtnum}    xtNum    - Outgoing FT or HT relative tone number
-     * @param {velocity} velocity - MIDI Velocity amount (from 0 to 127) of the original MIDI-IN message from the controller
-     * @param {(0|1)}    state    - Note ON or OFF; 1 is Note-ON, 0 is Note-OFF
-     * @param {tonetype} type     - If the outgoing MIDI message is for FTs or HTs
-     * @param {boolean=} tsnap    - If the note is managed by Tsnap
+     * @param {midinnum} ctrlNum  - MIDI Note number of the original MIDI-IN message from the controller.
+     * @param {xtnum}    xtNum    - Outgoing FT or HT relative tone number.
+     * @param {velocity} velocity - MIDI Velocity amount (from 0 to 127) of the original MIDI-IN message from the controller.
+     * @param {(0|1)}    state    - Note ON or OFF; 1 is Note-ON, 0 is Note-OFF.
+     * @param {tonetype} type     - If the outgoing MIDI message is for FTs or HTs.
+     * @param {boolean=} tsnap    - If the note is managed by Tsnap.
      */
-    // @old icMIDIout
     midiOut(ctrlNum, xtNum, velocity, state, type, tsnap=false) {
         let xtObj = this.dhc.tables[type][xtNum];
         // For each selected MIDI-OUT ports
@@ -629,20 +648,19 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * MIDI-OUT Tuning - PITCHBEND METHOD core
-     * The main function to manage the multichannel poly-assignment and send the MIDI messages
-     * This is to implement the "MIDI Channel Mode 4" aka "Guitar Mode" for outgoing messages
+     * MIDI-OUT Tuning - PITCHBEND METHOD core.
+     * The main function to manage the multichannel poly-assignment and send the MIDI messages.
+     * This is to implement the "MIDI Channel Mode 4" (aka "Guitar Mode") for outgoing messages.
      *
-     * @param {midinnum}                ctrlNum  - MIDI Note number of the original MIDI-IN message from the controller
-     * @param {xtnum}                   xt       - Outgoing FT or HT relative tone number
+     * @param {midinnum}      ctrlNum  - MIDI Note number of the original MIDI-IN message from the controller
+     * @param {xtnum}         xt       - Outgoing FT or HT relative tone number
      * @param {HUM.DHC#Xtone} xtObj    - FT or HT object of the outgoing tone
-     * @param {velocity}                velocity - MIDI Velocity amount (from 0 to 127) of the original MIDI-IN message from the controller
-     * @param {(0|1)}                   state    - Note ON or OFF; 1 is Note-ON, 0 is Note-OFF
-     * @param {tonetype}                type     - If the outgoing MIDI message is for FTs or HTs
-     * @param {string}                  portID   - ID of the MIDI-OUT Port to send the message to
-     * @param {boolean=}                tsnap    - If the note is managed by Tsnap
+     * @param {velocity}      velocity - MIDI Velocity amount (from 0 to 127) of the original MIDI-IN message from the controller
+     * @param {(0|1)}         state    - Note ON or OFF; 1 is Note-ON, 0 is Note-OFF
+     * @param {tonetype}      type     - If the outgoing MIDI message is for FTs or HTs
+     * @param {string}        portID   - ID of the MIDI-OUT Port to send the message to
+     * @param {boolean=}      tsnap    - If the note is managed by Tsnap
      */
-    // @old icSendMIDIoutPB
     sendMIDIoutPB(ctrlNum, xt, xtObj, velocity, state, type, portID, tsnap=false) {
         // @todo - Some functional Note-OFF must be sent without delay?!?
         let usedChs = this.settings[portID].pb.channels[type].used;
@@ -897,35 +915,35 @@ HUM.midi.MidiOut = class MidiOut {
 
 
 /**
- * Default port settings for MIDI-OUT tuning methods; each out port has its own settings
+ * Default Port settings for MIDI-OUT tuning methods; each out Port has its own settings.
  */            
 HUM.midi.MidiOut.prototype.InstrumentSettings = class {
     constructor() {
         /**
-        * Pitch Bend method settings namespace
+        * Pitch Bend method settings namespace.
         *
         * @member {Object}
         *
-        * @property {Object}                         channels              - FTs & HTs multichannel polyphony management
-        * @property {Object}                         channels.ft           - Multichannel polyphony for FTs
-        * @property {Array.<midichan>}               channels.ft.used      - Sorted array containing the FT used channel numbers
+        * @property {Object}                         channels              - FTs & HTs multichannel polyphony management.
+        * @property {Object}                         channels.ft           - Multichannel polyphony for FTs.
+        * @property {Array.<midichan>}               channels.ft.used      - Sorted array containing the FT used channel numbers.
         * @property {Object.<midinnum, HeldChannel>} channels.ft.held      - Object containing the FT busy channel; key is the original Controller MIDI Note number. Init value must be an empty Object.
         * @property {midichan}                       channels.ft.last      - Number of the last held FT channel. Init value must be a -1.
-        * @property {Object}                         channels.ht           - Multichannel polyphony for HTs
-        * @property {Array.<midichan>}               channels.ht.used      - Sorted array containing the HT used channel numbers
+        * @property {Object}                         channels.ht           - Multichannel polyphony for HTs.
+        * @property {Array.<midichan>}               channels.ht.used      - Sorted array containing the HT used channel numbers.
         * @property {Object.<midinnum, HeldChannel>} channels.ht.held      - Object containing the HT busy channels; keys are the original Controller MIDI Note number. Init value must be an empty Object.
         * @property {Array.<midichan>}               channels.ht.heldOrder - Array of channel numbers, sorted according to the held order. Init value must be an empty Array.
         * @property {midichan}                       channels.ht.last      - Number of the last held HT channel. Init value must be a -1.
-        * @property {Object}                         range                 - Namespace for pitchBend sensitivity settings
-        * @property {number}                         range.ft              - PitchBend sensitivity for FT channels
-        * @property {number}                         range.ht              - PitchBend sensitivity for HT channels
-        * @property {Object}                         delay                 - Namespace for setting the delay between the PitchBend and Note-ON messages
-        * @property {number}                         delay.ft              - Delay for FT channels (milliseconds)
-        * @property {number}                         delay.ht              - Delay for HT channels (milliseconds)
-        * @property {Object}                         voicestealing         - Namespace for voice stealing management ON/OFF (now stealing is always ON)
-        * @property {boolean}                        voicestealing.ft      - Voice stealing ON/OFF for FT channels
-        * @property {boolean}                        voicestealing.ht      - Voice stealing ON/OFF for HT channels
-        * @property {boolean}                        gm                    - General MIDI ON/OFF (when 'true', avoid channel 10) - `CURRENTLY NOT IMPLEMENTED`
+        * @property {Object}                         range                 - Namespace for pitchBend sensitivity settings.
+        * @property {number}                         range.ft              - PitchBend sensitivity for FT channels.
+        * @property {number}                         range.ht              - PitchBend sensitivity for HT channels.
+        * @property {Object}                         delay                 - Namespace for setting the delay between the PitchBend and Note-ON messages.
+        * @property {number}                         delay.ft              - Delay for FT channels (milliseconds).
+        * @property {number}                         delay.ht              - Delay for HT channels (milliseconds).
+        * @property {Object}                         voicestealing         - Namespace for voice stealing management ON/OFF (now stealing is always ON).
+        * @property {boolean}                        voicestealing.ft      - Voice stealing ON/OFF for FT channels.
+        * @property {boolean}                        voicestealing.ht      - Voice stealing ON/OFF for HT channels.
+        * @property {boolean}                        gm                    - General MIDI ON/OFF (when 'true', avoid channel 10) - `CURRENTLY NOT IMPLEMENTED`.
         */
         this.pb = {
             channels: {
@@ -955,18 +973,86 @@ HUM.midi.MidiOut.prototype.InstrumentSettings = class {
             },
             gm: undefined
         };
+        
         /**
-        * MIDI Tuning Standard method settings namespace - `CURRENTLY NOT IMPLEMENTED`
+        * MIDI Tuning Standard method settings namespace - `CURRENTLY NOT IMPLEMENTED`.
         *
         * @member {Object}
         */
         this.mts = {}; // @todo - MIDI Tuning Standard method
+        
         /**
         * Selected MIDI-OUT Tuning Method for this port;
-        *     `'pb'` is PitchBend method, `'mts'` is MIDI Tuning Standard method
+        *     `'pb'` is PitchBend method, `'mts'` is MIDI Tuning Standard method.
         *
         * @member {('pb'|'mts')}
         */
         this.selected = "pb";
     }
 };
+
+// /** 
+//  * Instance class-container used to create all the `HUM.Param` objects for each MIDI-OUT Port.
+//  */
+// HUM.midi.MidiOut.prototype.Parameters = class {
+//     constructor(midiin) {
+//         /**
+//          * Controller's Pitch Bend settings.
+//          * 
+//          * @member {Object}
+//          * @namespace
+//          */
+//         this.pitchbend = {
+//             /**  
+//              * This property is the MIDI input pitchbend range value in cents.
+//              * It's initialises the eventListener of the UIelem related to it.
+//              * It's stored on the DB.
+//              * @todo - Move to midi-in (one per input channel?)
+//              * @instance
+//              *
+//              * @member {HUM.Param}
+//              * 
+//              * @property {cent}        value                            - Pitchbend range value in cents (use hundreds when use MIDI-OUT and possibly the same as the instrument).
+//              * @property {Object}      uiElements                       - Namespace for the "in", "out" and "fn" objects.
+//              * @property {Object}      uiElements.in                    - Namespace for the "in" HTML elements.
+//              * @property {HTMLElement} uiElements.in.midiPitchbendRange - The HTML input text box for the pitchbend range number.
+//              */
+//             range: new HUM.Param({
+//                 app:midiin,
+//                 idbKey:'midiInPitchbendRange',
+//                 uiElements:{
+//                     'midiPitchbendRange': new HUM.Param.UIelem({
+//                         role: 'in',
+//                         opType:'set',
+//                         eventType: 'change',
+//                         htmlTargetProp:'value',
+//                         widget:'number',
+//                     })
+//                 },
+//                 dataType:'integer',
+//                 initValue:100,
+//             }),
+
+//             /**
+//              * Current input controller pitchbend amount.
+//              * Value from -8192 to +8191, normalized to the ratio from -1 to 0,99987792968750
+//              * No pitchbend is 0.
+//              * @instance
+//              * 
+//              * @member {number}
+//              */
+//             amount: 0.0
+//         };
+//         // =======================
+//     } // end class Constructor
+//     // ===========================
+
+//     /**
+//      * Initializes the parameters of the Tone Snap note-receiving mode.
+//      */
+//     _init() {
+//         this.tsnap.channelMode.chanFT._init();
+//         this.tsnap.channelMode.chanHT._init();
+//         this.receiveMode._init();
+//     }
+// };

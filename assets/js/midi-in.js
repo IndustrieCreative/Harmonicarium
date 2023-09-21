@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,20 +22,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals HUM */
-
 "use strict";
 
 /** 
- * The MidiIn class.<br>
- *     Manage MIDI input messages.
+ * The MidiIn class.
+ *     Manage MIDI Input messages coming from.
  */
 HUM.midi.MidiIn = class {
     /**
-    * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs
-    * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs
+    * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
+    * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
     */
     constructor(dhc, midi) {
+        /**
+        * The id of this MidiIn instance (same as the DHC id).
+        *
+        * @member {string}
+        */
+        this.id = dhc.id;
+        this._id = dhc._id;
+        /**
+        * The name of the `HUM.MidiIn`, useful for group the parameters on the DB.
+        * Currently hard-coded as `"midiIn"`.
+        *
+        * @member {string}
+        */
+        this.name = 'midiIn';
         /**
         * The DHC instance
         *
@@ -49,68 +61,41 @@ HUM.midi.MidiIn = class {
         */
         this.midi = midi;
         /**
-         * Output queue buffer for MIDI messages that must pass through and go out
-         *     (used as logger at the moment)
+         * Output queue buffer for MIDI messages that must pass through and go out.
+         * (currently can be used for logging/debugging)
          *
          * @todo - Pass through for most of the MIDI messages
          *
          * @member {Array.<OtherMidiMsg>}
          */
-        // @old icMidiPassThrough
         this.midiPassThrough = [];
+
         /**
-         * UI HTML elements
-         *
-         * @member {Object}
-         * 
-         * @property {Object.<string, HTMLElement>} fn  - Functional UI elements
-         * @property {Object.<string, HTMLElement>} in  - Input UI elements
-         * @property {Object.<string, HTMLElement>} out - Output UI elements
-         */
-        this.uiElements = {
-            fn: {
-                receiveModeTsnapTolerance: document.getElementById("HTMLf_midiReceiveModeTsnapTolerance"+dhc.id),
-                receiveModeTsnapChanFT: document.getElementById("HTMLf_midiReceiveModeTsnapChanFT"+dhc.id),
-                receiveModeTsnapChanHT: document.getElementById("HTMLf_midiReceiveModeTsnapChanHT"+dhc.id),
-                receiveModeTsnapDividerKey: document.getElementById("HTMLf_midiReceiveModeTsnapDividerKey"+dhc.id),
-                receiveModeTsnapDividerChan: document.getElementById("HTMLf_midiReceiveModeTsnapDividerChan"+dhc.id),
-            },
-            in: {
-                receiveMode: document.getElementById("HTMLi_midiReceiveMode"+dhc.id),
-                receiveModeTsnapTolerance: document.getElementById("HTMLi_midiReceiveModeTsnapTolerance"+dhc.id),
-                receiveModeTsnapChanFT: document.getElementById("HTMLi_midiReceiveModeTsnapChanFT"+dhc.id),
-                receiveModeTsnapChanHT: document.getElementById("HTMLi_midiReceiveModeTsnapChanHT"+dhc.id),
-                receiveModeTsnapDividerKey: document.getElementById("HTMLi_midiReceiveModeTsnapDividerKey"+dhc.id),
-                receiveModeTsnapDividerChan: document.getElementById("HTMLi_midiReceiveModeTsnapDividerChan"+dhc.id),
-            },
-            out: {
-                monitor0_note: document.getElementById(`HTMLo_midiMonitor0_note${dhc.id}`),
-                monitor0_velocity: document.getElementById(`HTMLo_midiMonitor0_velocity${dhc.id}`),
-                monitor0_channel: document.getElementById(`HTMLo_midiMonitor0_channel${dhc.id}`),
-                monitor0_port: document.getElementById(`HTMLo_midiMonitor0_port${dhc.id}`),
-                monitor1_note: document.getElementById(`HTMLo_midiMonitor1_note${dhc.id}`),
-                monitor1_velocity: document.getElementById(`HTMLo_midiMonitor1_velocity${dhc.id}`),
-                monitor1_channel: document.getElementById(`HTMLo_midiMonitor1_channel${dhc.id}`),
-                monitor1_port: document.getElementById(`HTMLo_midiMonitor1_port${dhc.id}`),
-            },
-        };
+        * Instance of `HUM.MidiIn#Parameters`.
+        *
+        * @member {HUM.MidiIn#Parameters}
+        */
+        this.parameters = new this.Parameters(this);
+
+        this.parameters._init();
+
         /**
          * Register of the MIDI Note-On inputs by channel.
-         *     Actually it's common to all input ports. 
+         * Actually it's common to all input ports. 
          *
          * @member {Object.<number, Object.<midinnum, MidiInNoteOn>>}
          * 
          * @example
          * // An example of structure of .notes_on[0]
-         * 0: {                                   // MIDI Channel
-         *     39: {                              // External MIDI note number (on the instrument)
-         *         keymapped: 56,                 // Internal MIDI note number (on the keymap)
-         *         midievent: {MIDIMessageEvent}  // The original `MIDIMessageEvent`
+         * 0: {                                   // MIDI Channel.
+         *     39: {                              // External MIDI note number (on the instrument).
+         *         keymapped: 56,                 // Internal MIDI note number (on the keymap).
+         *         midievent: {MIDIMessageEvent}  // The original `MIDIMessageEvent`.
          *     }
          * }
          * 
-         * @todo Dynamic, one for each imput port.
-         *       Now two in ports can conflicts if use the same channels.
+         * @todo Dynamic, one for each input port,
+         *       because currently, two input ports can conflict if they use the same channel.
          */
         this.notes_on = {
             /**
@@ -138,8 +123,6 @@ HUM.midi.MidiIn = class {
             15: {}
         };
 
-        this._initUI();
-
         // Tell to the DHC that a new app is using it
         this.dhc.registerApp(this, 'updatesFromDHC', 0);
 
@@ -148,8 +131,9 @@ HUM.midi.MidiIn = class {
     // ===========================
 
     /**
-     * Manage and route an incoming message
-     * @param {HUM.DHCmsg} msg - The incoming message
+     * Manage and route an incoming DHC message.
+     * 
+     * @param {HUM.DHCmsg} msg - The incoming message.
      */
     updatesFromDHC(msg) {
 
@@ -174,7 +158,7 @@ HUM.midi.MidiIn = class {
         }
     }
     /**
-     * Clear the {@link HUM.midi.MidiIn#notes_on} register 
+     * Clear the {@link HUM.midi.MidiIn#notes_on} register.
      */
     allNotesOff() {
         for (var ch = 0; ch < 16; ch++) {
@@ -189,14 +173,13 @@ HUM.midi.MidiIn = class {
      *
      * @see {@link https://webaudio.github.io/web-midi-api/#MIDIMessageEvent|Web MIDI API specs}
      * 
-     * @param {MIDIMessageEvent} midievent           - The MIDI message from {@link HUM.midi.MidiPorts#midiAccess}
-     * @param {Uint8Array}       midievent.data      - The data array (each entry is a 8bit integer)
-     * @param {number}           midievent.timeStamp - The Time-stamp of the message in milliseconds (floating-point number)
-     * @param {boolean=}         deSnapped=false     - If the Note-Off comes from de-snapping action, by the T-Snap receive mode.<br>
-     *                                                 `false`: (default) The note will be turned-off deleted from the {@link HUM.midi.MidiIn#notes_on} register
-     *                                                 `true`: (default) The note will be turned-off but still remains in the {@link HUM.midi.MidiIn#notes_on} register
+     * @param {MIDIMessageEvent} midievent           - The MIDI message from {@link HUM.midi.MidiPorts#midiAccess}.
+     * @param {Uint8Array}       midievent.data      - The data array (each entry is a 8bit integer).
+     * @param {number}           midievent.timeStamp - The Time-stamp of the message in milliseconds (floating-point number).
+     * @param {boolean=}         [deSnapped=false]   - If the Note-Off comes from de-snapping action, by the T-Snap receive mode.<br>
+     *                                                 `false`: (default) The note will be turned-off and deleted from the {@link HUM.midi.MidiIn#notes_on} register.
+     *                                                 `true`: The note will be turned-off but still remains in the {@link HUM.midi.MidiIn#notes_on} register.
      */
-    // @old icMidiMessageReceived
     midiMessageReceived(midievent, deSnapped=false) {
         // Divide the informations contained in the first byte (Status byte)
         // 4 bits bitwise shift to the right to get the remaining 4 bits representing
@@ -222,6 +205,7 @@ HUM.midi.MidiIn = class {
             piper = true;
         }
 
+        // NOTE: Logging the midievents slows down all the app!
         // this.logMidiEvent(midievent);
 
         // Check 'cmd' (the first 4 bits of the 1st byte of the message)
@@ -243,14 +227,14 @@ HUM.midi.MidiIn = class {
                 let monitorNotes = midievent.data[1];
                 
                 // MIDI NOTE NUMBER PREPARE (in case of Tsnap)
-                if (this.dhc.settings.controller.receive_mode === 'keymap') {
+                if (this.parameters.receiveMode.value === 'keymap') {
                     ctrlNum = midievent.data[1];
                 } else {
                     // Find the controller (internal and keymapped) note number from the incoming midi message
                     // if the midi receiving mode is Tone snap
-                    if (this.dhc.settings.controller.receive_mode === 'tsnap-channel') {
+                    if (this.parameters.receiveMode.value === 'tsnap-channel') {
                         ctrlNum = this.tsnapChannel(midievent.data[1], channel, hancock);
-                    } else if (this.dhc.settings.controller.receive_mode === 'tsnap-divider') {
+                    } else if (this.parameters.receiveMode.value === 'tsnap-divider') {
                         ctrlNum = this.tsnapDivider(midievent.data[1], channel, hancock);
                     }
                     if (hancock === false) {
@@ -319,7 +303,7 @@ HUM.midi.MidiIn = class {
                 // Handle pitchbend message
                 let pitchbendValue = ((midievent.data[2] * 128 + midievent.data[1]) - 8192) / 8192;
                 // Store the pitchbend value into global slot: value normalized to [-1 > 0,99987792968750]
-                this.dhc.settings.controller.pb.amount = pitchbendValue;
+                this.parameters.pitchbend.amount = pitchbendValue;
                 // Update the Synth voices frequencies
                 this.dhc.synth.updatePitchBend();
                 // Update the UI Monitors
@@ -344,12 +328,12 @@ HUM.midi.MidiIn = class {
      * MIDI NOTE ON/OFF HANDLING
      *==============================================================================*/
     /**
-     * Send a Note-ON over the app
+     * Send a Note-ON over the app.
      *
-     * @param {midinnum} ctrlNum    - MIDI note number of the incoming MIDI message
-     * @param {velocity} velocity   - Velocity of the incoming MIDI message
-     * @param {number}   statusByte - Status Byte of the incoming MIDI message
-     * @param {number}   timestamp  - Timestamp of the incoming MIDI message (currently not used)
+     * @param {midinnum} ctrlNum    - MIDI note number of the incoming MIDI message.
+     * @param {velocity} velocity   - Velocity of the incoming MIDI message.
+     * @param {number}   statusByte - Status Byte of the incoming MIDI message (currently not used).
+     * @param {number}   timestamp  - Timestamp of the incoming MIDI message (currently not used).
      * @param {boolean}  piper      - If is a note generated by the Piper feature:
      *                                `false`: it's not Piper;
      *                                `true`: it's Piper.
@@ -357,7 +341,6 @@ HUM.midi.MidiIn = class {
      *                                 `false`: it's not T-snapped;
      *                                 `true`: it's T-snapped.
      */
-    // @old icNoteON
     playTone(ctrlNum, velocity, statusByte, timestamp, piper, tsnap) {
         // Get frequency and midi.cents assigned to the incoming MIDI key (ctrlNum)
         // If the input MIDI key is in the ctrl_map, proceed
@@ -390,13 +373,12 @@ HUM.midi.MidiIn = class {
     /**
      * Send a Note-OFF over the app
      *
-     * @param {midinnum} ctrlNum    - MIDI note number of the incoming MIDI message
-     * @param {velocity} velocity   - Velocity of the incoming MIDI message
-     * @param {number}   statusByte - Status Byte of the incoming MIDI message
-     * @param {number}   timestamp  - Timestamp of the incoming MIDI message (currently not used)
-     * @param {boolean=} panic      - It tells that the message has been generated by a "hard" All-Notes-Off request.
+     * @param {midinnum} ctrlNum       - MIDI note number of the incoming MIDI message
+     * @param {velocity} velocity      - Velocity of the incoming MIDI message
+     * @param {number}   statusByte    - Status Byte of the incoming MIDI message
+     * @param {number}   timestamp     - Timestamp of the incoming MIDI message (currently not used)
+     * @param {boolean=} [panic=false] - It tells that the message has been generated by a "hard" All-Notes-Off request.
      */
-    // @old icNoteOFF
     muteTone(ctrlNum, velocity, statusByte, timestamp, panic=false) {
         // If the input MIDI key is in the ctrl_map, proceed
         if (this.dhc.tables.ctrl[ctrlNum]) {
@@ -428,14 +410,13 @@ HUM.midi.MidiIn = class {
      * Allows you to play only the keys that match the HTs frequencies.
      * If a key on the controller remains pressed, it will be dynamically switched on or off when the HTs table is updated.
      */
-     // @old icTsnapUpdateHT
     tsnapUpdateHT() {
         // Handle the change of FT on TSNAP RECEIVING MODE
         // Ignore handling if 'keymap' receiving mode
-        if (this.dhc.settings.controller.receive_mode === 'keymap') {
+        if (this.parameters.receiveMode.value === 'keymap') {
             return;
-        } else if (this.dhc.settings.controller.receive_mode === 'tsnap-channel') {
-            let ht_channel = this.dhc.settings.controller.tsnap.channel.ht;
+        } else if (this.parameters.receiveMode.value === 'tsnap-channel') {
+            let ht_channel = this.parameters.tsnap.channelMode.chanHT.value;
             let ht_notes_on = this.notes_on[ht_channel];
 
             // Mute or Re-play the current HT playng notes
@@ -471,15 +452,15 @@ HUM.midi.MidiIn = class {
                 }
             }
 
-        } else if (this.dhc.settings.controller.receive_mode === 'tsnap-divider') {
+        } else if (this.parameters.receiveMode.value === 'tsnap-divider') {
             // @todo - to fix: ht_channel is from tsnap-channel mode!!! (no more omni!)
-            let divider_channel = this.dhc.settings.controller.tsnap.channel.divider;
+            let divider_channel = this.parameters.tsnap.dividerMode.chan.value;
             let notes_on = this.notes_on[divider_channel];
 
             // For every notes-on
             for (let external of Object.keys(notes_on)) {
                 // If it's HT
-                if (this.dhc.settings.controller.tsnap.divider < external) {
+                if (this.parameters.tsnap.dividerMode.divKey.value < external) {
                     let newCtrlNoteNumber = this.tsnapDivider(external, divider_channel, false);
                     let midievent = notes_on[external].midievent;
                     // If the new note in NOT on the keymap
@@ -512,19 +493,19 @@ HUM.midi.MidiIn = class {
         }
     }
     /**
-     * Check if a frequency of a MIDI Note Number corresponds to a Harmonic (or Subharmonic) in the HT table under {@link HUM.DHC#tables}
-     * @param {midinnum} midi_note_number - The MIDI Note Number to be found in the reverse table
-     * @param {tonetype} type             - The type of tone (FT or HT)
+     * Check if a frequency of a MIDI Note Number corresponds to a Harmonic (or Subharmonic) in the HT table under {@link HUM.DHC#tables}.
+     * 
+     * @param {midinnum} midiNoteNum - The MIDI Note Number to be found in the reverse table.
+     * @param {tonetype} type        - The type of tone (FT or HT).
      *
      * @returns {(false|midinnum)} - Returns the keymapped MIDI Note Number that match the nearest HT to the incoming Note; if nothing is found, returns `false`
      */
-    // @old icTsnapFindCtrlNoteNumber
-    tsnapFindCtrlNoteNumber(midi_note_number, type) {  
+    tsnapFindCtrlNoteNumber(midiNoteNum, type) {  
         let table_keys_array =  Object.keys(this.dhc.tables.reverse[type]); 
         let closest_mc = table_keys_array.reduce((prev, curr) => {
             // @todo: snap to a different tone if two tones are at the same distance
-            let result = (Math.abs(curr - midi_note_number) < Math.abs(prev - midi_note_number) ? curr : prev);
-            if (Math.abs(result - midi_note_number) > this.dhc.settings.controller.tsnap.tolerance) {
+            let result = (Math.abs(curr - midiNoteNum) < Math.abs(prev - midiNoteNum) ? curr : prev);
+            if (Math.abs(result - midiNoteNum) > this.parameters.tsnap.tolerance.value) {
                 return false;
             } else {
                 return result;
@@ -554,46 +535,46 @@ HUM.midi.MidiIn = class {
     }
     /**
      * Tone Snap Channel receive mode router. Route messages accordingly to the MIDI Channel.
-     * @param {midinnum} midi_note_number - The MIDI Note Number to be found in the reverse table
-     * @param {midichan} channel          - The MIDI Channel from which the message is coming from
-     * @param {boolean}  hancock          - If the message comes from the Hancock virtual MIDI input (if it's `true` ignore and don't apply T-Snap)
+     * 
+     * @param {midinnum} midiNoteNum - The MIDI Note Number to be found in the reverse table.
+     * @param {midichan} channel     - The MIDI Channel from which the message is coming from.
+     * @param {boolean}  hancock     - If the message comes from the Hancock virtual MIDI input (if it's `true` ignore and don't apply T-Snap).
      *
-     * @returns {(false|midinnum)} - Returns the keymapped MIDI Note Number that match the nearest HT to the incoming Note; if nothing is found, returns `false`
+     * @returns {(false|midinnum)} - Returns the keymapped MIDI Note Number that match the nearest HT to the incoming Note; if nothing is found, returns `false`.
      */
-    // @old icTsnapChannel
-    tsnapChannel(midi_note_number, channel, hancock) {
+    tsnapChannel(midiNoteNum, channel, hancock) {
         if (hancock === true) {
-            return midi_note_number;
+            return midiNoteNum;
         } else {
-            if (this.dhc.settings.controller.tsnap.channel.ft == channel) {
-                return this.tsnapFindCtrlNoteNumber(midi_note_number, 'ft');
+            if (this.parameters.tsnap.channelMode.chanFT.value == channel) {
+                return this.tsnapFindCtrlNoteNumber(midiNoteNum, 'ft');
             }
-            else if (this.dhc.settings.controller.tsnap.channel.ht == channel) {
-                return this.tsnapFindCtrlNoteNumber(midi_note_number, 'ht');
+            else if (this.parameters.tsnap.channelMode.chanHT.value == channel) {
+                return this.tsnapFindCtrlNoteNumber(midiNoteNum, 'ht');
             } else {
                 return false;
             }
         }
     }
     /**
-     * Tone Snap Divider receive mode router.  Route messages accordingly to the divider MIDI Note Number.
-     * @param {midinnum} midi_note_number - The MIDI Note Number to be found in the reverse table
-     * @param {midichan} channel          - The MIDI Channel from which the message is coming from
-     * @param {boolean}  hancock          - If the message comes from the Hancock virtual MIDI input (if it's `true` ignore and don't apply T-Snap)
+     * Tone Snap Divider receive mode router. Route messages accordingly to the divider MIDI Note Number.
+     * 
+     * @param {midinnum} midiNoteNum - The MIDI Note Number to be found in the reverse table.
+     * @param {midichan} channel     - The MIDI Channel from which the message is coming from.
+     * @param {boolean}  hancock     - If the message comes from the Hancock virtual MIDI input (if it's `true` ignore and don't apply T-Snap).
      *
-     * @returns {(false|midinnum)} - Returns the keymapped MIDI Note Number that match the nearest HT to the incoming Note; if nothing is found, returns `false`
+     * @returns {(false|midinnum)} - Returns the keymapped MIDI Note Number that match the nearest HT to the incoming Note; if nothing is found, returns `false`.
      */
-    // @old icTsnapDivider
-    tsnapDivider(midi_note_number, channel, hancock) {
+    tsnapDivider(midiNoteNum, channel, hancock) {
         if (hancock === true) {
-            return midi_note_number;
+            return midiNoteNum;
         } else {
-            if (this.dhc.settings.controller.tsnap.channel.divider == channel) {
-                if (this.dhc.settings.controller.tsnap.divider >= midi_note_number) {
-                    return this.tsnapFindCtrlNoteNumber(midi_note_number, 'ft');
+            if (this.parameters.tsnap.dividerMode.chan.value == channel) {
+                if (this.parameters.tsnap.dividerMode.divKey.value >= midiNoteNum) {
+                    return this.tsnapFindCtrlNoteNumber(midiNoteNum, 'ft');
                 }
-                else if (this.dhc.settings.controller.tsnap.divider < midi_note_number) {
-                    return this.tsnapFindCtrlNoteNumber(midi_note_number, 'ht');
+                else if (this.parameters.tsnap.dividerMode.divKey.value < midiNoteNum) {
+                    return this.tsnapFindCtrlNoteNumber(midiNoteNum, 'ht');
                 } else {
                     return false;
                 }
@@ -606,38 +587,37 @@ HUM.midi.MidiIn = class {
      *==============================================================================*/
 
     /**
-     * Switch the MIDI INPUT RECEIVING MODE (called when UI is updated)
+     * Switch the MIDI INPUT RECEIVING MODE (called when UI is updated).
      *
-     * @param {('keymap'|'tsnap-channel'|'tsnap-divider')} receive_mode - FT/HT controller note receiving mode
+     * @param {('keymap'|'tsnap-channel'|'tsnap-divider')} receive_mode - FT/HT controller note receiving mode.
      */
-    // @old icSwitchMidiReceiveMode
-    switchReceiveModeUI(receive_mode) {
-        let tsnap_tolerance = this.uiElements.fn.receiveModeTsnapTolerance,
-            tsnap_chanFT = this.uiElements.fn.receiveModeTsnapChanFT,
-            tsnap_chanHT = this.uiElements.fn.receiveModeTsnapChanHT,
-            tsnap_divider_key = this.uiElements.fn.receiveModeTsnapDividerKey,
-            tsnap_divider_chan = this.uiElements.fn.receiveModeTsnapDividerChan;
+    switchReceiveModeUI(receiveMode) {
+        let tsnap_tolerance = this.parameters.tsnap.tolerance.uiElements.out.midiTsnapTolerance_box,
+            tsnap_chanFT = this.parameters.tsnap.channelMode.chanFT.uiElements.out.midiTsnapChanFT_box,
+            tsnap_chanHT = this.parameters.tsnap.channelMode.chanHT.uiElements.out.midiTsnapChanHT_box,
+            tsnap_divider_key = this.parameters.tsnap.dividerMode.divKey.uiElements.out.midiTsnapDividerKey_box,
+            tsnap_divider_chan = this.parameters.tsnap.dividerMode.chan.uiElements.out.midiTsnapDividerChan_box;
         
-        if (receive_mode === "keymap") {
+        if (receiveMode === "keymap") {
             tsnap_tolerance.style.display = "none";
             tsnap_chanFT.style.display = "none";
             tsnap_chanHT.style.display = "none";
             tsnap_divider_key.style.display = "none";
             tsnap_divider_chan.style.display = "none";
-        } else if (receive_mode === "tsnap-channel") {
+        } else if (receiveMode === "tsnap-channel") {
             tsnap_tolerance.style.display = "flex";
             tsnap_chanFT.style.display = "flex";
             tsnap_chanHT.style.display = "flex";
             tsnap_divider_key.style.display = "none";
             tsnap_divider_chan.style.display = "none";
-        } else if (receive_mode === "tsnap-divider") {
+        } else if (receiveMode === "tsnap-divider") {
             tsnap_tolerance.style.display = "flex";
             tsnap_chanFT.style.display = "none";
             tsnap_chanHT.style.display = "none";
             tsnap_divider_key.style.display = "flex";
             tsnap_divider_chan.style.display = "flex";
         } else {
-            let error = "The 'HTMLi_midiReceiveMode' HTML element has an unexpected value: " + receive_mode;
+            let error = "The 'HTMLi_midiReceiveMode' HTML element has an unexpected value: " + receiveMode;
             throw error;
         }
     }
@@ -645,102 +625,503 @@ HUM.midi.MidiIn = class {
     /**
      * MIDI-IN MONITOR
      *
-     * @param {midinnum} noteNumber - MIDI Note number (or conversion string if the Tone snapping receiving mode is active)
-     * @param {velocity} velocity   - MIDI Velocity amount
-     * @param {midichan} channel    - MIDI Channel number
-     * @param {string}   portName   - MIDI Port name
+     * @param {midinnum} noteNumber - MIDI Note number (or conversion string if the Tone snapping receiving mode is active).
+     * @param {velocity} velocity   - MIDI Velocity amount.
+     * @param {midichan} channel    - MIDI Channel number.
+     * @param {string}   portName   - MIDI Port name.
      */
-    // @old icMIDImonitor
     monitorMidiIN(noteNumber, velocity, channel, portName) {
         let dhcID = this.dhc.id;
         // Update the log on MIDI MONITOR on the UI
         for (let x of [0,1]) {
-            this.uiElements.out[`monitor${x}_note`].innerText = noteNumber;
-            this.uiElements.out[`monitor${x}_velocity`].innerText = velocity;
-            this.uiElements.out[`monitor${x}_channel`].innerText = channel + 1;
-            this.uiElements.out[`monitor${x}_port`].innerText = portName;
+            this.parameters.monitor.note.value = noteNumber;
+            this.parameters.monitor.velocity.value = velocity;
+            this.parameters.monitor.channel.value = channel + 1;
+            this.parameters.monitor.port.value = portName;
         }
     }
-    /**
-     * MIDI event log for debug purposes
-     *
-     * @param  {MIDIMessageEvent} midievent - The MIDI message event
-     */
-    logMidiEvent(midievent) {
-        // @debug - Parsing log
-        // Filter the Active Sensing messages (254 = 0xFE = 11111110)
-        if (midievent.data[0] !== 254) {
-            var str = "** Incoming MIDI message [" + midievent.data.length + " bytes]: ";
-            for (var i = 0; i < midievent.data.length; i++) {
-                str += "0x" + midievent.data[i].toString(16) + " ";
+
+    // /**
+    //  * MIDI event log for debug purposes,
+    //  *
+    //  * @param  {MIDIMessageEvent} midievent - The MIDI message event.
+    //  */
+    // logMidiEvent(midievent) {
+    //     // @debug - Parsing log
+    //     // Filter the Active Sensing messages (254 = 0xFE = 11111110)
+    //     if (midievent.data[0] !== 254) {
+    //         var str = "** Incoming MIDI message [" + midievent.data.length + " bytes]: ";
+    //         for (var i = 0; i < midievent.data.length; i++) {
+    //             str += "0x" + midievent.data[i].toString(16) + " ";
+    //         }
+    //         str += " | received at timestamp: " + timestamp;
+    //         console.log(str);
+    //         console.log("cmd:      " + cmd + " = " + cmd.toString(2));
+    //         console.log("channel:  " + channel + " = " + channel.toString(2));
+    //         console.log("1st byte: " + midievent.data[0] + " = 0x" + midievent.data[0].toString(16).toUpperCase() + " = " + midievent.data[0].toString(2));
+    //         console.log("2nd byte: " + midievent.data[1] + " = 0x" + midievent.data[1].toString(16).toUpperCase() + " = " + midievent.data[1].toString(2));
+    //         console.log("3rd byte: " + midievent.data[2] + " = 0x" + midievent.data[2].toString(16).toUpperCase() + " = " + midievent.data[2].toString(2));
+    //     }
+    // }
+
+};
+
+/** 
+ * Instance class-container used to create all the `HUM.Param` objects for the `HUM.midi.MidiIn` instance.
+ */
+HUM.midi.MidiIn.prototype.Parameters = class {
+    constructor(midiin) {
+        /**
+         * Controller's Pitch Bend settings.
+         * 
+         * @member {Object}
+         * @namespace
+         */
+        this.pitchbend = {
+            /**  
+             * This property is the MIDI input pitchbend range value in cents.
+             * It's initialises the eventListener of the UIelem related to it.
+             * It's stored on the DB.
+             * @todo - Move to midi-in (one per input channel?)
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {cent}        value                            - Pitchbend range value in cents (use hundreds when use MIDI-OUT and possibly the same as the instrument).
+             * @property {Object}      uiElements                       - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in                    - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.midiPitchbendRange - The HTML input text box for the pitchbend range number.
+             */
+            range: new HUM.Param({
+                app:midiin,
+                idbKey:'midiInPitchbendRange',
+                uiElements:{
+                    'midiPitchbendRange': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'number',
+                    })
+                },
+                dataType:'integer',
+                initValue:100,
+            }),
+
+            /**
+             * Current input controller pitchbend amount.
+             * Value from -8192 to +8191, normalized to the ratio from -1 to 0,99987792968750
+             * No pitchbend is 0.
+             * @instance
+             * 
+             * @member {number}
+             */
+            amount: 0.0
+        };
+
+        /**  
+         * This property sets the note-receiving mode for the controller (MIDI input).
+         * It's initialises the eventListener of the UIelem related to it.
+         * It's stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {('keymap'|'tsnap-channel'|'tsnap-divider')} value - The note-receiving mode for the FT/HT controller.
+         * @property {Object}             uiElements                    - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}             uiElements.in                 - Namespace for the "in" HTML elements.
+         * @property {HTMLElement}        uiElements.in.midiReceiveMode - The HTML input selection widget for the note-receiving mode.
+         */
+        this.receiveMode = new HUM.Param({
+            app: midiin,
+            idbKey: 'midiInReceiveMode',
+            uiElements:{
+                'midiReceiveMode': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType:'set',
+                    eventType: 'change',
+                    htmlTargetProp:'value',
+                    widget:'selection',
+                })
+            },
+            init:false,
+            dataType:'string',
+            initValue: 'keymap',
+            allowedValues: ['keymap', 'tsnap-channel', 'tsnap-divider'],
+            postSet: (value) => {
+                midiin.switchReceiveModeUI(value);
             }
-            str += " | received at timestamp: " + timestamp;
-            console.log(str);
-            console.log("cmd:      " + cmd + " = " + cmd.toString(2));
-            console.log("channel:  " + channel + " = " + channel.toString(2));
-            console.log("1st byte: " + midievent.data[0] + " = 0x" + midievent.data[0].toString(16).toUpperCase() + " = " + midievent.data[0].toString(2));
-            console.log("2nd byte: " + midievent.data[1] + " = 0x" + midievent.data[1].toString(16).toUpperCase() + " = " + midievent.data[1].toString(2));
-            console.log("3rd byte: " + midievent.data[2] + " = 0x" + midievent.data[2].toString(16).toUpperCase() + " = " + midievent.data[2].toString(2));
+        });
+        /**
+         * "Tone snapping" note-receiving mode settings.
+         * 
+         * @member {Object}
+         * @namespace
+         */
+        this.tsnap = {
+            /**  
+             * This property sets the "Snap tolerance" in midicent; that is the maximum
+             * difference within which you can consider two frequencies as the same note.
+             * It's initialises the eventListener of the UIelem related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {midicent}    value                                - Snap tolerance in midicent.
+             * @property {Object}      uiElements                           - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in                        - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.midiTsnapTolerance     - The HTML input box widget for the Snap tolerance.
+             * @property {HTMLElement} uiElements.in.midiTsnapTolerance_box - The HTML box container for the Snap tolerance.
+             */
+            // this.receiveModeTsnapTolerance = new HUM.Param({
+            tolerance: new HUM.Param({
+                app: midiin,
+                idbKey: 'midiInTsnapTolerance',
+                uiElements:{
+                    'midiTsnapTolerance': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'number',
+                    }),
+                    'midiTsnapTolerance_box': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                },
+                dataType:'float',
+                initValue: 0.5,
+            }),
+            /**
+             * Divider Mode settings for the Tone snapping.
+             * @instance
+             * 
+             * @member {Object}
+             * @namespace
+             */
+            dividerMode: {
+                /**  
+                 * This property sets the "Divider Key" when the "Tone Snap" is set on "Divider Mode".
+                 * This is the note, on a MIDI piano keyboard, to be used as the divider between FTs and HTs.
+                 * The notes smaller or equal to the divider will be considered FTs, the greater ones will be considered HTs.
+                 * It's initialises the eventListener of the UIelem related to it.
+                 * It's stored on the DB.
+                 * @instance
+                 *
+                 * @member {HUM.Param}
+                 * 
+                 * @property {midinnum}    value                                 - The MIDI number of the note to be used as divider.
+                 * @property {Object}      uiElements                            - Namespace for the "in", "out" and "fn" objects.
+                 * @property {Object}      uiElements.in                         - Namespace for the "in" HTML elements.
+                 * @property {HTMLElement} uiElements.in.midiTsnapDividerKey     - The HTML input box widget for the Divider key.
+                 * @property {HTMLElement} uiElements.in.midiTsnapDividerKey_box - The HTML box container for the Divider key.
+                 */
+                // this.receiveModeTsnapDividerKey = new HUM.Param({
+                divKey: new HUM.Param({
+                    app: midiin,
+                    idbKey: 'midiInTsnapDividerKey',
+                    uiElements:{
+                        'midiTsnapDividerKey': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'change',
+                            htmlTargetProp:'value',
+                            widget:'number',
+                        }),
+                        'midiTsnapDividerKey_box': new HUM.Param.UIelem({
+                            role: 'out',
+                        }),
+                    },
+                    dataType:'integer',
+                    initValue: 56,
+                }),
+                /**  
+                 * This property sets the "Divider Channel", that is the channel from which input notes are taken
+                 * when the "Tone Snap" is set on "Divider Mode".
+                 * It's initialises the eventListener of the UIelem related to it.
+                 * It's stored on the DB.
+                 * @instance
+                 *
+                 * @member {HUM.Param}
+                 * 
+                 * @property {midichan}    value                                  - The MIDI number of the channel from which the notes are received.
+                 * @property {Object}      uiElements                             - Namespace for the "in", "out" and "fn" objects.
+                 * @property {Object}      uiElements.in                          - Namespace for the "in" HTML elements.
+                 * @property {HTMLElement} uiElements.in.midiTsnapDividerChan     - The HTML input box widget for the Divider key.
+                 * @property {HTMLElement} uiElements.in.midiTsnapDividerChan_box - The HTML box container for the Divider key.
+                 */
+                // receiveModeTsnapDividerChan: new HUM.Param({
+                chan: new HUM.Param({
+                    app: midiin,
+                    idbKey: 'midiInTsnapDividerChan',
+                    uiElements:{
+                        'midiTsnapDividerChan': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'change',
+                            htmlTargetProp:'value',
+                            widget:'number',
+                        }),
+                        'midiTsnapDividerChan_box': new HUM.Param.UIelem({
+                            role: 'out',
+                        }),
+                    },
+                    dataType:'integer',
+                    initValue: 0,
+                }),
+            },
+            /**
+             * Channel Mode settings for the Tone snapping.
+             * @instance
+             * 
+             * @member {Object}
+             * @namespace
+             */
+            channelMode: {
+                /**  
+                 * This property sets the MIDI channel assigned to FTs, that is the channel from which input notes are considered FTs.
+                 * when the "Tone Snap" is set on "Channel Mode".
+                 * All notes received on this channel will be considered as FTs.
+                 * It's initialises the eventListener of the UIelem related to it.
+                 * It's stored on the DB.
+                 * @instance
+                 *
+                 * @member {HUM.Param}
+                 * 
+                 * @property {midichan}    value                             - The MIDI number of the channel for FTs.
+                 * @property {Object}      uiElements                        - Namespace for the "in", "out" and "fn" objects.
+                 * @property {Object}      uiElements.in                     - Namespace for the "in" HTML elements.
+                 * @property {HTMLElement} uiElements.in.midiTsnapChanFT     - The HTML input box widget for the Divider key.
+                 * @property {HTMLElement} uiElements.in.midiTsnapChanFT_box - The HTML box container for the Divider key.
+                 */
+                // receiveModeTsnapChanFT: new HUM.Param({
+                chanFT: new HUM.Param({
+                    app: midiin,
+                    idbKey: 'midiInTsnapChanFT',
+                    uiElements:{
+                        'midiTsnapChanFT': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'change',
+                            htmlTargetProp:'value',
+                            widget:'number',
+                        }),
+                        'midiTsnapChanFT_box': new HUM.Param.UIelem({
+                            role: 'out',
+                        }),
+                    },
+                    dataType:'integer',
+                    initValue: 1,
+                    allowedValues: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+                    init:false,
+                    postSet: (value, thisParam) => {
+                        if (value == this.tsnap.channelMode.chanHT.value) {
+                            throw "FT and HT cannot share the same MIDI channel!";
+                        } else {
+                            let ht_channels = this.tsnap.channelMode.chanHT.uiElements.in.midiTsnapChanHT;
+                            for (let opt of ht_channels) { 
+                                opt.disabled = false;
+                            }
+                            ht_channels.options[value].disabled = true;                    
+                        }
+                    }
+                }),
+                /**  
+                 * This property sets the MIDI channel assigned to HTs, that is the channel from which input notes are considered HTs.
+                 * when the "Tone Snap" is set on "Channel Mode".
+                 * All notes received on this channel will be considered as HTs.
+                 * It's initialises the eventListener of the UIelem related to it.
+                 * It's stored on the DB.
+                 * @instance
+                 *
+                 * @member {HUM.Param}
+                 * 
+                 * @property {midichan}    value                             - The MIDI number of the channel for HTs.
+                 * @property {Object}      uiElements                        - Namespace for the "in", "out" and "fn" objects.
+                 * @property {Object}      uiElements.in                     - Namespace for the "in" HTML elements.
+                 * @property {HTMLElement} uiElements.in.midiTsnapChanHT     - The HTML input box widget for the Divider key.
+                 * @property {HTMLElement} uiElements.in.midiTsnapChanHT_box - The HTML box container for the Divider key.
+                 */
+                // receiveModeTsnapChanHT: new HUM.Param({
+                chanHT: new HUM.Param({
+                    app: midiin,
+                    idbKey: 'midiInTsnapChanHT',
+                    uiElements:{
+                        'midiTsnapChanHT': new HUM.Param.UIelem({
+                            role: 'in',
+                            opType:'set',
+                            eventType: 'change',
+                            htmlTargetProp:'value',
+                            widget:'number',
+                        }),
+                        'midiTsnapChanHT_box': new HUM.Param.UIelem({
+                            role: 'out',
+                        }),
+                    },
+                    dataType:'integer',
+                    initValue: 0,
+                    allowedValues: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+                    init:false,
+                    postSet: (value, thisParam) => {
+                        if (value == this.tsnap.channelMode.chanFT.value) {
+                            throw "FT and HT cannot share the same MIDI channel!";
+                        } else {
+                            let ft_channels = this.tsnap.channelMode.chanFT.uiElements.in.midiTsnapChanFT;
+                            for (let opt of ft_channels) { 
+                                opt.disabled = false;
+                            }
+                            ft_channels.options[value].disabled = true;                    
+                        }
+                    }
+                })
+            }
+        };
+        /**
+         * Namespace for UI params of the MIDI Input monitor.
+         * 
+         * @member {Object}
+         * @namespace
+         */
+        this.monitor = {
+            /**  
+             * This property is a proxy for the UIelems related to the MIDI Input monitor
+             * that shows the NOTE info of the last incoming note-message.
+             * It's not stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {midichan}    value                            - The MIDI number of the channel for HTs.
+             * @property {Object}      uiElements                       - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.out                   - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.out.midiMonitor0_note - The HTML input box widget for the Divider key.
+             * @property {HTMLElement} uiElements.out.midiMonitor1_note - The HTML box container for the Divider key.
+             */
+            note: new HUM.Param({
+                app: midiin,
+                idbKey: 'midiInMonitorNote',
+                uiElements:{
+                    'midiMonitor0_note': new HUM.Param.UIelem({
+                        role: 'out',
+                        htmlTargetProp:'innerText',
+                    }),
+                    'midiMonitor1_note': new HUM.Param.UIelem({
+                        role: 'out',
+                        htmlTargetProp:'innerText',
+                    }),
+                },
+                init:false,
+                presetStore:false,
+                presetAutosave:false,
+                presetRestore:false,
+            }),
+            /**  
+             * This property is a proxy for the UIelems related to the MIDI Input monitor
+             * that shows the VELOCITY info of the last incoming note-message.
+             * It's not stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {midichan}    value                                - The MIDI number of the channel for HTs.
+             * @property {Object}      uiElements                           - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.out                       - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.out.midiMonitor0_velocity - The HTML input box widget for the Divider key.
+             * @property {HTMLElement} uiElements.out.midiMonitor1_velocity - The HTML box container for the Divider key.
+             */
+            velocity: new HUM.Param({
+                app: midiin,
+                idbKey: 'midiInMonitorVelocity',
+                uiElements:{
+                    'midiMonitor0_velocity': new HUM.Param.UIelem({
+                        role: 'out',
+                        htmlTargetProp:'innerText',
+                    }),
+                    'midiMonitor1_velocity': new HUM.Param.UIelem({
+                        role: 'out',
+                        htmlTargetProp:'innerText',
+                    }),
+                },
+                init:false,
+                presetStore:false,
+                presetAutosave:false,
+                presetRestore:false,
+            }),
+            /**  
+             * This property is a proxy for the UIelems related to the MIDI Input monitor
+             * that shows the CHANNEL info of the last incoming note-message.
+             * It's not stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {midichan}    value                                - The MIDI number of the channel for HTs.
+             * @property {Object}      uiElements                           - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.out                       - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.out.midiMonitor0_channel - The HTML input box widget for the Divider key.
+             * @property {HTMLElement} uiElements.out.midiMonitor1_channel - The HTML box container for the Divider key.
+             */
+            channel: new HUM.Param({
+                app: midiin,
+                idbKey: 'midiInMonitorChannel',
+                uiElements:{
+                    'midiMonitor0_channel': new HUM.Param.UIelem({
+                        role: 'out',
+                        htmlTargetProp:'innerText',
+                    }),
+                    'midiMonitor1_channel': new HUM.Param.UIelem({
+                        role: 'out',
+                        htmlTargetProp:'innerText',
+                    }),
+                },
+                init:false,
+                presetStore:false,
+                presetAutosave:false,
+                presetRestore:false,
+            }),
+            /**  
+             * This property is a proxy for the UIelems related to the MIDI Input monitor
+             * that shows the PORT info of the last incoming note-message.
+             * It's not stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {midichan}    value                            - The MIDI number of the channel for HTs.
+             * @property {Object}      uiElements                       - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.out                   - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.out.midiMonitor0_port - The HTML input box widget for the Divider key.
+             * @property {HTMLElement} uiElements.out.midiMonitor1_port - The HTML box container for the Divider key.
+             */
+            port: new HUM.Param({
+                app: midiin,
+                idbKey: 'midiInMonitorPort',
+                uiElements:{
+                    'midiMonitor0_port': new HUM.Param.UIelem({
+                        role: 'out',
+                        htmlTargetProp:'innerText',
+                    }),
+                    'midiMonitor1_port': new HUM.Param.UIelem({
+                        role: 'out',
+                        htmlTargetProp:'innerText',
+                    }),
+                },
+                init:false,
+                presetStore:false,
+                presetAutosave:false,
+                presetRestore:false,
+            }),
         }
-    }
+        // =======================
+    } // end class Constructor
+    // ===========================
+
     /**
-     * Initialize the UI of the MidiIn instance
+     * Initializes the parameters of the Tone Snap note-receiving mode.
      */
-    _initUI() {
-        //------------------------
-        // UI MIDI settings
-        //------------------------
-
-        // Default MIDI SETTINGS on UI textboxes
-        this.uiElements.in.receiveMode.value = this.dhc.settings.controller.receive_mode;
-        this.uiElements.in.receiveModeTsnapTolerance.value = this.dhc.settings.controller.tsnap.tolerance;
-        this.uiElements.in.receiveModeTsnapChanFT.value = this.dhc.settings.controller.tsnap.channel.ft;
-        this.uiElements.in.receiveModeTsnapChanHT.options[this.dhc.settings.controller.tsnap.channel.ft].disabled = true;
-        this.uiElements.in.receiveModeTsnapChanHT.value = this.dhc.settings.controller.tsnap.channel.ht;
-        this.uiElements.in.receiveModeTsnapChanFT.options[this.dhc.settings.controller.tsnap.channel.ht].disabled = true;
-        this.uiElements.in.receiveModeTsnapDividerKey.value = this.dhc.settings.controller.tsnap.divider;
-        this.uiElements.in.receiveModeTsnapDividerChan.value = this.dhc.settings.controller.tsnap.channel.divider;
-
-        // Set the FT/HT NUMBER RECEIVING MODE from UI HTML inputs
-        this.uiElements.in.receiveMode.addEventListener("change", (event) => {
-            this.dhc.settings.controller.receive_mode = event.target.value;
-            this.switchReceiveModeUI(event.target.value);
-        });
-        this.uiElements.in.receiveModeTsnapTolerance.addEventListener("input", (event) => {
-            this.dhc.settings.controller.tsnap.tolerance = event.target.value;
-        });
-        this.uiElements.in.receiveModeTsnapDividerKey.addEventListener("input", (event) => {
-            this.dhc.settings.controller.tsnap.divider = event.target.value;
-        });
-        this.uiElements.in.receiveModeTsnapChanFT.addEventListener("change", (event) => {
-            if (event.target.value == this.dhc.settings.controller.tsnap.channel.ht) {
-                throw "FT and HT cannot share the same MIDI channel!";
-            } else {
-                let ht_channels = this.uiElements.in.receiveModeTsnapChanHT;
-                for (let opt of ht_channels) { 
-                    opt.disabled = false;
-                }
-                ht_channels.options[event.target.value].disabled = true;
-                this.dhc.settings.controller.tsnap.channel.ft = event.target.value;
-            }
-        });
-        this.uiElements.in.receiveModeTsnapChanHT.addEventListener("change", (event) => {
-            if (event.target.value == this.dhc.settings.controller.tsnap.channel.ft) {
-                throw "FT and HT cannot share the same MIDI channel!";
-            } else {
-                let ft_channels = this.uiElements.in.receiveModeTsnapChanFT;
-                for (let opt of ft_channels) { 
-                    opt.disabled = false;
-                }
-                ft_channels.options[event.target.value].disabled = true;
-                this.dhc.settings.controller.tsnap.channel.ht = event.target.value;
-            }
-        });
-        this.uiElements.in.receiveModeTsnapDividerChan.addEventListener("change", (event) => {
-            this.dhc.settings.controller.tsnap.channel.divider = event.target.value;
-        });
-        // Set default FT/HT NUMBER RECEIVING MODE after the UI widgets are set-up
-        this.switchReceiveModeUI(this.dhc.settings.controller.receive_mode);
-    }   
-
+    _init() {
+        this.tsnap.channelMode.chanFT._init();
+        this.tsnap.channelMode.chanHT._init();
+        this.receiveMode._init();
+    }
 };

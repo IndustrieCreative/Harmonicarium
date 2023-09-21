@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,30 +22,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals HUM */
-
 "use strict";
 
 /** 
- * The BackendUtils class<br>
+ * The BackendUtils class.<br>
  *    A toolset to manage the backend UI.
  */
 HUM.BackendUtils = class {
      /**
-     * @param {HUM} harmonicarium - The HUM instance to which this DHC must refer
+     * @param {HUM} harmonicarium - The HUM instance to which this DHC must refer.
      */
     constructor(harmonicarium) {
+        /**
+        * The id of this `HUM.BackendUtils`. It's the same of the HUM instance passed to the constructor.
+        *
+        * @member {number}
+        */
         this.id = harmonicarium.id;
         this._id = harmonicarium.id;
+        /**
+        * The name of the `HUM.BackendUtils`, useful for group the parameters on the DB.
+        * Currently hard-coded as `"backendUtils"`.
+        *
+        * @member {string}
+        */
         this.name = 'backendUtils';
         /**
-        * The HUM instance
+        * The HUM instance passed to the constructor.
         *
         * @member {HUM}
         */
         this.harmonicarium = harmonicarium;
         /**
-        * The HUM instance
+        * Instance of `HUM.BackendUtils#Parameters`.
         *
         * @member {HUM.BackendUtils.prototype.Parameters}
         */
@@ -55,13 +64,10 @@ HUM.BackendUtils = class {
     } // end class Constructor
     // ===========================
 
-    /*==============================================================================*
-     * UI EVENTS LOG
-     *==============================================================================*/
     /**
-     * Log into the HTML Log element the infos passed via the argument
+     * Write into the HTML Log element the infos passed via the argument.
      *
-     * @param {string} str - Text string describing the event to log
+     * @param {string} str - Text string describing the event to log.
      */
     eventLog(str) {
         let time = new Date();
@@ -76,78 +82,43 @@ HUM.BackendUtils = class {
         logText.parentElement.scrollTop = logText.scrollHeight;
     }
 
-    showLogPanel(mode='toggle') {
-        let logPanel = this.parameters.logPanel.uiElements.out.logPanel,
-            logCloseBtn = this.parameters.logPanel.uiElements.fn.logCloseBtn;
-        
-        if (mode === 'closed') {
-            logPanel.style.height = "0%";
-            logCloseBtn.classList.remove('hum-modal-shown');
-        } else if (mode === 'open') {
-            logPanel.style.height = "35%";  
-            logCloseBtn.classList.add('hum-modal-shown');
-        } else if (mode === 'toggle') {
-            if (logCloseBtn.classList.contains('hum-modal-shown')) {
-                // Closed %
-                this.parameters.logPanel.value = 'closed';
-            } else {
-                // Open %
-                this.parameters.logPanel.value = 'open';
-            }
-        }
-    }
-
-    /*==============================================================================*
-     * UI HELP/CREDITS
-     *==============================================================================*/
     /**
-     * Open the side panel
+     * Toggle the visibility of the Log panel.
      */
-    // @old icHelp
-    showSidebar(mode='toggle') {
-        let sidePanel = this.parameters.sidePanel.uiElements.out.sidePanel,
-            dpPadContainer = this.harmonicarium.html.dpPadContainer;
-
-        if (mode === 'full') {
-            sidePanel.style.width = "100%"; 
-            dpPadContainer.style.width = '1%';
-            dpPadContainer.classList.add('d-none');
-            sidePanel.classList.add('hum-modal-full', 'hum-modal-shown');
-            sidePanel.classList.remove('hum-modal-half');
-        } else if (mode === 'half') {
-            sidePanel.style.width = "50%"; 
-            dpPadContainer.style.width = '50%';
-            dpPadContainer.classList.remove('d-none');
-            sidePanel.classList.add('hum-modal-half', 'hum-modal-shown');
-            sidePanel.classList.remove('hum-modal-full');
-        } else if (mode === 'closed') {
-            sidePanel.style.width = "0%";
-            dpPadContainer.style.width = "100%";
-            dpPadContainer.classList.remove('d-none');
-            sidePanel.classList.remove('hum-modal-half', 'hum-modal-full', 'hum-modal-shown');
-        } else if (mode === 'toggle') {
-            if (sidePanel.classList.contains('hum-modal-shown')) {
-                this.parameters.sidePanel.value = 'closed';
-            } else {
-                if (window.matchMedia("(min-width: 768px)").matches) {
-                    this.parameters.sidePanel.value = 'half';
-                } else {
-                    this.parameters.sidePanel.value = 'full';
-                }
-            }
+    toggleLogPanel() {
+        let logCloseBtn = this.parameters.logPanel.uiElements.fn.logCloseBtn;
+        if (logCloseBtn.classList.contains('hum-modal-shown')) {
+            // Closed %
+            this.parameters.logPanel.value = 'closed';
+        } else {
+            // Open %
+            this.parameters.logPanel.value = 'open';
         }
-        // this.harmonicarium.windowResize();
-        this.harmonicarium.components.dpPad.windowResize();
     }
 
-    /*==============================================================================*
-     * UI FILE READ ERROR HANDLING
-     *==============================================================================*/
+    /**
+     * Toggle the visibility of the Side panel.
+     *     - For displays smaller than 768px in width, the toggle acts as "full" and "closed" alternatively.
+     *     - For displays larger than 768px in width, the toggle acts as "half" and "closed" alternatively.
+     */
+    toggleSidebar() {
+        let sidePanel = this.parameters.sidePanel.uiElements.out.sidePanel;
+        if (sidePanel.classList.contains('hum-modal-shown')) {
+            this.parameters.sidePanel.value = 'closed';
+        } else {
+            if (window.matchMedia("(min-width: 768px)").matches) {
+                this.parameters.sidePanel.value = 'half';
+            } else {
+                this.parameters.sidePanel.value = 'full';
+            }
+        }
+    }
+
     /**
      * Handle errors generated by `FileReader` when loading a file.<br>
      * It is meant to be assigned to `FileReader.onerror` handler.
      *
-     * @param {Event} errorEvent - The error event
+     * @param {Event} errorEvent - The error event.
      */
     fileErrorHandler(errorEvent) {
         switch (errorEvent.target.error.code) {
@@ -165,11 +136,8 @@ HUM.BackendUtils = class {
         }
     }
 
-    /*==============================================================================*
-     * TEST/DEBUG SECTION
-     *==============================================================================*/
     /**
-     * Print the DHC tone tables in the console for test/debug purposes
+     * Print the DHC tone tables into the console for test/debug purposes.
      */
     tester() {
         this.eventLog("TEST: Full tables printed out. Look at the console of your browser.");
@@ -193,6 +161,11 @@ HUM.BackendUtils = class {
         }
     }
 
+    /**
+     * Static tool-method for emptying an HTML element of all its child nodes.
+     *
+     * @param {HTMLElement} htmlElem - The HTML element to be emptied.
+     */
     static emptyHTMLElement(htmlElem) {
         while (htmlElem.firstChild) {
             htmlElem.removeChild(htmlElem.firstChild);
@@ -200,22 +173,42 @@ HUM.BackendUtils = class {
     }
 };
 
-
+/** 
+ * Instance class-container used to create all the `HUM.Param` objects for the `HUM.BackendUtils` instance.
+ */
 HUM.BackendUtils.prototype.Parameters = class {
+    /**
+     * @param {HUM.BackendUtils} backendUtils - The BackendUtils instance in which this class is being used.
+     */
     constructor(backendUtils) {
-
+        /**  
+         * This property controls the visibility of the side panel (settings) and initialises the
+         * eventListener of the UIelems related to it.
+         * It's not stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {('closed'|'half'|'full')} value                      - The visibility one wants to achieve.
+         * @property {Object}                   uiElements                 - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}                   uiElements.out             - Namespace for the "out" HTML elements.
+         * @property {Object}                   uiElements.fn              - Namespace for the "fn" HTML elements.
+         * @property {HTMLElement}              uiElements.out.sidePanel   - The HTML side panel.
+         * @property {HTMLElement}              uiElements.fn.sideCloseBtn - The HTML close button of the side panel.
+         * @property {HTMLElement}              uiElements.fn.sideHalfBtn  - The HTML half button of the side panel.
+         * @property {HTMLElement}              uiElements.fn.sideFullBtn  - The HTML full button of the side panel.
+         */
         this.sidePanel = new HUM.Param({
-            app:backendUtils,
-            idbKey:'backendSidePanel',
-            uiElements:{
+            app: backendUtils,
+            idbKey: 'backendSidePanel',
+            uiElements: {
                 'sidePanel': new HUM.Param.UIelem({
                     role: 'out',
                 }),
                 'sideCloseBtn': new HUM.Param.UIelem({
                     role: 'fn',
                     opType: 'toggle',
-                    widget:'button',
-                    htmlTargetProp:'checked',
+                    widget: 'button',
+                    htmlTargetProp: 'checked',
                     eventType: 'click',
                     eventListener: evt => {
                         this.sidePanel.valueUI = 'closed';
@@ -224,8 +217,8 @@ HUM.BackendUtils.prototype.Parameters = class {
                 'sideHalfBtn': new HUM.Param.UIelem({
                     role: 'fn',
                     opType: 'toggle',
-                    widget:'button',
-                    htmlTargetProp:'checked',
+                    widget: 'button',
+                    htmlTargetProp: 'checked',
                     eventType: 'click',
                     eventListener: evt => {
                         this.sidePanel.valueUI = 'half';
@@ -234,39 +227,74 @@ HUM.BackendUtils.prototype.Parameters = class {
                 'sideFullBtn': new HUM.Param.UIelem({
                     role: 'fn',
                     opType: 'toggle',
-                    widget:'button',
-                    htmlTargetProp:'checked',
+                    widget: 'button',
+                    htmlTargetProp: 'checked',
                     eventType: 'click',
                     eventListener: evt => {
                         this.sidePanel.valueUI = 'full';
                     }
                 }),
             },
-            init:false,
-            dataType:'string',
-            initValue:'closed',
-            presetStore:false,
-            presetAutosave:false,
-            presetRestore:false,
+            init: false,
+            dataType: 'string',
+            initValue: 'closed',
+            presetStore: false,
+            presetRestore: false,
             restoreStage: 'pre',
             allowedValues: ['closed', 'half', 'full'],
             postSet: (value, thisParam, init) => {
-                backendUtils.showSidebar(value);
+                // backendUtils.showSidebar(value);
+                let sidePanel = thisParam.uiElements.out.sidePanel,
+                    dpPadContainer = backendUtils.harmonicarium.html.dpPadContainer;
+    
+                if (value === 'full') {
+                    sidePanel.style.width = "100%"; 
+                    dpPadContainer.style.width = '1%';
+                    dpPadContainer.classList.add('d-none');
+                    sidePanel.classList.add('hum-modal-full', 'hum-modal-shown');
+                    sidePanel.classList.remove('hum-modal-half');
+                } else if (value === 'half') {
+                    sidePanel.style.width = "50%"; 
+                    dpPadContainer.style.width = '50%';
+                    dpPadContainer.classList.remove('d-none');
+                    sidePanel.classList.add('hum-modal-half', 'hum-modal-shown');
+                    sidePanel.classList.remove('hum-modal-full');
+                } else if (value === 'closed') {
+                    sidePanel.style.width = "0%";
+                    dpPadContainer.style.width = "100%";
+                    dpPadContainer.classList.remove('d-none');
+                    sidePanel.classList.remove('hum-modal-half', 'hum-modal-full', 'hum-modal-shown');
+                }
+                backendUtils.harmonicarium.components.dpPad.windowResize();
             }
         });
-
+        /**  
+         * This property controls the visibility of the log panel and initialises the
+         * eventListener of the UIelems related to it.
+         * It's not stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {('closed'|'open')} value                     - The visibility one wants to achieve.
+         * @property {Object}            uiElements                - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}            uiElements.out            - Namespace for the "out" HTML elements.
+         * @property {Object}            uiElements.fn             - Namespace for the "fn" HTML elements.
+         * @property {HTMLElement}       uiElements.out.logPanel   - The HTML log panel.
+         * @property {HTMLElement}       uiElements.fn.logCloseBtn - The HTML close button of the log panel.
+         * @property {HTMLElement}       uiElements.fn.logTestBtn  - The HTML test button of the log panel.
+         */
         this.logPanel = new HUM.Param({
-            app:backendUtils,
-            idbKey:'backendLogPanel',
-            uiElements:{
+            app: backendUtils,
+            idbKey: 'backendLogPanel',
+            uiElements: {
                 'logPanel': new HUM.Param.UIelem({
                     role: 'out',
                 }),
                 'logCloseBtn': new HUM.Param.UIelem({
                     role: 'fn',
                     opType: 'toggle',
-                    widget:'button',
-                    htmlTargetProp:'checked',
+                    widget: 'button',
+                    htmlTargetProp: 'checked',
                     eventType: 'click',
                     eventListener: evt => {
                         this.logPanel.valueUI = 'closed';
@@ -275,31 +303,73 @@ HUM.BackendUtils.prototype.Parameters = class {
                 'logTestBtn': new HUM.Param.UIelem({
                     role: 'fn',
                     opType: 'toggle',
-                    widget:'button',
-                    htmlTargetProp:'checked',
+                    widget: 'button',
+                    htmlTargetProp: 'checked',
                     eventType: 'click',
                     eventListener: evt => {
                         backendUtils.tester();
                     }
                 }),
             },
-            init:false,
-            dataType:'string',
-            initValue:'closed',
-            presetStore:false,
-            presetAutosave:false,
-            presetRestore:false,
+            init: false,
+            dataType: 'string',
+            initValue: 'closed',
+            presetStore: false,
+            presetRestore: false,
             restoreStage: 'pre',
             allowedValues: ['closed', 'open'],
             postSet: (value, thisParam, init) => {
-                backendUtils.showLogPanel(value);
+                let logPanel = thisParam.uiElements.out.logPanel,
+                    logCloseBtn = thisParam.uiElements.fn.logCloseBtn;
+            
+                if (value === 'closed') {
+                    logPanel.style.height = "0%";
+                    logCloseBtn.classList.remove('hum-modal-shown');
+                } else if (value === 'open') {
+                    logPanel.style.height = "35%";  
+                    logCloseBtn.classList.add('hum-modal-shown');
+                }
             }
         });
-
+        /**
+         * This property is a proxy for the UIelem of the textbox of the log panel (common to all dhc instances).
+         * It's not stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {Object}      uiElements             - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.out         - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.out.logText - The HTML log textbox.
+         */
+        this.logText = new HUM.Param({
+            app: backendUtils,
+            idbKey: 'backendLogText',
+            uiElements: {
+                'logText': new HUM.Param.UIelem({
+                    role: 'out',
+                })
+            },
+            postInit: (thisParam) => {
+                thisParam.uiElements.out.logText.innerHTML = 
+                "<p>>>>>>>>> > Welcome to the Harmonicarium!</p><p>...</p><p>..</p><p>.</p>";
+            },
+            presetStore: false,
+            presetRestore: false,
+        });
+        /**  
+         * This property initialises the eventListener of the sideNav UIelem.
+         * It's not stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {Object}      uiElements             - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.out         - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.out.sideNav - The HTML side navigation (top).
+         */
         this.sideNav = new HUM.Param({
-            app:backendUtils,
-            idbKey:'backendSideNav',
-            uiElements:{
+            app: backendUtils,
+            idbKey: 'backendSideNav',
+            uiElements: {
                 'sideNav': new HUM.Param.UIelem({
                     role: 'out',
                     eventType: 'shown.bs.tab',
@@ -312,13 +382,27 @@ HUM.BackendUtils.prototype.Parameters = class {
                     }
                 }),
             },
-            init:false,
+            presetStore: false,
+            presetRestore: false,
         });
-
+        /**  
+         * This property is a proxy for the UIelems related to the side menu.
+         * It's not stored on the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {Object}      uiElements                 - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.out             - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.out.sideMenu    - The HTML side menu (accordions' container).
+         * @property {HTMLElement} uiElements.out.helpObj     - The HTML help page.
+         * @property {HTMLElement} uiElements.out.creditsObj  - The HTML credits page.
+         * @property {HTMLElement} uiElements.out.settingsObj - The HTML settings page.
+         * @property {HTMLElement} uiElements.out.appObj      - The HTML PWA page.
+         */
         this.sideMenu = new HUM.Param({
-            app:backendUtils,
-            idbKey:'backendSideMenu',
-            uiElements:{
+            app: backendUtils,
+            idbKey: 'backendSideMenu',
+            uiElements: {
                 'sideMenu': new HUM.Param.UIelem({
                     htmlID: backendUtils.harmonicarium.html.sideMenu.id,
                     role: 'out',
@@ -336,32 +420,44 @@ HUM.BackendUtils.prototype.Parameters = class {
                         role: 'out',
                     }),
             },
-            init:false,
+            presetStore: false,
+            presetRestore: false,
         });
-
+        // 
         /**
-         *  The global HTML Log element (common to all dhc instances)
+         * This property is a tool for creating a modal dialog by setting the `value` property with an object
+         * containing the right properties. It's also a proxy for the UIelems related to the modal dialog.
+         * It's not stored on the DB.
          *
-         * @type {HTMLElement}
+         * @member {HUM.Param}
+         * 
+         * @property {Object}          value                                  - Object containing the arguments useful for modal dialog customization.
+         * @property {string}          value.hTitle                           - The modal dialog title text.
+         * @property {function(Event)} value.hCancel                          - The function to be executed when the dialog header cancel button is clicked.
+         * @property {HTMLElement}     value.body                             - The HTML of the modal dialog header.
+         * @property {string}          value.fCancelTxt                       - The cancel button text of the modal dialog. 
+         * @property {function(Event)} value.fCancel                          - The function to be executed when the dialog footer cancel button is clicked.
+         * @property {string}          value.fOKTxt                           - The OK button text of the modal dialog. 
+         * @property {function(Event)} value.fOK                              - The function to be executed when the dialog footer OK button is clicked.
+         * @property {boolean}         value.visible                          - Whether the dialog should be visible or not.
+         * @property {Object}          uiElements                             - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}          uiElements.out                         - Namespace for the "out" HTML elements.
+         * @property {HTMLElement}     uiElements.out.dialogModalContainer    - The HTML modal dialog container.
+         * @property {HTMLElement}     uiElements.out.dialogModal             - The HTML modal dialog box.
+         * @property {HTMLElement}     uiElements.out.dialogModalContent      - The HTML modal dialog content.
+         * @property {HTMLElement}     uiElements.out.dialogModalHeader       - The HTML modal dialog header.
+         * @property {HTMLElement}     uiElements.out.dialogModalHeaderTitle  - The HTML modal dialog title.
+         * @property {HTMLElement}     uiElements.out.dialogModalHeaderCancel - The HTML modal dialog header cancel button.
+         * @property {HTMLElement}     uiElements.out.dialogModalBody         - The HTML modal dialog body.
+         * @property {HTMLElement}     uiElements.out.dialogModalFooter       - The HTML modal dialog footer.
+         * @property {HTMLElement}     uiElements.out.dialogModalFooterCancel - The HTML modal dialog footer cancel button.
+         * @property {HTMLElement}     uiElements.out.dialogModalFooterOK     - The HTML modal dialog footer OK button.
+         * @property {HTMLElement}     uiElements.out.dialogModalContents     - The HTML modal dialog container for body contents.
          */
-        this.logText = new HUM.Param({
-            app:backendUtils,
-            idbKey:'backendLogText',
-            uiElements:{
-                'logText': new HUM.Param.UIelem({
-                    role: 'out',
-                })
-            },
-            postInit: (thisParam) => {
-                thisParam.uiElements.out.logText.innerHTML = 
-                "<p>>>>>>>>> > Welcome to the Harmonicarium!</p><p>...</p><p>..</p><p>.</p>";
-            },
-        });
-
         this.dialogModal = new HUM.Param({
-            app:backendUtils,
-            idbKey:'backendDialogModal',
-            uiElements:{
+            app: backendUtils,
+            idbKey: 'backendDialogModal',
+            uiElements: {
                 'dialogModalContainer': new HUM.Param.UIelem({role: 'out'}),
                     'dialogModal': new HUM.Param.UIelem({role: 'out'}),
                         'dialogModalContent': new HUM.Param.UIelem({role: 'out'}),
@@ -374,10 +470,9 @@ HUM.BackendUtils.prototype.Parameters = class {
                                 'dialogModalFooterOK': new HUM.Param.UIelem({role: 'out'}),
                 'dialogModalContents': new HUM.Param.UIelem({role: 'out'})
             },
+            init: false,
             presetStore: false,
-            presetAutosave: false,
             presetRestore: false,
-            init:false,
             postInit: (thisParam) => {
                 let modal = thisParam.uiElements.out;
                 thisParam.bsModal = new bootstrap.Modal(modal.dialogModalContainer, {
@@ -407,7 +502,6 @@ HUM.BackendUtils.prototype.Parameters = class {
                         keyboard: false,
                         backdrop: 'static'
                     });
-
 
                     if (hTitle) {
                         modal.dialogModalHeaderTitle.innerText = hTitle;
@@ -447,7 +541,7 @@ HUM.BackendUtils.prototype.Parameters = class {
 
                     if (fOK) {
                         modal.dialogModalFooterOK.classList.remove('d-none');
-                        modal.dialogModalFooterOK.addEventListener('click', fOK); // .fn);
+                        modal.dialogModalFooterOK.addEventListener('click', fOK);
                         // modal.dialogModalFooterOK.innerText = fOK.label;
                     } else {
                         modal.dialogModalFooterOK.classList.add('d-none');
@@ -479,6 +573,9 @@ HUM.BackendUtils.prototype.Parameters = class {
         });
 
     }
+    /**
+     * Initializes the parameters of side panel, log panel, and dialog modal.
+     */
     _init() {
         this.sidePanel._init();
         this.logPanel._init();

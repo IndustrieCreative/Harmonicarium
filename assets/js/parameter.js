@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -26,10 +26,12 @@
 
 "use strict";
 
+/* The above code is defining a JavaScript class called "Param" with various properties and methods.
+The class is used to create instances of parameters that can be used in an application. The
+parameters can be stored in a preset on a database, have UI elements associated with them, have a
+specific data type, and have various initialization and manipulation functions. The class provides
+flexibility and customization options for creating and managing parameters in an application. */
 HUM.Param = class {
-    /**
-    * @param {HUM.DHC} dhc - The DHC instance to which it belongs
-    */
     constructor(
         {
             app, // object - The component (app) that uses this param
@@ -82,7 +84,7 @@ HUM.Param = class {
         this._preRestore = preRestore;
         this._postRestore = postRestore;
         this.dataType = dataType; // 'integer'|'float'|'boolean'|'string'|'other'
-    	this.role = role; // 'in'|'fn'
+    	this.role = role; // 'int'|'fn'
         this._value = null;
         let setGet = {
             value: {
@@ -377,7 +379,7 @@ HUM.Param = class {
                 });
             }
         // If the autosaveQueue is active (is an array)
-        } else if (this._presetAutosave && this.harmonicarium.components.user.autosaveQueue.push) {
+        } else if (this._presetStore && this._presetAutosave && this.harmonicarium.components.user.autosaveQueue.push) {
             this.harmonicarium.components.user.autosaveQueue.push(this);
         }
 
@@ -467,9 +469,12 @@ HUM.Param = class {
 };
 
 
+/* The above code is defining a class called `UIelem` in JavaScript. The class has a constructor
+function that takes in an object `settings` as a parameter. The `settings` object contains various
+properties that define the behavior and attributes of the UI element. */
 HUM.Param.UIelem = class {
     /**
-    * @param {HUM.DHC} dhc - ...
+    * @param {object} settings - ...
     */
     constructor(
         {

@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,8 +22,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals HUM */
-
 "use strict";
 
 /** 
@@ -32,36 +30,47 @@
  *    Manage an route the communications from and to the other App components.
  */
 HUM.DHC = class {
-     /**
-     * @param {string} id            - The DHC id, in format harmonicariumID-dhcID (eg. '1-0')
-     * @param {HUM}    harmonicarium - The HUM instance to which the this DHC must refer
+    /**
+     * @param {string} id            - The DHC full ID, composed by the HUM ID and the DHC ID (eg. '1-0', '1-1', '1-2' etc.)
+     * @param {number} idx           - The DHC ID (eg. 0, 1, 2 etc.)
+     * @param {HUM}    harmonicarium - The HUM instance to which this DHC must refer.
      */
     constructor(id, idx, harmonicarium) {
         /**
-        * The HUM instance
+        * The HUM instance.
         *
         * @member {HUM}
         */
         this.harmonicarium = harmonicarium;
+        
         /**
-        * The id of this DHC instance
+        * The id of this DHC instance.
         *
         * @member {string}
         */
         this.id = id;
+
         this._id = idx;
+        
+        /**
+        * The name of the `HUM.DHC`, useful for group the parameters on the DB.
+        * Currently hard-coded as `"dhc"`.
+        *
+        * @member {string}
+        */
         this.name = 'dhc';
+        
         /**
          * DHC Tables
          *
          * @member {Object}
          * 
-         * @property {CtrlKeymap}                    ctrl       - The current Controller Keymap
-         * @property {Object.<xtnum, HUM.DHC#Xtone>} ft         - The current Fundamental Tones table
-         * @property {Object.<xtnum, HUM.DHC#Xtone>} ht         - The current Harmonic/Subharmonic Tones table
-         * @property {Object}                        reverse    - Reverse tables namespace
-         * @property {Object.<midinnum, xtnum>}      reverse.ft - Reverse Fundamental Tones table
-         * @property {Object.<midinnum, xtnum>}      reverse.ht - Reverse Harmonic/Subharmonic Tones table
+         * @property {CtrlKeymap}                    ctrl       - The current Controller Keymap.
+         * @property {Object.<xtnum, HUM.DHC#Xtone>} ft         - The current Fundamental Tones table.
+         * @property {Object.<xtnum, HUM.DHC#Xtone>} ht         - The current Harmonic/Subharmonic Tones table.
+         * @property {Object}                        reverse    - Namespace for the everse tables.
+         * @property {Object.<midinnum, xtnum>}      reverse.ft - Reverse Fundamental Tones table.
+         * @property {Object.<midinnum, xtnum>}      reverse.ht - Reverse Harmonic/Subharmonic Tones table.
          */
         this.tables = {
             ctrl: {},
@@ -72,17 +81,17 @@ HUM.DHC = class {
                 ht: {},
             },
         };
+        
         /**
          * Registered Apps<br>
          *     The <em>key</em> of each record is an app Object and the <em>value</em> is the metod that must be invoked
-         *     to send messages towards the app. 
+         *     to send messages towards the app.
+         * @todo Pass by constructor parameters and if false, no signals will be sent to the component.
          *
          * @member {Map.<Object, string>}
          */
         this.registeredApps = new Map();
-        // @todo: Pass by constructor parameters
-        //        and if false, no signals will be sent to the component
-
+        
         /**
          * Queues for FT/HT playing and muting management
          *
@@ -95,6 +104,7 @@ HUM.DHC = class {
             ft: [],
             ht: [],
         };
+        
         /**
         * The Backend Utils instance
         *
@@ -104,6 +114,7 @@ HUM.DHC = class {
 
         /**
          * DHC Settings
+         * @todo Rename "settings" to "parameters".
          *
          * @member {HUM.DHC#Parameters}
          * 
@@ -116,8 +127,6 @@ HUM.DHC = class {
         * @member {HUM.Hancock}
         */
         this.hancock = new HUM.Hancock(this);
-
-        this.settings._init();
 
         /**
         * The Synth instance
@@ -133,6 +142,8 @@ HUM.DHC = class {
         */
         this.midi = new HUM.midi.MidiHub(this);
 
+        this.settings._init();
+
         /**
         * The Hstack instance
         *
@@ -144,11 +155,12 @@ HUM.DHC = class {
     // ===========================
     
     /**
-     * Register a new App (module)
+     * Register a new App (module) with a specified method and priority, and rearranges
+     * the registered apps by priority.
      * 
-     * @param {Object} app      - The instance of the app to be registered
-     * @param {string} method   - The name of the method to use to send messages
-     * @param {number} priority - The priority with which the registered app will receive messages
+     * @param {Object} app      - The instance of the app to be registered.
+     * @param {string} method   - The name of the method to use to send messages to the app.
+     * @param {number} priority - The priority with which the registered app will receive messages.
      */
     registerApp(app, method, priority) {
         let rA = this.registeredApps;
@@ -156,6 +168,7 @@ HUM.DHC = class {
         // Re-arrage the registered apps by priority
         this.registeredApps = new Map([...rA.entries()].sort((a, b) => a[1].priority-b[1].priority));
     }
+
     /**
      * Send a DHCmsg message to all the registered apps
      * 
@@ -174,7 +187,6 @@ HUM.DHC = class {
     /**
      * Recompile FT & HT tables in the right order
      */
-    // @old icTablesCreate
     initTables() {
         // Create the FT tables
         this.createFTtable();
@@ -187,9 +199,9 @@ HUM.DHC = class {
     }
 
     /**
-     * Recompile the Fundamental Tones (FT) table 
+     * Recompile the Fundamental Tones (FT) table in accordance with the current FT Tuning System
+     * and send a message to the other apps.
      */
-    // @old icFTtableCreate
     createFTtable() {
         // Temp object
         let fundamentalsTable = {},
@@ -311,13 +323,13 @@ HUM.DHC = class {
     }
 
     /**
-     * Recompile the Harmonic/Subarmonic Tones (HT) table
+     * Recompile the Harmonic/Subarmonic Tones (HT) table and the reverse one and send a message to the other apps.
      * 
-     * @param {hertz} fundamental - The tone on which to build the table, expressed in hertz (Hz)
+     * @todo Implement custom H/S table length (16>32>64>128) to increase performances if needed.
+     * 
+     * @param {hertz} fundamental - The tone on which to build the table, expressed in hertz (Hz).
      */
-    // @old icHTtableCreate
     createHTtable(fundamental) {
-        // @todo - Implement custom H/S table length (16>32>64>128) to increase performances if needed
         let harmonicsTable = {},
             harmonicsReverseTable = {};
         for (let i = -128; i < 0; i++) {
@@ -342,12 +354,11 @@ HUM.DHC = class {
      * FM UI tools
      *==============================================================================*/
     /**
-     * Print the Fundamental Mother (FM) data to the UI output
+     * Print the Fundamental Mother (FM) data to the UI output monitor.
      *
-     * @param {hertz}    hz - Frequency expressed in hertz (Hz)
-     * @param {midicent} mc - MIDI note number expressed in midicent
+     * @param {hertz}    hz - Frequency expressed in hertz (Hz).
+     * @param {midicent} mc - MIDI note number expressed in midicent.
      */
-    // @old icPrintFundamentalMother
     printFundamentalMother(hz, mc){
         let xtObj = new this.Xtone(hz, mc);
         // Apply the controller pitchbend (if present) to the xtObj
@@ -367,14 +378,13 @@ HUM.DHC = class {
     /**
      * Update the preset list according to the selected FTs Tuning System
      */
-    // @old icUpdateKeymapPreset
     updateKeymapPreset() {
         let htmlElem = this.settings.keymap.presets.uiElements.in.controllerKeymapPresets;
         let lastValue = this.settings.keymap.presets.value[this.settings.ft.selected.value];
         let changeEvent = {target: {value: lastValue}};
         let keymaps = Object.keys(this.settings.keymap.presets.ctrlKeymapPreset[this.settings.ft.selected.value]);
         let optionFile = document.createElement("option");
-        // htmlElem.innerHTML = "";
+
         while (htmlElem.firstChild) {
             htmlElem.removeChild(htmlElem.firstChild);
         }
@@ -392,11 +402,12 @@ HUM.DHC = class {
     }
 
     /**
-     * Load a Controller keymap from 'ctrlKeymapPreset' according to the selection on UI
+     * Load a Controller keymap from 'ctrlKeymapPreset' according to the selection on UI.
+     * It performs various actions such as updating global variables, initializing tables,
+     * and sending a message to apps.
      *
-     * @param {Event} changeEvent - Change HTML event on 'select' element (ctrl keymap dropdown)
+     * @param {Event} changeEvent - Change HTML event object on 'select' element (ctrl keymap dropdown).
      */
-    // @old icLoadKeymapPreset
     loadKeymapPreset(changeEvent) {
         let indexValue = changeEvent.target.value;
         if (indexValue != 99) {
@@ -423,11 +434,10 @@ HUM.DHC = class {
     }
 
     /**
-     * Initialize the reading process of the Controller Keymap file
+     * Initialize the reading process of the Controller Keymap file.
      *
-     * @param {File} file - The file to be read
+     * @param {File} file - The file object that represents the keymap to be read.
      */
-    // @old icReadKeymapFile
     readKeymapFile(file) {
         let reader = new FileReader();
         // Handle loading errors
@@ -443,12 +453,15 @@ HUM.DHC = class {
     }
 
     /**
-     * Build the Controller Keymap table on the incoming raw data from .hcmap file
+     * Build the Controller Keymap table on the incoming raw data from .hcmap file.
+     * In particular, it splits the data into lines, parses each line into elements, 
+     * and writes the parsed elements into a new slot in the settings keymap presets.
      *
-     * @param {string} data - The text content of the Controller keymap file
-     * @param {string} name - The filename
+     * @param {string} data - The text content of the Controller keymap file. It is expected to
+     *                        be in a specific format where each line represents a key and its
+     *                        corresponding values. The values can be separated by spaces or tabs.
+     * @param {string} name - The filename, that represents the name of the keymap preset.
      */
-    // @old icProcessKeymapData
     processKeymapData(data, name) {
         // Get the key for the new slot
         let optionValue = this.settings.keymap.presets.uiElements.in.controllerKeymapPresets.length;
@@ -472,9 +485,8 @@ HUM.DHC = class {
     }
 
     /**
-     * Create an HTML table from the controller keymap and write it to the UI under a modal element
+     * Create an HTML table from the controller keymap and write it to the UI under a modal element.
      */
-    // @old icCtrlKeymap2HTML
     keymap2Html() {
         let txt = "";
         let map = this.tables.ctrl;
@@ -502,9 +514,12 @@ HUM.DHC = class {
      *==============================================================================*/
     
     /**
-     * Play a Fundamental Tone
+     * Play a Fundamental Tone.
+     * It recalculates the HT table.
+     * It avoids stucking notes by stopping any currently playing FTs with the same xtNum or ctrlNum.
+     * It manages the play queue, sends the message to the registered apps and updates the UI monitors.
      *
-     * @param {HUM.DHCmsg} dhcMsg - The message containing the FT to be played
+     * @param {HUM.DHCmsg} dhcMsg - The message containing the FT to be played.
      */
     playFT(dhcMsg) {
         // Recalculate the ht table passing the frequency (Hz)
@@ -515,12 +530,11 @@ HUM.DHC = class {
         if (dhcMsg.ctrlNum === false) {
             // Search by xtNum
             let remPos = false;
-            // If there is ONE FT is already pressed, stop it before playing it again
+            // If there is ONE FT already pressed, stop it before playing it again
             this.playQueue.ft.forEach( (queueTone, position) => {
                 // If the key is already pressed
                 if (queueTone.xtNum === dhcMsg.xtNum) {
                     this.sendMessageToApps(HUM.DHCmsg.ftOFF(queueTone.source, queueTone.xtNum, queueTone.velocity, queueTone.ctrlNum));
-                    // this.playQueue.ft.splice(position, 1);
                     remPos = position;
                 }
             });
@@ -535,7 +549,6 @@ HUM.DHC = class {
                 // If the key is already pressed
                 if (queueTone.ctrlNum === dhcMsg.ctrlNum) {
                     this.sendMessageToApps(HUM.DHCmsg.ftOFF(queueTone.source, queueTone.xtNum, queueTone.velocity, queueTone.ctrlNum));
-                    // this.playQueue.ft.splice(position, 1);
                     remPos = position;
                 }
             });
@@ -553,19 +566,20 @@ HUM.DHC = class {
         this.sendMessageToApps(dhcMsg);
 
         // Update the UI
-        // this.dhcMonitor("ft", dhcMsg.xtNum);
         this.settings.global.monitor.value = ["ft", dhcMsg.xtNum];
     }
 
     /**
-     * Stop playing a Fundamental Tone
+     * Stop playing a Fundamental Tone.
+     * It manages the play queue and sends the message to the registered apps.
+     * If there are other notes in the play queue, it plays the next note and updates the UI monitors.
      *
-     * @param {HUM.DHCmsg} dhcMsg - The message containing the FT to be muted
+     * @param {HUM.DHCmsg} dhcMsg - The message containing the FT to be muted.
      */
     muteFT(dhcMsg) {            
         // Search the FT number in the playQueue array
         let position = this.playQueue.ft.findIndex(qt => qt.xtNum === dhcMsg.xtNum);
-        // If the FTn exist
+        // If the FTn exists in the playQueue
         if (position !== -1) {
             // Remove the FTn from the playQueue array
             this.playQueue.ft.splice(position, 1);
@@ -592,24 +606,23 @@ HUM.DHC = class {
 
                 }
             }
-
-        // If the FTn does not exist
         }
+        // If the FTn does not exist in the playQueue
         // else {
         //     // if (dhcMsg.panic === false) {
         //     //     console.log("STRANGE: there is NOT a FT pressed key #:", dhcMsg.xtNum);
         //     // }
         // }
-
     }
 
     /**
-     * Play a Harmonic/Subharmonic Tone
-     *
-     * @param {HUM.DHCmsg} dhcMsg - The message containing the HT to be played
+     * Play a Harmonic/Subharmonic Tone.
+     * It avoids stucking notes by stopping any currently playing FTs with the same xtNum or ctrlNum.
+     * It manages the play queue, sends the message to the registered apps and updates the UI monitors.
+     * 
+     * @param {HUM.DHCmsg} dhcMsg - The message containing the HT to be played.
      */
     playHT(dhcMsg) {
-
         // - - - - - - - - - - - - - -
         // ANTI NOTES STUCKING
         if (dhcMsg.ctrlNum === false) {
@@ -673,8 +686,9 @@ HUM.DHC = class {
 
     /**
      * Stop playing a Harmonic/Subharmonic Tone
+     * It manages the play queue and sends the message to the registered apps.
      *
-     * @param {HUM.DHCmsg} dhcMsg - The message containing the HT to be muted
+     * @param {HUM.DHCmsg} dhcMsg - The message containing the HT to be muted.
      */
     muteHT(dhcMsg) {
         // If it's a normal HT
@@ -692,9 +706,8 @@ HUM.DHC = class {
                 }
 
                 this.sendMessageToApps(dhcMsg);
-
-            // If the FTn does not exist
             } 
+            // If the FTn does not exist
             // else {
             //     // if (dhcMsg.panic === false) {
             //     //     console.log("STRANGE: there is NOT a HT pressed key #:", dhcMsg.xtNum);
@@ -707,11 +720,11 @@ HUM.DHC = class {
             this.piping(0);
             this.sendMessageToApps(dhcMsg);
         }
-
     }
 
     /**
-     * Force to stop playing all Fundamental and Harmonic/Subharmonic Tones
+     * Force to stop playing all Fundamental and Harmonic/Subharmonic Tones.
+     * It clears the play queues and sends a message to the registered apps to turn off all notes.
      */
     panic() {
         this.playQueue.ft = [];
@@ -720,19 +733,18 @@ HUM.DHC = class {
     }
 
     /*==============================================================================*
-     * PIPER HT0 FEATURE
-     * The Piper store the last N pressed HTs and repeat them when HT0 is pressed
+     * PIPER (HT0) FEATURE
+     * The Piper stores the last N pressed HTs and repeats them when HT0 is pressed
      * simulating a special fake MIDI message
      *==============================================================================*/
 
     /**
-     * Store a play-HT message into the Piper's queue
+     * Store a play-HT message into the Piper's queue.
      *
-     * @param {HUM.DHCmsg} dhcMsg - The message containing the HT to be piped
+     * @param {HUM.DHCmsg} dhcMsg - The message containing the HT to be piped.
      */
-    piper(dhcMsg) { // statusByte, ctrlNum, velocity, type) {
+    piper(dhcMsg) {
         // Prepare the fake MIDI message
-        // let pack = [statusByte, ctrlNum, velocity];
         // If the pipe is not full
         if (this.settings.piper.queue.length < this.settings.piper.maxLength.value) {
             // Insert the message at the beginning of the queue
@@ -747,8 +759,8 @@ HUM.DHC = class {
     }
 
     /**
-     * Play or mute the next HT available in the piper's queue.<br>
-     *     Usually when HT0 is pressed (or released).
+     * Play or mute the next HT available in the Piper's queue
+     * (usually when HT0 is pressed or released).
      *
      * @param {(0|1)} state - Note ON/OFF; 1 is ON (play), 0 is OFF (mute)
      */
@@ -824,15 +836,14 @@ HUM.DHC = class {
     }
 
     /**
-     * Experimental function for dynamic default/preloaded piper melody.<br>
-     *     Fill the Piper's queue with a sequence of HTs.
+     * Experimental function for setting a default/preloaded melody into the Piper.
+     * It fills the Piper's queue with a sequence of HTs.
      *
-     * @todo - The preloaded Pipe must use only available keys
+     * @todo - The preloaded Pipe must use only the available keys.
      * 
-     * @param {('h'|'s'|'hs')} type - The HTs scale type of the current Controller keymap
+     * @param {('h'|'s'|'hs')} type - The HTs scale type of the current Controller keymap.
      */
     initPipeQueue(type) {
-        // let ctrlMap = this.tables.ctrl;
         let melodies = {
             h: [9, 10, 8, 4, 6],
             s: [-6, -5, -4, -3, -4, -5],
@@ -857,10 +868,9 @@ HUM.DHC = class {
      *
      * @return {HUM.DHC#Xtone} - The pitch-bent object
      */
-    // @old icArrayPitchbender
     bendXtone(xtObj) {
         // Compute the Controller Pitchbend amount in cents
-        let pitchbend = this.settings.controller.pb.amount * this.settings.controller.pb.range.value,
+        let pitchbend = this.midi.in.parameters.pitchbend.amount * this.midi.in.parameters.pitchbend.range.value,
         // Apply the controller pitchbend if present
             hz = Math.pow(2, pitchbend / 1200) * xtObj.hz,
             mc = (xtObj.mc + pitchbend / 100);
@@ -871,7 +881,6 @@ HUM.DHC = class {
      * Update all parts of the UI with the last computed or set values.
      * Send the 'init' message to all the redistered Apps. 
      */
-    // @old icMONITORSinit
     initUImonitors() {
         // Compile the FM monitors
         this.printFundamentalMother(this.settings.fm.hz.value, this.settings.fm.mc.value);
@@ -890,19 +899,19 @@ HUM.DHC = class {
      *==============================================================================*/
 
     /**
-     * Parse a note name string to get the MIDI note number
+     * Parse a note name string to get the MIDI note number in accordance with the specified mode.
      *
      * @example
-     * 'hancock' C0 == 0 midicent == 0 midinnum
-     * 'scientific' C0 == 12 midicent == 12 midinnum
-     * 'ui' C0 == // depends on Middle C setting ({@link Parameters.global.middle_c}) 
+     * Depending on the mode:
+     * - 'hancock' C0 == 0 midicent == 0 midinnum
+     * - 'scientific' C0 == 12 midicent == 12 midinnum
+     * - 'ui' C0 == // depends on Middle C setting ({@link DHC#Parameters.global.middle_c}) 
      * 
      * @param {('hancock'|'ui'|'scientific')} mode - The method in which the 'note' should be interpreted.
-     * @param {string}                        note - The note name in format <em>[A-G]#?-?\d+</em>. E.g. C0, A#4, G-3, D#-1  
+     * @param {string}                        note - The note name in format <code>[A-G]#?-?\d+</code>. E.g. C0, A#4, G-3, D#-1  
      * 
-     * @return {midinnum} - MIDI note number
+     * @return {midinnum} - MIDI note number (based on the given mode and note).
      */
-    // @old icHancockToMidi
     nameToMidiNumber(mode, note) {
         let ref = {
             "C": 0,
@@ -929,6 +938,7 @@ HUM.DHC = class {
                 // Return the MIDI note number 
                 return ref[note] + (12 * octave);
             } else if (mode === 'ui') {
+                                                     // middle C octave - 5 -> starting octave
                 return ref[note] + (12 * (octave + ((this.settings.global.middle_c.value-5) * -1)));
             } else if (mode === 'scientific') {
                 return ref[note] + (12 * (octave + 1));
@@ -937,15 +947,15 @@ HUM.DHC = class {
             return undefined;
         }
     }
+
     /**
-     * Convert a MIDI note number to an array containing 'hancock', 'ui' and 'scientific' note name,
-     *     plus the information if the key on the piano should be black or white.
+     * Utiity to convert a given MIDI note number to an array containing 'hancock', 'ui' and 'scientific' note name,
+     * plus the information if the key on the piano should be black or not.
      *
-     * @param {midinnum} midikey - MIDI note number (integer)
+     * @param {midinnum} midikey - MIDI note number (integer). The standard is from 0 (C-1) to 127 (G9).
      *
-     * @return {Array.<string, string, boolean, string>} - An array with Hancock, UI and Scientific note name, and if the key is white or black
+     * @return {Array.<string, string, boolean, string>} - An array with Hancock, UI and Scientific note name, and if the key is white or black.
      */
-    // @old icMidiToHancock
     midiNumberToNames(midikey) {
         let ref = {};
         if (this.settings.global.enharmonic_nn.value === 'sharp') {
@@ -1013,9 +1023,11 @@ HUM.DHC = class {
 
         }
     }
+ 
     /**
-     * UI Util to get the UI note name +/- cents from given midicent
-     *
+     * Utility to convert a given midicent value to an array containing the UI note name +/- cents
+     * plus the information if the key on the piano should be black or not.
+     * 
      * @param {midicent} mc - Pitch in midicent (float)
      *
      * @return {Array.<string, number, string, boolean>} - Array containing [note name, +/- sign, cents, black key y/n]
@@ -1052,59 +1064,60 @@ HUM.DHC = class {
         //       note name,   +/- sign,    cents,    black key y/n
         return [noteNames[1], centSign, noteCentsUI, noteNames[2]];
     }
+ 
     /**
-     * Util to get the full string of UI note name +/- cents
+     * Util to get the full string of UI note name +/- cents.
      *
-     * @param {midicent} mc - Pitch in midicent (float)
+     * @param {midicent} mc - Pitch in midicent (float).
      *
-     * @return {string} - The compliled string; e.g. D#3 -45&cent;;
+     * @return {string} - The compliled string; e.g. D#3 -45&cent;.
      */
     mcToNameString(mc) {
         let result = this.mcToName(mc);
         return result[0] + " " + result[1] + result[2] + "\u00A2";
     }
 
-/*==============================================================================*
- * GENERAL DHC COMPUTING TOOLS
- *==============================================================================*/
+    // end class Prototype
+
+    /*==============================================================================*
+    * GENERAL DHC COMPUTING TOOLS
+    *==============================================================================*/
 
     /**
-     * From MIDI note number to frequency (Hz)
+     * From MIDI note number to frequency (Hz).
      * 
-     * @param {midicent} mc - MIDI note number expressed in midi.cents
+     * @param {midicent} mc - MIDI note number expressed in midicents.
      * 
-     * @return {hertz} - Frequency expressed in hertz (Hz)
+     * @return {hertz} - Frequency expressed in hertz (Hz).
      */
-    // @old icMtoF
     static mcToFreq(mc) {
         // Use the icCompute_nEDx() function to get frequency
         return this.compute_nEDx(mc - 69, 2, 12, 440);
     }
 
     /**
-     * From frequency (Hz) to MIDI note number
+     * From frequency (Hz) to MIDI note number.
      * 
-     * @param {hertz} freq - Frequency expressed in hertz (Hz)
+     * @param {hertz} freq - Frequency expressed in hertz (Hz).
      * 
-     * @return {midicent} - MIDI note number expressed in midicent
+     * @return {midicent} - MIDI note number expressed in midicent.
      */
-    // @old icFtoM
     static freqToMc(freq) {
         let midicent = 69 + 12 * Math.log2(freq / 440);
         // Return full accuracy midicent
         return midicent;
     }
+
     /**
-     * Calculate the n-EDx ("free" equal temperament) of a relative tone
+     * Calculate the n-EDx ("free" equal temperament) of a relative tone.
      *
-     * @param  {number} relativeTone - Relative number of the "step" in the scale (should be integer)
-     * @param  {number} unit         - Ratio unit (must be greater than zero)
-     * @param  {number} division     - Equal divisions of the ratio unit (must be greater than zero)
-     * @param  {hertz}  masterTuning - Reference frequency expressed in hertz (Hz)
+     * @param  {number} relativeTone - Relative number of the "step" in the scale (should be integer).
+     * @param  {number} unit         - Ratio unit (must be greater than zero).
+     * @param  {number} division     - Equal divisions of the ratio unit (must be greater than zero).
+     * @param  {hertz}  masterTuning - Reference frequency expressed in hertz (Hz).
      * 
      * @return {hertz} - Frequency expressed in hertz (Hz)
      */
-    // @old icCompute_nEDx
     static compute_nEDx(relativeTone, unit, division, masterTuning) {
         let frequency = Math.pow(unit, relativeTone / division) * masterTuning;
         // Return full accuracy frequency
@@ -1112,28 +1125,27 @@ HUM.DHC = class {
     }
 
     /**
-     * Remove duplicated values on the array passed via the argument
+     * Remove duplicated values on the array passed via the argument.
      *
-     * @param {Array.<number>} arrArg - Array of numbers
+     * @param {Array.<number>} arrArg - Array of numbers.
      *
-     * @return {Array.<number>} - Uniquified array
+     * @return {Array.<number>} - A new array with only unique elements.
      */
     static uniqArray(arrArg) {
           return arrArg.filter((elem, pos, arr) => arr.indexOf(elem) === pos );
     }
 
-    // end class Prototype
-
 }; // end Class
 
 
 /**
- * A FT or HT relative tone (used in ft_table ht_table)
+ * A FT or HT relative tone (used in `HUM.DHC#table.ft` `HUM.DHC#table.ht`).
+ * It's a freezed object.
  */
 HUM.DHC.prototype.Xtone = class {
     /**
-     * @property {hertz}    hz - Frequency expressed in hertz (Hz)
-     * @property {midicent} mc - MIDI note number expressed in midi.cents
+     * @property {hertz}    hz - Frequency expressed in hertz (Hz).
+     * @property {midicent} mc - MIDI note number expressed in midicents.
      */
     constructor(hz, mc) {
         this.hz = Number(hz);
@@ -1143,38 +1155,47 @@ HUM.DHC.prototype.Xtone = class {
 };
 
 /** 
- * Dynamic Harmonics Calculator Settings class
+ * Instance class-container used to create all the `HUM.Param` objects for the `HUM.DHC` instance.
  */
-HUM.DHC.prototype.Parameters = class {
-     /**
-     * @param {string} preset - A JSON string containing...
+HUM.DHC.prototype.Parameters = class { 
+    /**
+     * @param {HUM.DHC} dhc - The DHC instance in which this class is being used.
      */
     constructor(dhc) {
         /**
          * Global settings
          *
          * @member {Object}
-         * 
-         * @property {number}                      hz_accuracy   - Number of decimal places (on UI) for numbers expressed in hertz (Hz)
-         * @property {number}                      cent_accuracy - Number of decimal places (on UI) for numbers expressed in cents
-         * @property {('sharp'|'flat'|'relative')} enharmonic_nn - Enharmonic note naming; 'sharp' for [#], 'flat' for [b] or "relative" for [#/b]
-         * @property {number}                      middle_c      - Middle C octave (-1 = from octave -1 >> Middle C = 60) - Starting octave
+         * @namespace
          */
         this.global = {
+            /**  
+             * This property controls the accuracy for the numbers expressed on hertz (Hz) in the UI
+             * and initialises the eventListener of the UIelem related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {number}      value                        - Number of decimal places (on UI) for the numbers expressed in hertz (Hz).
+             * @property {Object}      uiElements                   - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in                - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.dhc_hzAccuracy - The HTML input widget for Hz accuracy.
+             */
             hz_accuracy: new HUM.Param({
-                app:dhc,
-                idbKey:'dhcHzAccuracy',
-                uiElements:{
+                app: dhc,
+                idbKey: 'dhcHzAccuracy',
+                uiElements: {
                     'dhc_hzAccuracy': new HUM.Param.UIelem({
                         role: 'in',
-                        opType:'set',
+                        opType: 'set',
                         eventType: 'change',
-                        htmlTargetProp:'value',
-                        widget:'number',
+                        htmlTargetProp: 'value',
+                        widget: 'number',
                     })
                 },                
-                dataType:'integer',
-                initValue:2,
+                dataType: 'integer',
+                initValue: 2,
                 postSet: (value, param, init) => {
                     if (!init) {
                         // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
@@ -1182,20 +1203,34 @@ HUM.DHC.prototype.Parameters = class {
                     }
                 }
             }),
+
+            /**  
+             * This property controls the accuracy for the numbers expressed in cents on the UI
+             * and initialises the eventListener of the UIelem related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {number}      value                        - Number of decimal places (on UI) for the numbers expressed in cents.
+             * @property {Object}      uiElements                   - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in                - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.dhc_mcAccuracy - The HTML input widget for cent accuracy.
+             */
             cent_accuracy: new HUM.Param({
-                app:dhc,
-                idbKey:'dhcCentAccuracy',
-                uiElements:{
+                app: dhc,
+                idbKey: 'dhcCentAccuracy',
+                uiElements: {
                     'dhc_mcAccuracy': new HUM.Param.UIelem({
                         role: 'in',
-                        opType:'set',
+                        opType: 'set',
                         eventType: 'change',
-                        htmlTargetProp:'value',
-                        widget:'number',
+                        htmlTargetProp: 'value',
+                        widget: 'number',
                     })
                 },
-                dataType:'integer',
-                initValue:0,
+                dataType: 'integer',
+                initValue: 0,
                 postSet: (value, param, init) => {
                     if (!init) {
                         // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
@@ -1203,20 +1238,35 @@ HUM.DHC.prototype.Parameters = class {
                     }
                 }
             }),
+
+            /**  
+             * This property controls the way the enharmonic notes in the UI are displayed: 
+             * 'sharp' for [#] or 'flat' for [b] on the UI.
+             * It's initialises the eventListener of the UIelem related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {number}      value                          - Enharmonic note naming; 'sharp' or 'flat'.
+             * @property {Object}      uiElements                     - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in                  - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.dhc_enharmonicNN - The HTML input widget for enharmonic note naming.
+             */
             enharmonic_nn: new HUM.Param({
-                app:dhc,
-                idbKey:'dhcEnharmonicNN',
-                uiElements:{
+                app: dhc,
+                idbKey: 'dhcEnharmonicNN',
+                uiElements: {
                     'dhc_enharmonicNN': new HUM.Param.UIelem({
                         role: 'in',
-                        opType:'set',
+                        opType: 'set',
                         eventType: 'change',
-                        htmlTargetProp:'value',
-                        widget:'selection',
+                        htmlTargetProp: 'value',
+                        widget: 'selection',
                     })
                 },
-                dataType:'string',
-                initValue:'sharp',
+                dataType: 'string',
+                initValue: 'sharp',
                 allowedValues: ['sharp', 'flat'],
                 postSet: (value, param, init) => {
                     if (!init) {
@@ -1225,20 +1275,34 @@ HUM.DHC.prototype.Parameters = class {
                     }
                 }
             }),
+
+            /**  
+             * This property controls the way the middle C is named in the UI by setting its octave number.
+             * It's initialises the eventListener of the UIelem related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {number}      value                     - Middle C octave number.
+             * @property {Object}      uiElements                - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in             - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.dhc_middleC - The HTML input widget for the middle C octave.
+             */
             middle_c: new HUM.Param({
-                app:dhc,
-                idbKey:'dhcMiddleC',
-                uiElements:{
+                app: dhc,
+                idbKey: 'dhcMiddleC',
+                uiElements: {
                     'dhc_middleC': new HUM.Param.UIelem({
                         role: 'in',
-                        opType:'set',
+                        opType: 'set',
                         eventType: 'change',
-                        htmlTargetProp:'value',
-                        widget:'number',
+                        htmlTargetProp: 'value',
+                        widget: 'number',
                     })
                 },
-                dataType:'integer',
-                initValue:4,
+                dataType: 'integer',
+                initValue: 4,
                 postSet: (value, param, init) => {
                     if (!init) {
                         // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
@@ -1246,40 +1310,57 @@ HUM.DHC.prototype.Parameters = class {
                     }
                 }
             }),
+            /**  
+             * This property is a proxy for the UIelems related to the DHC monitor that shows the last pressed FT and HT.
+             * It's not stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {Object}      uiElements                     - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.out                 - Namespace for the "out" HTML elements.
+             * @property {HTMLElement} uiElements.out.monFT_frequency - The HTML for FT frequency (monitor)
+             * @property {HTMLElement} uiElements.out.monFT_midicents - The HTML for FT midicents (monitor)
+             * @property {HTMLElement} uiElements.out.monFT_notename  - The HTML for FT note name (monitor)
+             * @property {HTMLElement} uiElements.out.monFT_tone      - The HTML for FT relative tone number (monitor)
+             * @property {HTMLElement} uiElements.out.monHT_frequency - The HTML for HT frequency (monitor)
+             * @property {HTMLElement} uiElements.out.monHT_midicents - The HTML for HT midicents (monitor)
+             * @property {HTMLElement} uiElements.out.monHT_notename  - The HTML for HT note name (monitor)
+             * @property {HTMLElement} uiElements.out.monHT_tone      - The HTML for HT tone number (monitor)
+             */
             monitor: new HUM.Param({
-                app:dhc,
-                idbKey:'dhcMonitor',
-                uiElements:{
-                    'toneMonitorFT_frequency': new HUM.Param.UIelem({
+                app: dhc,
+                idbKey: 'dhcMonitor',
+                uiElements: {
+                    'monFT_frequency': new HUM.Param.UIelem({
                         role: 'out',
                     }),
-                    'toneMonitorFT_midicents': new HUM.Param.UIelem({
+                    'monFT_midicents': new HUM.Param.UIelem({
                         role: 'out',
                     }),
-                    'toneMonitorFT_notename': new HUM.Param.UIelem({
+                    'monFT_notename': new HUM.Param.UIelem({
                         role: 'out',
                     }),
-                    'toneMonitorFT_tone': new HUM.Param.UIelem({
+                    'monFT_tone': new HUM.Param.UIelem({
                         role: 'out',
                     }),
-                    'toneMonitorHT_frequency': new HUM.Param.UIelem({
+                    'monHT_frequency': new HUM.Param.UIelem({
                         role: 'out',
                     }),
-                    'toneMonitorHT_midicents': new HUM.Param.UIelem({
+                    'monHT_midicents': new HUM.Param.UIelem({
                         role: 'out',
                     }),
-                    'toneMonitorHT_notename': new HUM.Param.UIelem({
+                    'monHT_notename': new HUM.Param.UIelem({
                         role: 'out',
                     }),
-                    'toneMonitorHT_tone': new HUM.Param.UIelem({
+                    'monHT_tone': new HUM.Param.UIelem({
                         role: 'out',
                     })
                 },
-                init:false,
-                dataType:'array',
+                init: false,
+                dataType: 'array',
                 presetStore: false,
                 presetRestore: false,
-                // initValue:4,
                 postSet: (value, thisParam, init) => {
                     const [type, xtNum] = value;
                     let xtObj = dhc.tables[type][xtNum];
@@ -1293,99 +1374,60 @@ HUM.DHC.prototype.Parameters = class {
                         mcAccuracy = this.global.cent_accuracy.value;
                     if (type === "ft") {
                         // Update the log on MONITOR FT info on the UI
-                        thisParam.uiElements.out.toneMonitorFT_tone.innerText = xtNum;
-                        thisParam.uiElements.out.toneMonitorFT_midicents.innerText = xtObj.mc.toFixed(mcAccuracy + 2);
-                        thisParam.uiElements.out.toneMonitorFT_notename.innerText = name + " " + sign + cent + "\u00A2";
-                        thisParam.uiElements.out.toneMonitorFT_frequency.innerText = xtObj.hz.toFixed(hzAccuracy);
+                        thisParam.uiElements.out.monFT_tone.innerText = xtNum;
+                        thisParam.uiElements.out.monFT_midicents.innerText = xtObj.mc.toFixed(mcAccuracy + 2);
+                        thisParam.uiElements.out.monFT_notename.innerText = name + " " + sign + cent + "\u00A2";
+                        thisParam.uiElements.out.monFT_frequency.innerText = xtObj.hz.toFixed(hzAccuracy);
                     } else if (type === "ht") {
                         // Update the log on MONITOR HT info on the UI
-                        thisParam.uiElements.out.toneMonitorHT_tone.innerText = xtNum;
-                        thisParam.uiElements.out.toneMonitorHT_midicents.innerText = xtObj.mc.toFixed(mcAccuracy + 2);
-                        thisParam.uiElements.out.toneMonitorHT_notename.innerText = name + " " + sign + cent + "\u00A2";
-                        thisParam.uiElements.out.toneMonitorHT_frequency.innerText = xtObj.hz.toFixed(hzAccuracy);
+                        thisParam.uiElements.out.monHT_tone.innerText = xtNum;
+                        thisParam.uiElements.out.monHT_midicents.innerText = xtObj.mc.toFixed(mcAccuracy + 2);
+                        thisParam.uiElements.out.monHT_notename.innerText = name + " " + sign + cent + "\u00A2";
+                        thisParam.uiElements.out.monHT_frequency.innerText = xtObj.hz.toFixed(hzAccuracy);
                     }
                 }
             }),
         };
-        /**
-         * Controller settings
-         *
-         * @todo - Move to midi-in (one per input channel?)
-         * 
-         * @member {Object}
-         *
-         * @property {Object}                                             pb                  - Controller's Pitch Bend settings
-         * @property {cent}                                               pb.range            - Range value in cents (use hundreds when use MIDI-OUT and possibly the same as the instrument)
-         * @property {number}                                             pb.amount           - Current input controller pitchbend amount.
-         *                                                                                      Value from -8192 to +8191, normalized to the ratio from -1 to 0,99987792968750 
-         *                                                                                      Init amount is always 0.
-         * @property {('keymap'|'tsnap-channel'|'tsnap-divider')}         receive_mode        - FT/HT controller note receiving mode
-         * @property {Object}                                             tsnap               - Tone snapping receiving mode settings
-         * @property {midicent}                                           tsnap.tolerance     - Snap tolerance in midicent; it's the maximum difference within which you can consider
-         *                                                                                      two frequencies as the same note
-         * @property {midinnum}                                           tsnap.divider       - The note, on a MIDI piano keyboard, that divides the FTs from HTs;
-         *                                                                                      the notes smaller or equal to the divider will be considered FT, the greater ones will be considered HT
-         * @property {Object}                                             tsnap.channel       - Namesapace for tone snapping Channel Mode settings
-         * @property {midichan}                                           tsnap.channel.ft    - The MIDI channel assigned to FTs; all notes received on this channel will be considered as FT
-         * @property {midichan}                                           tsnap.channel.ht    - The MIDI channel assigned to HTs; all notes received on this channel will be considered as HT
-         */
-        this.controller = {
-            pb: {
-                range: new HUM.Param({
-                    app:dhc,
-                    idbKey:'dhcPitchbendRange',
-                    uiElements:{
-                        'dhc_pitchbendRange': new HUM.Param.UIelem({
-                            role: 'in',
-                            opType:'set',
-                            eventType: 'change',
-                            htmlTargetProp:'value',
-                            widget:'number',
-                        })
-                    },                    
-                    dataType:'integer',
-                    initValue:100,
-                }),
-                amount: 0.0
-            },
-            receive_mode: "keymap",
-            tsnap: {
-                tolerance: 0.5,
-                divider: 56,
-                channel: {
-                    ft: 1,
-                    ht: 0,
-                    divider: 0
-                }
-            },
-        };
+
         /**
          * Fundamental Mother (FM) settings
          * 
          * @member {Object}
-         *
-         * @property {hertz}       hz   - Frequency expressed in hertz (Hz)
-         * @property {midicent}    mc   - Frequency expressed in midi.cents (mc)
-         * @property {('mc'|'hz')} init - What unit to use to initialize, 'hz' or 'mc'
+         * @namespace
          */
-        this.fm = {
+        this.fm = {            
+            /**  
+             * This property allows the FM to be set by a value expressed in hertz (Hz).
+             * It's initialises the eventListener of the UIelem related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {hertz}       value                        - The FM frequency in hertz (Hz) as float number.
+             * @property {Object}      uiElements                   - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in                - Namespace for the "in" HTML elements.
+             * @property {Object}      uiElements.out               - Namespace for the "out" HTML elements.
+             * @property {HTMLElement} uiElements.in.fm_hz          - The HTML input widget for FM frequency in hertz.
+             * @property {HTMLElement} uiElements.out.fm_hz_monitor - The HTML output that shows the current FM frequency in hertz.
+             */
             hz: new HUM.Param({
-                app:dhc,
-                idbKey:'dhcFMhz',
-                uiElements:{
+                app: dhc,
+                idbKey: 'dhcFMhz',
+                uiElements: {
                     'fm_hz': new HUM.Param.UIelem({
                         role: 'in',
-                        opType:'set',
+                        opType: 'set',
                         eventType: 'change',
-                        htmlTargetProp:'value',
-                        widget:'number',
+                        htmlTargetProp: 'value',
+                        widget: 'number',
                     }),
                     'fm_hz_monitor': new HUM.Param.UIelem({
                         role: 'out',
                     }),
                 },
-                dataType:'float',
-                initValue:false, // 130.8127826502993,
+                dataType: 'float',
+                initValue: false, // 130.8127826502993,
                 preSet: (value, thisParam) => {
                     if (value <= 0) {
                         value = 1;
@@ -1400,23 +1442,39 @@ HUM.DHC.prototype.Parameters = class {
                     }
                 },
             }),
+
+            /**  
+             * This property allows the FM to be set by a value expressed in midicents (mc).
+             * It's initialises the eventListener of the UIelem related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {midicent}    value                        - The FM frequency in midicent as float number.
+             * @property {Object}      uiElements                   - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in                - Namespace for the "in" HTML elements.
+             * @property {Object}      uiElements.out               - Namespace for the "out" HTML elements.
+             * @property {HTMLElement} uiElements.in.fm_mc          - The HTML input widget for FM frequency in midicent.
+             * @property {HTMLElement} uiElements.out.fm_mc_monitor - The HTML output that shows the current FM frequency in midicent.
+             */
             mc: new HUM.Param({
-                app:dhc,
-                idbKey:'dhcFMmc',
-                uiElements:{
+                app: dhc,
+                idbKey: 'dhcFMmc',
+                uiElements: {
                     'fm_mc': new HUM.Param.UIelem({
                         role: 'in',
-                        opType:'set',
+                        opType: 'set',
                         eventType: 'change',
-                        htmlTargetProp:'value',
-                        widget:'number',
+                        htmlTargetProp: 'value',
+                        widget: 'number',
                     }),
                     'fm_mc_monitor': new HUM.Param.UIelem({
                         role: 'out',
                     }),
                 },
-                dataType:'float',
-                initValue:48, // C3
+                dataType: 'float',
+                initValue: 48, // C3
                 postSet: (value, thisParam, init) => {
                     // Change the 'init' for eventual icDHCinit
                     if (!init) {
@@ -1425,13 +1483,24 @@ HUM.DHC.prototype.Parameters = class {
                 },
             })
         };
+
+        /**  
+         * This property indicates what unit to use for initializing the FM when the app is loaded: 'hz' or 'mc'.
+         * It's stored on the DB.
+         * @instance
+         * @name init
+         * @memberof HUM.DHC#Parameters#fm
+         * @type {HUM.Param}
+         * 
+         * @property {('mc'|'hz')} value - What unit to use to initialize the FM, 'hz' or 'mc'.
+         */
         this.fm.init = new HUM.Param({
-            app:dhc,
-            idbKey:'dhcFMinit',
-            dataType:'string',
-            role:'int',
-            initValue:'mc',
-            init:false,
+            app: dhc,
+            idbKey: 'dhcFMinit',
+            dataType: 'string',
+            role: 'int',
+            initValue: 'mc',
+            init: false,
             postSet: (value, thisParam, init) => {
                 if (value === 'hz') {
                     let midicents = dhc.constructor.freqToMc(this.fm.hz.value);
@@ -1454,47 +1523,48 @@ HUM.DHC.prototype.Parameters = class {
                 }
             }
         });
+
         /**
          * Fundamental Tones (FTs) scale tuning method settings
          * 
          * @member {Object}
-         * 
-         * @property {Object}                   nEDx                - "Equal Temperament" tuning method parameters
-         * @property {number}                   nEDx.unit           - The ratio to divide
-         * @property {number}                   nEDx.division       - The equal divisions
-         * @property {Object}                   h_s                 - "Harmonics and subharmonics" tuning method parameters
-         * @property {Object}                   h_s.natural         - Natural (no transposition)
-         * @property {tratio}                   h_s.natural.h_tr    - Transpose ratio in decimal for Harmonics
-         * @property {tratio}                   h_s.natural.s_tr    - Transpose ratio in decimal for Subharmonics
-         * @property {Object}                   h_s.sameOctave      - Same octave transposition
-         * @property {tratio}                   h_s.sameOctave.h_tr - Transpose ratio in decimal for Harmonics
-         * @property {tratio}                   h_s.sameOctave.s_tr - Transpose ratio in decimal for Subharmonics
-         * @property {('natural'|'sameOctave')} h_s.selected        - Default/current sub-method selected
-         * @property {Object}                   file                - Tuning files method (currently not used)
-         * @property {('nEDx'|'h_s'|'file')}    selected            - Default/current method selected
-         * @property {number}                   steps               - +/- Steps for {DHC#tables.ft}<br>
-         *                                                            'steps' to final range: MIDI Note number range considerations<br>
-         *                                                            32 = -32 > +32 : (old default: I think +-64 is too wide, but let's try)<br>
-         *                                                            64 = -64 > +64 : FM = midi#63 or midi#64 to use the full MIDI note range<br>
-         *                                                            ( midi#63 out of range on -1  )<br>
-         *                                                            ( midi#64 out of range on 128 )
+         * @namespace
          */
-        this.ft = {           
+        this.ft = {    
+            /**
+             * FT "Equal Temperament" tuning method parameters
+             * 
+             * @member {Object}
+             * @namespace
+             */
             nEDx: {
+                /**  
+                 * This property indicates what interval is to be divided into logarithmically equal parts.
+                 * It's initialises the eventListener of the UIelem related to it.
+                 * It's stored on the DB.
+                 * @instance
+                 *
+                 * @member {HUM.Param}
+                 * 
+                 * @property {number}      value                     - The ratio (interval) to divide.
+                 * @property {Object}      uiElements                - Namespace for the "in", "out" and "fn" objects.
+                 * @property {Object}      uiElements.in             - Namespace for the "in" HTML elements.
+                 * @property {HTMLElement} uiElements.in.ftNEDX_unit - The HTML input widget for the ratio unit.
+                 */
                 unit: new HUM.Param({
-                    app:dhc,
-                    idbKey:'dhcFTnEDxUnit',
-                    uiElements:{
+                    app: dhc,
+                    idbKey: 'dhcFTnEDxUnit',
+                    uiElements: {
                         'ftNEDX_unit': new HUM.Param.UIelem({
                             role: 'in',
-                            opType:'set',
+                            opType: 'set',
                             eventType: 'change',
-                            htmlTargetProp:'value',
-                            widget:'number',
+                            htmlTargetProp: 'value',
+                            widget: 'number',
                         })
                     },
-                    dataType:'integer',
-                    initValue:2,
+                    dataType: 'integer',
+                    initValue: 2,
                     preSet: (value, thisParam) => {
                         if (value <= 1) {
                             value = 2;
@@ -1509,20 +1579,33 @@ HUM.DHC.prototype.Parameters = class {
                         }
                     },
                 }),
+                /**  
+                 * This property indicates how many logarithmically equal parts the unit should be divided into.
+                 * It's initialises the eventListener of the UIelem related to it.
+                 * It's stored on the DB.
+                 * @instance
+                 *
+                 * @member {HUM.Param}
+                 * 
+                 * @property {number}      value                         - The number of equal divisions.
+                 * @property {Object}      uiElements                    - Namespace for the "in", "out" and "fn" objects.
+                 * @property {Object}      uiElements.in                 - Namespace for the "in" HTML elements.
+                 * @property {HTMLElement} uiElements.in.ftNEDX_division - The HTML input widget for equal divisions.
+                 */
                 division: new HUM.Param({
-                    app:dhc,
-                    idbKey:'dhcFTnEDxDivision',
-                    uiElements:{
+                    app: dhc,
+                    idbKey: 'dhcFTnEDxDivision',
+                    uiElements: {
                         'ftNEDX_division': new HUM.Param.UIelem({
                             role: 'in',
-                            opType:'set',
+                            opType: 'set',
                             eventType: 'change',
-                            htmlTargetProp:'value',
-                            widget:'number',
+                            htmlTargetProp: 'value',
+                            widget: 'number',
                         })
                     },
-                    dataType:'integer',
-                    initValue:12,
+                    dataType: 'integer',
+                    initValue: 12,
                     preSet: (value, thisParam) => {
                         if (value < 1) {
                             value = 12;
@@ -1538,26 +1621,65 @@ HUM.DHC.prototype.Parameters = class {
                     },
                 }),
             },
+
+            /**
+             * "Harmonics and subharmonics" FT tuning method parameters.
+             * 
+             * @member {Object}
+             * @namespace
+             */
             h_s: {
+                /**  
+                 * This property indicates what sub-method of "Harmonics and subharmonics" (H-S) tuning is selected for FT.
+                 * It's stored on the DB.
+                 * @instance
+                 * 
+                 * @member {HUM.Param}
+                 * 
+                 * @property {('natural'|'sameOctave')} value - The selected H-S tuning sub-method.
+                 */
                 selected: new HUM.Param({
-                    app:dhc,
-                    idbKey:'dhcFThsSelected',
-                    dataType:'string',
-                    role:'int',
-                    initValue:'sameOctave',
+                    app: dhc,
+                    idbKey: 'dhcFThsSelected',
+                    dataType: 'string',
+                    role: 'int',
+                    initValue: 'sameOctave',
                     allowedValues: ['natural', 'sameOctave'],
                 }),
+
+                /**
+                 * FT tuning method parameters for natural "Harmonics and subharmonics" (no transposition).
+                 * 
+                 * @member {Object}
+                 * @namespace
+                 */
                 natural: {
+                    /**  
+                     * This property sets the transpose ratio expressed in decimal value for natural Harmonics.
+                     * It's initialises the eventListener of the UIelem related to it.
+                     * It's stored on the DB.
+                     * @instance
+                     *
+                     * @member {HUM.Param}
+                     * 
+                     * @property {tratio}      value                                - Transpose ratio for Harmonics expressed in decimal places.
+                     * @property {Object}      uiElements                           - Namespace for the "in", "out" and "fn" objects.
+                     * @property {Object}      uiElements.in                        - Namespace for the "in" HTML elements.
+                     * @property {Object}      uiElements.out                       - Namespace for the "out" HTML elements.
+                     * @property {HTMLElement} uiElements.in.ftHStranspose_h_plus   - The HTML input button that doubles the ratio.
+                     * @property {HTMLElement} uiElements.in.ftHStranspose_h_minus  - The HTML input button that divides the ratio by two.
+                     * @property {HTMLElement} uiElements.out.ftHStranspose_h_ratio - The HTML output that shows the current transpose ratio.
+                     */
                     h_tr: new HUM.Param({
-                        app:dhc,
-                        idbKey:'dhcFThsNaturalHtr',
-                        uiElements:{
+                        app: dhc,
+                        idbKey: 'dhcFThsNaturalHtr',
+                        uiElements: {
                             'ftHStranspose_h_plus': new HUM.Param.UIelem({
                                 role: 'in',
-                                opType:'set',
+                                opType: 'set',
                                 eventType: 'click',
-                                htmlTargetProp:'checked',
-                                widget:'button', // "button" is like uiSet===null
+                                htmlTargetProp: 'checked',
+                                widget: 'button', // "button" is like uiSet===null
                                 eventListener: (evt) => {
                                     if (this.ft.h_s.selected.value === "natural") {
                                         this.ft.h_s.natural.h_tr.value *= 2;
@@ -1566,10 +1688,10 @@ HUM.DHC.prototype.Parameters = class {
                             }),
                             'ftHStranspose_h_minus': new HUM.Param.UIelem({
                                 role: 'in',
-                                opType:'set',
+                                opType: 'set',
                                 eventType: 'click',
-                                htmlTargetProp:'checked',
-                                widget:'button', // "button" is like uiSet===null
+                                htmlTargetProp: 'checked',
+                                widget: 'button', // "button" is like uiSet===null
                                 eventListener: (evt) => {
                                     if (this.ft.h_s.selected.value === "natural") {
                                         this.ft.h_s.natural.h_tr.value *= 0.5;
@@ -1580,10 +1702,10 @@ HUM.DHC.prototype.Parameters = class {
                                 role: 'out',
                             }),
                         },
-                        dataType:'float',
-                        // role:'int',
-                        initValue:1,
-                        // init:false, 
+                        dataType: 'float',
+                        // role: 'int',
+                        initValue: 1,
+                        // init: false, 
                         postSet: (value, thisParam, init) => {
                             if (!init) {
                                 if (this.ft.h_s.selected.value === "natural") {
@@ -1593,16 +1715,32 @@ HUM.DHC.prototype.Parameters = class {
                             }
                         }
                     }),
+                    /**  
+                     * This property sets the transpose ratio expressed in decimal value for natural Subharmonics.
+                     * It's initialises the eventListener of the UIelem related to it.
+                     * It's stored on the DB.
+                     * @instance
+                     *
+                     * @member {HUM.Param}
+                     * 
+                     * @property {tratio}      value                                - Transpose ratio for Subharmonics expressed in decimal places.
+                     * @property {Object}      uiElements                           - Namespace for the "in", "out" and "fn" objects.
+                     * @property {Object}      uiElements.in                        - Namespace for the "in" HTML elements.
+                     * @property {Object}      uiElements.out                       - Namespace for the "out" HTML elements.
+                     * @property {HTMLElement} uiElements.in.ftHStranspose_s_plus   - The HTML input button that doubles the ratio.
+                     * @property {HTMLElement} uiElements.in.ftHStranspose_s_minus  - The HTML input button that divides the ratio by two.
+                     * @property {HTMLElement} uiElements.out.ftHStranspose_s_ratio - The HTML output that shows the current transpose ratio.
+                     */
                     s_tr: new HUM.Param({
-                        app:dhc,
-                        idbKey:'dhcFThsNaturalStr',
+                        app: dhc,
+                        idbKey: 'dhcFThsNaturalStr',
                         uiElements: {
                             'ftHStranspose_s_plus': new HUM.Param.UIelem({
                                 role: 'in',
-                                opType:'set',
+                                opType: 'set',
                                 eventType: 'click',
-                                htmlTargetProp:'checked',
-                                widget:'button', // "button" is like uiSet===null
+                                htmlTargetProp: 'checked',
+                                widget: 'button', // "button" is like uiSet===null
                                 eventListener: (evt) => {
                                     if (this.ft.h_s.selected.value === "natural") {
                                         this.ft.h_s.natural.s_tr.value *= 2;
@@ -1611,10 +1749,10 @@ HUM.DHC.prototype.Parameters = class {
                             }),
                             'ftHStranspose_s_minus': new HUM.Param.UIelem({
                                 role: 'in',
-                                opType:'set',
+                                opType: 'set',
                                 eventType: 'click',
-                                htmlTargetProp:'checked',
-                                widget:'button', // "button" is like uiSet===null
+                                htmlTargetProp: 'checked',
+                                widget: 'button', // "button" is like uiSet===null
                                 eventListener: (evt) => {
                                     if (this.ft.h_s.selected.value === "natural") {
                                         this.ft.h_s.natural.s_tr.value *= 0.5;
@@ -1625,8 +1763,8 @@ HUM.DHC.prototype.Parameters = class {
                                 role: 'out',
                             })
                         },
-                        dataType:'float',
-                        initValue:16,
+                        dataType: 'float',
+                        initValue: 16,
                         postSet: (value, thisParam, init) => {
                             if (!init) {
                                 if (this.ft.h_s.selected.value === "natural") {
@@ -1637,17 +1775,40 @@ HUM.DHC.prototype.Parameters = class {
                         }
                     })
                 },
+
+                /**
+                 * FT tuning method parameters for "Harmonics and subharmonics" transposed on the same octave.
+                 * 
+                 * @member {Object}
+                 * @namespace
+                 */
                 sameOctave: {
+                    /**  
+                     * This property sets the transpose ratio expressed in decimal value for Harmonics already transposed on the same octave.
+                     * It's initialises the eventListener of the UIelem related to it.
+                     * It's stored on the DB.
+                     * @instance
+                     *
+                     * @member {HUM.Param}
+                     * 
+                     * @property {tratio}      value                                - Transpose ratio for Harmonics expressed in decimal places.
+                     * @property {Object}      uiElements                           - Namespace for the "in", "out" and "fn" objects.
+                     * @property {Object}      uiElements.in                        - Namespace for the "in" HTML elements.
+                     * @property {Object}      uiElements.out                       - Namespace for the "out" HTML elements.
+                     * @property {HTMLElement} uiElements.in.ftHStranspose_h_plus   - The HTML input button that doubles the ratio.
+                     * @property {HTMLElement} uiElements.in.ftHStranspose_h_minus  - The HTML input button that divides the ratio by two.
+                     * @property {HTMLElement} uiElements.out.ftHStranspose_h_ratio - The HTML output that shows the current transpose ratio.
+                     */
                     h_tr: new HUM.Param({
-                        app:dhc,
-                        idbKey:'dhcFThsSameOctaveHtr',
-                        uiElements:{
+                        app: dhc,
+                        idbKey: 'dhcFThsSameOctaveHtr',
+                        uiElements: {
                             'ftHStranspose_h_plus': new HUM.Param.UIelem({
                                 role: 'in',
-                                opType:'set',
+                                opType: 'set',
                                 eventType: 'click',
-                                htmlTargetProp:'checked',
-                                widget:'button', // "button" is like uiSet===null
+                                htmlTargetProp: 'checked',
+                                widget: 'button', // "button" is like uiSet===null
                                 eventListener: (evt) => {
                                     if (this.ft.h_s.selected.value === "sameOctave") {
                                         this.ft.h_s.sameOctave.h_tr.value *= 2;
@@ -1656,10 +1817,10 @@ HUM.DHC.prototype.Parameters = class {
                             }),
                             'ftHStranspose_h_minus': new HUM.Param.UIelem({
                                 role: 'in',
-                                opType:'set',
+                                opType: 'set',
                                 eventType: 'click',
-                                htmlTargetProp:'checked',
-                                widget:'button', // "button" is like uiSet===null
+                                htmlTargetProp: 'checked',
+                                widget: 'button', // "button" is like uiSet===null
                                 eventListener: (evt) => {
                                     if (this.ft.h_s.selected.value === "sameOctave") {
                                         this.ft.h_s.sameOctave.h_tr.value *= 0.5;
@@ -1670,8 +1831,8 @@ HUM.DHC.prototype.Parameters = class {
                                 role: 'out',
                             }),
                         },
-                        dataType:'float',
-                        initValue:1,
+                        dataType: 'float',
+                        initValue: 1,
                         postSet: (value, thisParam, init) => {
                             if (!init) {
                                 if (this.ft.h_s.selected.value === "sameOctave") {
@@ -1681,16 +1842,32 @@ HUM.DHC.prototype.Parameters = class {
                             }
                         }
                     }),
+                    /**  
+                     * This property sets the transpose ratio expressed in decimal value for Subharmonics already transposed on the same octave.
+                     * It's initialises the eventListener of the UIelem related to it.
+                     * It's stored on the DB.
+                     * @instance
+                     *
+                     * @member {HUM.Param}
+                     * 
+                     * @property {tratio}      value                                - Transpose ratio for Subharmonics expressed in decimal places.
+                     * @property {Object}      uiElements                           - Namespace for the "in", "out" and "fn" objects.
+                     * @property {Object}      uiElements.in                        - Namespace for the "in" HTML elements.
+                     * @property {Object}      uiElements.out                       - Namespace for the "out" HTML elements.
+                     * @property {HTMLElement} uiElements.in.ftHStranspose_s_plus   - The HTML input button that doubles the ratio.
+                     * @property {HTMLElement} uiElements.in.ftHStranspose_s_minus  - The HTML input button that divides the ratio by two.
+                     * @property {HTMLElement} uiElements.out.ftHStranspose_s_ratio - The HTML output that shows the current transpose ratio.
+                     */
                     s_tr: new HUM.Param({
-                        app:dhc,
-                        idbKey:'dhcFThsSameOctaveStr',
+                        app: dhc,
+                        idbKey: 'dhcFThsSameOctaveStr',
                         uiElements: {
                             'ftHStranspose_s_plus': new HUM.Param.UIelem({
                                 role: 'in',
-                                opType:'set',
+                                opType: 'set',
                                 eventType: 'click',
-                                htmlTargetProp:'checked',
-                                widget:'button', // "button" is like uiSet===null
+                                htmlTargetProp: 'checked',
+                                widget: 'button', // "button" is like uiSet===null
                                 eventListener: (evt) => {
                                     if (this.ft.h_s.selected.value === "sameOctave") {
                                         this.ft.h_s.sameOctave.s_tr.value *= 2;
@@ -1699,10 +1876,10 @@ HUM.DHC.prototype.Parameters = class {
                             }),
                             'ftHStranspose_s_minus': new HUM.Param.UIelem({
                                 role: 'in',
-                                opType:'set',
+                                opType: 'set',
                                 eventType: 'click',
-                                htmlTargetProp:'checked',
-                                widget:'button', // "button" is like uiSet===null
+                                htmlTargetProp: 'checked',
+                                widget: 'button', // "button" is like uiSet===null
                                 eventListener: (evt) => {
                                     if (this.ft.h_s.selected.value === "sameOctave") {
                                         this.ft.h_s.sameOctave.s_tr.value *= 0.5;
@@ -1713,8 +1890,8 @@ HUM.DHC.prototype.Parameters = class {
                                 role: 'out',
                             })
                         },
-                        dataType:'float',
-                        initValue:2,
+                        dataType: 'float',
+                        initValue: 2,
                         postSet: (value, thisParam, init) => {
                             if (!init) {
                                 if (this.ft.h_s.selected.value === "sameOctave") {
@@ -1726,7 +1903,14 @@ HUM.DHC.prototype.Parameters = class {
                     })
                 },
             },
-            /** @todo - Tuning file formats */ 
+ 
+            /**
+             * FT Tuning files method (currently not used).
+             * @todo Implement the loading of tuning file formats.
+             * 
+             * @member {Object}
+             * @namespace
+             */
             file: {
                 scl: {},
                 tun: {},
@@ -1734,16 +1918,37 @@ HUM.DHC.prototype.Parameters = class {
                 lmso: {},
                 selected: "scl"
             },
+
+            /**  
+             * This property indicates what tuning method is selected for FT.
+             * It's stored on the DB.
+             * @todo {('file')}
+             * @instance
+             * 
+             * @member {HUM.Param}
+             * 
+             * @property {('nEDx'|'h_s')} value                                - The selected tuning method.
+             * @property {Object}         uiElements                           - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}         uiElements.fn                        - Namespace for the "fn" HTML elements.
+             * @property {Object}         uiElements.out                       - Namespace for the "out" HTML elements.
+             * @property {HTMLElement}    uiElements.fn.ftSys_NEDX             - The HTML radio button for selecting the NEDX tuning method.
+             * @property {HTMLElement}    uiElements.fn.ftSys_HSnat            - The HTML radio button for selecting the HSnat tuning method.
+             * @property {HTMLElement}    uiElements.fn.ftSys_HStrans          - The HTML radio button for selecting the HStrans tuning method.
+             * @property {HTMLElement}    uiElements.out.ftNEDX                - The HTML output that shows the controls for NEDX tuning method.
+             * @property {HTMLElement}    uiElements.out.ftHS                  - The HTML output that shows the controls for Harmonics/Subharmonics tuning method.
+             * @property {HTMLElement}    uiElements.out.ftHStranspose_h_ratio - The HTML output that shows the current transpose ratio for Harmonics.
+             * @property {HTMLElement}    uiElements.out.ftHStranspose_s_ratio - The HTML output that shows the current transpose ratio for Subharmonics.
+             */
             selected: new HUM.Param({
-                app:dhc,
-                idbKey:'dhcFTselected',
-                uiElements:{
+                app: dhc,
+                idbKey: 'dhcFTselected',
+                uiElements: {
                     'ftSys_NEDX': new HUM.Param.UIelem({
                         role: 'fn',
-                        opType:'set',
+                        opType: 'set',
                         eventType: 'click',
-                        htmlTargetProp:'checked',
-                        widget:'number',
+                        htmlTargetProp: 'checked',
+                        widget: 'number',
                         uiSet: (value, thisParam, init) => {
                             if (value === 'nEDx') {
                                 thisParam.uiElements.fn.ftSys_NEDX.checked = true;
@@ -1757,10 +1962,10 @@ HUM.DHC.prototype.Parameters = class {
                     }),
                     'ftSys_HSnat': new HUM.Param.UIelem({
                         role: 'fn',
-                        opType:'set',
+                        opType: 'set',
                         eventType: 'click',
-                        htmlTargetProp:'checked',
-                        widget:'number',
+                        htmlTargetProp: 'checked',
+                        widget: 'number',
                         uiSet: (value, thisParam, init) => {
                             if (value === 'h_s') {
                                 if (this.ft.h_s.selected.value === 'natural') {
@@ -1777,10 +1982,10 @@ HUM.DHC.prototype.Parameters = class {
                     }),
                     'ftSys_HStrans': new HUM.Param.UIelem({
                         role: 'fn',
-                        opType:'set',
+                        opType: 'set',
                         eventType: 'click',
-                        htmlTargetProp:'checked',
-                        widget:'number',
+                        htmlTargetProp: 'checked',
+                        widget: 'number',
                         uiSet: (value, thisParam, init) => {
                             if (value === 'h_s') {
                                 if (this.ft.h_s.selected.value === 'sameOctave') {
@@ -1795,10 +2000,10 @@ HUM.DHC.prototype.Parameters = class {
                             }
                         }
                     }),
-                    'ftHS': new HUM.Param.UIelem({
+                    'ftNEDX': new HUM.Param.UIelem({
                         role: 'out',
                     }),
-                    'ftNEDX': new HUM.Param.UIelem({
+                    'ftHS': new HUM.Param.UIelem({
                         role: 'out',
                     }),
                     'ftHStranspose_h_ratio': new HUM.Param.UIelem({
@@ -1808,9 +2013,9 @@ HUM.DHC.prototype.Parameters = class {
                         role: 'out',
                     })
                 },
-                dataType:'string',
-                initValue:'nEDx',
-                init:false,
+                dataType: 'string',
+                initValue: 'nEDx',
+                init: false,
                 allowedValues: ['nEDx', 'h_s'],
                 // restoreStage: 'pre',
                 // restoreSequence: 32,
@@ -1835,31 +2040,67 @@ HUM.DHC.prototype.Parameters = class {
                     // }
                 },
             }),
+                                              
+            /**
+             * +/- Steps for the complete range of {HUM.DHC#tables.ft}.
+             * The default is 64 (that is 129 steps).
+             * 
+             * Some considerations about the MIDI Note number range: <br>
+             * 
+             * - 32 = from -32 to +32 = 65 steps<br>
+             * 
+             * - 64 = from -64 to +64 = 129 steps
+             *   To use the full MIDI note range, FM should be midi#63 or midi#64.
+             *   ( midi#63 out of MIDI range on -1  )
+             *   ( midi#64 out of MIDI range on 128 )
+             * 
+             * Maybe a range of 129 steps is too wide, but let's try.
+             * @instance
+             * 
+             * @member {number}
+             */
             steps: 64
         };
+        
         /**
-         * Harmonic/subharmonic Tones (HTs) scale tuning settings
+         * Harmonic/Subharmonic Tones (HTs) scale tuning method settings
          * 
          * @member {Object}
-         *
-         * @property {Object} transpose   - Harmonics and subharmonics transpose
-         * @property {tratio} transpose.h - Transpose ratio in decimal for Harmonics
-         * @property {tratio} transpose.s - Transpose ratio in decimal for Subharmonics
-         * @property {xtnum}  curr_ft     - The current FT (that generated the last HT table); init value must be 0
-         * @property {xtnum}  curr_ft     - The last pressed HT; init value should be null
+         * @namespace
          */
         this.ht = {
+            /**
+             * Harmonics and subharmonics transposition parameters
+             * 
+             * @member {Object}
+             * @namespace
+             */
             transpose: {
+                /**
+                 * This property indicates the transpose ratio in decimal places for Harmonics.
+                 * It's stored on the DB.
+                 * @instance
+                 * 
+                 * @member {HUM.Param}
+                 * 
+                 * @property {tratio}      value                             - The transpose ratio in decimal places for Harmonics.
+                 * @property {Object}      uiElements                        - Namespace for the "in", "out" and "fn" objects.
+                 * @property {Object}      uiElements.in                     - Namespace for the "in" HTML elements.
+                 * @property {Object}      uiElements.out                    - Namespace for the "out" HTML elements.
+                 * @property {HTMLElement} uiElements.in.htTranspose_h_plus  - The HTML input button that doubles the ratio.
+                 * @property {HTMLElement} uiElements.in.htTranspose_h_minus - The HTML input button that divides the ratio by two.
+                 * @property {HTMLElement} uiElements.in.htTranspose_h_ratio - The HTML input text box for inserting a custom ratio.
+                 */
                 h: new HUM.Param({
-                    app:dhc,
-                    idbKey:'dhcHTtransposeH',
-                    uiElements:{
+                    app: dhc,
+                    idbKey: 'dhcHTtransposeH',
+                    uiElements: {
                         'htTranspose_h_plus': new HUM.Param.UIelem({
                             role: 'in',
-                            opType:'set',
+                            opType: 'set',
                             eventType: 'click',
-                            htmlTargetProp:'checked',
-                            widget:'button', // "button" is like uiSet===null
+                            htmlTargetProp: 'checked',
+                            widget: 'button', // "button" is like uiSet===null
                             eventListener: (evt) => {
                                 this.ht.transpose.h.value *= 2;
                                 // dhc.transposeHT(2, "h", true);
@@ -1867,10 +2108,10 @@ HUM.DHC.prototype.Parameters = class {
                         }),
                         'htTranspose_h_minus': new HUM.Param.UIelem({
                             role: 'in',
-                            opType:'set',
+                            opType: 'set',
                             eventType: 'click',
-                            htmlTargetProp:'checked',
-                            widget:'button', // "button" is like uiSet===null
+                            htmlTargetProp: 'checked',
+                            widget: 'button', // "button" is like uiSet===null
                             eventListener: (evt) => {
                                 this.ht.transpose.h.value *= 0.5;
                                 // dhc.transposeHT(0.5, "h", true);
@@ -1878,14 +2119,14 @@ HUM.DHC.prototype.Parameters = class {
                         }),
                         'htTranspose_h_ratio': new HUM.Param.UIelem({
                             role: 'in',
-                            opType:'set',
+                            opType: 'set',
                             eventType: 'change',
-                            htmlTargetProp:'value',
-                            widget:'number',
+                            htmlTargetProp: 'value',
+                            widget: 'number',
                         })
                     },     
-                    dataType:'float',
-                    initValue:1,
+                    dataType: 'float',
+                    initValue: 1,
                     restoreStage: 'pre',
                     preSet: (value) => {
                         // Check if the ratio is > 0
@@ -1899,16 +2140,32 @@ HUM.DHC.prototype.Parameters = class {
                         // dhc.transposeHT(value, "h", false);
                     }
                 }),
+
+                /**
+                 * This property indicates the transpose ratio in decimal places for Subharmonics.
+                 * It's stored on the DB.
+                 * @instance
+                 * 
+                 * @member {HUM.Param}
+                 * 
+                 * @property {tratio}      value                             - The transpose ratio in decimal places for Subharmonics.
+                 * @property {Object}      uiElements                        - Namespace for the "in", "out" and "fn" objects.
+                 * @property {Object}      uiElements.in                     - Namespace for the "in" HTML elements.
+                 * @property {Object}      uiElements.out                    - Namespace for the "out" HTML elements.
+                 * @property {HTMLElement} uiElements.in.htTranspose_h_plus  - The HTML input button that doubles the ratio.
+                 * @property {HTMLElement} uiElements.in.htTranspose_h_minus - The HTML input button that divides the ratio by two.
+                 * @property {HTMLElement} uiElements.in.htTranspose_h_ratio - The HTML input text box for inserting a custom ratio.
+                 */
                 s: new HUM.Param({
-                    app:dhc,
-                    idbKey:'dhcHTtransposeS',
-                    uiElements:{
+                    app: dhc,
+                    idbKey: 'dhcHTtransposeS',
+                    uiElements: {
                         'htTranspose_s_plus': new HUM.Param.UIelem({
                             role: 'in',
-                            opType:'set',
+                            opType: 'set',
                             eventType: 'click',
-                            htmlTargetProp:'checked',
-                            widget:'button', // "button" is like uiSet===null
+                            htmlTargetProp: 'checked',
+                            widget: 'button', // "button" is like uiSet===null
                             eventListener: (evt) => {
                                 // Multiply the current transpose ratio by 2
                                 this.ht.transpose.s.value *= 2;
@@ -1917,10 +2174,10 @@ HUM.DHC.prototype.Parameters = class {
                         }),
                         'htTranspose_s_minus': new HUM.Param.UIelem({
                             role: 'in',
-                            opType:'set',
+                            opType: 'set',
                             eventType: 'click',
-                            htmlTargetProp:'checked',
-                            widget:'button', // "button" is like uiSet===null
+                            htmlTargetProp: 'checked',
+                            widget: 'button', // "button" is like uiSet===null
                             eventListener: (evt) => {
                                 this.ht.transpose.s.value *= 0.5;
                                 // dhc.transposeHT(0.5, "s", true);
@@ -1928,15 +2185,15 @@ HUM.DHC.prototype.Parameters = class {
                         }),
                         'htTranspose_s_ratio': new HUM.Param.UIelem({
                             role: 'in',
-                            opType:'set',
+                            opType: 'set',
                             eventType: 'change',
-                            htmlTargetProp:'value',
-                            widget:'number',
+                            htmlTargetProp: 'value',
+                            widget: 'number',
                         })
 
                     },    
-                    dataType:'float',
-                    initValue:1, // 16,
+                    dataType: 'float',
+                    initValue: 1, // 16,
                     restoreStage: 'pre',
                     preSet: (value) => {
                         // Check if the ratio is > 0
@@ -1951,53 +2208,134 @@ HUM.DHC.prototype.Parameters = class {
                     }
                 }),
             },
+
+            /**  
+             * This property indicates the last pressed FT (or released if there are no more pressed FTs),
+             * that generated the last HT table; init value must be 0.
+             * @instance
+             * 
+             * @member {xtnum}
+             */
             curr_ft: 0,
+            /**  
+             * This property indicates the last pressed HT (or released if there are no more pressed HTs);
+             * init value should be null.
+             * @instance
+             * 
+             * @member {xtnum}
+             */
             curr_ht: null
         };
+
         /**
-         * Piper's default settings
-         *
-         * @member {Object}
-         *
-         * @property {number}             maxLength - How many steps has the Pipe
          * @property {Array.<HUM.DHCmsg>} queue     - Last HT MIDI Note-ON messages received
          * @property {Array.<HUM.DHCmsg>} pipe      - MIDI Note-ON messages stored into the Pipe
          * @property {number}             currStep  - Last step played by the Piper
          * @property {HUM.DHCmsg}         currTone  - Last fake MIDI Note-ON message send
          */
+
+
+        /**
+         * Piper's settings
+         * 
+         * @member {Object}
+         * @namespace
+         */
         this.piper = {
+
+            /**  
+             * This property is the number of steps of the Piper's pipe.
+             * It's initialises the eventListener of the UIelem related to it.
+             * It's stored on the DB.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {number}      value                        - How many steps has the pipe.
+             * @property {Object}      uiElements                   - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in                - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.dhc_piperSteps - The HTML input text box for the pipe's steps number.
+             */
             maxLength: new HUM.Param({
-                app:dhc,
-                idbKey:'dhcPiperMaxLength',
-                uiElements:{
+                app: dhc,
+                idbKey: 'dhcPiperMaxLength',
+                uiElements: {
                     'dhc_piperSteps': new HUM.Param.UIelem({
                         role: 'in',
-                        opType:'set',
+                        opType: 'set',
                         eventType: 'change',
-                        htmlTargetProp:'value',
-                        widget:'number',
+                        htmlTargetProp: 'value',
+                        widget: 'number',
                     })
                 },
-                dataType:'integer',
-                initValue:5,
+                dataType: 'integer',
+                initValue: 5,
             }),
+            /**  
+             * This property is the Piper's queue, an array storing the last HT MIDI Note-ON messages received.
+             * @instance
+             * 
+             * @member {Array.<HUM.DHCmsg>}
+             */
             queue: [],
+            /**  
+             * This property is the actual Pipe, an array MIDI Note-ON messages coming from the Piper's queue.
+             * @instance
+             * 
+             * @member {Array.<HUM.DHCmsg>}
+             */
             pipe: [],
+            /**  
+             * This property is the number of last pipe's step played by the Piper.
+             * @instance
+             * 
+             * @member {number}
+             */
             currStep: 5,
+            /**  
+             * This property is the last "fake" MIDI Note-ON message send by the Piper.
+             * @instance
+             * 
+             * @member {HUM.DHCmsg}
+             */
             currTone: null
         };
 
+        /**
+         * Keymap's settings
+         * 
+         * @member {Object}
+         * @namespace
+         */
         this.keymap = {
+            /**  
+             * This property contains the current selected controller keymap for each peculiar DHC configuration, as the
+             * tuning method (nEDX or H-S), and all the current available keymaps.
+             * It's stored on the DB.
+             * @todo Auto-keymap for Tsnap MIDI input configuration, that requires a special keymap.
+             * 
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {Object}                value                                 - A register that stores the selected keymap IDs
+             * @property {number}                value.nEDx                            - The ID key of the selected keymap on nEDx tuning.
+             * @property {number}                value.h_s                             - The ID key of the selected keymap on H-S tuning.
+             * @property {HUM.CtrlKeymapPresets} ctrlKeymapPreset                      - All the keympas available.
+             * @property {Object}                uiElements                            - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}                uiElements.in                         - Namespace for the "in" HTML elements.
+             * @property {HTMLElement}           uiElements.in.controllerKeymapPresets - The HTML input dropdown for selecting the keymap. 
+             */
             presets: new HUM.Param({
-                app:dhc,
-                idbKey:'dhcCtrlKeymapPresets',
-                uiElements:{
+                app: dhc,
+                idbKey: 'dhcCtrlKeymapPresets',
+                uiElements: {
                     'controllerKeymapPresets': new HUM.Param.UIelem({
                         role: 'in',
-                        opType:'set',
+                        opType: 'set',
                         eventType: 'change',
-                        htmlTargetProp:'value',
-                        widget:'selection',
+                        htmlTargetProp: 'value',
+                        widget: 'selection',
                         uiSet: (value, thisParam) => {
                             thisParam.uiElements.in.controllerKeymapPresets.value = value[this.ft.selected.value];
                         },
@@ -2006,10 +2344,10 @@ HUM.DHC.prototype.Parameters = class {
                         }
                     })
                 },
-                dataType:'object',
+                dataType: 'object',
                 restoreStage: 'pre',
                 // restoreSequence: 64,
-                initValue:{
+                initValue: {
                     nEDx: 0,
                     h_s: 0,
                     // tsnap: 0
@@ -2027,21 +2365,33 @@ HUM.DHC.prototype.Parameters = class {
                     /**
                      * The container for all the Controller keymap presets
                      *
-                     * @member {HUM.CtrlKeymapPreset}
+                     * @member {HUM.CtrlKeymapPresets}
                      */
-                    ctrlKeymapPreset: new HUM.CtrlKeymapPreset(this)
+                    ctrlKeymapPreset: new HUM.CtrlKeymapPresets()
                 }
             }),
+
+            /**  
+             * This property is just a proxy to the HTML widget for the keymap file loading.
+             * It's initialises the eventListener of the UIelem related to it.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {Object}      uiElements                         - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.in                      - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.controllerKeymapFile - The HTML input file widget.
+             */
             keymapFile: new HUM.Param({
-                app:dhc,
-                idbKey:'dhcCtrlKeymapFile',
-                uiElements:{
+                app: dhc,
+                idbKey: 'dhcCtrlKeymapFile',
+                uiElements: {
                     'controllerKeymapFile': new HUM.Param.UIelem({
                         role: 'in',
-                        opType:'set',
+                        opType: 'set',
                         eventType: 'change',
-                        htmlTargetProp:'files',
-                        widget:'file',
+                        htmlTargetProp: 'files',
+                        widget: 'file',
                         eventListener: evt => {
                             // Check for the various File API support.
                             if (window.File && window.FileReader && window.FileList && window.Blob) {
@@ -2053,13 +2403,28 @@ HUM.DHC.prototype.Parameters = class {
                         }
                     })
                 },
-                dataType:'file',
-                // initValue:'default', // NOTE: 'default' is a special value
+                dataType: 'file',
+                // initValue: 'default', // NOTE: 'default' is a special value
+                presetStore: false,
+                presetRestore: false,
             }),
+
+            /**  
+             * This property is just a proxy to the HTML modal keymap table.
+             * It's initialises the eventListener of the UIelem related to it.
+             * @instance
+             *
+             * @member {HUM.Param}
+             * 
+             * @property {Object}      uiElements                           - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}      uiElements.out                       - Namespace for the "out" HTML elements.
+             * @property {HTMLElement} uiElements.out.controllerKeymapTable - The HTML modal dialog for the keymap table.
+             * @property {HTMLElement} uiElements.out.controllerKeymapModal - The HTML keymap table.
+             */
             modalTable: new HUM.Param({
-                app:dhc,
-                idbKey:'dhcCtrlKeymapModalTable',
-                uiElements:{
+                app: dhc,
+                idbKey: 'dhcCtrlKeymapModalTable',
+                uiElements: {
                     'controllerKeymapTable': new HUM.Param.UIelem({
                         role: 'out',
                     }),
@@ -2071,16 +2436,29 @@ HUM.DHC.prototype.Parameters = class {
                         }
                     }),
                 },
+                presetStore: false,
+                presetRestore: false,
             }),
         };
 
+        /**  
+         * This property is just a proxy to the HTML accordion for all the DHC tabs.
+         * It's initialises the eventListener of the UIelem related to it.
+         * @instance
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {Object}      uiElements                   - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.out               - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.out.accordion_dhc - The HTML DHC accordion.
+         */
         this.bsAccordion = new HUM.Param({
-            app:dhc,
-            idbKey:'dhcAccordion',
-            uiElements:{
+            app: dhc,
+            idbKey: 'dhcAccordion',
+            uiElements: {
                 'accordion_dhc': new HUM.Param.UIelem({
                     role: 'out',
-                    htmlID: dhc.harmonicarium.html.accordion[dhc.id].children[0].id,
+                    htmlID: dhc.harmonicarium.html.dhcAccordions[dhc.id].children[0].id,
                     eventType: 'shown.bs.collapse',
                     eventListener: evt => {
                         // @todo: TO-FIX! Temporary harcoded behaviour for auto-scrolling
@@ -2096,15 +2474,17 @@ HUM.DHC.prototype.Parameters = class {
                     }
                 }),
             },
-            init:false,
-            // dataType:'array',
-            // initValue:[],
-            // postSet: (value, thisParam, init) => {
-            //     // backendUtils.showSidebar(value);
-            // }
+            init: false,
+            presetStore: false,
+            presetRestore: false,
         });
+        // =======================
+    } // end class Constructor
+    // ===========================
 
-    }
+    /**
+     * Initializes the parameters of the FT tuning method and the FM.
+     */
     _init() {
         this.ft.selected._init();
         this.fm.init._init();
@@ -2114,20 +2494,25 @@ HUM.DHC.prototype.Parameters = class {
 };
 
 /**
- * DHC Message class
+ * DHC Message class.
+ * 
+ * This class is used to create instances of messages that can be sent between the different
+ * registered app components. The class has various static methods to facilitate the creation of
+ * different types of messages with different parameters.
  */
 HUM.DHCmsg = class {
      /**
-     * @param {string}                                         source   - Name of the App component that generated the message
-     * @param {('init'|'panic'|'update'|'tone-on'|'tone-off')} cmd      - Command code of the message
-     * @param {tonetype=}                                      type     - The tone typeto which the message is directed; FT or HT
-     * @param {xtnum=}                                         xtNum    - The FT or HT number
+     * 
+     * @param {string}                                         source   - Name of the App component that generated the message.
+     * @param {('init'|'panic'|'update'|'tone-on'|'tone-off')} cmd      - Command code of the message.
+     * @param {tonetype=}                                      type     - The tone typeto which the message is directed; FT or HT.
+     * @param {xtnum=}                                         xtNum    - The FT or HT number.
      * @param {velocity=}                                      velocity - The intensity of the sound to be generated in MIDI velocity format.<br>
      *                                                                    If the `cmd` is 'tone-on' , the values must be from 1 to 127.<br>
      *                                                                    If the `cmd` is 'tone-off' , the values must be from 0 to 127.<br>
      * @param {midinnum=}                                      ctrlNum  - The MIDI Note Number corresponding to the FT or HT on the keymap (if present).<br>
      *                                                                    If it is not provided, the Apps that need this information should ignore the message.
-     * @param {boolean=}                                       piper    - If the message is generated by the Piper feature
+     * @param {boolean=}                                       piper    - If the message is generated by the Piper feature.
      * @param {boolean=}                                       panic    - Only in case of `cmd` 'note-off', it tells that the message has been generated by a "hard" All-Notes-Off request.
      * @param {boolean=}                                       tsnap    - If the message has been converted by the Tone-Snap receiving mode.<br>
      *                                                                    If `true`, the `ctrlNum` may not be the same as the MIDI Note Number pressed on the controller.
@@ -2148,7 +2533,7 @@ HUM.DHCmsg = class {
      *
      * @param {string} source - Name of the App component that generated the message
      *
-     * @return {Array.<number>} - A new instance of DHCmsg
+     * @return {HUM.DHCmsg} - A new instance of DHCmsg
      */
     static init(source) {
         return new HUM.DHCmsg(source, 'init');
@@ -2158,7 +2543,7 @@ HUM.DHCmsg = class {
      *
      * @param {string} source - Name of the App component that generated the message
      *
-     * @return {Array.<number>} - A new instance of DHCmsg
+     * @return {HUM.DHCmsg} - A new instance of DHCmsg
      */
     static allNotesOff(source) {
         return new HUM.DHCmsg(source, 'panic');
@@ -2168,7 +2553,7 @@ HUM.DHCmsg = class {
      *
      * @param {string} source - Name of the App component that generated the message
      *
-     * @return {Array.<number>} - A new instance of DHCmsg
+     * @return {HUM.DHCmsg} - A new instance of DHCmsg
      */
     static ftUpd(source) {
         return new HUM.DHCmsg(source, 'update', 'ft');
@@ -2178,7 +2563,7 @@ HUM.DHCmsg = class {
      *
      * @param {string} source - Name of the App component that generated the message
      *
-     * @return {Array.<number>} - A new instance of DHCmsg
+     * @return {HUM.DHCmsg} - A new instance of DHCmsg
      */
     static htUpd(source) {
         return new HUM.DHCmsg(source, 'update', 'ht');
@@ -2188,7 +2573,7 @@ HUM.DHCmsg = class {
      *
      * @param {string} source - Name of the App component that generated the message
      *
-     * @return {Array.<number>} - A new instance of DHCmsg
+     * @return {HUM.DHCmsg} - A new instance of DHCmsg
      */
     static ctrlmapUpd(source) {
         return new HUM.DHCmsg(source, 'update', 'ctrlmap');
@@ -2202,7 +2587,7 @@ HUM.DHCmsg = class {
      * @param {midinnum=} ctrlNum  - The MIDI Note Number corresponding to the FT on the keymap (if present)
      * @param {boolean=}  tsnap    - If the message has been converted by the Tone-Snap receiving mode
      * 
-     * @return {Array.<number>} - A new instance of DHCmsg
+     * @return {HUM.DHCmsg} - A new instance of DHCmsg
      */
     static ftON(source, xtNum, velocity, ctrlNum=false, tsnap=false) {
         return new HUM.DHCmsg(source, 'tone-on', 'ft', 
@@ -2216,14 +2601,14 @@ HUM.DHCmsg = class {
     /**
      * Create a new 'HT Note-ON' DHCmsg
      *
-     * @param {string}    source   - Name of the App component that generated the message
-     * @param {xtnum}    xtNum    - The HT number
-     * @param {velocity} velocity - The intensity of the sound to be generated in MIDI velocity format, from 1 to 127.<br>
+     * @param {string}    source   - Name of the App component that generated the message.
+     * @param {xtnum}     xtNum    - The HT number.
+     * @param {velocity}  velocity - The intensity of the sound to be generated in MIDI velocity format, from 1 to 127.<br>
      * @param {midinnum=} ctrlNum  - The MIDI Note Number corresponding to the HT on the keymap (if present)
      * @param {boolean=}  piper    - If the message is generated by the Piper feature
      * @param {boolean=}  tsnap    - If the message has been converted by the Tone-Snap receiving mode
      * 
-     * @return {Array.<number>} - A new instance of DHCmsg
+     * @return {HUM.DHCmsg} - A new instance of DHCmsg
      */
     static htON(source, xtNum, velocity, ctrlNum=false, piper=false, tsnap=false) {
         return new HUM.DHCmsg(source, 'tone-on', 'ht',
@@ -2243,7 +2628,7 @@ HUM.DHCmsg = class {
      * @param {midinnum=} ctrlNum  - The MIDI Note Number corresponding to the FT on the keymap (if present)
      * @param {boolean=}  panic    - If `true`, it tells that the message has been generated by a "hard" All-Notes-Off request.
      * 
-     * @return {Array.<number>} - A new instance of DHCmsg
+     * @return {HUM.DHCmsg} - A new instance of DHCmsg
      */
     static ftOFF(source, xtNum, velocity=false, ctrlNum=false, panic=false) {
         return new HUM.DHCmsg(source, 'tone-off', 'ft',
@@ -2262,7 +2647,7 @@ HUM.DHCmsg = class {
      * @param {midinnum=} ctrlNum  - The MIDI Note Number corresponding to the HT on the keymap (if present)
      * @param {boolean=}  panic    - If `true`, it tells that the message has been generated by a "hard" All-Notes-Off request.
      * 
-     * @return {Array.<number>} - A new instance of DHCmsg
+     * @return {HUM.DHCmsg} - A new instance of DHCmsg
      */
     static htOFF(source, xtNum, velocity=false, ctrlNum=false, panic=false) {
         return new HUM.DHCmsg(source, 'tone-off', 'ht',
@@ -2277,14 +2662,16 @@ HUM.DHCmsg = class {
      *
      * @param {HUM.DHCmsg} dhcMsg - The original DHCmsg to be copied
      *
-     * @return {Array.<number>} - A copy of the original DHCmsg
+     * @return {HUM.DHCmsg} - A copy of the original DHCmsg
      */
     static copyOFF(dhcMsg) {
-        return new HUM.DHCmsg(dhcMsg.source, 'tone-off', dhcMsg.type,
+        return new HUM.DHCmsg(dhcMsg.source, 'tone-off',
+            dhcMsg.type,
             dhcMsg.xtNum,
             dhcMsg.velocity,
             dhcMsg.ctrlNum,
             dhcMsg.piper,
-            dhcMsg.panic);
+            dhcMsg.panic
+        );
     }
 };

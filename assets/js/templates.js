@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,14 +22,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals HUM */
-
 "use strict";
 
+/**
+ * Namespace for all the functions those return a rendered HTML template.
+ * @namespace HUM.tmpl
+ */
 HUM.tmpl = {
-    // parser: new DOMParser(),
-    // arguments (id, cl=false, label=false, title=false, help=false)
-
+    /**
+     * Get the full SVG iconset.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<svg>` element.
+     */
     dpIcons(id) {
         let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttributeNS('http://www.w3.org/2000/svg', 'id', `HTMLf_dpToolbarIcons${id}`);
@@ -125,6 +131,10 @@ HUM.tmpl = {
                 d: "M4.5 6a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1ZM6 6a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1Zm2-.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0Z M12 1a2 2 0 0 1 2 2 2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2 2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h10ZM2 12V5a2 2 0 0 1 2-2h9a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1Zm1-4v5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8H3Zm12-1V5a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v2h12Z",
                 viewBox: "0 0 16 16"
             },
+            link: {
+                d: "M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z",
+                viewBox: "0 0 16 16"
+            },
         };
 
         for (const name of Object.keys(icons)) {
@@ -146,6 +156,17 @@ HUM.tmpl = {
         return svg;
     },
 
+    /**
+     * Use a SVG icon.
+     *
+     * @param {number} iconName - Icon name.
+     * @param {number} humID    - The HUM instance ID.
+     * @param {number} svg      - The `<svg>` HTML element.
+     * @param {number} x        - The horizontal position.
+     * @param {number} y        - The vertical position.
+     * 
+     * @returns {HTMLElement} - A `<use>` element.
+     */
     useIcon(iconName, id, svg, x, y) {
         let use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
         svg.appendChild(use);
@@ -160,6 +181,13 @@ HUM.tmpl = {
         return use;
     },
 
+    /**
+     * Get the main App container for one Harmonicarium.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     appContainer(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -169,6 +197,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the main DiphonicPad container, one per Harmonicarium.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     dpPadContainer(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -178,6 +213,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the Log text box container, one per Harmonicarium.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     logTextBox(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -198,6 +240,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the Side Panel box container, one per Harmonicarium.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     sidePanel(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -207,8 +256,14 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
-    // - - - - - - - - - - - - - - - - - - - - 
-
+    /**
+     * Get the Side Panel Top Logo box container, one per Harmonicarium.
+     * Ti contains also the Top Navigation menu items.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     logoBox(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -254,8 +309,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
-    // - - - - - - - - - - - - - - - - - - - - 
-
+    /**
+     * Get the Side Panel Menu Contents container, one per Harmonicarium.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     sideMenu(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -296,8 +356,8 @@ HUM.tmpl = {
                         <h2>License</h2>
                         <h3 style="margin-bottom: 0;">Harmonicarium</h2>
                         <p style="margin-top: 0; margin-bottom: 0;">a Dynamic Harmonics Calculator</p>
-                        <p style="margin-top: 0;"><span class="monospace">ver. 0.8.0-beta (Mersenne)</span></p>
-                        <h3>Copyright (C) 2017-2022 by Walter G. Mantovani</h3>
+                        <p style="margin-top: 0;"><span class="monospace">ver. 0.8.1-beta (Mersenne)</span></p>
+                        <h3>Copyright (C) 2017-2023 by Walter G. Mantovani</h3>
                         <p>This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.</p>
                         <p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.</p>
                         <p>You should have received a copy of the GNU Affero General Public License along with this program. If not, see <a href="https://www.gnu.org/licenses/agpl.txt" target="_blank" rel="noopener noreferrer">http://www.gnu.org/licenses/</a>.</p>
@@ -382,8 +442,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
-    // - - - - - - - - - - - - - - - - - - - - 
-
+    /**
+     * Get the User Accordion container, one per Harmonicarium.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     userAccordion(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -397,6 +462,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the DiphonicPad Accordion container, one per Harmonicarium.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     dpPadAccordion(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -409,7 +481,14 @@ HUM.tmpl = {
             </div>`;
         return template.firstElementChild;
     },
-    
+
+    /**
+     * Get the DHC Accordion container, one per DHC.
+     *
+     * @param {number} id - The DHC instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     dhcAccordion(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -423,17 +502,15 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
-    // accordion(id) {
-    //     let template = document.createElement('div');
-    //     template.innerHTML = `
-    //         <div class="accordion">
-    //             <div id="HTMLf_accordion_dhc${id}" class="accordionTabs">
-
-    //             </div>
-    //         </div>`;
-    //     return template.firstElementChild;
-    // },
-
+    /**
+     * Get an Accordion Item container.
+     *
+     * @param {number} id     - The HUM or DHC instance ID.
+     * @param {number} idName - The app name.
+     * @param {number} title  - The title of the Accordion Item Tab.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     accordionTab(id, idName, title) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -457,8 +534,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
-    // - - - - - - - - - - - - - - - - - - - - 
-
+    /**
+     * Get the User Preset Management controls for modal, one per Harmonicarium.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     userManagePresets(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -492,6 +574,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the User DB Reset controls for modal, one per Harmonicarium.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     userResetDB(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -517,6 +606,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the User controls container, one per Harmonicarium.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     userBox(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -528,7 +624,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-xl">
                                 <strong class="mb-2">Load</strong>
-                                <p class="text-muted mb-0">Select a preset and click "Load".</p>
+                                <div><small class="text-muted">Select a preset and click "Load".</small></div>
                             </div>
                             <div class="col-auto">
                                 <div class="input-group">
@@ -549,7 +645,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-xl">
                                 <strong class="mb-2">Save new</strong>
-                                <p class="text-muted mb-0">Input the name and click "Save new".</p>
+                                <div><small class="text-muted">Input the name and click "Save new".</small></div>
                             </div>
                             <div class="col">
                                 <div class="input-group has-validation">
@@ -573,7 +669,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col">
                                 <strong class="mb-2">Manage</strong>
-                                <p class="text-muted mb-0">Rename or delete a preset.</p>
+                                <div><small class="text-muted">Rename or delete a preset.</small></div>
                             </div>
                             <div class="col-auto">
                                 <div class="vstack gap-2 mx-auto">
@@ -598,7 +694,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-xl">
                                 <strong class="mb-2">Import</strong>
-                                <p class="text-muted mb-0">Upload a presets file.</p>
+                                <div><small class="text-muted">Upload a presets file.</small></div>
                             </div>
                             <div class="col-auto">
                                 
@@ -652,7 +748,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-lg">
                                 <strong class="mb-2">Export</strong>
-                                <p class="text-muted mb-0">Download the current presets on a file.</p>
+                                <div><small class="text-muted">Download the current presets on a file.</small></div>
                             </div>
                             <div class="col-auto">
                                 <div class="row mx-0">
@@ -698,7 +794,7 @@ HUM.tmpl = {
                                     <div class="row align-items-center">
                                         <div class="col col-12 col-xl">
                                             <strong class="mb-2">Current session</strong>
-                                            <p class="text-muted mb-0">The session of this window/tab.</p>
+                                            <div><small class="text-muted">The session of this window/tab.</small></div>
                                         </div>
                                         <div class="col">
                                             <div id="HTMLo_user_session_current${id}"></div>
@@ -710,7 +806,7 @@ HUM.tmpl = {
                                     <div class="row align-items-center">
                                         <div class="col col-12 col-xxl">
                                             <strong class="mb-2">Rename current session</strong>
-                                            <p class="text-muted mb-0">Change the name of this session.</p>
+                                            <div><small class="text-muted">Change the name of this session.</small></div>
                                         </div>
                                         <div class="col">
                                             <div class="input-group has-validation">
@@ -733,7 +829,7 @@ HUM.tmpl = {
                                     <div class="row align-items-center">
                                         <div class="col col-12 col-xl">
                                             <strong class="mb-2">Concurrent session</strong>
-                                            <p class="text-muted mb-0">Sessions currently open in another windows/tabs.</p>
+                                            <div><small class="text-muted">Sessions currently open in another windows/tabs.</small></div>
                                         </div>
                                         <div class="col">
                                             <div id="HTMLo_user_session_concurrent${id}"></div>
@@ -752,6 +848,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the Hstack controls container, one per DHC.
+     *
+     * @param {number} id - The DHC instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     hstackBox(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -763,7 +866,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-sm">
                                 <strong class="mb-2">Zoom</strong>
-                                <p class="text-muted mb-0">The table font size.</p>
+                                <div><small class="text-muted">The table font size.</small></div>
                             </div>
                             <div class="col-auto">
                                 <input type="range" min="14" max="30" step="0.1"
@@ -783,7 +886,7 @@ HUM.tmpl = {
                     <hr/>
                     
                     <div class="table-responsive">
-                        <table class="table table-sm">
+                        <table class="table table-sm monospaced">
                             <tbody>
                                 <tr id="HTMLo_hstackFTrow${id}" class="hum-hstack-ft-off">
                                     <td width="12%"><span id="HTMLo_hstackFT_tone${id}"></span></td>
@@ -811,6 +914,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the Piano/Keymap controls container, one per DHC.
+     *
+     * @param {number} id - The DHC instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     pianoBox(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -826,7 +936,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-lg">
                                 <strong class="mb-2">Keymap</strong>
-                                <p class="text-muted mb-0">The controller's tones "palette".</p>
+                                <div><small class="text-muted">The controller's tones "palette".</small></div>
                             </div>
                             <div class="col-auto">
                                 <div class="input-group">
@@ -853,7 +963,7 @@ HUM.tmpl = {
                                 <div class="row align-items-center">
                                     <div class="col col-12 col-lg">
                                         <strong class="mb-2">Keys interval</strong>
-                                        <p class="text-muted mb-0">Which notes to show.</p>
+                                        <div><small class="text-muted">Which notes to show.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <div class="input-group mb-2">
@@ -880,7 +990,7 @@ HUM.tmpl = {
                                 <div class="row align-items-center">
                                     <div class="col col-12 col-lg">
                                         <strong class="mb-2">Dimensions</strong>
-                                        <p class="text-muted mb-0">How big is the virtual piano.</p>
+                                        <div><small class="text-muted">How big is the virtual piano.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <div class="input-group mb-2">
@@ -902,7 +1012,7 @@ HUM.tmpl = {
                                 <div class="row align-items-center">
                                     <div class="col col-12 col-lg">
                                         <strong class="mb-2">MIDI options</strong>
-                                        <p class="text-muted mb-0">For the notes generated by the virtual piano.</p>
+                                        <div><small class="text-muted">For the notes generated by the virtual piano.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <div class="input-group mb-2">
@@ -929,6 +1039,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the DHC controls container, one per DHC.
+     *
+     * @param {number} id - The DHC instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     dhcBox(id, humID) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -941,7 +1058,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-md">
                                 <strong class="mb-2">UI Hz accuracy</strong>
-                                <p class="text-muted mb-0">Places of decimal precision.</p>
+                                <div><small class="text-muted">Places of decimal precision.</small></div>
                             </div>
                             <div class="col-auto">
                                 <input type="number" min="0" max="50" step="1"
@@ -955,7 +1072,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-md">
                                 <strong class="mb-2">UI Cents accuracy</strong>
-                                <p class="text-muted mb-0">Places of decimal precision.</p>
+                                <div><small class="text-muted">Places of decimal precision.</small></div>
                             </div>
                             <div class="col-auto">
                                 <input type="number" min="0" max="50" step="1"
@@ -969,7 +1086,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-md">
                                 <strong class="mb-2">Enharmonic note naming</strong>
-                                <p class="text-muted mb-0"># or <i>b</i>.</p>
+                                <div><small class="text-muted"># or <i>b</i>.</small></div>
                             </div>
                             <div class="col-auto">
                                 <select id="HTMLi_dhc_enharmonicNN${id}" class="form-select">
@@ -983,7 +1100,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-md">
                                 <strong class="mb-2">Middle C octave</strong>
-                                <p class="text-muted mb-0">In which MIDI octave is the Middle C.</p>
+                                <div><small class="text-muted">In which MIDI octave is the Middle C.</small></div>
                             </div>
                             <div class="col-auto">
                                 <div class="input-group">
@@ -1001,31 +1118,11 @@ HUM.tmpl = {
                     <div class="list-group-item">
                         <div class="row align-items-center">
                             <div class="col col-12 col-md">
-                                <strong class="mb-2">Controller's PitchBend range</strong>
-                                <p class="text-muted mb-0">Sensitivity for MIDI Pitch Bend Change inputs.</p>
-                            </div>
-                            <div class="col-auto">
-                                <div class="input-group">
-
-                                    <input type="number" min="0" max=9600 step="100"
-                                           id="HTMLi_dhc_pitchbendRange${id}"
-                                           class="form-control"
-                                           aria-label="Pitch Bend input sensitivity">
-                                    <label for="HTMLi_dhc_middleC${id}"
-                                           class="input-group-text">cents</label>
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="list-group-item">
-                        <div class="row align-items-center">
-                            <div class="col col-12 col-md">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="currentColor" viewBox="0 0 16 16">
                                     <use fill-rule="evenodd" href="#dpIcon-piper${humID}"/>
                                 </svg>
                                 <strong class="mb-2">Piper (HT0) steps</strong>
-                                <p class="text-muted mb-0">Number of HTs the "manual arpeggiator" can store.</p>
+                                <div><small class="text-muted">Number of HTs the "manual arpeggiator" can store.</small></div>
                             </div>
                             <div class="col-auto">
                                 <input type="number" min="1" max=9999 step="1"
@@ -1040,6 +1137,14 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the DiphonicPad controls container, one per DHC.
+     *
+     * @param {number} id    - The DHC instance ID.
+     * @param {number} humID - The DHC instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     dpPadBox(id, humID) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -1053,7 +1158,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-lg">
                                 <strong class="mb-2">FT note range</strong>
-                                <p class="text-muted mb-0">The ambitus of your voice.</p>
+                                <div><small class="text-muted">The ambitus of your voice.</small></div>
                             </div>
                             <div class="col-auto">
 
@@ -1070,7 +1175,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-lg">
                                 <strong class="mb-2">Custom FT note range</strong>
-                                <p class="text-muted mb-0">Frequency expressed in MIDI units with decimals.</p>
+                                <div><small class="text-muted">Frequency expressed in MIDI units with decimals.</small></div>
                             </div>
                             <div class="col-auto">
 
@@ -1103,7 +1208,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-md">
                                 <strong class="mb-2">Range copy</strong>
-                                <p class="text-muted mb-0">Copy the range of HT pad to the FT one.</p>
+                                <div><small class="text-muted">Copy the range of HT pad to the FT one.</small></div>
                             </div>
                             <div class="col-auto">
                                 <button id="HTMLi_dppad_freq_range_copy_to_ft${id}" class="btn btn-secondary">FT same as HT</button>
@@ -1123,7 +1228,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-lg">
                                 <strong class="mb-2">HT frequency range</strong>
-                                <p class="text-muted mb-0">The range you can cover with the formant of your oral cavity..</p>
+                                <div><small class="text-muted">The range you can cover with the formant of your oral cavity..</small></div>
                             </div>
                             <div class="col-auto">
 
@@ -1140,7 +1245,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-lg">
                                 <strong class="mb-2">Custom HT frequecy range</strong>
-                                <p class="text-muted mb-0">Notes in scientific pitch nontation (midicents).</p>
+                                <div><small class="text-muted">Notes in scientific pitch nontation (midicents).</small></div>
                             </div>
                             <div class="col-auto">
 
@@ -1174,7 +1279,7 @@ HUM.tmpl = {
                         <div class="row align-items-center">
                             <div class="col col-12 col-md">
                                 <strong class="mb-2">Range copy</strong>
-                                <p class="text-muted mb-0">Copy the range of FT pad to the HT one.</p>
+                                <div><small class="text-muted">Copy the range of FT pad to the HT one.</small></div>
                             </div>
                             <div class="col-auto">
 
@@ -1206,7 +1311,7 @@ HUM.tmpl = {
                                             <use fill-rule="evenodd" href="#dpIcon-rotateView${humID}"/>
                                         </svg>
                                         <strong class="mb-2">Pads orientation</strong>
-                                        <p class="text-muted mb-0">Rotate the entire viewport.</p>
+                                        <div><small class="text-muted">Rotate the entire viewport.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <select id="HTMLi_dppad_main_orientation${id}" class="form-select">
@@ -1224,7 +1329,7 @@ HUM.tmpl = {
                                             <use fill-rule="evenodd" href="#dpIcon-rotateFT${humID}"/>
                                         </svg>
                                         <strong class="mb-2">FT scale orientation</strong>
-                                        <p class="text-muted mb-0">Rotate only the FT pad.</p>
+                                        <div><small class="text-muted">Rotate only the FT pad.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <select id="HTMLi_dppad_scale_orientation_ft${id}" class="form-select">
@@ -1242,7 +1347,7 @@ HUM.tmpl = {
                                             <use fill-rule="evenodd" href="#dpIcon-rotateHT${humID}"/>
                                         </svg>
                                         <strong class="mb-2">HT scale orientation</strong>
-                                        <p class="text-muted mb-0">Rotate only the HT pad.</p>
+                                        <div><small class="text-muted">Rotate only the HT pad.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <select id="HTMLi_dppad_scale_orientation_ht${id}" class="form-select">
@@ -1260,7 +1365,7 @@ HUM.tmpl = {
                                             <use fill-rule="evenodd" href="#dpIcon-invertPads${humID}"/>
                                         </svg>
                                         <strong class="mb-2">Pads order</strong>
-                                        <p class="text-muted mb-0">Swap the pads.</p>
+                                        <div><small class="text-muted">Swap the pads.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <select id="HTMLi_dppad_pads_order${id}" class="form-select">
@@ -1295,7 +1400,7 @@ HUM.tmpl = {
                                             <use fill-rule="evenodd" href="#dpIcon-toolbarPos${humID}"/>
                                         </svg>
                                         <strong class="mb-2">Toolbar orientation</strong>
-                                        <p class="text-muted mb-0">Rotate the toolbar.</p>
+                                        <div><small class="text-muted">Rotate the toolbar.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <select id="HTMLi_dppad_toolbar_orientation${id}" class="form-select">
@@ -1313,7 +1418,7 @@ HUM.tmpl = {
                                             <use fill-rule="evenodd" href="#dpIcon-toolbarPos${humID}"/>
                                         </svg>
                                         <strong class="mb-2">Toolbar position</strong>
-                                        <p class="text-muted mb-0">Place the toolbar before, in between or after the pads.</p>
+                                        <div><small class="text-muted">Place the toolbar before, in between or after the pads.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <select id="HTMLi_dppad_toolbar_position${id}" class="form-select">
@@ -1329,7 +1434,7 @@ HUM.tmpl = {
                                 <div class="row align-items-center">
                                     <div class="col col-12 col-lg">
                                         <strong class="mb-2">Toolbar icons</strong>
-                                        <p class="text-muted mb-0">Activate and deactivate the icons in the toolbar.</p>
+                                        <div><small class="text-muted">Activate and deactivate the icons in the toolbar.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <ul class="list-group">
@@ -1459,7 +1564,7 @@ HUM.tmpl = {
                                 <div class="row align-items-center">
                                     <div class="col col-12 col-md">
                                         <strong class="mb-2">FT Font size freq. monitor</strong>
-                                        <p class="text-muted mb-0">The frequency at the bottom of the FT pad.</p>
+                                        <div><small class="text-muted">The frequency at the bottom of the FT pad.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <div class="input-group">
@@ -1478,7 +1583,7 @@ HUM.tmpl = {
                                 <div class="row align-items-center">
                                     <div class="col col-12 col-md">
                                         <strong class="mb-2">FT Font size Keys labels</strong>
-                                        <p class="text-muted mb-0">The note names on the FT keys.</p>
+                                        <div><small class="text-muted">The note names on the FT keys.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <div class="input-group">
@@ -1497,7 +1602,7 @@ HUM.tmpl = {
                                 <div class="row align-items-center">
                                     <div class="col col-12 col-md">
                                         <strong class="mb-2">HT Font size freq. monitor</strong>
-                                        <p class="text-muted mb-0">The note names on the FT keys.</p>
+                                        <div><small class="text-muted">The note names on the FT keys.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <div class="input-group">
@@ -1516,7 +1621,7 @@ HUM.tmpl = {
                                 <div class="row align-items-center">
                                     <div class="col col-12 col-md">
                                         <strong class="mb-2">HT Font size Keys labels</strong>
-                                        <p class="text-muted mb-0">The note names on the FT keys.</p>
+                                        <div><small class="text-muted">The note names on the FT keys.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <div class="input-group">
@@ -1535,7 +1640,7 @@ HUM.tmpl = {
                                 <div class="row align-items-center">
                                     <div class="col col-12 col-md">
                                         <strong class="mb-2">HT Font size Lines labels</strong>
-                                        <p class="text-muted mb-0">The note names on the FT keys.</p>
+                                        <div><small class="text-muted">The note names on the FT keys.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <div class="input-group">
@@ -1583,7 +1688,7 @@ HUM.tmpl = {
                                 <div class="row align-items-center">
                                     <div class="col col-12 col-md">
                                         <strong class="mb-2">FT scale on HT pad</strong>
-                                        <p class="text-muted mb-0">Show the piano keys along the harmonic series.</p>
+                                        <div><small class="text-muted">Show the piano keys along the harmonic series.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <div class="form-check form-control-lg form-switch">
@@ -1598,7 +1703,7 @@ HUM.tmpl = {
                                 <div class="row align-items-center">
                                     <div class="col col-12 col-md">
                                         <strong class="mb-2">HT scale on FT pad</strong>
-                                        <p class="text-muted mb-0">Show the harmonics series along the piano keys.</p>
+                                        <div><small class="text-muted">Show the harmonics series along the piano keys.</small></div>
                                     </div>
                                     <div class="col-auto">
                                         <div class="form-check form-control-lg form-switch">
@@ -1614,8 +1719,8 @@ HUM.tmpl = {
                                 <div class="row align-items-center">
                                     <div class="col col-12 col-lg">
                                         <strong class="mb-2">Render quality</strong>
-                                        <p class="text-muted mb-0">The resolution mode for rendering the HTML Canvas.</p>
-                                        <p class="text-muted mb-0"><i>NOTE: It applies only on HiDPI displays.</i></p>
+                                        <div><small class="text-muted">The resolution mode for rendering the HTML Canvas.</small></div>
+                                        <div><small class="text-muted"><i>NOTE: It applies only on HiDPI displays.</i></small></div>
                                     </div>
                                     <div class="col-auto">
                                         <select id="HTMLi_dppad_render_mode${id}" class="form-select">
@@ -1638,6 +1743,14 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the Synth controls container, one per DHC.
+     *
+     * @param {number} id    - The DHC instance ID.
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     synthBox(id, humID) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -1807,7 +1920,7 @@ HUM.tmpl = {
                                     <div class="col-lg-8">
                                       <div class="form-label d-flex align-items-center">IR wave file:&nbsp;
                                         <span id="HTMLo_synth_irFileName${id}" class="fw-bold fst-italic"></span>
-                                        <button type="button" id="HTMLi_synth_irFileClearBtn${id}" class="btn btn-sm btn-outline-secondary ms-auto" title="Clear" aria-label="Clear. Restore the default reverb.">
+                                        <button type="button" id="HTMLi_synth_irFileClearBtn${id}" class="btn btn-sm btn-outline-secondary ms-auto" title="Clear (restore the default reverb)" aria-label="Clear and restore the default reverb.">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                 <use fill-rule="evenodd" href="#dpIcon-clear${humID}"/>
                                             </svg>
@@ -1830,6 +1943,14 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the MIDI controls container, one per DHC.
+     *
+     * @param {number} id    - The DHC instance ID.
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     midiBox(id, humID) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -1850,7 +1971,7 @@ HUM.tmpl = {
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-sm">
+                                <table class="table table-sm monospaced">
                                     <tr>
                                         <th>Port</th>
                                         <th>Channel</th>
@@ -1874,7 +1995,7 @@ HUM.tmpl = {
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-sm table-hover">
+                                <table class="table table-sm table-hover monospaced">
                                     <tr>
                                         <th width="33%"></th>
                                         <th width="33%">FT</th>
@@ -1882,23 +2003,23 @@ HUM.tmpl = {
                                     </tr>
                                     <tr>
                                         <th scope="row">#</th>
-                                        <td><span id="HTMLo_toneMonitorFT_tone${id}"></span></td>
-                                        <td><span id="HTMLo_toneMonitorHT_tone${id}"></span></td>
+                                        <td><span id="HTMLo_monFT_tone${id}"></span></td>
+                                        <td><span id="HTMLo_monHT_tone${id}"></span></td>
                                     </tr>
                                     <tr>
                                         <th scope="row">Note</th>
-                                        <td><span id="HTMLo_toneMonitorFT_notename${id}"></span></td>
-                                        <td><span id="HTMLo_toneMonitorHT_notename${id}"></span></td>
+                                        <td><span id="HTMLo_monFT_notename${id}"></span></td>
+                                        <td><span id="HTMLo_monHT_notename${id}"></span></td>
                                     </tr>
                                     <tr>
                                         <th scope="row">Hz</th>
-                                        <td><span id="HTMLo_toneMonitorFT_frequency${id}"></span></td>
-                                        <td><span id="HTMLo_toneMonitorHT_frequency${id}"></span></td>
+                                        <td><span id="HTMLo_monFT_frequency${id}"></span></td>
+                                        <td><span id="HTMLo_monHT_frequency${id}"></span></td>
                                     </tr>
                                     <tr>
                                         <th scope="row" title="MIDI.cent">m#.&cent;</th>
-                                        <td><span id="HTMLo_toneMonitorFT_midicents${id}"></span></td>
-                                        <td><span id="HTMLo_toneMonitorHT_midicents${id}"></span></td>
+                                        <td><span id="HTMLo_monFT_midicents${id}"></span></td>
+                                        <td><span id="HTMLo_monHT_midicents${id}"></span></td>
                                     </tr>
                                 </table>
 
@@ -1912,6 +2033,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the Splash modal container, one per Harmonicarium.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     splashModal(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -1926,6 +2054,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the Dialog modal container, one per Harmonicarium.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     dialogModal(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -1947,6 +2082,13 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * Get the Dialog modal content container, one per Harmonicarium.
+     *
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLElement} - A `<div>` element.
+     */
     dialogModalContents(id) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -1990,7 +2132,6 @@ HUM.tmpl = {
                  aria-labelledby="MIDI Settings panel" aria-hidden="true">
                 <!-- Modal content -->
                 <div class="modal-dialog modal-xl modal-fullscreen-xl-down modal-dialog-centered modal-dialog-scrollable">
-                    <!-- <span id="HTMLf_motPanelClose${id}" class="modalOverlay_close">&times;</span> -->
                     <div class="modal-content">
 
                         <div class="modal-header">
@@ -2026,8 +2167,27 @@ HUM.tmpl = {
                                                         <label class="list-group-item">
                                                             <div class="row row-cols-1 align-items-center">
                                                                 <div class="col">
-                                                                    <strong class="mb-2">Receiving mode</strong>
-                                                                    <p class="text-muted mb-0">How is it determined whether an input note should play as FT or HT.</p>
+                                                                    <strong class="mb-2">Controller's PitchBend range</strong>
+                                                                    <div><small class="text-muted mb-0">Sensitivity for MIDI Pitch Bend Change inputs.</small></div>
+                                                                </div>
+                                                                <div class="col mt-2">
+                                                                    <div class="input-group">
+                                                                        <input type="number" min="0" max=9600 step="100"
+                                                                                id="HTMLi_midiPitchbendRange${id}"
+                                                                                class="form-control"
+                                                                                aria-label="Pitch Bend input sensitivity">
+                                                                        <label for="HTMLi_dhc_middleC${id}"
+                                                                                class="input-group-text">cents</label>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </label>
+
+                                                        <label class="list-group-item">
+                                                            <div class="row row-cols-1 align-items-center">
+                                                                <div class="col">
+                                                                    <strong class="mb-2">Note-Receiving mode</strong>
+                                                                    <div><small class="text-muted mb-0">How is it determined whether an input note should play as FT or HT.</small></div>
                                                                 </div>
                                                                 <div class="col mt-2">
 
@@ -2044,16 +2204,16 @@ HUM.tmpl = {
                                                             </div>
                                                         </label>
 
-                                                        <label class="list-group-item" id="HTMLf_midiReceiveModeTsnapTolerance${id}">
+                                                        <label class="list-group-item" id="HTMLo_midiTsnapTolerance_box${id}">
                                                             <div class="row row-cols-1 align-items-center">
                                                                 <div class="col">
                                                                     <strong class="mb-2">HT snap tolerance</strong>
-                                                                    <p class="text-muted mb-0">Maximum deviation from the frequency of a HT within which the incoming MIDI note is "snapped" to that HT.</p>
+                                                                    <div><small class="text-muted mb-0">Maximum deviation from the frequency of a HT within which the incoming MIDI note is "snapped" to that HT.</small></div>
                                                                 </div>
                                                                 <div class="col">
 
                                                                     <div class="input-group">
-                                                                        <input type="number" min="0" max="100" step="1" id="HTMLi_midiReceiveModeTsnapTolerance${id}"
+                                                                        <input type="number" min="0" max="100" step="1" id="HTMLi_midiTsnapTolerance${id}"
                                                                                class="form-control"
                                                                                aria-label="MIDI cents delta (1 mc = 100 c)">
                                                                         <span class="input-group-text">mc delta</span>
@@ -2063,15 +2223,15 @@ HUM.tmpl = {
                                                             </div>
                                                         </label>
 
-                                                        <label class="list-group-item" id="HTMLf_midiReceiveModeTsnapChanFT${id}">
+                                                        <label class="list-group-item" id="HTMLo_midiTsnapChanFT_box${id}">
                                                             <div class="row row-cols-1 align-items-center">
                                                                 <div class="col">
                                                                     <strong class="mb-2">FT channel</strong>
-                                                                    <p class="text-muted mb-0">Channel for receiving FT.</p>
+                                                                    <div><small class="text-muted mb-0">Channel for receiving FT.</small></div>
                                                                 </div>
                                                                 <div class="col">
 
-                                                                    <select id="HTMLi_midiReceiveModeTsnapChanFT${id}" class="form-select"
+                                                                    <select id="HTMLi_midiTsnapChanFT${id}" class="form-select"
                                                                             aria-label="Channel for receiving FT">
                                                                         <option value="0">1</option>
                                                                         <option value="1">2</option>
@@ -2095,15 +2255,15 @@ HUM.tmpl = {
                                                             </div>
                                                         </label>
 
-                                                        <label class="list-group-item" id="HTMLf_midiReceiveModeTsnapChanHT${id}">
+                                                        <label class="list-group-item" id="HTMLo_midiTsnapChanHT_box${id}">
                                                             <div class="row row-cols-1 align-items-center">
                                                                 <div class="col">
                                                                     <strong class="mb-2">HTs channel</strong>
-                                                                    <p class="text-muted mb-0">Channel for receiving HTs.</p>
+                                                                    <div><small class="text-muted mb-0">Channel for receiving HTs.</small></div>
                                                                 </div>
                                                                 <div class="col">
 
-                                                                    <select id="HTMLi_midiReceiveModeTsnapChanHT${id}" class="form-select"
+                                                                    <select id="HTMLi_midiTsnapChanHT${id}" class="form-select"
                                                                             aria-label="Channel for receiving HTs">
                                                                         <option value="0">1</option>
                                                                         <option value="1">2</option>
@@ -2127,30 +2287,30 @@ HUM.tmpl = {
                                                             </div>
                                                         </label>
 
-                                                        <label class="list-group-item" id="HTMLf_midiReceiveModeTsnapDividerKey${id}">
+                                                        <label class="list-group-item" id="HTMLo_midiTsnapDividerKey_box${id}">
                                                             <div class="row row-cols-1 align-items-center">
                                                                 <div class="col">
                                                                     <strong class="mb-2">Divider key</strong>
-                                                                    <p class="text-muted mb-0">The MIDI note you want to use as divider. Below is taken as FT; equal or above is taken as HT.</p>
+                                                                    <div><small class="text-muted mb-0">The MIDI note you want to use as divider. Below is taken as FT; equal or above is taken as HT.</small></div>
                                                                 </div>
                                                                 <div class="col">
 
-                                                                    <input type="number" min="0" max="127" step="1" class="form-control" id="HTMLi_midiReceiveModeTsnapDividerKey${id}"
+                                                                    <input type="number" min="0" max="127" step="1" class="form-control" id="HTMLi_midiTsnapDividerKey${id}"
                                                                            aria-label="MIDI note number">
 
                                                                 </div>
                                                             </div>
                                                         </label>
 
-                                                        <label class="list-group-item" id="HTMLf_midiReceiveModeTsnapDividerChan${id}">
+                                                        <label class="list-group-item" id="HTMLo_midiTsnapDividerChan_box${id}">
                                                             <div class="row row-cols-1 align-items-center">
                                                                 <div class="col">
                                                                     <strong class="mb-2">Channel</strong>
-                                                                    <p class="text-muted mb-0">Channel to use for receiving in "divider" mode.</p>
+                                                                    <div><small class="text-muted mb-0">Channel to use for note-receiving in "divider" mode.</small></div>
                                                                 </div>
                                                                 <div class="col">
 
-                                                                    <select id="HTMLi_midiReceiveModeTsnapDividerChan${id}" class="form-select"
+                                                                    <select id="HTMLi_midiTsnapDividerChan${id}" class="form-select"
                                                                             aria-label="Channel to use for receiving">
                                                                         <option value="0">1</option>
                                                                         <option value="1">2</option>
@@ -2184,7 +2344,7 @@ HUM.tmpl = {
                                                   </div>
                                                   <div class="card-body">
                                                     <div class="table-responsive">
-                                                        <table class="table table-sm table-hover">
+                                                        <table class="table table-sm table-hover monospaced">
                                                             <tr>
                                                                 <th>Port</th>
                                                                 <td><span id="HTMLo_midiMonitor0_port${id}"></span></td>
@@ -2224,7 +2384,7 @@ HUM.tmpl = {
                                                   </div>
                                                   <div class="card-body">
                                                     <div id="HTMLo_outputPorts${id}"></div>
-                                                    <div id="HTMLf_webMidiLinkPorts${id}"></div>
+                                                    <div class="list-group" id="HTMLf_webMidiLinkPorts${id}"></div>
                                                   </div>
                                                 </div>
                                             </div>
@@ -2432,7 +2592,7 @@ HUM.tmpl = {
                     
                     <div class="row align-items-center">
                         <div class="col col-md col-12 text-center text-md-start">
-                            <label for="HTMLo_ftHStranspose_h_ratio${id}" class="form-label h6">Harmonics</label>
+                            <div class="form-label h6">Harmonics</div>
                         </div>
                         <div class="col">
                             <div class="input-group mb-3 align-items-center">
@@ -2445,7 +2605,7 @@ HUM.tmpl = {
                     
                     <div class="row align-items-center">
                         <div class="col col-md col-12 text-center text-md-start">
-                            <label for="HTMLo_ftHStranspose_s_ratio${id}" class="form-label h6">Subharmonics</label>
+                            <div class="form-label h6">Subharmonics</div>
                         </div>
                         <div class="col">
                             <div class="input-group mb-3 align-items-center">
@@ -2530,31 +2690,37 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
-    webMidiLinkPorts(id, key) {
+    webMidiLinkPorts(id, key, humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <table id="HTMLf_webMidiLinkLoader${id}" class="invisibleTable midiParam" style="display:none;">
-                <tr>
-                    <td colspan="2">
-                        <h5>WebMidiLink synth @ Port ${key}: &nbsp;&nbsp;<span id="HTMLf_webMidiLinkStatus${id}" class="webmidilinkNotLoaded">NOT LOADED</span></h5>
-                    </td>
-                </tr>
+            <div class="list-group-item p-0 mt-2 rounded-0" id="HTMLf_webMidiLinkLoader${id}" style="display:none;">
+                
+                    <div class="card border-0 border-bottom border-top border-dark-subtle rounded-0" id="HTMLo_user_preset_new${id}">
+                        <div class="card-header px-2 py-0 border-0">
+                            <strong class="mb-2">WebMidiLink synth @ Port ${key}: &nbsp;&nbsp;<span id="HTMLf_webMidiLinkStatus${id}" class="webmidilinkNotLoaded">NOT LOADED</span></strong>
+                            <div><small class="text-muted mb-0 text-s">Select or type an instrument URL and click "Load".</small></div>
+                        </div>
+                        <div class="card-body px-2 py-2">
+                            <div class="input-group input-group-sm mb-2">
+                                <select id="HTMLf_webMidiLinkSynthSelect${id}" class="form-select" aria-label="Select the instrument from the list.">
+                                </select>
+                            </div>
+                            <div class="input-group input-group-sm has-validation">
+                                <input id="HTMLf_webMidiLinkUrl${id}" type="text" class="form-control" size="48" placeholder="Input an URL of a WebMidiLink instrument" aria-label="Inputbox to type the instrument URL."/>
+                                <button id="HTMLf_webMidiLinkSynthLoad${id}" class="btn btn-outline-secondary" placeholder="Click to load the URL" type="button">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
+                                        <use fill-rule="evenodd" href="#dpIcon-link${humID}"/>
+                                    </svg>
+                                    Load
+                                </button>
+                                <div class="invalid-feedback">
+                                    It must be a valid URL.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                <tr>
-                    <td rowspan="2">URL</td>
-                    <td colspan="2">
-                        <input id="HTMLf_webMidiLinkUrl${id}" type="text" class="webMidiLinkUrl" size="48" />
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <select id="HTMLf_webMidiLinkSynthSelect${id}" class="webMidiLinkSelect"></select>
-                    </td>
-                    <td align="right">
-                        <button id="HTMLf_webMidiLinkSynthLoad${id}">Load</button>
-                    </td>
-                </tr>
-            </table>`;
+            </div>`;
         return template.firstElementChild;
     },
 

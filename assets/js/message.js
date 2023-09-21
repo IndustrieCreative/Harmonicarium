@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,28 +22,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals HUM */
-
 "use strict";
 
-// MessageType: userSession
-// Ask if there is another session
-// if yes
-    // read the sessionID
-    // update concurrent sessions
-    // 
-// if no
-    // 
-
+/**
+ * The BroadcastChannel interface class<br>
+ *    A tool for managing the sent/received messages through the `window.BroadcastChannel`.
+ */
 HUM.BroadcastChannel = class {
     /**
-    * @param {HUM} harmonicarium - ...
-    */
-    constructor(harmonicarium){
+     * @param {HUM} harmonicarium - The HUM instance to which this BroadcastChannel must refer.
+     */
+    constructor(harmonicarium) {
+        /**
+        * The HUM instance.
+        *
+        * @member {HUM}
+        */
         this.harmonicarium = harmonicarium;
+        /**
+        * The full name of the HUM instance.
+        * 
+        * @member {string}
+        */
         this.name = this.harmonicarium.instanceName;
-        // this.sessionID = this.harmonicarium.components.user.session.id;
+        /**
+        * The BroadcastChannel of this instance.
+        * 
+        * @member {BroadcastChannel}
+        */
         this.channel = new window.BroadcastChannel(this.name);
+        /**
+        * The commands' register.
+        * 
+        * @member {Object}
+        */
         this.commands = {};
 
         this.channel.addEventListener('message', (evt) => {
@@ -53,15 +65,42 @@ HUM.BroadcastChannel = class {
         // =======================
     } // end class Constructor
     // ===========================
+
+    /**
+    * The session ID of the current browser tab.
+    * 
+    * @member {string}
+    */
     get sessionID() {
         return this.harmonicarium.components.user.session.id;
     }
+    /**
+     * Register a BroadcastChannel command.
+     * 
+     * @param {string}   command - The name of the command that is to be registered.
+     * @param {Function} fn      - The callback function to be run for executing the command.
+     */
     registerCommand(command, fn) {
         this.commands[command] = fn;
     }
+    /**
+     * Remove a BroadcastChannel command.
+     * 
+     * @param {string} command - The name of the command that is to be unregistered.
+     */
     unregisterCommand(command) {
         delete this.commands[command];
     }
+    /**
+     * Send a BroadcastChannel command.
+     * 
+     * @param {string}                   command                   - The specific command for the app es. session.
+     * @param {any}                      data                      - The message to be sent.
+     * @param {string}                   [destination='broadcast'] - The destination of the message: a sessionID for communicating
+     *                                                               to a specific session or 'broadcast' for communicating with all sessions.
+     *                                                               It's optional and the default is 'broadcast'.
+     * @param {HUM.BroadcastChannel.Msg} [reqMsgID=null]           - The original message (inbound) that make the request. Optional.
+     */
     send(command, data, destination='broadcast', reqMsgID=null) {
         this.channel.postMessage(new HUM.BroadcastChannel.Msg({
             mode: 'out',
@@ -73,6 +112,12 @@ HUM.BroadcastChannel = class {
             reqMsgID: reqMsgID
         }));
     }
+    /**
+     * Receive a BroadcastChannel command.
+     * 
+     * @param {MessageEvent} evt      - The message event from BroadcastChannel.
+     * @param {any}          evt.data - The actual message.
+     */
     _receive(evt) {
         let msg = evt.data;
         if (['broadcast', this.sessionID].includes(msg.destination)) {
@@ -80,31 +125,44 @@ HUM.BroadcastChannel = class {
                 msg.mode = 'in';
                 msg.broadcastChannel = this;
                 msg.postInfo = { // from original message event
-                    origin: event.origin,
-                    lastEventId: event.lastEventId,
-                    source: event.source,
-                    ports: event.ports,
+                    origin: evt.origin,
+                    lastEventId: evt.lastEventId,
+                    source: evt.source,
+                    ports: evt.ports,
                 };
+                // Executes the command specified in the message.
                 this.commands[msg.command](new HUM.BroadcastChannel.Msg(msg));
             }
         }
     }
 };
 
+/**
+ * The BroadcastChannel Message class.
+ */
 HUM.BroadcastChannel.Msg = class {
     /**
-    * @param {HUM.DHC} dhc - ...
-    */
+     * @param {Object}               [obj]                - Destructuring parameter containing the message.
+     * @param {string}               obj.mode             - The message mode: 'in' or 'out'.
+     * @param {HUM.BroadcastChannel} obj.broadcastChannel - The `HUM.BroadcastChannel` instance.
+     * @param {string}               obj.msgID            - The message UUID.
+     * @param {string}               obj.source           - The session UUID.
+     * @param {string}               obj.destination      - A session UUID or 'broadcast'.
+     * @param {string}               obj.command          - Specific command for the app.
+     * @param {any}                  obj.data             - The message.
+     * @param {string}               obj.reqMsgID         - The UUID of the original incoming message that make the request.
+     * @param {Object}               obj.postInfo         - The infos from the original incoming message.
+     */
     constructor(
         {
             mode,
             broadcastChannel,
-            msgID, // message ID
-            source, // 'sessionID'
-            destination, // 'sessionID' or 'broadcast'
-            command, // specific command for the app es. session
-            data, // the message
-            reqMsgID, // the original message (inbound) that make the request
+            msgID,
+            source,
+            destination,
+            command,
+            data,
+            reqMsgID,
             postInfo,
         }={}
     ){
@@ -121,6 +179,13 @@ HUM.BroadcastChannel.Msg = class {
         // =======================
     } // end class Constructor
     // ===========================
+
+    /**
+     * Reply to this BroadcastChannel Message.
+     * 
+     * @param {string} command - The reply command.
+     * @param {any} data       - The reply data.
+     */
     reply(command, data) {
         this.broadcastChannel.send(command, data, this.source, this.msgID);
     }

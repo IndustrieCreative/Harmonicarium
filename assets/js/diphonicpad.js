@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -557,7 +557,18 @@ HUM.DpPad = function() {
         updatesFromDHC(msg) {
             if (msg.cmd === 'init') {
                 for (let type of ['ft', 'ht']) {
-                    this.updatePadRangeUI(type);
+                    // @todo "updatePadRangeUI" is now commented because starts writing on parameters
+                    // of the pads ranges and this triggers the update of the value on the DB
+                    // eg. on changing the mc/hz accuracy or there is an incomin pitchbend message
+                    // However, it would be good to be able to update the frequency/monitor printed
+                    // at the bottom of the two pads, which doesn't happen anyway, when we 
+                    // execute "updatePadRangeUI".
+                    // this.updatePadRangeUI(type);
+                    
+                    // For now, we only execute the two methods already present at the
+                    // "updatePadRangeUI" bottom:
+                    this[type].refillFreqArrays();
+                    this[type].drawFreqUI();
                 }
             }
 
@@ -1869,7 +1880,7 @@ HUM.DpPad = function() {
                     break;
                 case 'menu':
                     if (state === 0 ) {
-                        this.padSet.dhc.harmonicarium.components.backendUtils.showSidebar();
+                        this.padSet.dhc.harmonicarium.components.backendUtils.toggleSidebar();
                     }
                     break;
                 case 'rotateView':
@@ -1879,7 +1890,7 @@ HUM.DpPad = function() {
                     break;
                 case 'openLog':
                     if (state === 0) {
-                        this.padSet.dhc.harmonicarium.components.backendUtils.showLogPanel();
+                        this.padSet.dhc.harmonicarium.components.backendUtils.toggleLogPanel();
                     }
                     break;
                 case 'toolbarPos':

@@ -28,7 +28,7 @@ body {
     /*vertical-align: middle;*/
 }
 
-table {
+table.monospaced {
     font-family: 'Source Code Pro', monospace;
     /*border-collapse: collapse;
     text-align:center;*/
@@ -357,17 +357,17 @@ so they don't overlap */
 /***********************************************
  * MODAL MIDI-OUT TUNING METHODS
  ***********************************************/
-.mot-pb-settings button {
+/*.mot-pb-settings button {
     vertical-align: top;
 }
 .mot-pb-settings {
     display: flex;
-}
+}*/
 .mot-pb-row2 td,
 .mot-pb-row1 th[rowspan="2"] {
     border-bottom: solid 1px;
 }
-td.mot-pb-portChannel_ft,
+/*td.mot-pb-portChannel_ft,
 td.mot-pb-portChannel_ht {
     padding: 1px;
 }
@@ -378,18 +378,15 @@ td.mot-pb-delayHT {
 td.mot-pb-rangeFT,
 td.mot-pb-delayFT {
     padding: 6px 15px 0 15px;
-}
+}*/
 .mot-pb-typeHeader {
-    font-size: 20px;
+    font-size: 18px;
 }
 
 
 /***********************************************
  * MIDI PARAMS (inside the modal window)
  ***********************************************/
-table.midiParam {
-    text-align: left;
-}
 .webmidilinkLoaded {
     color:green;
 }
@@ -477,40 +474,42 @@ hr {
 /*H Stack HT & FT rows color on keypress events*/
 @keyframes FTpressedKey {
     0% {
-        background-color: #FFF;
+        --bs-table-bg: #FFF;
         color: #FFFFBB
     }
     100% {
-        background-color: #FFC79D;
+        --bs-table-bg: #FFC79D;
         color: #2A2838;
     }
 }
 @keyframes FTreleasedKey {
     0%   {
-        background-color: #FFC79D;
+        --bs-table-bg: #FFC79D;
         color: #2A2838;
     }
     100% {
-        background-color: #FFF;
+        --bs-table-bg: #FFF;
         color: #DDD;
     }
 }
 .hum-hstack-ft-on {
-    animation: FTpressedKey 250ms forwards;
+    animation: FTpressedKey 200ms forwards;
     font-weight: bold;
 }
 .hum-hstack-ft-off {
-    animation: FTreleasedKey 250ms linear;
+    animation: FTreleasedKey 200ms linear;
     font-weight: normal;
     /*color: #DDD;*/
 }
 .hum-hstack-ht-on {
     background-color: #C9E2F7;
+    --bs-table-bg: #C9E2F7;
     color: #2A2838;
     font-weight: bold;
 }
 .hum-hstack-ht-off {
     background-color: transparent;
+    --bs-table-bg: #ffffff82;
     /*color: #DDD;*/
     font-weight: normal;
     transition: all 125ms linear;

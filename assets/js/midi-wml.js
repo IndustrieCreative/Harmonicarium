@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,36 +22,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals HUM */
-
 "use strict";
 
 /** 
- * The WebMidiLinkIn port class.<br>
- *     Manage WebMidiLink input messages.
+ * The WebMidiLinkIn port class.
+ * Manage WebMidiLink input messages.
  *
  * @see {@link https://www.g200kg.com/en/docs/webmidilink/index.html}
  */
 HUM.midi.WebMidiLinkIn = class {
     /**
-    * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs
-    * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs
+    * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
+    * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
     */
     constructor(dhc, midi) {
         /**
-        * The DHC instance
+        * The DHC instance.
         *
         * @member {HUM.DHC}
         */
         this.dhc = dhc;
         /**
-        * The MidiHub instance
+        * The MidiHub instance.
         *
         * @member {HUM.midi.MidiHub}
         */
         this.midi = midi;
         /**
-        * The Window-like object of the page that opened or embedded the URL to this HUM instace
+        * The Window-like object of the page that opened or embedded the URL to this HUM instace.
         *
         * @member {Object}
         */
@@ -71,20 +69,24 @@ HUM.midi.WebMidiLinkIn = class {
     // ===========================
 
     /**
-     * Manage and route an incoming message
-     * @param {HUM.DHCmsg} msg - The incoming message
+     * Manage and route an incoming  message.
+     * 
+     * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent} 
+     * @see {@link https://www.g200kg.com/en/docs/webmidilink/spec.html} 
+
+     * @param {MessageEvent}    evt      - The incoming message event.
+     * @param {wmlmsg0|wmlmsg1} evt.data - A WebMidiLink Message Link 0 or 1.
      */
-    // @old icWebMidiLinkInput
-    receiveMessage(e) {
-       if (typeof e.data === 'string') {
-            var msg = e.data.split(",");
+    receiveMessage(evt) {
+       if (typeof evt.data === 'string') {
+            var msg = evt.data.split(",");
             switch (msg[0]) {
                 // Level 1 messages
                 case "link":
                     // Try to determinate which window sent the message
                     let synthNum = 0;
                     for (const [key, webMidiOut] of Object.entries(this.midi.port.webMidi.outputs)) {
-                        if (e.source === webMidiOut.synthWindow) {
+                        if (evt.source === webMidiOut.synthWindow) {
                             synthNum = key;
                         } 
                     }
@@ -106,7 +108,7 @@ HUM.midi.WebMidiLinkIn = class {
                         // Host=>Synth : if Harmonicarium is used as INSTRUMENT/SYNTH
                         case "reqpatch":
                             console.log("WebMidiLink Level 1 message (link) 'reqpatch' is not implemented yet!");
-                            // e.source.postMessage("link,patch," + ReqPatchString(),"*");
+                            // evt.source.postMessage("link,patch," + ReqPatchString(),"*");
                             break;
                         case "setpatch":
                             console.log("WebMidiLink Level 1 message (link) 'setpatch' is not implemented yet!");
@@ -138,28 +140,26 @@ HUM.midi.WebMidiLinkIn = class {
     }
     /**
      * Send "ready" message to the Host WebMidiLink window.
-     *     Should be called when Harmonicarium (hosted) is ready and listening.
-     *     [ Synth=>Host ]
-     * 
-     * @param {HUM.DHCmsg} msg - The incoming message
+     * Should be called when Harmonicarium (hosted) is ready and listening.
+     * [ Synth=>Host ]
      */
-    // @old icWebMidiLinkReady
     sendReadyMessage() {
-        // Send message to the host web app
+        // Send message to the host web app.
         this.hostWindow.postMessage("link,ready", "*");
     }
 };
 
 /** 
- * The WebMidiLinkOut port class.<br>
- *     Manage WebMidiLink output messages.
+ * The WebMidiLinkOut port class.
+ * Manage WebMidiLink output messages.
  *
  * @see {@link https://www.g200kg.com/en/docs/webmidilink/index.html}
  */
 HUM.midi.WebMidiLinkOut = class {
     /**
-    * @param {number}           key  - The internal number for the new virtual MIDI port (integer). It will be the port number on the UI.
-    * @param {string}           id   - The id for the new virtual MIDI port.
+    * @param {number}           key  - The internal number for the new virtual MIDI port (integer). It will be the
+    *                                  port number on the UI.
+    * @param {string}           id   - The ID for the new virtual MIDI port.
     *                                  The prefix should be like `"webmidilink_out_"`, ending with the `key` number.
     * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
     * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
@@ -180,7 +180,6 @@ HUM.midi.WebMidiLinkOut = class {
         /**
         * The id of this virtual MIDI port.
         *     
-        *
         * @member {string}
         */
         this.id = id;
@@ -215,7 +214,7 @@ HUM.midi.WebMidiLinkOut = class {
         */
         this.key = key;
         /**
-        * The external id this virtual MIDI port. It must be unique.
+        * The external ID this virtual MIDI port. It must be unique.
         *     It should contain the DHC id and the `key`.
         *
         * @member {string}
@@ -223,14 +222,15 @@ HUM.midi.WebMidiLinkOut = class {
         this.uniqKey = `${dhc.id}_${key}`;
         /**
         * The Window-like object of the page that has been opened by this HUM instace
+        * and this WebMidiLink Port.
         *
         * @member {Object}
         */
         this.synthWindow = {closed: true};
         /**
-        * The current state of the "Synth" application that has been opened
-        *     `true` if the "Synth" app sent the "ready" message
-        *     (not used yet)
+        * The current state of the "Synth" application that has been opened.
+        * `true` if the "Synth" app sent the "ready" message.
+        * (not used yet)
         *
         * @member {boolean}
         */
@@ -239,24 +239,27 @@ HUM.midi.WebMidiLinkOut = class {
         * What synthlist to use.
         * - `'adhocSynthList'`: An updated and reordered list; apps no longer reachable have been removed.
         *   In this list there are some extra properties that indicate some useful information for re-tuning.
-        * - `'g200kgSynthList'`: The original synthlist from g200kg site (see: {@link https://www.g200kg.com/en/docs/webmidilink/synthlist.html|SynthList - JSONP})
-        * To use the `'g200kgSynthList'`, uncomment one of the two scripts in the "./index.html" file, as explained here: {@link SynthListCallback}
+        * - `'g200kgSynthList'`: The original synthlist from g200kg site
+        *   (see: {@link https://www.g200kg.com/en/docs/webmidilink/synthlist.html|SynthList - JSONP})
+        * To use the `'g200kgSynthList'`, uncomment one of the two scripts in the "./index.html" file,
+        * as explained here: {@link SynthListCallback}
         *
         * @member {('adhocSynthList'|'g200kgSynthList')}
         */
         this.synthList = 'adhocSynthList'; // or 'g200kgSynthList'
 
         let portsContainer = document.getElementById(`HTMLf_webMidiLinkPorts${dhc.id}`),
-            newPortUI = HUM.tmpl.webMidiLinkPorts(this.uniqKey, this.key+1);
+            newPortUI = HUM.tmpl.webMidiLinkPorts(this.uniqKey, this.key+1, dhc.harmonicarium.id);
         portsContainer.appendChild(newPortUI);
+
         /**
-         * UI HTML elements
+         * UI HTML elements.
          *
          * @member {Object}
          * 
-         * @property {Object.<string, HTMLElement>} fn  - Functional UI elements
-         * @property {Object.<string, HTMLElement>} in  - Input UI elements
-         * @property {Object.<string, HTMLElement>} out - Output UI elements
+         * @property {Object.<string, HTMLElement>} fn  - Functional UI elements.
+         * @property {Object.<string, HTMLElement>} in  - Input UI elements.
+         * @property {Object.<string, HTMLElement>} out - Output UI elements.
          */
         this.uiElements = {
             fn: {
@@ -284,7 +287,7 @@ HUM.midi.WebMidiLinkOut = class {
     // ===========================
 
     /**
-     * Initialize the UI of the WebMidiLinkOut instance
+     * Initialize the UI of the WebMidiLinkOut instance.
      */
     _initUI() {
         // Add event listeners on <select> and <button> elements
@@ -301,19 +304,19 @@ HUM.midi.WebMidiLinkOut = class {
             let optTxt = `${sl[i].description}: ${sl[i].name} (by ${sl[i].author})`;
             this.uiElements.fn.webMidiLinkSynthSelect.options[i] = new Option(optTxt, sl[i].url);
         }
-
     }
     /**
      * Show the port's URL loader to the user and start check for the "Synth" window state.
-     *     To be used when the user check the port checkbox.
+     * To be used when the user check the port checkbox.
      */
     openPort() {
         this.uiElements.fn.webMidiLinkLoader.style.display = "table";
         this.startStateCheck();
     }
     /**
-     * Hide the port's URL loader to the user, close the "Synth" window (if open), stop check for its state and and change the status on the UI to "NOT LOADED". 
-     *     To be used when the user uncheck the port checkbox.
+     * Hide the port's URL loader to the user, close the "Synth" window (if open), stop check for
+     * its state and and change the status on the UI to "NOT LOADED". 
+     * To be used when the user uncheck the port checkbox.
      */
     closePort() {
         this.unload();
@@ -321,9 +324,10 @@ HUM.midi.WebMidiLinkOut = class {
         this.uiElements.fn.webMidiLinkLoader.style.display = "none";
     }
     /**
-     * Show an alert to the user, load the given URL in a new window and start check for the "Synth" window state.
+     * Show an alert to the user, load the given URL in a new window and start check for
+     * the "Synth" window state.
      * 
-     * @param {string} url - The URL of the "Synth" instrument
+     * @param {string} url - The URL of the "Synth" instrument.
      */
     load(url) {
         alert("A new popup-window containing a web-app instrument is about to be opened and may end up behind the current browser window.\n\nMake sure you interact at least once with the User Interface of the instrument that opened in the new popup-window before you start sending WebMidiLink signals from Harmonicarium.\n\nFor security reasons, the browser may suspend the AudioContext status until the user interacts with that window.\n\nClick OK to continue.");
@@ -336,7 +340,7 @@ HUM.midi.WebMidiLinkOut = class {
         this.startStateCheck();
     }
     /**
-     * Close the "Synth" window (if open) and change the status on the UI to "NOT LOADED"
+     * Close the "Synth" window (if open) and change the status on the UI to "NOT LOADED".
      */
     unload() {
         if (this.synthWindow.window){
@@ -349,7 +353,7 @@ HUM.midi.WebMidiLinkOut = class {
     }
     /**
      * Send a "Link Level 0" WebMidiLink message to the "Synth" instrument window.
-     *     "Link Level 0" means a simple MIDI message.
+     * "Link Level 0" means a simple MIDI message.
      *
      * @see {@link https://www.g200kg.com/en/docs/webmidilink/spec.html} 
      * 
@@ -381,7 +385,8 @@ HUM.midi.WebMidiLinkOut = class {
         }
     }
     /**
-     * Start check for the "Synth" window state every 1500ms. If the windows Synth is close, change the status on the UI to "NOT LOADED".
+     * Start check for the "Synth" window state every 1500ms. If the windows Synth is close,
+     * change the status on the UI to "NOT LOADED".
      */
     startStateCheck() {
         this.stateCheckTimer = setInterval( () => {
@@ -398,7 +403,9 @@ HUM.midi.WebMidiLinkOut = class {
         clearInterval(this.stateCheckTimer);
     }
     /**
-     * Change the status on the UI if the Synth is loading or is ready (and Link Level 1 enabled).
+     * Change the status on the UI if the Synth is loading or is ready (and Link Level 1 compliant).
+     * 
+     * @param {('ready'|'progress')} msg - The second part of a Link Level 1 message.
      */
     becomeReady(msg) {
         let uiStatus = this.uiElements.fn.webMidiLinkStatus;

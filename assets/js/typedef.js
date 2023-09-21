@@ -18,9 +18,11 @@
 
 /**
  * Midicent<br>
- * A midicent is one floating points MIDI-note-number unit.<br>
+ * In Harmonicarium, a midicent is a floating points MIDI-note-number unit.<br>
  *     It can be a positive or negative floating point number.<br>
- *     Considering the description of midicent proposed in the following links, our midicent should be called <em>hecto-midicent</em>.<br>
+ *     NOTE: In the French software OpenMusic, the midicent is defined in a different way.
+ *     Considering the description of midicent proposed in the following links,
+ *     our midicent is different and should be called <em>hecto-midicent</em> (multiplied by 100).<br>
  * <ul>
  * <li>{@link https://fr.wikipedia.org/wiki/Midicent}</li>
  * <li>{@link http://support.ircam.fr/docs/om/om6-manual/co/Score-Objects-Intro.html#zdN1d7}</li>
@@ -137,6 +139,18 @@
  * 
  * @global
  * @typedef {string} wmlmsg1
+ */
+
+/**
+ * localStorage Status
+ *     An object that describes the `localStorage` useful infos.
+ * 
+ * @global
+ * @typedef {Object} localStorageStatus
+ * 
+ * @property {('full'|'unavailable'|'available')} status - The localStorage status.
+ * @property {boolean}                            read   - If we can read from localStorage.
+ * @property {boolean}                            write  - If we can write to localStorage.
  */
 
 /*==============================================================================*
@@ -283,3 +297,10 @@
  * @typedef DOMException
  * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMException}
  */
+
+/**
+ * @name BroadcastChannel
+ * @typedef BroadcastChannel
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel}
+ */
+

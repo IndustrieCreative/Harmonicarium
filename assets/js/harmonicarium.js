@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -25,29 +25,51 @@
 "use strict";
 
 /** 
- * The HARMONICARIUM main class
+ * The HUM (HarmonicariUM) main class.
+ * 
+ * Please note: I chose not to use a development paradigm using JavaScript modules because
+ * I want this application to be usable by anyone locally (under the file:// protocol) without
+ * needing to use a web server. Currently, it is not possible to import modules under the
+ * file:// protocol as this generates a CORS error.
  */
 class HUM {
     /**
-     * Create an instance of DHC
      * @param {number} id - The id for the new instance of HUM
+     * @param {string} context - The id for the new instance of HUM
      */
     constructor(id, context) {
         /**
-         * The id of the HUM instance
-         *
-         * @type {number}
-         */
+        * The id of this HUM instance (eg. 0, 1, 2...)
+        *
+        * @member {number}
+        */
         this.id = id;
         this._id = id;
+        /**
+        * The name of the context where this app is instantiated.
+        *   Useful for composing the name of the DB in IndexedDB.
+        *
+        * @member {string}
+        */
         this.context = context;
+        /**
+        * The name of this app.
+        *   Useful for composing the name of the DB in IndexedDB.
+        *
+        * @member {string}
+        */
         this.name = 'harmonicarium';
+        /**
+        * The full name of the instance.
+        *   Used as name of the DB in IndexedDB.
+        *
+        * @member {string}
+        */
         this.instanceName = this.name+this.id+'_'+this.context;
-
         /**
          * Namespace for base settings
          *
-         * @type {Object}
+         * @member {Object}
          * 
          * @property {number}  dhcQty - How many DHCs must be generated
          * @property {boolean} dpPad  - If the Diphonic Pad must be included
@@ -58,13 +80,22 @@ class HUM {
         };
 
         /**
+        * Instance of `HUM#Parameters`.
+        *
+        * @member {HUM#Parameters}
+        */
+        this.parameters = null
+
+        /**
          * Namespace container for module components
          *
-         * @type {Object}
+         * @member {Object}
          * 
-         * @property {Object.<string, HUM.DHC>} availableDHCs - How many DHCs must be generated
-         * @property {HUM.DpPad}                dpPad         - If the Diphonic Pad must be included
-         * @property {HUM.BackendUtils}         backendUtils  - If the Backend Utils must be included
+         * @property {Object.<string, HUM.DHC>} availableDHCs - The generated DHC instances
+         * @property {HUM.DpPad}                dpPad         - The Diphonic Pad instance
+         * @property {HUM.BackendUtils}         backendUtils  - The Backend Utils instance
+         * @property {HUM.PwaManager}           pwaManager    - The PWA Manager instance
+         * @property {HUM.User}                 user          - The User instance
          */
         this.components = {
             availableDHCs: {},
@@ -73,13 +104,18 @@ class HUM {
             pwaManager: null,
             user: null
         };
-
+        /**
+        * The full name of the instance.
+        *   Used as name of the DB in IndexedDB.
+        *
+        * @member {HUM.BroadcastChannel}
+        */
         this.broadcastChannel = {};
 
         /**
          * The dimensions of the main reference HTML container
          *
-         * @type {Object}
+         * @member {Object}
          * 
          * @property {number} x - Width in pixel
          * @property {number} y - Height in pixel
@@ -88,29 +124,33 @@ class HUM {
             x: 0,
             y: 0
         };
+
         /**
          * Namespace container for all the injected HTML templates
          *
-         * @type {Object}
+         * @member {Object}
          * 
-         * @property {HTMLElement}                  instancesContainer - The main HTML container of all HUM instances
-         * @property {HTMLElement}                  appContainer       - The HTML container of this HUM instance
-         * @property {HTMLElement}                  dpPadContainer          - The HTML container of the DpPad instance (just one per harmonicarium)
-         * @property {HTMLElement}                  sidePanel          - The main HTML container of the side panel's objects (.logoBox and .sideContents)
-         * @property {HTMLElement}                  logTextBox         - The HTML container of the log text box for the BackendUtils instance
-         * @property {HTMLElement}                  svgIcons           - The HTML container of the SVG icons palette
-         * @property {HTMLElement}                  logoBox            - The HTML container of the logo/menu box
-         * @property {HTMLElement}                  sideContents       - The HTML container of the .sideMenu
-         * @property {HTMLElement}                  sideMenu           - The HTML container of .dpPadAccordion (just one) and all accordions of each DHC instance
-         * @property {HTMLElement}                  dpPadAccordion     - The HTML container of the HTML accordion of the DpPad instance
-         * @property {Object.<string, HTMLElement>} hstackTab          - All the DHC's Hstak HTML containers
-         * @property {Object.<string, HTMLElement>} pianoTab           - All the DHC's Hancock HTML containers
-         * @property {Object.<string, HTMLElement>} dhcTab             - All the DHC's main settings HTML containers
-         * @property {Object.<string, HTMLElement>} synthTab           - All the DHC's Synth HTML containers
-         * @property {Object.<string, HTMLElement>} midiTab            - All the DHC's Midi HTML containers
-         * @property {Object.<string, HTMLElement>} fmTab              - All the DHC's FM settings HTML containers
-         * @property {Object.<string, HTMLElement>} ftTab              - All the DHC's FT settings HTML containers
-         * @property {Object.<string, HTMLElement>} htTab              - All the DHC's HT settings HTML containers
+         * @property {HTMLElement}                  instancesContainer  - The main HTML container of all HUM instances
+         * @property {HTMLElement}                  appContainer        - The HTML container of this HUM instance
+         * @property {HTMLElement}                  dpPadContainer      - The HTML container of the DpPad instance (just one per HUM)
+         * @property {HTMLElement}                  sidePanel           - The main HTML container of the side panel's objects (.logoBox and .sideMenu)
+         * @property {HTMLElement}                  logTextBox          - The HTML container of the log text box for the BackendUtils instance
+         * @property {HTMLElement}                  svgIcons            - The HTML container of the SVG icons palette
+         * @property {HTMLElement}                  modalDialogContents - The HTML container of the modal dialog tool (reusable)
+         * @property {HTMLElement}                  logoBox             - The HTML container of the logo/menu box
+         * @property {HTMLElement}                  sideMenu            - The HTML container of one .userAccordion, one .dpPadAccordion and all accordions of each DHC instance (.dhcAccordions)
+         * @property {HTMLElement}                  userAccordion       - The HTML container of the accordion of the User instance
+         * @property {HTMLElement}                  dpPadAccordion      - The HTML container of the accordion of the DpPad instance
+         * @property {Object.<string, HTMLElement>} dhcAccordions       - All the DHC's HTML accordion's containers
+         * @property {HTMLElement}                  userTab             - The HTML container of the tab for the User instance
+         * @property {Object.<string, HTMLElement>} hstackTabs          - Container for all the DHC's Hstak HTML accordion's tabs
+         * @property {Object.<string, HTMLElement>} pianoTabs           - Container for all the DHC's Hancock HTML accordion's tabs
+         * @property {Object.<string, HTMLElement>} dhcTabs             - Container for all the DHC's main settings HTML accordion's tabs
+         * @property {Object.<string, HTMLElement>} synthTabs           - Container for all the DHC's Synth HTML accordion's tabs
+         * @property {Object.<string, HTMLElement>} midiTabs            - Container for all the DHC's Midi HTML accordion's tabs
+         * @property {Object.<string, HTMLElement>} fmTabs              - Container for all the DHC's FM settings HTML accordion's tabs
+         * @property {Object.<string, HTMLElement>} ftTabs              - Container for all the DHC's FT settings HTML accordion's tabs
+         * @property {Object.<string, HTMLElement>} htTabs              - Container for all the DHC's HT settings HTML accordion's tabs
          */
         this.html = {
             // Body content
@@ -127,27 +167,25 @@ class HUM {
 
             // Side Panel contents
             logoBox: HUM.tmpl.logoBox(this.id),
-            // sideContents: HUM.tmpl.sideContents(this.id),
-
-            // Side Contents content
             sideMenu: HUM.tmpl.sideMenu(this.id),
 
-            // Side Menu content
+            // Side Menu accordions
             userAccordion: HUM.tmpl.userAccordion(this.id),
             dpPadAccordion: HUM.tmpl.dpPadAccordion(this.id),
+            dhcAccordions: {},  // All the DHCs' accordions
 
+            // Tab for User accordion
             userTab: HUM.tmpl.accordionTab(this.id, 'user', 'Setting presets'),
 
-            // dhc Container contents (DHC-specific Boxes)
-            accordion: {},
-            hstackTab: {},
-            pianoTab: {},
-            dhcTab: {},
-            synthTab: {},
-            midiTab: {},
-            fmTab: {},
-            ftTab: {},
-            htTab: {},
+            // Tab for the DHC-specific accordions
+            hstackTabs: {},
+            pianoTabs: {},
+            dhcTabs: {},
+            synthTabs: {},
+            midiTabs: {},
+            fmTabs: {},
+            ftTabs: {},
+            htTabs: {},
             // visualiserBox: {},
         };
 
@@ -158,9 +196,11 @@ class HUM {
     }
 
     /**
-     * Initialize a single instance of HUM
+     * The `init()` method initializes the Harmonicarium app by creating the various components, rendering the
+     * HTML templates, setting up the event listeners, and checking the availability of the IndexedDB provider 
+     * for saving and loading presets.
      */
-    _init() {
+    init() {
         console.log('****** WELCOME TO HARMONICARIUM *****');
         console.group('HARMONICARIUM - START: Initializing...');
 
@@ -207,6 +247,7 @@ class HUM {
             this.html.dpPadContainer.style.width = "100%";
             this.html.dpPadContainer.style.height = "100%";
 
+            // Initialize the backend parameters
             this.components.backendUtils.parameters._init();
 
         console.groupEnd();
@@ -252,7 +293,8 @@ class HUM {
     }
 
     /**
-     * Inject in the document all the main HTML templates
+     * The method `_initTemplates()` injects various HTML elements (templates) to their respective
+     * containers in the DOM.
      */
     _initTemplates() {
 
@@ -264,12 +306,8 @@ class HUM {
         this.html.sideMenu.children[0].appendChild(this.html.userAccordion);
         this.html.sideMenu.children[0].appendChild(this.html.dpPadAccordion);
 
-        // into Side Contents
-        // this.html.sideContents.appendChild(this.html.sideMenu);
-
         // into Side Panel
         this.html.sidePanel.appendChild(this.html.logoBox);
-        // this.html.sidePanel.appendChild(this.html.sideContents);
         this.html.sidePanel.appendChild(this.html.sideMenu);
 
         // into App Container
@@ -291,8 +329,10 @@ class HUM {
         // into Instances Container
         this.html.instancesContainer.appendChild(this.html.appContainer);
     }
+
     /**
-     * Initialize all the necessary DHCs
+     * The `_initDHCs` function creates and initializes all the necessary DHCs and injects the
+     * HTML elements to their respective tabs and boxes in the DOM.
      */
     _initDHCs() {
         let hrmID = this.id;
@@ -300,41 +340,41 @@ class HUM {
         for (let id=0; id<this.settings.dhcQty; id++) {
             let dhcID = hrmID+'-'+id;
             
-            this.html.accordion[dhcID] = HUM.tmpl.dhcAccordion(dhcID);
-            let dhcAccordion = this.html.accordion[dhcID];
+            this.html.dhcAccordions[dhcID] = HUM.tmpl.dhcAccordion(dhcID);
+            let dhcAccordions = this.html.dhcAccordions[dhcID];
 
-            this.html.synthTab[dhcID] = HUM.tmpl.accordionTab(dhcID, 'synth', 'Built-in Synth');
-            this.html.midiTab[dhcID] = HUM.tmpl.accordionTab(dhcID, 'midi', 'MIDI I/O');
-            this.html.pianoTab[dhcID] = HUM.tmpl.accordionTab(dhcID, 'piano', 'Piano Keymap');
-            this.html.dhcTab[dhcID] = HUM.tmpl.accordionTab(dhcID, 'dhcSettings', 'DHC Settings');
-            this.html.fmTab[dhcID] = HUM.tmpl.accordionTab(dhcID, 'fm', 'Fundamental Mother');
-            this.html.ftTab[dhcID] = HUM.tmpl.accordionTab(dhcID, 'ft', 'Fundamental Tones');
-            this.html.htTab[dhcID] = HUM.tmpl.accordionTab(dhcID, 'ht', 'Harmonic Tones');
-            this.html.hstackTab[dhcID] = HUM.tmpl.accordionTab(dhcID, 'hstack', 'Hstack');
+            this.html.synthTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'synth', 'Built-in Synth');
+            this.html.midiTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'midi', 'MIDI I/O');
+            this.html.pianoTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'piano', 'Piano Keymap');
+            this.html.dhcTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'dhcSettings', 'DHC Settings');
+            this.html.fmTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'fm', 'Fundamental Mother');
+            this.html.ftTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'ft', 'Fundamental Tones');
+            this.html.htTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'ht', 'Harmonic Tones');
+            this.html.hstackTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'hstack', 'Hstack');
 
-            this.html.hstackTab[dhcID].children[1].children[0].appendChild(HUM.tmpl.hstackBox(dhcID));
-            this.html.pianoTab[dhcID].children[1].children[0].appendChild(HUM.tmpl.pianoBox(dhcID));
-            this.html.dhcTab[dhcID].children[1].children[0].appendChild(HUM.tmpl.dhcBox(dhcID, hrmID));
-            this.html.synthTab[dhcID].children[1].children[0].appendChild(HUM.tmpl.synthBox(dhcID, hrmID));
-            this.html.midiTab[dhcID].children[1].children[0].appendChild(HUM.tmpl.midiBox(dhcID, hrmID));
+            this.html.hstackTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.hstackBox(dhcID));
+            this.html.pianoTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.pianoBox(dhcID));
+            this.html.dhcTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.dhcBox(dhcID, hrmID));
+            this.html.synthTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.synthBox(dhcID, hrmID));
+            this.html.midiTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.midiBox(dhcID, hrmID));
 
             this.html.appContainer.appendChild(HUM.tmpl.midiModal(dhcID));
             this.html.appContainer.appendChild(HUM.tmpl.keymapModal(dhcID));
             
-            this.html.fmTab[dhcID].children[1].children[0].appendChild(HUM.tmpl.fmBox(dhcID));
-            this.html.ftTab[dhcID].children[1].children[0].appendChild(HUM.tmpl.ftBox(dhcID));
-            this.html.htTab[dhcID].children[1].children[0].appendChild(HUM.tmpl.htBox(dhcID));
+            this.html.fmTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.fmBox(dhcID));
+            this.html.ftTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.ftBox(dhcID));
+            this.html.htTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.htBox(dhcID));
 
-            dhcAccordion.children[0].appendChild(this.html.synthTab[dhcID]);
-            dhcAccordion.children[0].appendChild(this.html.midiTab[dhcID]);
-            dhcAccordion.children[0].appendChild(this.html.pianoTab[dhcID]);
-            dhcAccordion.children[0].appendChild(this.html.dhcTab[dhcID]);
-            dhcAccordion.children[0].appendChild(this.html.fmTab[dhcID]);
-            dhcAccordion.children[0].appendChild(this.html.ftTab[dhcID]);
-            dhcAccordion.children[0].appendChild(this.html.htTab[dhcID]);
-            dhcAccordion.children[0].appendChild(this.html.hstackTab[dhcID]);
+            dhcAccordions.children[0].appendChild(this.html.synthTabs[dhcID]);
+            dhcAccordions.children[0].appendChild(this.html.midiTabs[dhcID]);
+            dhcAccordions.children[0].appendChild(this.html.pianoTabs[dhcID]);
+            dhcAccordions.children[0].appendChild(this.html.dhcTabs[dhcID]);
+            dhcAccordions.children[0].appendChild(this.html.fmTabs[dhcID]);
+            dhcAccordions.children[0].appendChild(this.html.ftTabs[dhcID]);
+            dhcAccordions.children[0].appendChild(this.html.htTabs[dhcID]);
+            dhcAccordions.children[0].appendChild(this.html.hstackTabs[dhcID]);
 
-            this.html.sideMenu.children[0].appendChild(dhcAccordion);
+            this.html.sideMenu.children[0].appendChild(dhcAccordions);
 
             this.components.availableDHCs[id] = new HUM.DHC(dhcID, id, this);
 
@@ -342,8 +382,10 @@ class HUM {
     }
 
     /**
-     * Recompute the drawn geometries in all the components that need to be resized
-     *     accordingly to the reference HTML container's dimensions
+     * The function `windowResize()` updates the viewport size and adjusts the width and height of the
+     * app container accordingly, and then calls the `windowResize()` function of the `dpPad`
+     * component in order to recompute the drawn geometries in all the sub-components that need to be
+     * resized accordingly to the reference HTML container's dimensions
      */
     windowResize() {
         // window.requestAnimationFrame( () => {
@@ -359,7 +401,7 @@ class HUM {
      */
     updateViewportSize() {
         // @todo - no difference if hiding scrollbar ?!
-        //         why -1 andd -7 works ??
+        //         why -1 and -7 works ??
 
         // this.viewportDim.x = window.innerWidth - 1;
         // this.viewportDim.y = window.innerHeight - 1;
@@ -369,8 +411,23 @@ class HUM {
     }
 }
 
+
+/** 
+ * Instance class-container used to create all the `HUM.Param` objects for the Harmonicarium (HUM) instance.
+ */
 HUM.prototype.Parameters = class {
+    /**
+     * @param {HUM} harmonicarium - The HUM instance in which this class is being used.
+     */
     constructor(harmonicarium) {
+        /**  
+         * This property is a `HUM.Param` to control the initial splash screen by Bootstrap API.
+         * It's not stored in the DB.
+         *
+         * @member {HUM.Param}
+         * 
+         * @property {bootstrap.Modal} bsModal - The Bootstrap controller for the initial loading HTML modal splash screen.
+         */
         this.splashModal = new HUM.Param({
             app:harmonicarium,
             idbKey:'humSplashModal',

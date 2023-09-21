@@ -182,7 +182,7 @@ SynthListCallback([{
     }
 }, {
     "name": "Yamaha XG Sound Set.sf2",
-    "url": "https://logue.dev/sf2synth.js/",
+    "url": "http://logue.github.io/smfplayer.js/wml.html",
     "author": "Logue",
     "authorurl": "http://logue.be/",
     "description": "Yamahaã®XGéŸ³æºã£ã½ã„ã‚µã‚¦ãƒ³ãƒ‰ãƒ•ã‚©ãƒ³ãƒˆ",
@@ -212,26 +212,4 @@ SynthListCallback([{
     "authorurl": "http://logue.be/",
     "description": "WebMidiLinkå½¢å¼ã®ã‚·ãƒ³ã‚»ã‚µã‚¤ã‚¶ã‚’Web MIDI Apiã‚’ç”¨ã„ã¦å‡ºåŠ›ã—ã¾ã™ã€‚",
     "latency": {}
-}, {
-    "name": "SpessaSynth",
-    "url": "https://spessasus.github.io/SpessaSynth",
-    "author": "Spessasus",
-    "authorurl": "https://github.com/spessasus",
-    "description": "SoundFont2 based Synthesizer",
-    "latency": {
-        "win-ch": 40,
-        "win-ff": 80,
-        "*-*": 40
-    }
-}, {
-    "name": "SpessaSynth",
-    "url": "https://spessasus.github.io/SpessaSynth",
-    "author": "Spessasus",
-    "authorurl": "https://github.com/spessasus",
-    "description": "SoundFont2 based Synthesizer",
-    "latency": {
-        "win-ch": 40,
-        "win-ff": 80,
-        "*-*": 40
-    }
 }])

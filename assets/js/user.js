@@ -5,8 +5,8 @@
  * https://github.com/IndustrieCreative/Harmonicarium
  * 
  * @license
- * Copyright (C) 2017-2022 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter Mantovani.
+ * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
+ * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,44 +22,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals HUM, indexedDB, crypto, bootstrap */
-
-// =============================================================
-// TODO (Oct 2022:
-
-// - check all restored params (if restore correctly)
-// - exclude functional params from db store
-
-// - write upgrade to v2 or full re-init
-
-// - piper memory store
-
-// - print tables on modals
-//    + table of params sequence! for debug on different devices in case of problems
-
-// -> delete session
-// - change session
-
-// - pass (some!) parameters by URL PATH GET parameters (eg. presetID!)
-// - ?? save new preset -> fast save "New preset + timestamp"
-// - ?? re-arrange preset tool (edit sequence)
-//  tool to clear all old version parameters????
-//       -> todo for upgrade db functions   
-//  force auto-save before load / skip autosave after load
-     // Xno->yes?? after a preset is loaded, the  at the first modify, all the parameters are stored to autosave preset
-     // Xno- after a preset is loaded the autosave preset is cleared,
-// =============================================================
-
-
 "use strict";
 
+/** 
+ * The Dynamic Harmonics Calculator class<br>
+ *    This is the computational kernel for the frequency/midicent tables.
+ *    Manage an route the communications from and to the other App components.
+ */
 HUM.User = class {
     /**
-    * @param {HUM.DHC} dhc - The DHC instance to which it belongs
-    */
+     * @param {HUM} harmonicarium
+     */
     constructor(harmonicarium) {
         this.DEFAULT_PRESET_NAME = 'New preset';
-
+        /**
+        * The id of this Synth instance (same as the DHC id)
+        *
+        * @member {string}
+        */
         this.id = harmonicarium.id;
         this._id = harmonicarium.id;
         this.name = 'user';
