@@ -860,7 +860,7 @@ HUM.midi.MidiIn.prototype.Parameters = class {
                             opType:'set',
                             eventType: 'change',
                             htmlTargetProp:'value',
-                            widget:'number',
+                            widget:'selection',
                         }),
                         'midiTsnapDividerChan_box': new HUM.Param.UIelem({
                             role: 'out',
@@ -904,7 +904,7 @@ HUM.midi.MidiIn.prototype.Parameters = class {
                             opType:'set',
                             eventType: 'change',
                             htmlTargetProp:'value',
-                            widget:'number',
+                            widget:'selection',
                         }),
                         'midiTsnapChanFT_box': new HUM.Param.UIelem({
                             role: 'out',
@@ -914,8 +914,8 @@ HUM.midi.MidiIn.prototype.Parameters = class {
                     initValue: 1,
                     allowedValues: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
                     init:false,
-                    postSet: (value, thisParam) => {
-                        if (value == this.tsnap.channelMode.chanHT.value) {
+                    postSet: (value, thisPara, init) => {
+                        if (!init && value === this.tsnap.channelMode.chanHT.value) {
                             throw "FT and HT cannot share the same MIDI channel!";
                         } else {
                             let ht_channels = this.tsnap.channelMode.chanHT.uiElements.in.midiTsnapChanHT;
@@ -952,7 +952,7 @@ HUM.midi.MidiIn.prototype.Parameters = class {
                             opType:'set',
                             eventType: 'change',
                             htmlTargetProp:'value',
-                            widget:'number',
+                            widget:'selection',
                         }),
                         'midiTsnapChanHT_box': new HUM.Param.UIelem({
                             role: 'out',
@@ -963,7 +963,7 @@ HUM.midi.MidiIn.prototype.Parameters = class {
                     allowedValues: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
                     init:false,
                     postSet: (value, thisParam) => {
-                        if (value == this.tsnap.channelMode.chanFT.value) {
+                        if (value === this.tsnap.channelMode.chanFT.value) {
                             throw "FT and HT cannot share the same MIDI channel!";
                         } else {
                             let ft_channels = this.tsnap.channelMode.chanFT.uiElements.in.midiTsnapChanFT;
