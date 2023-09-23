@@ -175,7 +175,7 @@ class HUM {
             dhcAccordions: {},  // All the DHCs' accordions
 
             // Tab for User accordion
-            userTab: HUM.tmpl.accordionTab(this.id, 'user', 'Setting presets'),
+            userTab: HUM.tmpl.accordionTab(this.id, 'user', 'Setting presets', 'user'),
 
             // Tab for the DHC-specific accordions
             hstackTabs: {},
@@ -343,14 +343,14 @@ class HUM {
             this.html.dhcAccordions[dhcID] = HUM.tmpl.dhcAccordion(dhcID);
             let dhcAccordions = this.html.dhcAccordions[dhcID];
 
-            this.html.synthTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'synth', 'Built-in Synth');
-            this.html.midiTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'midi', 'MIDI I/O');
-            this.html.pianoTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'piano', 'Piano Keymap');
-            this.html.dhcTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'dhcSettings', 'DHC Settings');
-            this.html.fmTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'fm', 'Fundamental Mother');
-            this.html.ftTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'ft', 'Fundamental Tones');
-            this.html.htTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'ht', 'Harmonic Tones');
-            this.html.hstackTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'hstack', 'Hstack');
+            this.html.synthTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'synth', 'Built-in Synth', 'audio', hrmID);
+            this.html.midiTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'midi', 'MIDI I/O', 'midi', hrmID);
+            this.html.pianoTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'piano', 'Piano Keymap', 'piano', hrmID);
+            this.html.dhcTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'dhcSettings', 'DHC Settings', 'dhcSettings', hrmID);
+            this.html.fmTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'fm', 'Fundamental Mother', 'fm', hrmID);
+            this.html.ftTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'ft', 'Fundamental Tones', 'ft', hrmID);
+            this.html.htTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'ht', 'Harmonic Tones', 'ht', hrmID);
+            this.html.hstackTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'hstack', 'Hstack', 'table', hrmID);
 
             this.html.hstackTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.hstackBox(dhcID));
             this.html.pianoTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.pianoBox(dhcID));

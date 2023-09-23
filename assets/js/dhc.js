@@ -27,7 +27,7 @@
 /** 
  * The Dynamic Harmonics Calculator class<br>
  *    This is the computational kernel for the frequency/midicent tables.
- *    Manage an route the communications from and to the other App components.
+ *    Manage and route the communications from and to the other App components.
  */
 HUM.DHC = class {
     /**

@@ -22,13 +22,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* globals HUM */
-/* jshint -W009 */
-
 "use strict";
 
-// "requestAnimationFrame" Fallback method
-// requestAnimFrame shim layer by Paul Irish
+/* "requestAnimationFrame" Fallback method
+   requestAnimFrame shim layer by Paul Irish
+ */
 // var requestAnimFrame = (function(){
 //     return  window.requestAnimationFrame       || 
 //             window.webkitRequestAnimationFrame || 
@@ -40,6 +38,11 @@
 //             };
 // })();
 
+
+/*
+ * The DiohonicPad class.
+ *    This is the main interface designed for mobile interfaces.
+ */
 HUM.DpPad = function() {
 
     /*  __      __   _                             _     _ _             
@@ -49,7 +52,27 @@ HUM.DpPad = function() {
      *     \  / (_) | | (_|  __// ____ \| | | | | | |_) | | |_| |_| \__ \
      *      \/ \___/|_|\___\___/_/    \_\_| |_| |_|_.__/|_|\__|\__,_|___/
      */
+    
+    /**
+     * The DpPad VoiceAmbitus inner class.
+     * It defines an ambitus (frequency range) for the FT or HT pad.
+     * 
+     * @alias HUM.DpPad~VoiceAmbitus
+     * @inner
+     */
     class VoiceAmbitus {
+        /**
+         * @constructs HUM.DpPad~VoiceAmbitus
+         * 
+         * @param {tonetype}                      type - If the ambitus is intended for FTs or HTs.
+         * @param {string}                        name - The name of the new ambitus.
+         * @param {('hz'|'mc'|'scientific'|'ui')} mode - The measurement mode by which `min` and `max` parameters are expressed.
+         * @param {(string|number)}               min  - The minimum frequency, expressed as number if the `mode` is `'hz'` or `'mc'`, 
+         *                                               or expressed as note-name string if the `mode` is `'scientific'` or `'ui'`.
+         * @param {(string|number)}               max  - The maximum frequency, expressed as number if the `mode` is `'hz'` or `'mc'`, 
+         *                                               or expressed as note-name string if the `mode` is `'scientific'` or `'ui'`.
+         * @param {HUM}                           dhc  - The DHC instance to which this VoiceAmbitus must refer.
+         */
         constructor(type, name, mode, min, max, dhc) {
             this.type = type;
             this.dhc = dhc;
@@ -128,7 +151,19 @@ HUM.DpPad = function() {
      *        | |                     
      *        |_|                     
      */
+    /**
+     * The DiohonicPad main class.
+     * 
+     * @exports HUM.DpPad
+     * @class
+     * @inner
+     */
     class DpPad {
+        /**
+         * @param {HUM}      harmonicarium - The HUM instance to which this DpPad must refer.
+         * @param {HUM.DHC=} dhc           - A DHC. If the argument is not passed to the constructor, a new DHC will be created.
+         *                                   (untested, work in progress).
+         */
         constructor(harmonicarium, dhc=false) {
             this.id = harmonicarium.id;
             this._id = harmonicarium.id;
@@ -417,7 +452,8 @@ HUM.DpPad = function() {
             tbarDiv.appendChild(tbarSvg);
             
             // Create a new HTML element with UI backend and append it into the document
-            let accordionTab = HUM.tmpl.accordionTab(setKey, 'dppad', 'Diphonic Pad ' + (dpPadComponent.padSets.length > 1 ? setKey : ''));
+            let humID = dpPadComponent.harmonicarium.id;
+            let accordionTab = HUM.tmpl.accordionTab(setKey, 'dppad', 'Diphonic Pad ' + (dpPadComponent.padSets.length > 1 ? setKey : ''), 'dppad', humID);
             accordionTab.children[1].children[0].appendChild(HUM.tmpl.dpPadBox(setKey, dhc.harmonicarium.id));
             dpPadComponent.harmonicarium.html.dpPadAccordion.children[0].appendChild(accordionTab);
 
