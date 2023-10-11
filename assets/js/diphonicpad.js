@@ -52,7 +52,6 @@ HUM.DpPad = function() {
      *     \  / (_) | | (_|  __// ____ \| | | | | | |_) | | |_| |_| \__ \
      *      \/ \___/|_|\___\___/_/    \_\_| |_| |_|_.__/|_|\__|\__,_|___/
      */
-    
     /**
      * The DpPad VoiceAmbitus inner class.
      * It defines an ambitus (frequency range) for the FT or HT pad.
@@ -74,25 +73,74 @@ HUM.DpPad = function() {
          * @param {HUM}                           dhc  - The DHC instance to which this VoiceAmbitus must refer.
          */
         constructor(type, name, mode, min, max, dhc) {
+            /**
+            * The voice/tone type of this ambitus.
+            *
+            * @member {tonetype}
+            */
             this.type = type;
+            /**
+            * The DHC instance
+            *
+            * @member {HUM.DHC}
+            */
             this.dhc = dhc;
+            /**
+            * The name of this ambitus. Useful to identificate it on the UI.
+            *
+            * @member {string}
+            */
             this.name = '';
+            /**
+             * The ambitus range, expressed in hertz.
+             *
+             * @member {Object}
+             *
+             * @property {hertz} min - The minimum frequency of the ambius, in hertz.
+             * @property {hertz} max - The maximum frequency of the ambius, in hertz.
+             */
             this.hz = {
                 min: 0,
                 max: 0
             };
+            /**
+             * The ambitus range, expressed in midicent.
+             *
+             * @member {Object}
+             *
+             * @property {hertz} min - The minimum frequency of the ambius, in midicent.
+             * @property {hertz} max - The maximum frequency of the ambius, in midicent.
+             */
             this.mc = {
                 min: 0,
                 max: 0
             };
-            // Note name in scientific pitch notation (cents offset is omitted)
+            /**
+             * The ambitus range, expressed as note-name in scientific pitch notation.
+             * NOTE: the cents offset is omitted.
+             *
+             * @member {Object}
+             *
+             * @property {string} min - The minimum frequency of the ambius, in scientific pitch notation.
+             * @property {string} max - The maximum frequency of the ambius, in scientific pitch notation.
+             */
             this.note = {
                 min: '',
                 max: ''
             };
-            this.setRange(name, mode, min, max);
+            this._setRange(name, mode, min, max);
         }
-        setRange(name, mode, min, max) {
+        /**
+         * This method sets the range expressed in any mode.
+         * 
+         * @param {string}                        name - The name of the new ambitus.
+         * @param {('hz'|'mc'|'scientific'|'ui')} mode - The measurement mode by which `min` and `max` parameters are expressed.
+         * @param {(string|number)}               min  - The minimum frequency, expressed as number if the `mode` is `'hz'` or `'mc'`, 
+         *                                               or expressed as note-name string if the `mode` is `'scientific'` or `'ui'`.
+         * @param {(string|number)}               max  - The maximum frequency, expressed as number if the `mode` is `'hz'` or `'mc'`, 
+         *                                               or expressed as note-name string if the `mode` is `'scientific'` or `'ui'`.
+         */
+        _setRange(name, mode, min, max) {
             this.name = name;
             if (mode === 'hz') {
                 this.hz.min = min;
@@ -117,6 +165,15 @@ HUM.DpPad = function() {
                 this.hz.max = HUM.DHC.mcToFreq(this.mc.max);
             } 
         }
+        /**
+         * This is a getter property that returns, the ambitus range expressed as note-name in "UI notation".
+         * (currently not used - deprecate it?)
+         *
+         * @member {Object}
+         *
+         * @property {string} min - The minimum frequency of the ambius, in UI notation.
+         * @property {string} max - The maximum frequency of the ambius, in UI notation.
+         */
         get noteUI() {
             return {
                 min: this.dhc.midiNumberToNames(Math.round(this.mc.min))[1],
@@ -125,7 +182,31 @@ HUM.DpPad = function() {
         }
     }
 
+    /*    _____         ______          _   
+     *   / ____|       |  ____|        | |  
+     *  | |     ___ ___| |__ ___  _ __ | |_ 
+     *  | |    / __/ __|  __/ _ \| '_ \| __|
+     *  | |____\__ \__ \ | | (_) | | | | |_ 
+     *   \_____|___/___/_|  \___/|_| |_|\__|
+     */
+    /**
+     * The DpPad CssFont inner class.
+     * It defines a font to be used on the Pads.
+     * 
+     * @alias HUM.DpPad~CssFont
+     * @inner
+     */
     class CssFont {
+        /**
+         * @constructs HUM.DpPad~CssFont
+         * 
+         * @param {string} [style='']       - The CSS font-style.
+         * @param {string} [weight='']      - The CSS font-weight.
+         * @param {number} [size=12]        - The CSS font-size.
+         * @param {string} [unit=px]        - The CSS font-size unit.
+         * @param {string} [family='Arial'] - The CSS font-family.
+         * @param {string} [color='black']  - The CSS color.
+         */
         constructor(style, weight, size, unit, family, color) {
             this.style = style || ''; // italic
             this.weight = weight || ''; // bold
@@ -134,9 +215,22 @@ HUM.DpPad = function() {
             this.family = family || 'Arial';
             this.color = color || 'black';
         }
+        /**
+         * This is a getter property that returns the font definition string for applying it
+         * to the `font` property of the `CanvasRenderingContext2D` objects.
+         * This string uses the same syntax as the {@link https://developer.mozilla.org/en-US/docs/Web/CSS/font|CSS font} specifier.
+         * 
+         * @member {string}
+         */
         get getCss() {
             return [this.style, this.weight, this.getSize, this.family].filter(Boolean).join(' ');
         }
+        /**
+         * This is a getter property that returns the font-size definition string for using it
+         * the `getCss` getter.
+         * 
+         * @member {string}
+         */
         get getSize() {
             return this.size ? this.size + this.unit : '';
         }
@@ -165,42 +259,97 @@ HUM.DpPad = function() {
          *                                   (untested, work in progress).
          */
         constructor(harmonicarium, dhc=false) {
+            /**
+            * The id of this `HUM.DpPad`. It's the same of the HUM instance passed to the constructor.
+            *
+            * @member {number}
+            */
             this.id = harmonicarium.id;
             this._id = harmonicarium.id;
+            /**
+             * The name of the `HUM.DpPad`, useful for group the parameters on the DB.
+             * Currently hard-coded as `"dpPad"`.
+             *
+             * @member {string}
+             */
             this.name = 'dpPad';
+            /**
+             * The HUM instance passed to the constructor.
+             *
+             * @member {HUM}
+             */
             this.harmonicarium = harmonicarium;
-            this.dhc = dhc; // 'dhc' === false is meant for stand-alone distributions of the Diphonic Pad
+            /**
+             * The DHC instance.
+             * NOTE: 'dhc' === false is meant for stand-alone distributions of the Diphonic Pad
+             *
+             * @member {HUM.DHC}
+             */
+            this.dhc = dhc;
+            /**
+             * The container of the PadSets.
+             *
+             * @member {Array.<HUM.DpPad~PadSet>}
+             */
             this.padSets = new Array();
-            this.toolbars = new Array();
+            /**
+             * DpPad main hard-coded parameters namespace.
+             *
+             * @member {Object}
+             *
+             * @property {string} orientation     - The main orientation.
+             * @property {number} numberOfSets    - The number of PadSet. Multi-sets implementation is work in progress (leave 1)
+             * @property {Object} refDimensions   - The standard reference dimension namespace. X and Y are to be intended at 
+             *                                      VERTICAL 'orientation' 16:9 aspect ratio @ 4K UHD.
+             * @property {number} refDimensions.x - The width reference, in pixels.
+             * @property {number} refDimensions.y - The height reference, in pixels.
+             */
             this.settings = {
                 orientation: 'vertical',
-                numberOfSets: 1, // Multi-sets implementation is working progress (leave 1)
+                numberOfSets: 1,
                 refDimensions: {
-                    // X and Y are to be intended at VERTICAL 'orientation'
-                    // 16:9 aspect ratio @ 4K UHD
                     x: 768, // 2160,
                     y: 1366 // 3840
                 }
             };
+            /**
+             * Current viewport dimension namespace.
+             *
+             * @member {Object}
+             *
+             * @property {number} x - The width of the viewport, in pixels.
+             * @property {number} y - The height of the viewport, in pixels.
+             */
             this.viewportDim = {
-                    x: 0,
-                    y: 0
+                x: 0,
+                y: 0
             };
-            // Variables to keep track of the mouse position and left-button status 
+            /**
+             * A namespace for the parameters useful to keep track of the mouse position and its left-button status.
+             *
+             * @member {Object}
+             *
+             * @property {number}  x      - The current horizontal position.
+             * @property {number}  y      - The current vertical position.
+             * @property {boolean} down   - If the left button of the mouse is pressed.
+             * @property {number}  last   - Coordinates namespace to keep track of the old/last position when drawing a line.
+             *                              They are set to false at the start to indicate that we don't have a good value for it yet.
+             * @property {number}  last.x - The last horizontal position.
+             * @property {number}  last.y - The last vertical position.
+             */
             this.mouse = {
                 x: null,
                 y: null,
                 down: false,
-                // Keep track of the old/last position when drawing a line
-                // We set it to false at the start to indicate that we don't have a good value for it yet
                 last: { 
                     x: false,
                     y: false
                 }
             };
         }
-        
-        // Set-up the canvas and add our event handlers after the page has loaded
+        /**
+         * Set-up the canvas and add our event handlers after the page has loaded.
+         */
         init() {
             // Since we are listening to the entire window for the mouseup, it only needs to be done once per page,
             // and not once per canvas
@@ -217,14 +366,17 @@ HUM.DpPad = function() {
                 this.padSets[n] = new DpPad.PadSet(padSetID, n, this, (!this.dhc ? false : this.dhc));
             }
         }
-
-        // Keep track of the mouse button being released
-        mouseUp(e) {
-            this.updateMousePosition(e);
+        /**
+         * Keep track of the mouse button being released.
+         * 
+         * @param {Event} evt - The mouse-up event.
+         */
+        mouseUp(evt) {
+            this.updateMousePosition(evt);
             for (let padSet of this.padSets) {
                 padSet.ft.mouseUp();
                 padSet.ht.mouseUp();
-                padSet.toolbar.mouseUp(e);
+                padSet.toolbar.mouseUp(evt);
             }
             // Reset the mouse AFTER the single pad mouseUp
             // So that if you have to do something with the last mouse position, you can do it before you lose the data.
@@ -234,22 +386,33 @@ HUM.DpPad = function() {
             this.mouse.last.y = false;
 
         }
-
-        // Get the current mouse position relative to the top-left of the canvas
-        updateMousePosition(e) {
-            if (e.offsetX) {
-                this.mouse.x = e.offsetX;
-                this.mouse.y = e.offsetY;
+        /**
+         * Get the current mouse position relative to the top-left of the canvas.
+         * 
+         * @param {Event} evt - The moving mouse event.
+         */
+        updateMousePosition(evt) {
+            if (evt.offsetX) {
+                this.mouse.x = evt.offsetX;
+                this.mouse.y = evt.offsetY;
             }
             else if (e.layerX) {
-                this.mouse.x = e.layerX;
-                this.mouse.y = e.layerY;
+                this.mouse.x = evt.layerX;
+                this.mouse.y = evt.layerY;
             }
         }
+        /**
+         * Update the viewport size of the DpPad HTML container.
+         */
         updateViewportSize() {
             this.viewportDim.x = this.harmonicarium.html.dpPadContainer.clientWidth;
             this.viewportDim.y = this.harmonicarium.html.dpPadContainer.clientHeight;
         }
+        /**
+         * Rotate the view.
+         * 
+         * @param {('horizontal'|'vertical')=} value - Set the specified orientation or switch if no argument is passed.
+         */
         rotateView(value=false) {
             // Set
             if (value) {
@@ -273,7 +436,9 @@ HUM.DpPad = function() {
             }
             this.windowResize();
         }
-
+        /**
+         * Windows resize.
+         */
         windowResize() {
             this.updateViewportSize();
             let pixScale = window.devicePixelRatio;
@@ -386,7 +551,15 @@ HUM.DpPad = function() {
                 }
             }
         }
-
+        /**
+         * From frequency to lenght in pixel.
+         * 
+         * @param {hertz}  frequency       - The frequency to be converted in pixel lenght.
+         * @param {Object} rangePreset     - The frequency range represented by the `pxMaxLength` parameter.
+         * @param {hertz}  rangePreset.min - Minimum frequency of the range.
+         * @param {hertz}  rangePreset.max - Maximum frequency of the range.
+         * @param {number} pxMaxLength     - The lenght of the range in pixel.
+         */
         freqToPix(frequency, rangePreset, pxMaxLength) {
             let freqMin = Math.log(rangePreset.min.value) / Math.log(10),
                 freqMax = Math.log(rangePreset.max.value) / Math.log(10),
@@ -394,6 +567,15 @@ HUM.DpPad = function() {
                 pxPosition = (Math.log(frequency) / Math.log(10) - freqMin) / range * pxMaxLength;
             return pxPosition;
         }
+        /**
+         * From pixel lenght to frequency.
+         * 
+         * @param {number}  pxPosition      - The pixel position inside the range.
+         * @param {Object} rangePreset     - The frequency range represented by the `pxMaxLength` parameter.
+         * @param {hertz}  rangePreset.min - Minimum frequency of the range.
+         * @param {hertz}  rangePreset.max - Maximum frequency of the range.
+         * @param {number} pxMaxLength     - The lenght of the range in pixel.
+         */
         pixToFreq(pxPosition, rangePreset, pxMaxLength){
             let freqMin = Math.log(rangePreset.min.value) / Math.log(10),
                 freqMax = Math.log(rangePreset.max.value) / Math.log(10),
@@ -410,10 +592,23 @@ HUM.DpPad = function() {
      *  | |  | (_| | (_| |____) |  __/ |_ 
      *  |_|   \__,_|\__,_|_____/ \___|\__|
      */
+    /**
+     * The PadSet class.
+     * It defines a set of pads.
+     * 
+     * @static
+     */
     DpPad.PadSet = class {
-        // NOTE: If a dhc is passed, use that, else create its own dhc
-        // @todo: have to check empty/available keys in "harmonicarium.availableDHCs" the setKey
-        //        currently, it can create conflicts with the main app if the "dhc" is not provided
+        /**
+         * @param {string}    setKey         - The ID key of the PadSet.
+         * @param {number}    idx            - The ID of the DpPad.
+         * @param {HUM.DpPad} dpPadComponent - The `HUM.DpPad` instance to which this PadSet must refer.
+         * @param {HUM.DHC=}  dhc            - The DHC instance to be used by this PadSet.
+         *                                     NOTE: If a DHC is passed, use that, else create its own DHC.
+         * 
+         * @todo For `dhc` parameters, it's needed to check empty/available keys in "harmonicarium.availableDHCs"
+         *       the setKey currently, it can create conflicts with the main app if the "dhc" is not provided.
+         */
         constructor(setKey, idx, dpPadComponent, dhc=new HUM.DHC(setKey)) {
             let appDiv = dpPadComponent.harmonicarium.html.dpPadContainer,
                 
@@ -795,7 +990,6 @@ HUM.DpPad = function() {
         }
     
     };
-
 
     /*  _____                               _                
      * |  __ \                             | |               

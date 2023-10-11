@@ -34,30 +34,30 @@ HUM.BackendUtils = class {
      */
     constructor(harmonicarium) {
         /**
-        * The id of this `HUM.BackendUtils`. It's the same of the HUM instance passed to the constructor.
-        *
-        * @member {number}
-        */
+         * The id of this `HUM.BackendUtils`. It's the same of the HUM instance passed to the constructor.
+         *
+         * @member {number}
+         */
         this.id = harmonicarium.id;
         this._id = harmonicarium.id;
         /**
-        * The name of the `HUM.BackendUtils`, useful for group the parameters on the DB.
-        * Currently hard-coded as `"backendUtils"`.
-        *
-        * @member {string}
-        */
+         * The name of the `HUM.BackendUtils`, useful for group the parameters on the DB.
+         * Currently hard-coded as `"backendUtils"`.
+         *
+         * @member {string}
+         */
         this.name = 'backendUtils';
         /**
-        * The HUM instance passed to the constructor.
-        *
-        * @member {HUM}
-        */
+         * The HUM instance passed to the constructor.
+         *
+         * @member {HUM}
+         */
         this.harmonicarium = harmonicarium;
         /**
-        * Instance of `HUM.BackendUtils#Parameters`.
-        *
-        * @member {HUM.BackendUtils.prototype.Parameters}
-        */
+         * Instance of `HUM.BackendUtils#Parameters`.
+         *
+         * @member {HUM.BackendUtils.prototype.Parameters}
+         */
         this.parameters = new this.Parameters(this);
 
         // =======================
