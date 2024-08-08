@@ -396,7 +396,7 @@ HUM.DpPad = function() {
                 this.mouse.x = evt.offsetX;
                 this.mouse.y = evt.offsetY;
             }
-            else if (e.layerX) {
+            else if (evt.layerX) {
                 this.mouse.x = evt.layerX;
                 this.mouse.y = evt.layerY;
             }
@@ -684,6 +684,9 @@ HUM.DpPad = function() {
         }
 
         //                                     'min'|'max'
+        /**
+         * 
+        */
         updatePadRangeUI(type, ambitus=false, target=false, value=false, copy=false) {
             if (ambitus) {
                 this.parameters.freqRange[type].ambitus._setValue(ambitus, false, false, true, false);
@@ -779,6 +782,9 @@ HUM.DpPad = function() {
             this[type].drawFreqUI();
         }
 
+        /**
+         * 
+        */
         addCentToHertz(initFreq, addCents) {
             let resCents = HUM.DHC.freqToMc(initFreq);
             resCents += addCents;
