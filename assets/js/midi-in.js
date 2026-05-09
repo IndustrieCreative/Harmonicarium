@@ -1,64 +1,103 @@
- /**
+/**
+ * @fileoverview MIDI Input handler for the Harmonicarium application.
+ * This file defines the HUM.midi.MidiIn class which receives and processes
+ * all incoming MIDI messages, routing note events to the DHC and handling
+ * receive modes including direct keymap mapping and Tone Snap (T-Snap).
+ *
+ * @module midi-in
+ * @memberof HUM.midi
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ *
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 "use strict";
 
-/** 
- * The MidiIn class.
- *     Manage MIDI Input messages coming from.
+/**
+ * MIDI Input message handler for a DHC instance.
+ *
+ * @class
+ * @memberof HUM.midi
+ *
+ * @description
+ * The HUM.midi.MidiIn class processes all MIDI messages arriving from physical
+ * or virtual input devices. It handles:
+ * - Parsing raw MIDI status bytes to extract command, channel, and data
+ * - Routing Note-On/Off messages to the DHC via {@link HUM.midi.MidiIn#playTone} and {@link HUM.midi.MidiIn#muteTone}
+ * - Supporting three receive modes: `keymap` (direct mapping), `tsnap-channel` (channel-based tone snapping), and `tsnap-divider` (key-divider tone snapping)
+ * - Tracking active notes per channel in the {@link HUM.midi.MidiIn#notes_on} register
+ * - Processing Pitch Bend and Control Change messages
+ * - Updating the MIDI input monitor display
+ *
+ * @see {@link https://webaudio.github.io/web-midi-api/|Web MIDI API}
  */
 HUM.midi.MidiIn = class {
     /**
-    * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
-    * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
-    */
+     * Creates a new MidiIn instance and binds it to the given DHC and MidiHub.
+     *
+     * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
+     * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
+     *
+     * @description
+     * Initializes the MidiIn handler by:
+     * 1. Setting up identification and references to the parent DHC and MidiHub instances
+     * 2. Initializing the MIDI pass-through output buffer
+     * 3. Creating and initializing the parameter management system
+     * 4. Initializing the {@link HUM.midi.MidiIn#notes_on} register for all 16 MIDI channels
+     * 5. Registering this instance as a DHC subscriber for real-time updates
+     */
     constructor(dhc, midi) {
         /**
-        * The id of this MidiIn instance (same as the DHC id).
-        *
-        * @member {string}
-        */
+         * The id of this MidiIn instance (same as the DHC id).
+         *
+         * @member {string}
+         */
         this.id = dhc.id;
+        /**
+         * Internal reference to the DHC instance ID.
+         *
+         * @member {string}
+         * @private
+         */
         this._id = dhc._id;
         /**
-        * The name of the `HUM.MidiIn`, useful for group the parameters on the DB.
-        * Currently hard-coded as `"midiIn"`.
-        *
-        * @member {string}
-        */
+         * The name of the `HUM.midi.MidiIn`, useful for grouping the parameters on the DB.
+         * Currently hard-coded as `"midiIn"`.
+         *
+         * @member {string}
+         */
         this.name = 'midiIn';
         /**
-        * The DHC instance
-        *
-        * @member {HUM.DHC}
-        */
+         * The DHC instance.
+         *
+         * @member {HUM.DHC}
+         */
         this.dhc = dhc;
         /**
-        * The MidiHub instance
-        *
-        * @member {HUM.midi.MidiHub}
-        */
+         * The MidiHub instance.
+         *
+         * @member {HUM.midi.MidiHub}
+         */
         this.midi = midi;
         /**
          * Output queue buffer for MIDI messages that must pass through and go out.
@@ -71,40 +110,44 @@ HUM.midi.MidiIn = class {
         this.midiPassThrough = [];
 
         /**
-        * Instance of `HUM.MidiIn#Parameters`.
-        *
-        * @member {HUM.MidiIn#Parameters}
-        */
+         * Instance of `HUM.midi.MidiIn#Parameters`.
+         *
+         * @member {HUM.MidiIn#Parameters}
+         * @member {HUM.midi.MidiIn.prototype.Parameters}
+         */
         this.parameters = new this.Parameters(this);
 
         this.parameters._init();
 
         /**
-         * Register of the MIDI Note-On inputs by channel.
-         * Actually it's common to all input ports. 
+         * @typedef {Object} MidiInNoteOn
+         *
+         * @description
+         * An entry in the {@link HUM.midi.MidiIn#notes_on} register tracking an active Note-On input.
+         *
+         * @property {midinnum}         keymapped - The MIDI note number on the keymap (internal).
+         * @property {MIDIMessageEvent} midievent - The original MIDI event containing the note-on message.
+         */
+
+        /**
+         * Register of active MIDI Note-On inputs, indexed by channel then by external MIDI note number.
+         * Currently shared across all input ports.
          *
          * @member {Object.<number, Object.<midinnum, MidiInNoteOn>>}
-         * 
+         *
          * @example
-         * // An example of structure of .notes_on[0]
+         * // Structure of .notes_on[0]
          * 0: {                                   // MIDI Channel.
          *     39: {                              // External MIDI note number (on the instrument).
          *         keymapped: 56,                 // Internal MIDI note number (on the keymap).
          *         midievent: {MIDIMessageEvent}  // The original `MIDIMessageEvent`.
          *     }
          * }
-         * 
+         *
          * @todo Dynamic, one for each input port,
          *       because currently, two input ports can conflict if they use the same channel.
          */
         this.notes_on = {
-            /**
-             * MIDI note number from external input controller
-             * @typedef {Object} MidiInNoteOn
-             * 
-             * @property {midinnum}         keymapped - The MIDI Note Number on the keymap (internal)
-             * @property {MIDIMessageEvent} midievent - The original MIDI event containing the note-on message
-             */
             0: {},
             1: {},
             2: {},
@@ -131,9 +174,18 @@ HUM.midi.MidiIn = class {
     // ===========================
 
     /**
-     * Manage and route an incoming DHC message.
-     * 
-     * @param {HUM.DHCmsg} msg - The incoming message.
+     * Manages and routes an incoming DHC message to the appropriate handler.
+     *
+     * @param {HUM.DHCmsg} msg - The incoming message from the DHC.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Handles the following message commands:
+     * - `panic`: Calls {@link HUM.midi.MidiIn#allNotesOff} to clear the notes-on register.
+     * - `update/ft`: Reserved for future FT-change handling; currently a no-op.
+     * - `update/ht`: Calls {@link HUM.midi.MidiIn#tsnapUpdateHT} to re-evaluate T-Snap mappings when the HT table changes.
+     * - `update/ctrlmap`: No action; keymap changes do not require MIDI-In reconfiguration.
      */
     updatesFromDHC(msg) {
 
@@ -158,7 +210,14 @@ HUM.midi.MidiIn = class {
         }
     }
     /**
-     * Clear the {@link HUM.midi.MidiIn#notes_on} register.
+     * Clears all active Note-On entries from the {@link HUM.midi.MidiIn#notes_on} register.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Iterates over all 16 MIDI channels and resets their entry in the notes-on
+     * register to an empty object, effectively forgetting all currently pressed notes.
+     * Called in response to a `panic` DHC message.
      */
     allNotesOff() {
         for (var ch = 0; ch < 16; ch++) {
@@ -169,16 +228,28 @@ HUM.midi.MidiIn = class {
      * MAIN MIDI MESSAGE HANDLER
      *==============================================================================*/
     /**
-     * Handle the incoming MIDI messages
+     * Handles and dispatches an incoming MIDI message.
+     *
+     * @param {MIDIMessageEvent} midievent           - The MIDI message from {@link HUM.midi.MidiPorts#midiAccess}.
+     * @param {Uint8Array}       midievent.data      - The data array (each entry is an 8-bit integer).
+     * @param {number}           midievent.timeStamp - The timestamp of the message in milliseconds (floating-point number).
+     * @param {boolean}          [deSnapped=false]   - If the Note-Off originates from a T-Snap de-snapping action:
+     *                                                 `false` (default): the note is turned off and deleted from the {@link HUM.midi.MidiIn#notes_on} register.
+     *                                                 `true`: the note is turned off but its entry is retained in the register.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Parses the MIDI status byte to extract the command nibble and channel, then
+     * dispatches accordingly:
+     * - **Note-On / Note-Off** (cmd `0x8` / `0x9`): Applies the active receive mode
+     *   (keymap, tsnap-channel, or tsnap-divider) to resolve the controller note number,
+     *   then calls {@link HUM.midi.MidiIn#muteTone} or {@link HUM.midi.MidiIn#playTone}.
+     * - **Control Change** (cmd `0xB`): Handles All-Notes-Off (CC 123).
+     * - **Pitch Bend** (cmd `0xE`): Updates the pitchbend amount and refreshes synth voices.
+     * - Active Sensing messages (0xFE) are silently discarded.
      *
      * @see {@link https://webaudio.github.io/web-midi-api/#MIDIMessageEvent|Web MIDI API specs}
-     * 
-     * @param {MIDIMessageEvent} midievent           - The MIDI message from {@link HUM.midi.MidiPorts#midiAccess}.
-     * @param {Uint8Array}       midievent.data      - The data array (each entry is a 8bit integer).
-     * @param {number}           midievent.timeStamp - The Time-stamp of the message in milliseconds (floating-point number).
-     * @param {boolean=}         [deSnapped=false]   - If the Note-Off comes from de-snapping action, by the T-Snap receive mode.<br>
-     *                                                 `false`: (default) The note will be turned-off and deleted from the {@link HUM.midi.MidiIn#notes_on} register.
-     *                                                 `true`: The note will be turned-off but still remains in the {@link HUM.midi.MidiIn#notes_on} register.
      */
     midiMessageReceived(midievent, deSnapped=false) {
         // Divide the informations contained in the first byte (Status byte)
@@ -328,18 +399,25 @@ HUM.midi.MidiIn = class {
      * MIDI NOTE ON/OFF HANDLING
      *==============================================================================*/
     /**
-     * Send a Note-ON over the app.
+     * Sends a Note-ON event through the DHC for the given controller key.
      *
      * @param {midinnum} ctrlNum    - MIDI note number of the incoming MIDI message.
      * @param {velocity} velocity   - Velocity of the incoming MIDI message.
      * @param {number}   statusByte - Status Byte of the incoming MIDI message (currently not used).
      * @param {number}   timestamp  - Timestamp of the incoming MIDI message (currently not used).
-     * @param {boolean}  piper      - If is a note generated by the Piper feature:
-     *                                `false`: it's not Piper;
-     *                                `true`: it's Piper.
-     * @param {boolean}  tsnap      - If is a note translated by the T-Snap receive mode:
-     *                                 `false`: it's not T-snapped;
-     *                                 `true`: it's T-snapped.
+     * @param {boolean}  piper      - Whether the note was generated by the Piper feature:
+     *                                `false` — not a Piper note;
+     *                                `true` — generated by Piper (prevents looping).
+     * @param {boolean}  tsnap      - Whether the note was translated by the T-Snap receive mode:
+     *                                `false` — not T-snapped;
+     *                                `true` — T-snapped.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Looks up `ctrlNum` in the controller keymap (`dhc.tables.ctrl`). If found,
+     * calls {@link HUM.DHC#playFT} for any assigned FT and {@link HUM.DHC#playHT}
+     * for any assigned HT. Keys not present in the keymap are silently ignored.
      */
     playTone(ctrlNum, velocity, statusByte, timestamp, piper, tsnap) {
         // Get frequency and midi.cents assigned to the incoming MIDI key (ctrlNum)
@@ -371,13 +449,20 @@ HUM.midi.MidiIn = class {
     }
 
     /**
-     * Send a Note-OFF over the app
+     * Sends a Note-OFF event through the DHC for the given controller key.
      *
-     * @param {midinnum} ctrlNum       - MIDI note number of the incoming MIDI message
-     * @param {velocity} velocity      - Velocity of the incoming MIDI message
-     * @param {number}   statusByte    - Status Byte of the incoming MIDI message
-     * @param {number}   timestamp     - Timestamp of the incoming MIDI message (currently not used)
-     * @param {boolean=} [panic=false] - It tells that the message has been generated by a "hard" All-Notes-Off request.
+     * @param {midinnum} ctrlNum      - MIDI note number of the incoming MIDI message.
+     * @param {velocity} velocity     - Velocity of the incoming MIDI message.
+     * @param {number}   statusByte   - Status Byte of the incoming MIDI message.
+     * @param {number}   timestamp    - Timestamp of the incoming MIDI message (currently not used).
+     * @param {boolean}  [panic=false] - Whether the note-off was triggered by a "hard" All-Notes-Off request.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Looks up `ctrlNum` in the controller keymap (`dhc.tables.ctrl`). If found,
+     * calls {@link HUM.DHC#muteFT} for any assigned FT and {@link HUM.DHC#muteHT}
+     * for any assigned HT. Keys not present in the keymap are silently ignored.
      */
     muteTone(ctrlNum, velocity, statusByte, timestamp, panic=false) {
         // If the input MIDI key is in the ctrl_map, proceed
@@ -405,10 +490,21 @@ HUM.midi.MidiIn = class {
      * TONE SNAPPING - RECEIVING MODE FEATURE
      *==============================================================================*/
     /**
-     * Updates the status of the keys pressed on the controller when the T-Snap is active.
-     * It should be invoked when the HTs table at {@link HUM.DHC#tables} changes. 
-     * Allows you to play only the keys that match the HTs frequencies.
-     * If a key on the controller remains pressed, it will be dynamically switched on or off when the HTs table is updated.
+     * Re-evaluates all currently pressed keys against the updated HT table when T-Snap is active.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Should be called whenever the HT table at {@link HUM.DHC#tables} changes.
+     * For each note currently held in {@link HUM.midi.MidiIn#notes_on}, the method
+     * re-runs the T-Snap routing to find the new controller note number:
+     * - If the new mapping resolves to `false` (no matching HT within tolerance),
+     *   the note is silently turned off and removed from the register.
+     * - If a valid mapping is found, the note is turned off and immediately
+     *   re-triggered with the updated pitch assignment.
+     *
+     * This ensures that physically held keys seamlessly follow changes to the
+     * Harmonic Series in real-time. Has no effect when `receiveMode` is `'keymap'`.
      */
     tsnapUpdateHT() {
         // Handle the change of FT on TSNAP RECEIVING MODE
@@ -493,12 +589,19 @@ HUM.midi.MidiIn = class {
         }
     }
     /**
-     * Check if a frequency of a MIDI Note Number corresponds to a Harmonic (or Subharmonic) in the HT table under {@link HUM.DHC#tables}.
-     * 
-     * @param {midinnum} midiNoteNum - The MIDI Note Number to be found in the reverse table.
-     * @param {tonetype} type        - The type of tone (FT or HT).
+     * Finds the controller note number whose frequency is closest to a given MIDI note number.
      *
-     * @returns {(false|midinnum)} - Returns the keymapped MIDI Note Number that match the nearest HT to the incoming Note; if nothing is found, returns `false`
+     * @param {midinnum} midiNoteNum - The incoming MIDI note number (in midicents) to match against the reverse table.
+     * @param {tonetype} type        - The type of tone to search: `'ft'` for Fundamental Tones or `'ht'` for Harmonic Tones.
+     *
+     * @returns {(false|midinnum)} The keymapped MIDI note number for the nearest matching tone within the snap tolerance,
+     *                             or `false` if no tone is close enough.
+     *
+     * @description
+     * Searches the DHC reverse table (`dhc.tables.reverse[type]`) for the entry
+     * whose midicent value is closest to `midiNoteNum`. If the nearest entry is
+     * within the configured {@link HUM.midi.MidiIn.prototype.Parameters#tsnap} tolerance,
+     * the corresponding keymap entry is returned; otherwise `false` is returned.
      */
     tsnapFindCtrlNoteNumber(midiNoteNum, type) {  
         let table_keys_array =  Object.keys(this.dhc.tables.reverse[type]); 
@@ -534,13 +637,20 @@ HUM.midi.MidiIn = class {
         return false;
     }
     /**
-     * Tone Snap Channel receive mode router. Route messages accordingly to the MIDI Channel.
-     * 
-     * @param {midinnum} midiNoteNum - The MIDI Note Number to be found in the reverse table.
-     * @param {midichan} channel     - The MIDI Channel from which the message is coming from.
-     * @param {boolean}  hancock     - If the message comes from the Hancock virtual MIDI input (if it's `true` ignore and don't apply T-Snap).
+     * Routes an incoming note through the T-Snap Channel receive mode.
      *
-     * @returns {(false|midinnum)} - Returns the keymapped MIDI Note Number that match the nearest HT to the incoming Note; if nothing is found, returns `false`.
+     * @param {midinnum} midiNoteNum - The incoming MIDI note number to resolve against the reverse table.
+     * @param {midichan} channel     - The MIDI channel on which the message arrived.
+     * @param {boolean}  hancock     - Whether the message originates from the Hancock virtual MIDI input;
+     *                                 if `true`, T-Snap is bypassed and `midiNoteNum` is returned as-is.
+     *
+     * @returns {(false|midinnum)} The keymapped MIDI note number for the nearest matching tone within the snap tolerance,
+     *                             or `false` if the channel does not match either the FT or HT channel.
+     *
+     * @description
+     * Determines whether `channel` corresponds to the configured FT channel or HT channel
+     * and delegates to {@link HUM.midi.MidiIn#tsnapFindCtrlNoteNumber} with the appropriate
+     * tone type. Returns `false` for any channel that matches neither.
      */
     tsnapChannel(midiNoteNum, channel, hancock) {
         if (hancock === true) {
@@ -557,13 +667,21 @@ HUM.midi.MidiIn = class {
         }
     }
     /**
-     * Tone Snap Divider receive mode router. Route messages accordingly to the divider MIDI Note Number.
-     * 
-     * @param {midinnum} midiNoteNum - The MIDI Note Number to be found in the reverse table.
-     * @param {midichan} channel     - The MIDI Channel from which the message is coming from.
-     * @param {boolean}  hancock     - If the message comes from the Hancock virtual MIDI input (if it's `true` ignore and don't apply T-Snap).
+     * Routes an incoming note through the T-Snap Divider receive mode.
      *
-     * @returns {(false|midinnum)} - Returns the keymapped MIDI Note Number that match the nearest HT to the incoming Note; if nothing is found, returns `false`.
+     * @param {midinnum} midiNoteNum - The incoming MIDI note number to resolve against the reverse table.
+     * @param {midichan} channel     - The MIDI channel on which the message arrived.
+     * @param {boolean}  hancock     - Whether the message originates from the Hancock virtual MIDI input;
+     *                                 if `true`, T-Snap is bypassed and `midiNoteNum` is returned as-is.
+     *
+     * @returns {(false|midinnum)} The keymapped MIDI note number for the nearest matching tone within the snap tolerance,
+     *                             or `false` if no match is found.
+     *
+     * @description
+     * Uses the configured divider key (`tsnap.dividerMode.divKey`) to split the MIDI note
+     * range: notes at or below the divider are treated as FTs, and notes above it are treated
+     * as HTs. Delegates to {@link HUM.midi.MidiIn#tsnapFindCtrlNoteNumber} with the appropriate
+     * tone type. Only processes messages on the configured divider channel.
      */
     tsnapDivider(midiNoteNum, channel, hancock) {
         if (hancock === true) {
@@ -587,9 +705,20 @@ HUM.midi.MidiIn = class {
      *==============================================================================*/
 
     /**
-     * Switch the MIDI INPUT RECEIVING MODE (called when UI is updated).
+     * Updates the UI visibility of T-Snap settings panels when the receive mode changes.
      *
-     * @param {('keymap'|'tsnap-channel'|'tsnap-divider')} receive_mode - FT/HT controller note receiving mode.
+     * @param {('keymap'|'tsnap-channel'|'tsnap-divider')} receiveMode - The newly selected note-receiving mode.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Shows or hides the tolerance, channel, and divider UI boxes to match the
+     * active receive mode:
+     * - `keymap`: hides all T-Snap controls.
+     * - `tsnap-channel`: shows tolerance, FT channel, and HT channel selectors.
+     * - `tsnap-divider`: shows tolerance, divider key, and divider channel selectors.
+     *
+     * @throws {string} Throws an error string if `receiveMode` is not one of the expected values.
      */
     switchReceiveModeUI(receiveMode) {
         let tsnap_tolerance = this.parameters.tsnap.tolerance.uiElements.out.midiTsnapTolerance_box,
@@ -623,12 +752,20 @@ HUM.midi.MidiIn = class {
     }
 
     /**
-     * MIDI-IN MONITOR
+     * Updates the MIDI Input monitor display with data from the latest received note message.
      *
-     * @param {midinnum} noteNumber - MIDI Note number (or conversion string if the Tone snapping receiving mode is active).
-     * @param {velocity} velocity   - MIDI Velocity amount.
-     * @param {midichan} channel    - MIDI Channel number.
-     * @param {string}   portName   - MIDI Port name.
+     * @param {(midinnum|string)} noteNumber - MIDI note number, or a conversion string (e.g. `"39>56"`) when T-Snap is active.
+     * @param {velocity}          velocity   - MIDI velocity of the note.
+     * @param {midichan}          channel    - MIDI channel number (0-based).
+     * @param {string}            portName   - Name of the MIDI input port.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Writes the note, velocity, channel, and port values to the corresponding
+     * {@link HUM.Param} output elements, updating both monitor instances in the UI.
+     * Piper-generated messages are excluded from the monitor upstream in
+     * {@link HUM.midi.MidiIn#midiMessageReceived}.
      */
     monitorMidiIN(noteNumber, velocity, channel, portName) {
         let dhcID = this.dhc.id;
@@ -666,10 +803,38 @@ HUM.midi.MidiIn = class {
 
 };
 
-/** 
- * Instance class-container used to create all the `HUM.Param` objects for the `HUM.midi.MidiIn` instance.
+/**
+ * Parameter container for the {@link HUM.midi.MidiIn} instance.
+ *
+ * @class
+ * @memberof HUM.midi.MidiIn
+ *
+ * @description
+ * Container class that instantiates and exposes all {@link HUM.Param} objects used
+ * by a {@link HUM.midi.MidiIn} instance. It manages:
+ * - `pitchbend`: Pitchbend range setting and current normalized amount.
+ * - `receiveMode`: Active note-receiving mode (`keymap`, `tsnap-channel`, or `tsnap-divider`).
+ * - `tsnap`: Tone-Snap settings, including tolerance, divider mode, and channel mode parameters.
+ * - `monitor`: Read-only proxy parameters feeding the MIDI Input monitor display.
  */
 HUM.midi.MidiIn.prototype.Parameters = class {
+    /**
+     * Creates a new Parameters instance for the given MidiIn handler.
+     *
+     * @param {HUM.midi.MidiIn} midiin - The MidiIn instance that owns this parameter set.
+     *
+     * @description
+     * Instantiates all {@link HUM.Param} objects for the MidiIn handler:
+     * - `pitchbend.range`: Pitchbend range in cents.
+     * - `pitchbend.amount`: Current normalized pitchbend value (plain number, not a Param).
+     * - `receiveMode`: Note-receiving mode selector.
+     * - `tsnap.tolerance`: Maximum snap tolerance in midicents.
+     * - `tsnap.dividerMode.divKey`: Divider note number separating FTs from HTs.
+     * - `tsnap.dividerMode.chan`: Divider mode MIDI channel.
+     * - `tsnap.channelMode.chanFT`: FT-dedicated MIDI channel.
+     * - `tsnap.channelMode.chanHT`: HT-dedicated MIDI channel.
+     * - `monitor.note/velocity/channel/port`: MIDI input monitor display proxies.
+     */
     constructor(midiin) {
         /**
          * Controller's Pitch Bend settings.
@@ -680,17 +845,17 @@ HUM.midi.MidiIn.prototype.Parameters = class {
         this.pitchbend = {
             /**  
              * This property is the MIDI input pitchbend range value in cents.
-             * It's initialises the eventListener of the UIelem related to it.
+             * Initialises the eventListener of the UIelem related to it.
              * It's stored on the DB.
              * @todo - Move to midi-in (one per input channel?)
              * @instance
              *
              * @member {HUM.Param}
-             * 
-             * @property {cent}        value                            - Pitchbend range value in cents (use hundreds when use MIDI-OUT and possibly the same as the instrument).
+             *
+             * @property {number}      value                            - Pitchbend range value in cents (use hundreds when using MIDI-OUT and ideally match the instrument setting).
              * @property {Object}      uiElements                       - Namespace for the "in", "out" and "fn" objects.
              * @property {Object}      uiElements.in                    - Namespace for the "in" HTML elements.
-             * @property {HTMLElement} uiElements.in.midiPitchbendRange - The HTML input text box for the pitchbend range number.
+             * @property {HTMLElement} uiElements.in.midiPitchbendRange - The HTML input number box for the pitchbend range.
              */
             range: new HUM.Param({
                 app:midiin,
@@ -847,8 +1012,8 @@ HUM.midi.MidiIn.prototype.Parameters = class {
                  * @property {midichan}    value                                  - The MIDI number of the channel from which the notes are received.
                  * @property {Object}      uiElements                             - Namespace for the "in", "out" and "fn" objects.
                  * @property {Object}      uiElements.in                          - Namespace for the "in" HTML elements.
-                 * @property {HTMLElement} uiElements.in.midiTsnapDividerChan     - The HTML input box widget for the Divider key.
-                 * @property {HTMLElement} uiElements.in.midiTsnapDividerChan_box - The HTML box container for the Divider key.
+                 * @property {HTMLElement} uiElements.in.midiTsnapDividerChan     - The HTML input selection widget for the Divider channel.
+                 * @property {HTMLElement} uiElements.in.midiTsnapDividerChan_box - The HTML box container for the Divider channel selector.
                  */
                 // receiveModeTsnapDividerChan: new HUM.Param({
                 chan: new HUM.Param({
@@ -891,8 +1056,8 @@ HUM.midi.MidiIn.prototype.Parameters = class {
                  * @property {midichan}    value                             - The MIDI number of the channel for FTs.
                  * @property {Object}      uiElements                        - Namespace for the "in", "out" and "fn" objects.
                  * @property {Object}      uiElements.in                     - Namespace for the "in" HTML elements.
-                 * @property {HTMLElement} uiElements.in.midiTsnapChanFT     - The HTML input box widget for the Divider key.
-                 * @property {HTMLElement} uiElements.in.midiTsnapChanFT_box - The HTML box container for the Divider key.
+                 * @property {HTMLElement} uiElements.in.midiTsnapChanFT     - The HTML input selection widget for the FT channel.
+                 * @property {HTMLElement} uiElements.in.midiTsnapChanFT_box - The HTML box container for the FT channel selector.
                  */
                 // receiveModeTsnapChanFT: new HUM.Param({
                 chanFT: new HUM.Param({
@@ -939,8 +1104,8 @@ HUM.midi.MidiIn.prototype.Parameters = class {
                  * @property {midichan}    value                             - The MIDI number of the channel for HTs.
                  * @property {Object}      uiElements                        - Namespace for the "in", "out" and "fn" objects.
                  * @property {Object}      uiElements.in                     - Namespace for the "in" HTML elements.
-                 * @property {HTMLElement} uiElements.in.midiTsnapChanHT     - The HTML input box widget for the Divider key.
-                 * @property {HTMLElement} uiElements.in.midiTsnapChanHT_box - The HTML box container for the Divider key.
+                 * @property {HTMLElement} uiElements.in.midiTsnapChanHT     - The HTML input selection widget for the HT channel.
+                 * @property {HTMLElement} uiElements.in.midiTsnapChanHT_box - The HTML box container for the HT channel selector.
                  */
                 // receiveModeTsnapChanHT: new HUM.Param({
                 chanHT: new HUM.Param({
@@ -991,11 +1156,11 @@ HUM.midi.MidiIn.prototype.Parameters = class {
              *
              * @member {HUM.Param}
              * 
-             * @property {midichan}    value                            - The MIDI number of the channel for HTs.
-             * @property {Object}      uiElements                       - Namespace for the "in", "out" and "fn" objects.
-             * @property {Object}      uiElements.out                   - Namespace for the "in" HTML elements.
-             * @property {HTMLElement} uiElements.out.midiMonitor0_note - The HTML input box widget for the Divider key.
-             * @property {HTMLElement} uiElements.out.midiMonitor1_note - The HTML box container for the Divider key.
+             * @property {(midinnum|string)} value                            - The note number (or T-Snap conversion string, e.g. `"39>56"`) of the last received note-on message.
+             * @property {Object}            uiElements                       - Namespace for the "in", "out" and "fn" objects.
+             * @property {Object}            uiElements.out                   - Namespace for the "out" HTML elements.
+             * @property {HTMLElement}       uiElements.out.midiMonitor0_note - The primary HTML output element showing the note number.
+             * @property {HTMLElement}       uiElements.out.midiMonitor1_note - The secondary HTML output element showing the note number.
              */
             note: new HUM.Param({
                 app: midiin,
@@ -1023,11 +1188,11 @@ HUM.midi.MidiIn.prototype.Parameters = class {
              *
              * @member {HUM.Param}
              * 
-             * @property {midichan}    value                                - The MIDI number of the channel for HTs.
+             * @property {velocity}    value                                - The velocity of the last received note-on message.
              * @property {Object}      uiElements                           - Namespace for the "in", "out" and "fn" objects.
-             * @property {Object}      uiElements.out                       - Namespace for the "in" HTML elements.
-             * @property {HTMLElement} uiElements.out.midiMonitor0_velocity - The HTML input box widget for the Divider key.
-             * @property {HTMLElement} uiElements.out.midiMonitor1_velocity - The HTML box container for the Divider key.
+             * @property {Object}      uiElements.out                       - Namespace for the "out" HTML elements.
+             * @property {HTMLElement} uiElements.out.midiMonitor0_velocity - The primary HTML output element showing the velocity.
+             * @property {HTMLElement} uiElements.out.midiMonitor1_velocity - The secondary HTML output element showing the velocity.
              */
             velocity: new HUM.Param({
                 app: midiin,
@@ -1055,11 +1220,11 @@ HUM.midi.MidiIn.prototype.Parameters = class {
              *
              * @member {HUM.Param}
              * 
-             * @property {midichan}    value                                - The MIDI number of the channel for HTs.
+             * @property {midichan}    value                                - The MIDI channel number (1-based) of the last received note-on message.
              * @property {Object}      uiElements                           - Namespace for the "in", "out" and "fn" objects.
-             * @property {Object}      uiElements.out                       - Namespace for the "in" HTML elements.
-             * @property {HTMLElement} uiElements.out.midiMonitor0_channel - The HTML input box widget for the Divider key.
-             * @property {HTMLElement} uiElements.out.midiMonitor1_channel - The HTML box container for the Divider key.
+             * @property {Object}      uiElements.out                       - Namespace for the "out" HTML elements.
+             * @property {HTMLElement} uiElements.out.midiMonitor0_channel  - The primary HTML output element showing the channel number.
+             * @property {HTMLElement} uiElements.out.midiMonitor1_channel  - The secondary HTML output element showing the channel number.
              */
             channel: new HUM.Param({
                 app: midiin,
@@ -1087,11 +1252,11 @@ HUM.midi.MidiIn.prototype.Parameters = class {
              *
              * @member {HUM.Param}
              * 
-             * @property {midichan}    value                            - The MIDI number of the channel for HTs.
+             * @property {string}      value                            - The name of the MIDI input port from which the last note-on message was received.
              * @property {Object}      uiElements                       - Namespace for the "in", "out" and "fn" objects.
-             * @property {Object}      uiElements.out                   - Namespace for the "in" HTML elements.
-             * @property {HTMLElement} uiElements.out.midiMonitor0_port - The HTML input box widget for the Divider key.
-             * @property {HTMLElement} uiElements.out.midiMonitor1_port - The HTML box container for the Divider key.
+             * @property {Object}      uiElements.out                   - Namespace for the "out" HTML elements.
+             * @property {HTMLElement} uiElements.out.midiMonitor0_port - The primary HTML output element showing the port name.
+             * @property {HTMLElement} uiElements.out.midiMonitor1_port - The secondary HTML output element showing the port name.
              */
             port: new HUM.Param({
                 app: midiin,
@@ -1117,7 +1282,15 @@ HUM.midi.MidiIn.prototype.Parameters = class {
     // ===========================
 
     /**
-     * Initializes the parameters of the Tone Snap note-receiving mode.
+     * Initializes parameters that require deferred setup.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Calls `_init()` on the T-Snap channel mode parameters (`chanFT`, `chanHT`) to
+     * attach their event listeners and mutual-exclusion logic, then calls `_init()` on
+     * `receiveMode` to apply the initial UI visibility state via
+     * {@link HUM.midi.MidiIn#switchReceiveModeUI}.
      */
     _init() {
         this.tsnap.channelMode.chanFT._init();

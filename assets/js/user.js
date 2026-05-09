@@ -1,12 +1,21 @@
  /**
+ * @fileoverview User management system for Harmonicarium application.
+ * This file defines the HUM.User class which handles user sessions,
+ * preset management, and database operations. It manages user preferences,
+ * session persistence, and multi-tab coordination.
+ * 
+ * @module user
+ * @memberof HUM
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ * 
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -24,31 +33,82 @@
 
 "use strict";
 
-/** 
- * The Dynamic Harmonics Calculator class<br>
- *    This is the computational kernel for the frequency/midicent tables.
- *    Manage an route the communications from and to the other App components.
+/**
+ * User management class for the Harmonicarium application.
+ * 
+ * Handles user sessions, preset management, database operations, and
+ * multi-tab coordination. This class provides the complete user experience
+ * infrastructure including data persistence and session management.
+ * 
+ * @class
+ * @memberof HUM
  */
 HUM.User = class {
     /**
-     * @param {HUM} harmonicarium
+     * Creates a new User instance for managing user Sessions and Presets.
+     * 
+     * @param {HUM} harmonicarium - The parent Harmonicarium instance that owns this user manager.
+     * 
+     * @description
+     * Initializes the user management system with:
+     * - Session tracking and multi-tab coordination
+     * - Database connections for Presets and backups
+     * - Parameter management for user preferences
+     * - Autosave functionality for Session persistence
+     * 
+     * The user system maintains separate parameter lists for live values
+     * (current session) and file values (saved presets), enabling efficient
+     * preset management and session recovery. NOTE: The management of the file
+     * parameters is still under development and maybe, if not useful, will
+     * be removed.
      */
     constructor(harmonicarium) {
         this.DEFAULT_PRESET_NAME = 'New preset';
+        
         /**
-        * The id of this Synth instance (same as the DHC id)
-        *
-        * @member {string}
-        */
+         * The unique identifier for this User instance (same as the HUM id).
+         * @type {string}
+         */
         this.id = harmonicarium.id;
+
+        /**
+         * The internal (private) ID for this User instance.
+         * @type {number}
+         */
         this._id = harmonicarium.id;
+        
+        /**
+         * The component name identifier.
+         * @type {string}
+         */
         this.name = 'user';
+        
+        /**
+         * Reference to the parent Harmonicarium instance.
+         * @type {HUM}
+         */
         this.harmonicarium = harmonicarium;
         
-        // this.dbName = 'harmonicarium'+harmonicarium.id+'_'+harmonicarium.context; // IDBDatabase
+        /**
+         * IndexedDB database name for this instance.
+         * @type {string}
+         */
         this.dbName = harmonicarium.instanceName;
+        
+        /**
+         * IndexedDB schema version number.
+         * @type {number}
+         */
         this.dbVersion = 2;
 
+        /**
+         * Session management object containing current session data.
+         * @type {Object}
+         * @property {string|boolean} id - Current session ID or false if none
+         * @property {string|boolean} name - Current session name or false if none
+         * @property {string} sessionStorageKey - Key for session storage
+         * @property {Set} concurrentSessions - Set of concurrent session IDs
+         */
         this.session = {
             id: false,
             name: false,
@@ -56,39 +116,127 @@ HUM.User = class {
             concurrentSessions: new Set()
         };
 
+        /**
+         * Whether the user system is in read-only mode.
+         * @type {boolean}
+         */
         this.readonly = false;
 
+        /**
+         * Autosave functionality status.
+         * @type {boolean}
+         */
         this.autosave = false;
-        // Queue for autosave params modified after the
-        // _setValue() action that trigger an "autosave init".
-        // (it happens for the first Param modified after a Preset loading)
+        
+        /**
+         * Queue for autosave params modified after the
+         * _setValue() action that trigger an "autosave init".
+         * (it happens for the first Param modified after a Preset loading)
+         * @type {boolean|Array}
+         */
         this.autosaveQueue = false;
+        
+        /**
+         * Object containing parameter values from live data
+         * @type {Object}
+         */
         this.paramListLive = {};
+        
+        /**
+         * Object containing parameter values from saved preset
+         * @type {Object}
+         */
         this.paramListFile = {};
 
         // DEBUG PARAMETERS MAPS
-        // ^^^^^^^^^^^^^^^^^^^^^
+        // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        /**
+         * Object containing parameter values from live data, organized by stage.
+         * @type {Object}
+         * @property {Object} pre - Parameters for the 'pre' stage
+         * @property {Object} mid - Parameters for the 'mid' stage
+         * @property {Object} post - Parameters for the 'post' stage
+         */
         this.paramListLivebyStage = {
             'pre': {},
             'mid': {},
             'post': {}
         };
+        /**
+         * Object containing parameter values from saved preset, organized by stage.
+         * @type {Object}
+         * @property {Object} pre - Parameters for the 'pre' stage
+         * @property {Object} mid - Parameters for the 'mid' stage
+         * @property {Object} post - Parameters for the 'post' stage
+         */
         this.paramListFilebyStage = {
             'pre': {},
             'mid': {},
             'post': {}
         };
-        this.paramMapLive = {};
-        this.paramMapFile = {};
-        // ^^^^^^^^^^^^^^^^^^^^^
 
+        /**
+         * Object containing the map of live parameter values.
+         * The structure is [componentName] > [componentId] > [paramKey]
+         * 
+         * @type {Object}
+         */
+        this.paramMapLive = {};
+        /**
+         * Object containing the map of preset file parameter values.
+         * NOTE: Actually not used... but kept for symmetry with paramMapLive
+         * @type {Object}
+         */
+        this.paramMapFile = {};
+
+        // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        /**
+         * Parameter management system instance for the user module.
+         * @type {HUM.User.prototype.Parameters}
+         * 
+         * @description
+         * This object provides the complete parameter interface for User
+         * Session and Preset management functionality. It is initialized
+         * in the _init() method.
+         */
         this.parameters = {};
 
-        // Create the database-provider instances
+        /**
+         * Preset service database instance
+         * @type {HUM.User.IDBPresetService}
+         * 
+         * @description
+         * This object manages the IndexedDB connection and operations
+         * for user presets. It is initialized in the _init() method.
+         */
         this.presetServiceDB = {};
-        this.backupServiceDB = {};
+
+        // this.backupServiceDB = {};
     }
-    _init(){
+
+    /**
+     * Initializes the user management system and database connections.
+     * 
+     * @returns {Promise<void>} Promise that resolves when initialization is complete.
+     * 
+     * @description
+     * This method performs the complete initialization sequence:
+     * 1. Creates parameter management system and preset service instances
+     * 2. Opens IndexedDB database connection
+     * 3. Initializes UI preset management widgets
+     * 4. Reads existing sessions from database
+     * 5. Registers BroadcastChannel message handlers for multi-tab coordination
+     * 6. Discovers and manages concurrent sessions across browser tabs
+     * 7. Restores or creates appropriate session based on availability
+     * 8. Loads the last selected preset for the active session
+     * 
+     * The method handles session discovery, concurrent session management,
+     * and ensures proper coordination between multiple browser tabs/windows
+     * through BroadcastChannel communication.
+     */
+    _init() {
         console.group('USER APP - START: Initializing...');
         // @todo: Read URL page path parameters to get params to force after init
         this.parameters = new this.Parameters(this);
@@ -100,7 +248,7 @@ HUM.User = class {
         // @todo: Check if the system date is after 2000
         //        if not, probably is wrong set and alert the user
         //        that the history can have strange behaviours if the
-        //        date change frequetly.
+        //        date change frequently.
 
         // Initialize the database
         return this.presetServiceDB._openDB()
@@ -247,12 +395,29 @@ HUM.User = class {
         });
     }
 
+    /**
+     * Discovers concurrent sessions by sending a broadcast message.
+     * 
+     * @returns {Promise} Promise that resolves after discovery timeout.
+     * 
+     * @description
+     * Sends a broadcast message to other browser tabs/windows to discover
+     * active sessions. Used for session coordination and preventing conflicts.
+     */
     _askDiscoverSession() {
         return new Promise((resolve, reject) => {
             this.harmonicarium.broadcastChannel.send('ask_discoverSessions');
             setTimeout(resolve, 2000);
         });
     }
+    
+    /**
+     * Reveals this session to other concurrent sessions.
+     * 
+     * @description
+     * Broadcasts this session's ID to other tabs/windows and updates
+     * the session display in the UI with current session information.
+     */
     _revealThisSession() {
         this.harmonicarium.broadcastChannel.send('reply_discoverSessions', this.session.id);
         this.presetServiceDB.getSession(this.session.id)
@@ -260,9 +425,27 @@ HUM.User = class {
             this.parameters.sessionDisplayCurrent.value = `<b>${session.name}</b> <small><i>(${session.sessionID})</i></small>`;
             this.parameters.sessionRename.value = session.name;
         });
-        
     }
 
+    /**
+     * Reads and parses a preset file uploaded by the user.
+     * 
+     * @param {File} file - The File object representing the uploaded preset file.
+     * 
+     * @returns {void}
+     * 
+     * @description
+     * This method handles the import process for preset files:
+     * 1. Reads the file content using FileReader
+     * 2. Parses JSON data and validates format
+     * 3. Populates the import interface with available presets
+     * 4. Creates checkboxes for preset selection
+     * 5. Handles file reading errors and validation
+     * 
+     * The method supports selective import, allowing users to choose
+     * which presets to import from the file. It also handles reverb
+     * IR data import options.
+     */
     readPresetFile(file) {
         let reader = new FileReader();
         // Handle loading errors
@@ -322,7 +505,23 @@ HUM.User = class {
         }
     }
 
-    // Import the selected presets from file
+    /**
+     * Imports selected presets from the loaded preset file into the database.
+     * 
+     * @returns {Promise<Array>} Promise that resolves with array of import results.
+     * 
+     * @description
+     * This method processes the presets selected for import and:
+     * 1. Creates preset objects from the selected file data
+     * 2. Handles preset ID conflicts and renaming
+     * 3. Manages parameter data and reverb IR import
+     * 4. Saves presets to the IndexedDB database
+     * 5. Updates UI feedback with import results
+     * 
+     * The method preserves the original preset structure while ensuring
+     * compatibility with the current database schema. It handles both
+     * regular parameters and optional reverb IR data based on user preference.
+     */
     importPresets() {
         return new Promise((resolve, reject) => {
             let res = [];
@@ -370,7 +569,26 @@ HUM.User = class {
         });
     }
 
-    // Export all preset stored on the database
+    /**
+     * Exports all stored presets from the database to a downloadable JSON file.
+     * 
+     * @returns {void}
+     * 
+     * @description
+     * This method creates a comprehensive export of all user presets:
+     * 1. Retrieves all presets from the IndexedDB database
+     * 2. Collects all associated parameters for each preset
+     * 3. Optionally includes reverb IR data if user preference is set
+     * 4. Converts ArrayBuffer data to base64 for JSON serialization
+     * 5. Creates and triggers automatic download of the JSON file
+     * 6. Provides UI feedback during the export process
+     * 
+     * The exported file contains complete preset data including:
+     * - Preset metadata (name, description, timestamps)
+     * - All parameter values and configurations
+     * - Optional reverb impulse response data
+     * - Database version information for compatibility
+     */
     exportPresets() {
         // Activate the spinner on button
         this.parameters.presetExport.uiElements.out.user_preset_exportBtnSpinner.classList.add('spinner-border');
@@ -454,6 +672,25 @@ HUM.User = class {
         });
     }
 
+    /**
+     * Saves the current live parameters as a new preset in the database.
+     * 
+     * @param {string} name                      - The name for the new preset.
+     * @param {string} [key=crypto.randomUUID()] - Optional unique key for the preset.
+     * 
+     * @returns {Promise} Promise that resolves when the preset is saved.
+     * 
+     * @description
+     * This method creates a new preset from the current live parameters:
+     * 1. Validates the preset name and checks for duplicates
+     * 2. Generates a unique key if not provided
+     * 3. Saves all current live parameters to the new preset in IndexedDB
+     * 4. Updates the current session to use the new preset
+     * 5. Broadcasts changes to other tabs/windows
+     * 
+     * The method ensures that preset names are unique and handles
+     * session updates to reflect the newly created preset.
+     */
     saveNewPreset(name, key=crypto.randomUUID()) {
         return new Promise((resolve, reject) => {
             if (name) {
@@ -517,6 +754,28 @@ HUM.User = class {
         return resSeq;
     }
     
+    /**
+     * Loads a preset by its ID and applies it to the current session.
+     * 
+     * @param {string}  presetID          - The unique identifier of the preset to load.
+     * @param {boolean} [init=false]      - Whether this is during initialization (disables autosave).
+     * @param {boolean} [fromParam=false] - Whether the load was triggered by a parameter change.
+     * 
+     * @returns {Promise} Promise that resolves when the preset is loaded.
+     * 
+     * @description
+     * This method retrieves and applies a preset from the database:
+     * 1. Fetches preset parameters from IndexedDB
+     * 2. Applies parameter values to live parameters
+     * 3. Handles custom property restoration and pre/post hooks
+     * 4. Updates the current session with the selected preset
+     * 5. Manages autosave state based on context
+     * 6. Updates the preset parameter value if not triggered by parameter change
+     * 
+     * The method ensures that all applicable parameters are restored
+     * according to their defined restoration logic and updates the
+     * session state accordingly.
+     */
     loadPreset(presetID, init=false, fromParam=false) {
         return new Promise((resolve, reject) => {
             console.group(`PRESET LOADING - START: The preset "${presetID}" is loading...`);
@@ -621,21 +880,66 @@ HUM.User = class {
 //     constructor(user) {}
 // };
 
+/**
+ * IndexedDB Preset Service for managing user presets and sessions.
+ * @class
+ * @memberof HUM.User
+ * 
+ * @description
+ * This class provides IndexedDB database operations for storing and retrieving
+ * user presets, parameters, and session data. It defines the database schema,
+ * handles version upgrades, and offers CRUD operations with proper transaction
+ * management and error handling for persistent user settings.
+ * 
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API|IndexedDB API}
+ */
 HUM.User.IDBPresetService = class {
+    /**
+     * Creates an instance of the IDBPresetService.
+     * 
+     * @param {HUM.User} user - The parent user management instance.
+     * @constructor
+     * 
+     * @description
+     * Initializes the IDBPresetService with the provided user instance.
+     * Sets up database connection parameters, schema definitions, and
+     * prepares for database operations.
+     */
     constructor(user) {
-        // Parent object slot
+        /**
+         * @type {HUM.User}
+         * @description Reference to the parent User management instance.
+         */
         this.user = user;
 
         // DB identifiers slots
         // this.dbName = user.dbName; 
         // this.dbVersion = user.dbVersion;
 
-        // DB conection slots
-        this.database = false; // IDBDatabase
+        /**
+         * @type {IDBDatabase|false}
+         * @description The IndexedDB database instance or false if not initialized.
+         */
+        this.database = false;
+
+        /**
+         * @type {boolean}
+         * @description Indicates if the database is available for operations.
+         */
         this.available = false;
 
+        /**
+         * @type {string}
+         * @description The access mode for database transactions ('readonly' or 'readwrite').
+         */
         this.accessMode = user.readonly ? 'readonly' : 'readwrite';
-        // DB schema slots
+
+        /**
+         * @type {Object}
+         * @description Definitions of the object stores in the database.
+         * Each store includes its name, key path, schema, and indexes.
+         * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore|IDBObjectStore}
+         */
         this.stores = {
             PARAMETER: {
                 name: 'parameter',
@@ -762,6 +1066,12 @@ HUM.User.IDBPresetService = class {
                 }
             },
         };
+
+        /**
+         * @type {Object}
+         * @description Default preset definitions for quick access and initialization.
+         * Includes the two main presets: DEFAULT and AUTOSAVE.
+         */
         this.defaults = {
             DEFAULT: {
                 presetID: 'default',
@@ -773,9 +1083,36 @@ HUM.User.IDBPresetService = class {
             }
         };
 
-        // Shortcut to get the names of all the available stores
+        /**
+         * @type {Array<string>}
+         * @description List of object store names for easy reference and iteration.
+         * e.g. ['parameter', 'preset', 'history', 'session']
+         */
         this.objectStoreNames = Object.values(this.stores).map(store => store.name);
     }
+
+    /*
+     * ========================================================================
+     *  DATABASE CONNECTION METHODS
+     * ========================================================================
+     */
+
+    /**
+     * Opens a connection to the IndexedDB database.
+     * 
+     * @returns {Promise<IDBDatabase>} Promise that resolves with the opened database instance.
+     * 
+     * @description
+     * This method initiates the opening of the IndexedDB database:
+     * 1. Handles version upgrades and schema initialization
+     * 2. Sets up event listeners for database events (success, error, blocked)
+     * 3. Manages the database instance and its availability state
+     * 4. Provides error handling and user notifications for issues
+     * 
+     * The method ensures that the database is properly initialized
+     * and ready for operations, resolving with the database instance
+     * upon successful connection.
+     */
     _openDB() {
         return new Promise((resolve, reject) => {
             console.group('USER IDB - START: Initializing...');
@@ -835,11 +1172,45 @@ HUM.User.IDBPresetService = class {
             };
         });
     }
+
+    /**
+     * Closes the connection to the IndexedDB database.
+     * 
+     * @returns {void}
+     * 
+     * @description
+     * This method closes the active connection to the IndexedDB database:
+     * 1. Calls the close method on the database instance
+     * 2. Updates the availability state of the database
+     * 3. Logs the closure event for debugging purposes
+     * 
+     * The method ensures that the database connection is properly
+     * terminated and resources are released.
+     */
     _closeDB() {
         this.database.close();
         console.log(`[IDBFactory] CLOSED DATABASE "${this.user.dbName}".`);
         this.available = false;
     }
+
+    /**
+     * Handles database version upgrades and schema initialization.
+     * 
+     * @param {IDBVersionChangeEvent} versionChangeEvent - The version change event.
+     * @param {Function} reject - The reject function from the Promise.
+     * 
+     * @returns {void}
+     * 
+     * @description
+     * This method manages the upgrade process when the database version changes:
+     * 1. Deletes existing object stores if upgrading from version 1
+     * 2. Creates new object stores and indexes for version 2 and above
+     * 3. Populates the database with initial data if necessary
+     * 4. Provides error handling and user notifications for issues during upgrade
+     * 
+     * The method ensures that the database schema is updated correctly
+     * and that any necessary data is initialized for the new version.
+     */
     _upgradeDB(versionChangeEvent, reject) {
         this.database = versionChangeEvent.target.result;
         const oldVersion = versionChangeEvent.oldVersion,
@@ -895,6 +1266,27 @@ HUM.User.IDBPresetService = class {
         //     // ...
         // }
     }
+
+    /**
+     * Initializes and populates the database with default data.
+     * 
+     * @param {Object}         stores                 - The object stores to populate.
+     * @param {IDBObjectStore} stores.paramObjStore   - The parameter object store.
+     * @param {IDBObjectStore} stores.presetObjStore  - The preset object store.
+     * @param {IDBObjectStore} stores.sessionObjStore - The session object store.
+     * 
+     * @returns {Promise} Promise that resolves when the database is populated.
+     * 
+     * @description
+     * This method populates the database with initial data:
+     * 1. Creates a new session with a unique ID
+     * 2. Stores the session ID in sessionStorage for persistence
+     * 3. Adds default presets and parameters to the respective object stores
+     * 4. Uses transactions to ensure atomicity of operations
+     * 
+     * The method ensures that the database is initialized with
+     * necessary default data for proper functionality.
+     */
     _initPopulateDB({paramObjStore, presetObjStore, sessionObjStore}) {
         // Create a new "first" session
         this.user.session.id = crypto.randomUUID();
@@ -929,10 +1321,27 @@ HUM.User.IDBPresetService = class {
         ];
         return Promise.all(requestArray);
     }
+
     /*
-     * ----------------------------
+     * ========================================================================
      * TRANSACTION METHODS
-     * ----------------------------
+     * ========================================================================
+     */
+
+    /**
+     * Creates and returns a new IndexedDB transaction.
+     * @param {string|Array<string>} objectStoreNames - The name(s) of the object store(s) for the transaction.
+     * 
+     * @returns {IDBTransaction} The created IndexedDB transaction.
+     * 
+     * @description
+     * This method creates a new transaction for the specified object store(s):
+     * 1. Initializes the transaction with the defined access mode (readonly or readwrite)
+     * 2. Sets up event listeners for transaction events (error, abort, complete)
+     * 3. Provides error handling and user notifications for issues during the transaction
+     * 
+     * The method ensures that the transaction is properly configured
+     * and ready for database operations.
      */
     _getTransaction(objectStoreNames) {
         let transaction = this.database.transaction(objectStoreNames, this.accessMode);
@@ -951,6 +1360,25 @@ HUM.User.IDBPresetService = class {
         };
         return transaction;
     }
+
+    /**
+     * Retrieves object stores for the specified names within a transaction.
+     * @param {Array<string>} objectStoreNames - The names of the object stores to retrieve.
+     * 
+     * @returns {Object} An object containing the requested object stores.
+     * 
+     * @throws {Error} If any of the provided store names are invalid.
+     * 
+     * @description
+     * This method retrieves the specified object stores within a transaction:
+     * 1. Validates the provided store names against the defined schema
+     * 2. Creates a transaction for the valid store names
+     * 3. Returns an object containing the requested object stores
+     * 4. Provides error handling and user notifications for invalid store names
+     * 
+     * The method ensures that only valid object stores are accessed
+     * and that they are properly managed within a transaction.
+     */
     _getStores(objectStoreNames=[]) {
         // Check if is the store names are valid
         // If there is an invalid name
@@ -972,16 +1400,40 @@ HUM.User.IDBPresetService = class {
             return stores;
         }
     }
+
     /*
-     * ----------------------------
+     * ========================================================================
      * COMPOSED CRUD INDEXEDDB OPS
-     * ----------------------------
+     * ========================================================================
      */
 
-    /*
-     * CREATE / UPDATE
-     */
+    // - - - - - - - - - - - - - - - - - - - - - 
+    // CREATE / UPDATE
+    // - - - - - - - - - - - - - - - - - - - - - 
 
+    /**
+     * Creates a new session with the specified ID and name.
+     * 
+     * @param {string} sessionID - The unique identifier for the session.
+     * @param {string} [name]    - Optional name for the session.
+     * @param {Object} [stores]  - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.sessionObjStore] - The session object store.
+     * @param {IDBObjectStore} [stores.paramObjStore]   - The parameter object store.
+     * @param {IDBObjectStore} [stores.presetObjStore]  - The preset object store.
+     * 
+     * @returns {Promise} Promise that resolves when the session is created.
+     * 
+     * @description
+     * This method creates a new session in the database:
+     * 1. Initializes a new session object with the provided ID and name
+     * 2. Sets creation and last edit timestamps
+     * 3. Stores the session in the session object store
+     * 4. Optionally creates and initializes an autosave preset for the session
+     * 5. Uses transactions to ensure atomicity of operations
+     * 
+     * The method ensures that the new session is properly created
+     * and stored in the database, along with its associated autosave preset.
+     */
     newSession(sessionID, name, {sessionObjStore, paramObjStore, presetObjStore}=this._getStores([this.stores.PARAMETER.name, this.stores.SESSION.name, this.stores.PRESET.name])) {
         return new Promise((resolve, reject) => {
             const transaction = sessionObjStore.transaction;
@@ -1011,6 +1463,25 @@ HUM.User.IDBPresetService = class {
         });
     }
 
+    /**
+     * Adds a new preset and its parameters to the database.
+     * 
+     * @param {string} presetID   - The unique identifier for the new preset.
+     * @param {string} presetDesc - The description of the new preset.
+     * @param {string} source     - The source of the preset parameters ('live' or 'file').
+     * @param {Object} [stores]   - The object stores to use for the operation.
+     * @param {IDBObjectStore} [stores.paramObjStore]  - The parameter object store.
+     * @param {IDBObjectStore} [stores.presetObjStore] - The preset object store.
+     * 
+     * @returns {Promise<Array>} Promise that resolves with results array when both preset and parameters are created.
+     * 
+     * @description
+     * This method creates a new preset and adds its parameters in a single transaction:
+     * 1. Creates a new preset entry in the preset object store
+     * 2. Adds all parameters for the preset based on the specified source
+     * 3. Uses Promise.all to ensure both operations complete successfully
+     * 4. Aborts the transaction if any operation fails
+     */
     addPresetParams(presetID, presetDesc, source, {paramObjStore, presetObjStore}=this._getStores(this.objectStoreNames)) {
         return new Promise((resolve, reject) => {
             const transaction = paramObjStore.transaction;
@@ -1031,6 +1502,29 @@ HUM.User.IDBPresetService = class {
         });
     }
 
+    /**
+     * Adds a new preset and its parameters from imported JSON data.
+     * 
+     * @param {Object} preset - The preset object containing the original description.
+     * @param {string} preset.description - The original preset description.
+     * @param {Object} parameters - An object containing parameter objects to be added.
+     * @param {Object} [stores] - The object stores to use for the operation.
+     * @param {IDBObjectStore} [stores.paramObjStore]  - The parameter object store.
+     * @param {IDBObjectStore} [stores.presetObjStore] - The preset object store.
+     * 
+     * @returns {Promise<{newPresetID: string, newDescription: string}>} Promise that resolves with the new preset ID and description.
+     * 
+     * @description
+     * This method imports a preset from JSON data:
+     * 1. Generates a new unique preset ID using crypto.randomUUID()
+     * 2. Creates a modified description with import identifier
+     * 3. Processes each parameter, updating the preset ID reference
+     * 4. Handles audio file parameters (base64 encoded WAV files):
+     *    - Converts back to File object if import reverb option is enabled
+     *    - Sets to 'default' if import reverb option is disabled
+     * 5. Creates preset and all parameters in a single transaction
+     * 6. Aborts transaction on any failure
+     */
     addFilePresetParams(preset, parameters, {paramObjStore, presetObjStore}=this._getStores(this.objectStoreNames)) {
         return new Promise((resolve, reject) => {
             const transaction = paramObjStore.transaction;
@@ -1072,6 +1566,27 @@ HUM.User.IDBPresetService = class {
         });
     }
 
+    /**
+     * Updates an existing session with new data.
+     * 
+     * @param {Object} newData  - The new data to update the session with.
+     * @param {Object} [stores] - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.sessionObjStore] - The session object store.
+     * 
+     * @returns {Promise} Promise that resolves when the session is updated.
+     * 
+     * @description
+     * This method updates an existing session in the database:
+     * 1. Retrieves the existing session by its ID
+     * 2. Merges the new data into the existing session object
+     * 3. Updates the last edit timestamp if not provided
+     * 4. Stores the updated session back in the session object store
+     * 5. Uses transactions to ensure atomicity of operations
+     * 6. Aborts the transaction if any operation fails
+     * 
+     * The method ensures that the session is properly updated and stored
+     * in the database.
+    */
     updateSession(newData, {sessionObjStore}=this._getStores([this.stores.SESSION.name])) {
         if (!newData.lastEditOn) {
             newData.lastEditOn = new Date();
@@ -1089,6 +1604,30 @@ HUM.User.IDBPresetService = class {
         });
     }
 
+    /**
+     * Updates an existing preset with new data.
+     * 
+     * @param {Object} newData - The new data to update the preset with.
+     * @param {string} newData.presetID - The unique identifier for the preset to update.
+     * @param {string} [newData.description] - The new description for the preset.
+     * @param {number} [newData.dbVersion] - The new database version for the preset.
+     * @param {Object} [stores] - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.presetObjStore] - The preset object store.
+     * 
+     * @returns {Promise<{newDesc: string, newVers: number, oldDesc: string, oldVers: number}>} Promise that resolves with an object containing old and new values.
+     * 
+     * @description
+     * This method updates an existing preset in the database:
+     * 1. Retrieves the existing preset by its ID
+     * 2. Merges the new data into the existing preset object
+     * 3. Stores the updated preset back in the preset object store
+     * 4. Uses transactions to ensure atomicity of operations
+     * 5. Aborts the transaction if any operation fails
+     * 6. Returns an object containing both old and new values for description and database version
+     * 
+     * The method ensures that the preset is properly updated and stored
+     * in the database, while also providing feedback on the changes made.
+     */
     updatePreset(newData, {presetObjStore}=this._getStores([this.stores.PRESET.name])) {
         return new Promise((resolve, reject) => {
             // Create result obj to keep track of old and new values
@@ -1120,12 +1659,58 @@ HUM.User.IDBPresetService = class {
         });
     }
 
+    /**
+     * Updates multiple parameters for a given preset.
+     * 
+     * @param {string} presetID - The unique identifier for the preset whose parameters are to be updated.
+     * @param {string} source   - The source of the parameters to update ('live' or 'file').
+     * @param {Object} [stores] - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.paramObjStore] - The parameter object store.
+     * @returns {Promise<Array>} Promise that resolves with an array of results when all parameters are updated.
+     * 
+     * @description
+     * This method is a wrapper to {@link _storeParams} using the 'put' operation type.
+     */
     updateParams(presetID, source, {paramObjStore}=this._getStores([this.stores.PARAMETER.name])) {
         return this._storeParams(presetID, source, 'put', {paramObjStore});
     }
+
+    /**
+     * Adds multiple parameters for a given preset.
+     * 
+     * @param {string} presetID - The unique identifier for the preset whose parameters are to be added.
+     * @param {string} source   - The source of the parameters to add ('live' or 'file').
+     * @param {Object} [stores] - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.paramObjStore] - The parameter object store.
+     * @returns {Promise<Array>} Promise that resolves with an array of results when all parameters are added.
+     * 
+     * @description
+     * This method is a wrapper to {@link _storeParams} using the 'add' operation type.
+    */
     addParams(presetID, source, {paramObjStore}=this._getStores([this.stores.PARAMETER.name])) {
         return this._storeParams(presetID, source, 'add', {paramObjStore});
     }
+
+    /**
+     * Stores multiple parameters for a given preset using the specified operation type.
+     * 
+     * @param {string} presetID - The unique identifier for the preset whose parameters are to be stored.
+     * @param {string} source   - The source of the parameters to store ('live' or 'file').
+     * @param {string} opType   - The operation type ('add' or 'put').
+     * @param {Object} [stores] - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.paramObjStore] - The parameter object store.
+     * @returns {Promise<Array>} Promise that resolves with an array of results when all parameters are stored.
+     * 
+     * @description
+     * This method stores multiple parameters for a given preset:
+     * 1. Retrieves the list of parameter IDs from the specified source ('live' or 'file')
+     * 2. Creates a request for each parameter to store it using the specified operation type ('add' or 'put')
+     * 3. Uses Promise.all to ensure all parameter storage operations complete successfully
+     * 4. Aborts the transaction if any operation fails
+     * 
+     * The method ensures that all parameters are properly stored in the database
+     * for the specified preset.
+     */
     _storeParams(presetID, source, opType, {paramObjStore}=this._getStores([this.stores.PARAMETER.name])) {
         return new Promise((resolve, reject) => {
             const transaction = paramObjStore.transaction;
@@ -1152,10 +1737,30 @@ HUM.User.IDBPresetService = class {
         });
     }
 
-    /*
-     * DELETE
-     */
+    // - - - - - - - - - - - - - - - - - - - - - 
+    // DELETE
+    // - - - - - - - - - - - - - - - - - - - - - 
 
+    /**
+     * Deletes a preset and all its associated parameters from the database.
+     * 
+     * @param {string} presetID - The unique identifier for the preset to be deleted.
+     * @param {Object} [stores] - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.paramObjStore]  - The parameter object store.
+     * @param {IDBObjectStore} [stores.presetObjStore] - The preset object store.
+     * 
+     * @returns {Promise} Promise that resolves when the preset and its parameters are deleted.
+     * 
+     * @description
+     * This method deletes a preset and all its associated parameters in a single transaction:
+     * 1. Retrieves all parameters associated with the specified preset ID
+     * 2. Creates a deletion request for each parameter
+     * 3. Creates a deletion request for the preset itself
+     * 4. Uses Promise.all to ensure all deletion operations complete successfully
+     * 5. Aborts the transaction if any operation fails
+     * 
+     * The method ensures that the preset and its parameters are properly deleted from the database.
+     */
     deletePresetParams(presetID, {paramObjStore, presetObjStore}=this._getStores(this.objectStoreNames)) {
         return new Promise((resolve, reject) => {
             const transaction = paramObjStore.transaction;
@@ -1182,15 +1787,33 @@ HUM.User.IDBPresetService = class {
     }
 
     /*
-     * ----------------------------
+     * ========================================================================
      * NUCLEAR CRUD INDEXEDDB OPS
-     * ----------------------------
+     * ========================================================================
      */
 
-    /*
-     * CREATE / UPDATE
-     */
+    // - - - - - - - - - - - - - - - - - - - - - 
+    // CREATE / UPDATE
+    // - - - - - - - - - - - - - - - - - - - - - 
 
+    /**
+     * Adds a new session to the database.
+     * @param {string} [sessionID=this.user.session.id] - The unique identifier for the session. Defaults to the current user's session ID.
+     * @param {string} [sessionName] - The name of the session. If not provided, defaults to "New session" followed by the first 3 and last 3 characters of the session ID.
+     * @param {Object} [stores] - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.sessionObjStore] - The session object store.
+     * 
+     * @returns {Promise} Promise that resolves when the session is added.
+     * 
+     * @description
+     * This method adds a new session to the database:
+     * 1. Initializes a new session object with the provided ID and name
+     * 2. Sets creation and last edit timestamps
+     * 3. Stores the session in the session object store
+     * 
+     * The method ensures that the new session is properly created
+     * and stored in the database.
+     */
     addSession(sessionID=this.user.session.id,
                sessionName='New session '+sessionID.slice(0,3)+sessionID.slice(-3),
                {sessionObjStore}=this._getStores([this.stores.SESSION.name])) {
@@ -1206,6 +1829,23 @@ HUM.User.IDBPresetService = class {
         return this._storeSession(data, 'add', {sessionObjStore});
     }
 
+    /**
+     * Stores a session in the database using the specified operation type.
+     * @param {Object} data - The session data to store.
+     * @param {string} opType - The operation type ('add' or 'put').
+     * @param {Object} [stores] - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.sessionObjStore] - The session object store.
+     * 
+     * @returns {Promise} Promise that resolves when the session is stored.
+     * 
+     * @description
+     * This method stores a session in the database:
+     * 1. Uses the specified operation type ('add' or 'put') to store the session
+     * 2. Handles success and error events for the storage operation
+     * 3. Provides error handling and user notifications for issues during the storage
+     * 
+     * The method ensures that the session is properly stored in the database.
+     */
     _storeSession(data, opType, {sessionObjStore}=this._getStores([this.stores.SESSION.name])) {
         return new Promise((resolve, reject) => {
             let request = sessionObjStore[opType](data);
@@ -1219,6 +1859,24 @@ HUM.User.IDBPresetService = class {
         });
     }
 
+    /**
+     * Adds a new preset to the database.
+     * @param {string} presetID - The unique identifier for the new preset.
+     * @param {string} presetDesc - The description of the new preset.
+     * @param {Object} [stores] - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.presetObjStore] - The preset object store.
+     * 
+     * @returns {Promise} Promise that resolves when the preset is added.
+     * 
+     * @description
+     * This method adds a new preset to the database:
+     * 1. Initializes a new preset object with the provided ID and description
+     * 2. Sets the database version for the preset
+     * 3. Stores the preset in the preset object store
+     * 
+     * The method ensures that the new preset is properly created
+     * and stored in the database.
+     */
     addPreset(presetID, presetDesc, {presetObjStore}=this._getStores([this.stores.PRESET.name])) {
         let data = {
             presetID: presetID,
@@ -1228,6 +1886,23 @@ HUM.User.IDBPresetService = class {
         return this._storePreset(data, 'add', {presetObjStore});
     }
 
+    /**
+     * Stores a preset in the database using the specified operation type.
+     * @param {Object} data - The preset data to store.
+     * @param {string} opType - The operation type ('add' or 'put').
+     * @param {Object} [stores] - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.presetObjStore] - The preset object store.
+     * 
+     * @returns {Promise} Promise that resolves when the preset is stored.
+     * 
+     * @description
+     * This method stores a preset in the database:
+     * 1. Uses the specified operation type ('add' or 'put') to store the preset
+     * 2. Handles success and error events for the storage operation
+     * 3. Provides error handling and user notifications for issues during the storage
+     * 
+     * The method ensures that the preset is properly stored in the database.
+     */
     _storePreset(data, opType, {presetObjStore}=this._getStores([this.stores.PRESET.name])) {
         return new Promise((resolve, reject) => {
             let request = presetObjStore[opType](data);
@@ -1241,12 +1916,66 @@ HUM.User.IDBPresetService = class {
         });
     }
 
+    /**
+     * Updates an existing parameter for a given preset.
+     *
+     * @param {string} presetID - The unique identifier for the preset whose parameter is to be updated.
+     * @param {string} paramID  - The unique identifier for the parameter to update.
+     * @param {string} source   - The source of the parameter to update ('live' or 'file').
+     * @param {Object} [stores] - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.paramObjStore] - The parameter object store.
+     * 
+     * @returns {Promise} Promise that resolves when the parameter is updated.
+     * 
+     * @description
+     * This method is a wrapper to {@link _storeParam} using the 'put' operation type.
+     */
     updateParam(presetID, paramID, source, {paramObjStore}=this._getStores([this.stores.PARAMETER.name])) {
         return this._storeParam(presetID, paramID, source, 'put', {paramObjStore});
     }
+
+    /**
+     * Adds a new parameter for a given preset.
+     *
+     * @param {string} presetID - The unique identifier for the preset whose parameter is to be added.
+     * @param {string} paramID  - The unique identifier for the parameter to add.
+     * @param {string} source   - The source of the parameter to add ('live' or 'file').
+     * @param {Object} [stores] - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.paramObjStore] - The parameter object store.
+     * 
+     * @returns {Promise} Promise that resolves when the parameter is added.
+     * 
+     * @description
+     * This method is a wrapper to {@link _storeParam} using the 'add' operation type.
+     */
     addParam(presetID, paramID, source, {paramObjStore}=this._getStores([this.stores.PARAMETER.name])) {
         return this._storeParam(presetID, paramID, source, 'add', {paramObjStore});
     }
+
+    /**
+     * Stores a parameter for a given preset using the specified operation type.
+     *
+     * @param {string} presetID - The unique identifier for the preset whose parameter is to be stored.
+     * @param {string} paramID  - The unique identifier for the parameter to store.
+     * @param {string} source   - The source of the parameter to store ('live' or 'file').
+     * @param {string} opType   - The operation type ('add' or 'put').
+     * @param {Object} [stores] - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.paramObjStore] - The parameter object store.
+     * 
+     * @returns {Promise} Promise that resolves when the parameter is stored.
+     * 
+     * @description
+     * This method stores a parameter for a given preset:
+     * 1. Retrieves the parameter object from the specified source ('live' or 'file')
+     * 2. Checks if the parameter can be stored
+     * 3. Prepares the parameter data for storage, including custom properties
+     * 4. Uses the specified operation type ('add' or 'put') to store the parameter
+     * 5. Handles success and error events for the storage operation
+     * 6. Provides error handling and user notifications for issues during the storage
+     * 
+     * The method ensures that the parameter is properly stored in the database
+     * for the specified preset.
+     */
     _storeParam(presetID, paramID, source, opType, {paramObjStore}=this._getStores([this.stores.PARAMETER.name])) {
         let paramObj = false;
         if (source === 'live') {
@@ -1299,6 +2028,24 @@ HUM.User.IDBPresetService = class {
         }
     }
 
+    /**
+     * Stores a full parameter object in the database using the specified operation type.
+     *
+     * @param {Object} idbParamObj - The parameter object to store.
+     * @param {string} opType      - The operation type ('add' or 'put').
+     * @param {Object} [stores]    - The object stores to use for the operation. If not provided, they will be retrieved automatically from the default names.
+     * @param {IDBObjectStore} [stores.paramObjStore] - The parameter object store.
+     * 
+     * @returns {Promise} Promise that resolves when the parameter object is stored.
+     * 
+     * @description
+     * This method stores a full parameter object in the database:
+     * 1. Uses the specified operation type ('add' or 'put') to store the parameter object
+     * 2. Handles success and error events for the storage operation
+     * 3. Provides error handling and user notifications for issues during the storage
+     * 
+     * The method ensures that the parameter object is properly stored in the database.
+     */
     _storeidbParamObj(idbParamObj, opType, {paramObjStore}=this._getStores([this.stores.PARAMETER.name])) {
         return new Promise((resolve, reject) => {
             let request = paramObjStore[opType](idbParamObj);
@@ -1312,10 +2059,26 @@ HUM.User.IDBPresetService = class {
         });
     }
 
-    /*
-     * READ
-     */
+    // - - - - - - - - - - - - - - - - - - - - - 
+    // READ
+    // - - - - - - - - - - - - - - - - - - - - - 
 
+    /**
+     * Retrieves all user Sessions from the database.
+     * @param {Object} [stores] - The object store to use for the operation. If not provided,
+     *                            it will be retrieved automatically from the default Session name.
+     * @param {IDBObjectStore} [stores.sessionObjStore] - The Session object store.
+     * 
+     * @returns {Promise<Array>} Promise that resolves with an array of all sessions.
+     * 
+     * @description
+     * This method retrieves all Sessions from the database:
+     * 1. Uses the getAll() method of the Session object store to fetch all Sessions
+     * 2. Handles success and error events for the retrieval operation
+     * 3. Provides error handling and user notifications for issues during the retrieval
+     * 
+     * The method ensures that all Sessions are properly retrieved from the database.
+     */
     getAllSessions({sessionObjStore}=this._getStores([this.stores.SESSION.name])) {
         return new Promise((resolve, reject) => {
             let request = sessionObjStore.getAll();
@@ -1329,6 +2092,23 @@ HUM.User.IDBPresetService = class {
         });
     }
 
+    /**
+     * Retrieves a specific user Session from the database by it ID.
+     * @param {string} sessionID - The unique identifier for the Session to retrieve.
+     * @param {Object} [stores] - The object store to use for the operation. If not provided,
+     *                            it will be retrieved automatically from the default Session name.
+     * @param {IDBObjectStore} [stores.sessionObjStore] - The session object store.
+     * 
+     * @returns {Promise<Object>} Promise that resolves with the session object.
+     * 
+     * @description
+     * This method retrieves a specific session from the database:
+     * 1. Uses the get() method of the session object store to fetch the session by its ID
+     * 2. Handles success and error events for the retrieval operation
+     * 3. Provides error handling and user notifications for issues during the retrieval
+     * 
+     * The method ensures that the specified session is properly retrieved from the database.
+     */
     getSession(sessionID, {sessionObjStore}=this._getStores([this.stores.SESSION.name])) {
         return new Promise((resolve, reject) => {
             let request = sessionObjStore.get(sessionID);
@@ -1342,6 +2122,22 @@ HUM.User.IDBPresetService = class {
         });
     }
 
+    /**
+     * Retrieves all user Presets from the database.
+     * @param {Object} [stores] - The object store to use for the operation. If not provided,
+     *                            it will be retrieved automatically from the default Preset name.
+     * @param {IDBObjectStore} [stores.presetObjStore] - The Preset object store.
+     * 
+     * @returns {Promise<Array>} Promise that resolves with an array of all presets.
+     * 
+     * @description
+     * This method retrieves all Presets from the database:
+     * 1. Uses the getAll() method of the Preset object store to fetch all Presets
+     * 2. Handles success and error events for the retrieval operation
+     * 3. Provides error handling and user notifications for issues during the retrieval
+     * 
+     * The method ensures that all Presets are properly retrieved from the database.
+     */
     getAllPresets({presetObjStore}=this._getStores([this.stores.PRESET.name])) {
         return new Promise((resolve, reject) => {
             let request = presetObjStore.getAll();
@@ -1355,6 +2151,23 @@ HUM.User.IDBPresetService = class {
         });
     }
 
+    /**
+     * Retrieves a specific user Preset from the database by its ID.
+     * @param {string} presetID - The unique identifier for the Preset to retrieve.
+     * @param {Object} [stores] - The object store to use for the operation. If not provided,
+     *                            it will be retrieved automatically from the default Preset name.
+     * @param {IDBObjectStore} [stores.presetObjStore] - The preset object store.
+     * 
+     * @returns {Promise<Object>} Promise that resolves with the preset object.
+     * 
+     * @description
+     * This method retrieves a specific preset from the database:
+     * 1. Uses the get() method of the preset object store to fetch the preset by its ID
+     * 2. Handles success and error events for the retrieval operation
+     * 3. Provides error handling and user notifications for issues during the retrieval
+     * 
+     * The method ensures that the specified preset is properly retrieved from the database.
+     */
     getPreset(presetID, {presetObjStore}=this._getStores([this.stores.PRESET.name])) {
         return new Promise((resolve, reject) => {
             let request = presetObjStore.get(presetID);
@@ -1368,6 +2181,23 @@ HUM.User.IDBPresetService = class {
         });
     }
 
+    /**
+     * Retrieves all Parameters associated with a specific Preset from the database.
+     * @param {string} presetID - The unique identifier for the Preset whose Parameters are to be retrieved.
+     * @param {Object} [stores] - The object store to use for the operation. If not provided,
+     *                            it will be retrieved automatically from the default Parameter name.
+     * @param {IDBObjectStore} [stores.paramObjStore] - The Parameter object store.
+     * 
+     * @returns {Promise<Array>} Promise that resolves with an array of Parameter objects.
+     * 
+     * @description
+     * This method retrieves all parameters associated with a specific preset from the database:
+     * 1. Uses the preset index of the parameter object store to fetch all parameters for the given preset ID
+     * 2. Handles success and error events for the retrieval operation
+     * 3. Provides error handling and user notifications for issues during the retrieval
+     * 
+     * The method ensures that all parameters for the specified preset are properly retrieved from the database.
+     */
     getPresetParameters(presetID, {paramObjStore}=this._getStores([this.stores.PARAMETER.name])) {
         return new Promise((resolve, reject) => {
             let presetIndex = paramObjStore.index(this.stores.PARAMETER.indexes.PRESET.name),
@@ -1382,13 +2212,27 @@ HUM.User.IDBPresetService = class {
         });
     }
 
-    /*
-     * DELETE
-     */
+    // - - - - - - - - - - - - - - - - - - - - - 
+    // DELETE
+    // - - - - - - - - - - - - - - - - - - - - - 
 
+    /**
+     * Deletes the entire IndexedDB database.
+     * @param {string} dbName - The name of the database to delete.
+     * 
+     * @returns {Promise} Promise that resolves when the database is deleted.
+     * 
+     * @description
+     * This method deletes the entire IndexedDB database:
+     * 1. Uses the indexedDB.deleteDatabase() method to delete the specified database
+     * 2. Handles success and error events for the deletion operation
+     * 3. Provides error handling and user notifications for issues during the deletion
+     * 
+     * The method ensures that the specified database is properly deleted.
+     */
     _deleteDatabase(dbName) {
         return new Promise((resolve, reject) => {
-            let request = indexedDB.deleteDatabase(dbName );
+            let request = window.indexedDB.deleteDatabase(dbName );
             request.onsuccess = (evt) => {
                 resolve();
             };
@@ -1399,6 +2243,23 @@ HUM.User.IDBPresetService = class {
         });
     }
 
+    /**
+     * Deletes a specific preset from the database.
+     * @param {string} presetID - The unique identifier for the preset to delete.
+     * @param {Object} [stores] - The object store to use for the operation. If not provided,
+     *                            it will be retrieved automatically from the default Preset name.
+     * @param {IDBObjectStore} [stores.presetObjStore] - The preset object store.
+     * 
+     * @returns {Promise} Promise that resolves when the preset is deleted.
+     * 
+     * @description
+     * This method deletes a specific preset from the database:
+     * 1. Uses the delete() method of the preset object store to remove the preset by its ID
+     * 2. Handles success and error events for the deletion operation
+     * 3. Provides error handling and user notifications for issues during the deletion
+     * 
+     * The method ensures that the specified preset is properly deleted from the database.
+     */
     _deletePreset(presetID, {presetObjStore}=this._getStores([this.stores.PRESET.name])) {
         return new Promise((resolve, reject) => {
             // @todo: check, cannot delete preset if its parameters are still stored
@@ -1414,6 +2275,23 @@ HUM.User.IDBPresetService = class {
         });
     }
 
+    /**
+     * Deletes a specific parameter from the database.
+     * @param {string} paramID - The unique identifier for the parameter to delete.
+     * @param {Object} [stores] - The object store to use for the operation. If not provided,
+     *                            it will be retrieved automatically from the default Parameter name.
+     * @param {IDBObjectStore} [stores.paramObjStore] - The parameter object store.
+     * 
+     * @returns {Promise} Promise that resolves when the parameter is deleted.
+     * 
+     * @description
+     * This method deletes a specific parameter from the database:
+     * 1. Uses the delete() method of the parameter object store to remove the parameter by its ID
+     * 2. Handles success and error events for the deletion operation
+     * 3. Provides error handling and user notifications for issues during the deletion
+     * 
+     * The method ensures that the specified parameter is properly deleted from the database.
+     */
     _deleteParam(paramID, {paramObjStore}=this._getStores([this.stores.PARAMETER.name])) {
         return new Promise((resolve, reject) => {
             let request = paramObjStore.delete(paramID);
@@ -1429,6 +2307,17 @@ HUM.User.IDBPresetService = class {
 };
 
 
+/**
+ * Class representing user parameters.
+ * @class
+ * @memberof HUM.User
+ * 
+ * @description
+ * This class defines specific parameters for managing user related stuff like
+ * sessions and presets. It includes parameters for renaming sessions,
+ * displaying the current session, displaying concurrent sessions, and
+ * selecting presets.
+ */
 HUM.User.prototype.Parameters = class {
     constructor(user) {
         this.app = user;

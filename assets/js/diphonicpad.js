@@ -1,23 +1,33 @@
- /**
+/**
+ * @fileoverview Diphonic Pad touch/mouse interface for the Harmonicarium application.
+ * This file defines the HUM.DpPad class, which implements the primary graphical
+ * user interface designed for touch and mobile devices. It renders two canvas-based
+ * frequency pads (FT and HT) side-by-side with an SVG toolbar, reacting to pointer
+ * and touch events to drive the DHC in real-time.
+ *
+ * @module diphonicpad
+ * @memberof HUM
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ *
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -39,9 +49,29 @@
 // })();
 
 
-/*
- * The DiohonicPad class.
- *    This is the main interface designed for mobile interfaces.
+/**
+ * Diphonic Pad component for the Harmonicarium application.
+ *
+ * @class
+ * @memberof HUM
+ *
+ * @description
+ * `HUM.DpPad` is an immediately-invoked function expression (IIFE) that
+ * defines and returns the {@link HUM.DpPad~DpPad|DpPad} constructor together
+ * with its inner helper classes ({@link HUM.DpPad~VoiceAmbitus|VoiceAmbitus},
+ * {@link HUM.DpPad~CssFont|CssFont}) and static sub-classes
+ * ({@link HUM.DpPad.PadSet|PadSet}, {@link HUM.DpPad.PadSet.Toolbar|Toolbar},
+ * {@link HUM.DpPad.PadSet.FrequencyPad|FrequencyPad}).
+ *
+ * It provides a full-screen, logarithmic-frequency canvas interface where the
+ * left pad represents Fundamental Tones (FT) and the right pad represents
+ * Harmonic Tones (HT). Pointer and touch events are mapped to note-on/off
+ * messages dispatched to the DHC.
+ *
+ * @example
+ * // Instantiated internally by HUM during initialization
+ * harmonicarium.components.dpPad = new HUM.DpPad(harmonicarium, dhc);
+ * harmonicarium.components.dpPad.init();
  */
 HUM.DpPad = function() {
 
@@ -53,11 +83,19 @@ HUM.DpPad = function() {
      *      \/ \___/|_|\___\___/_/    \_\_| |_| |_|_.__/|_|\__|\__,_|___/
      */
     /**
-     * The DpPad VoiceAmbitus inner class.
-     * It defines an ambitus (frequency range) for the FT or HT pad.
-     * 
+     * Defines a named frequency ambitus (range) for one pad type.
+     *
+     * @class
      * @alias HUM.DpPad~VoiceAmbitus
      * @inner
+     *
+     * @description
+     * A `VoiceAmbitus` stores the same frequency range expressed in three
+     * parallel representations — hertz, midicent, and scientific pitch
+     * notation — so that any part of the application can read whichever unit
+     * it needs without re-converting. Instances are created for every named
+     * range preset (e.g. `'tenore'`, `'soprano'`, `'normal'`) and stored on
+     * the ambitus parameter's `presets` object.
      */
     class VoiceAmbitus {
         /**
@@ -190,11 +228,18 @@ HUM.DpPad = function() {
      *   \_____|___/___/_|  \___/|_| |_|\__|
      */
     /**
-     * The DpPad CssFont inner class.
-     * It defines a font to be used on the Pads.
-     * 
+     * A simple value object that bundles all CSS font properties for canvas text.
+     *
+     * @class
      * @alias HUM.DpPad~CssFont
      * @inner
+     *
+     * @description
+     * `CssFont` groups the six CSS font properties needed to draw text on a
+     * `CanvasRenderingContext2D`. The {@link HUM.DpPad~CssFont#getCss} getter
+     * assembles them into the shorthand string accepted by
+     * `CanvasRenderingContext2D.font`. Instances are stored as parameter values
+     * inside {@link HUM.DpPad.PadSet.prototype.Parameters#fonts}.
      */
     class CssFont {
         /**
@@ -246,17 +291,37 @@ HUM.DpPad = function() {
      *        |_|                     
      */
     /**
-     * The DiohonicPad main class.
-     * 
-     * @exports HUM.DpPad
+     * The Diphonic Pad main class.
+     *
      * @class
+     * @exports HUM.DpPad
      * @inner
+     *
+     * @description
+     * `DpPad` is the top-level controller for the Diphonic Pad interface. It
+     * owns one or more {@link HUM.DpPad.PadSet|PadSet} instances and handles
+     * application-wide concerns:
+     * - Viewport dimension tracking and canvas resize propagation.
+     * - Global mouse-up event handling shared across all pad canvases.
+     * - Logarithmic frequency↔pixel conversion used by all pads.
+     * - View rotation between portrait and landscape orientations.
+     *
+     * @example
+     * const dpPad = new HUM.DpPad(harmonicarium, dhc);
+     * dpPad.init();
      */
     class DpPad {
         /**
+         * Creates a new DpPad instance bound to a HUM instance.
+         *
          * @param {HUM}      harmonicarium - The HUM instance to which this DpPad must refer.
          * @param {HUM.DHC=} dhc           - A DHC. If the argument is not passed to the constructor, a new DHC will be created.
          *                                   (untested, work in progress).
+         *
+         * @description
+         * Initializes all instance properties to their default values.
+         * Does not create the canvas elements or register event listeners;
+         * call {@link HUM.DpPad~DpPad#init|init()} after construction.
          */
         constructor(harmonicarium, dhc=false) {
             /**
@@ -348,7 +413,15 @@ HUM.DpPad = function() {
             };
         }
         /**
-         * Set-up the canvas and add our event handlers after the page has loaded.
+         * Sets up canvases and registers event handlers after the page has loaded.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Registers the global `mouseup` listener on `window` (needed because
+         * the mouseup may fire outside the canvas). Then creates all
+         * {@link HUM.DpPad.PadSet|PadSet} instances up to `settings.numberOfSets`,
+         * injecting them into the DOM and binding them to the DHC.
          */
         init() {
             // Since we are listening to the entire window for the mouseup, it only needs to be done once per page,
@@ -367,9 +440,17 @@ HUM.DpPad = function() {
             }
         }
         /**
-         * Keep track of the mouse button being released.
-         * 
-         * @param {Event} evt - The mouse-up event.
+         * Handles the global `mouseup` event and delegates note-off to all pads.
+         *
+         * @param {MouseEvent} evt - The mouse-up event.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Updates the shared mouse position, then calls `mouseUp()` on the FT
+         * pad, HT pad, and toolbar of every PadSet. Resets `mouse.down` and
+         * the last-position coordinates after all pads have had a chance to
+         * process the final pointer location.
          */
         mouseUp(evt) {
             this.updateMousePosition(evt);
@@ -387,9 +468,17 @@ HUM.DpPad = function() {
 
         }
         /**
-         * Get the current mouse position relative to the top-left of the canvas.
-         * 
-         * @param {Event} evt - The moving mouse event.
+         * Updates the shared mouse coordinates from a DOM mouse/pointer event.
+         *
+         * @param {MouseEvent} evt - The moving mouse event.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Reads `offsetX`/`offsetY` (or falls back to `layerX`/`layerY`) and
+         * writes the values into {@link HUM.DpPad~DpPad#mouse|mouse.x / mouse.y}.
+         * Called before any hit-testing logic so that the stored coordinates
+         * are always up-to-date.
          */
         updateMousePosition(evt) {
             if (evt.offsetX) {
@@ -402,16 +491,37 @@ HUM.DpPad = function() {
             }
         }
         /**
+         * Reads the DpPad HTML container's current pixel dimensions and caches them.
          * Update the viewport size of the DpPad HTML container.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Queries `clientWidth` and `clientHeight` of the
+         * `harmonicarium.html.dpPadContainer` element and stores the result
+         * in {@link HUM.DpPad~DpPad#viewportDim}. Called by
+         * {@link HUM.DpPad~DpPad#windowResize|windowResize()} before
+         * recomputing canvas dimensions.
          */
         updateViewportSize() {
             this.viewportDim.x = this.harmonicarium.html.dpPadContainer.clientWidth;
             this.viewportDim.y = this.harmonicarium.html.dpPadContainer.clientHeight;
         }
         /**
-         * Rotate the view.
-         * 
-         * @param {('horizontal'|'vertical')=} value - Set the specified orientation or switch if no argument is passed.
+         * Switches the pad layout between portrait (vertical) and landscape (horizontal).
+         *
+         * @param {('horizontal'|'vertical')=} [value] - Target orientation. Omit to toggle.
+         *
+         * @returns {void}
+         *
+         * @description
+         * When called without an argument the orientation alternates between
+         * `'vertical'` and `'horizontal'` and the change is propagated to all
+         * PadSet parameter stores. Regardless of the call mode, each PadSet's
+         * FT and HT scale orientations are switched via
+         * {@link HUM.DpPad.PadSet.FrequencyPad#switchScaleOrientation} and the
+         * pads are re-arranged, followed by a full
+         * {@link HUM.DpPad~DpPad#windowResize|windowResize()}.
          */
         rotateView(value=false) {
             // Set
@@ -437,7 +547,17 @@ HUM.DpPad = function() {
             this.windowResize();
         }
         /**
-         * Windows resize.
+         * Handles a window resize event by recomputing all canvas dimensions.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Calls {@link HUM.DpPad~DpPad#updateViewportSize|updateViewportSize()}
+         * to refresh the cached container size, then recalculates and applies
+         * the CSS and pixel dimensions of every toolbar SVG and FT/HT canvas
+         * for each PadSet — accounting for the current orientation, toolbar
+         * placement, pad ratio, and HiDPI pixel ratio. Finally, triggers a full
+         * redraw of all pads by calling `refillFreqArrays()` and `drawFreqUI()`.
          */
         windowResize() {
             this.updateViewportSize();
@@ -552,13 +672,15 @@ HUM.DpPad = function() {
             }
         }
         /**
-         * From frequency to lenght in pixel.
-         * 
-         * @param {hertz}  frequency       - The frequency to be converted in pixel lenght.
+         * Converts a frequency value to a pixel position using a logarithmic scale.
+         *
+         * @param {hertz}  frequency       - The frequency to be converted to a pixel length.
          * @param {Object} rangePreset     - The frequency range represented by the `pxMaxLength` parameter.
          * @param {hertz}  rangePreset.min - Minimum frequency of the range.
          * @param {hertz}  rangePreset.max - Maximum frequency of the range.
-         * @param {number} pxMaxLength     - The lenght of the range in pixel.
+         * @param {number} pxMaxLength     - The length of the range in pixels.
+         *
+         * @returns {number} The pixel position within `[0, pxMaxLength]` for the given frequency.
          */
         freqToPix(frequency, rangePreset, pxMaxLength) {
             let freqMin = Math.log(rangePreset.min.value) / Math.log(10),
@@ -568,13 +690,15 @@ HUM.DpPad = function() {
             return pxPosition;
         }
         /**
-         * From pixel lenght to frequency.
-         * 
-         * @param {number}  pxPosition      - The pixel position inside the range.
+         * Converts a pixel position back to a frequency value using a logarithmic scale.
+         *
+         * @param {number} pxPosition      - The pixel position within the range.
          * @param {Object} rangePreset     - The frequency range represented by the `pxMaxLength` parameter.
          * @param {hertz}  rangePreset.min - Minimum frequency of the range.
          * @param {hertz}  rangePreset.max - Maximum frequency of the range.
-         * @param {number} pxMaxLength     - The lenght of the range in pixel.
+         * @param {number} pxMaxLength     - The length of the range in pixels.
+         *
+         * @returns {hertz} The frequency corresponding to the given pixel position.
          */
         pixToFreq(pxPosition, rangePreset, pxMaxLength){
             let freqMin = Math.log(rangePreset.min.value) / Math.log(10),
@@ -593,21 +717,54 @@ HUM.DpPad = function() {
      *  |_|   \__,_|\__,_|_____/ \___|\__|
      */
     /**
-     * The PadSet class.
-     * It defines a set of pads.
-     * 
+     * A single Diphonic Pad set, consisting of two canvas pads and an SVG toolbar.
+     *
+     * @class
+     * @memberof HUM.DpPad
      * @static
+     *
+     * @description
+     * `DpPad.PadSet` manages the complete set of UI elements for one
+     * playable instance:
+     * - An FT {@link HUM.DpPad.PadSet.FrequencyPad|FrequencyPad} that shows
+     *   Fundamental Tones on a logarithmic canvas.
+     * - An HT {@link HUM.DpPad.PadSet.FrequencyPad|FrequencyPad} that shows
+     *   Harmonic Tones on a logarithmic canvas.
+     * - A {@link HUM.DpPad.PadSet.Toolbar|Toolbar} rendered in an SVG element.
+     *
+     * It also registers itself with the DHC so it receives real-time update
+     * callbacks (`updatesFromDHC`) whenever the fundamental or harmonic tone
+     * data changes.
+     *
+     * @example
+     * // PadSet is instantiated internally by DpPad.init()
+     * const padSet = new DpPad.PadSet('1-0', 0, dpPadComponent, dhc);
      */
     DpPad.PadSet = class {
         /**
-         * @param {string}    setKey         - The ID key of the PadSet.
-         * @param {number}    idx            - The ID of the DpPad.
+         * Creates a new PadSet, builds all DOM/SVG elements, and initializes sub-components.
+         *
+         * @param {string}    setKey         - The ID key of the PadSet (e.g. `'1-0'`).
+         * @param {number}    idx            - The sequential index of this PadSet within its DpPad.
          * @param {HUM.DpPad} dpPadComponent - The `HUM.DpPad` instance to which this PadSet must refer.
          * @param {HUM.DHC=}  dhc            - The DHC instance to be used by this PadSet.
          *                                     NOTE: If a DHC is passed, use that, else create its own DHC.
-         * 
-         * @todo For `dhc` parameters, it's needed to check empty/available keys in "harmonicarium.availableDHCs"
-         *       the setKey currently, it can create conflicts with the main app if the "dhc" is not provided.
+         *
+         * @description
+         * During construction this method:
+         * 1. Creates and appends all container `<div>` and `<canvas>` elements
+         *    to the DpPad container in the DOM.
+         * 2. Creates the accordion tab HTML via `HUM.tmpl` and injects the
+         *    Diphonic Pad settings box into the side panel.
+         * 3. Instantiates the {@link HUM.DpPad.PadSet.prototype.Parameters|Parameters},
+         *    FT and HT {@link HUM.DpPad.PadSet.FrequencyPad|FrequencyPad}, and
+         *    {@link HUM.DpPad.PadSet.Toolbar|Toolbar} objects.
+         * 4. Calls `parameters._init()` and `arrangePads()` to finalize layout.
+         * 5. Registers itself with the DHC for real-time callbacks at priority 101.
+         *
+         * @todo For `dhc` parameters, it's needed to check empty/available keys in
+         *       `harmonicarium.availableDHCs`. The `setKey` currently can create
+         *       conflicts with the main app if `dhc` is not provided.
          */
         constructor(setKey, idx, dpPadComponent, dhc=new HUM.DHC(setKey)) {
             let appDiv = dpPadComponent.harmonicarium.html.dpPadContainer,
@@ -683,10 +840,28 @@ HUM.DpPad = function() {
             this.dhc.registerApp(this, 'updatesFromDHC', 101);
         }
 
-        //                                     'min'|'max'
         /**
-         * 
-        */
+         * Updates the frequency range of a pad type and refreshes its display.
+         *
+         * @param {tonetype}            type         - The pad type to update: `'ft'` or `'ht'`.
+         * @param {string|false}        [ambitus]    - The ambitus preset key (e.g. `'tenore'`, `'custom'`) or
+         *                                             `false` to keep the current preset and just re-apply it.
+         * @param {('min'|'max'|false)} [target]     - Which range bound to modify when editing the custom preset.
+         * @param {number|false}        [value]      - The new raw value (midicent for FT, hertz for HT) for `target`.
+         * @param {boolean}             [copy=false] - When `true`, copies the range from the opposite pad type
+         *                                             instead of applying a value directly.
+         * @returns {void}
+         *
+         * @description
+         * Depending on the combination of arguments this method:
+         * - Loads and applies a named preset from `freqRange[type].ambitus.presets`.
+         * - Modifies and temporarily stores a custom min or max value (FT in
+         *   midicents, HT in hertz), with a special half-step correction for
+         *   12-EDO layouts so the first/last key is fully visible.
+         * - Shows or hides the "Save custom" button accordingly.
+         * Always finalises by calling `refillFreqArrays()` and `drawFreqUI()`
+         * on the affected pad.
+         */
         updatePadRangeUI(type, ambitus=false, target=false, value=false, copy=false) {
             if (ambitus) {
                 this.parameters.freqRange[type].ambitus._setValue(ambitus, false, false, true, false);
@@ -783,14 +958,45 @@ HUM.DpPad = function() {
         }
 
         /**
-         * 
-        */
+         * Shifts a frequency by a given number of cents and returns the new frequency.
+         *
+         * @param {hertz}  initFreq  - The starting frequency in hertz.
+         * @param {number} addCents  - The number of cents to add (positive or negative).
+         *
+         * @returns {hertz} The frequency resulting from adding `addCents` to `initFreq`.
+         *
+         * @description
+         * Converts `initFreq` to midicents, adds `addCents`, then converts back
+         * to hertz. Used internally by
+         * {@link HUM.DpPad.PadSet#updatePadRangeUI|updatePadRangeUI()} to widen
+         * the pad range by half a step so the boundary keys are fully rendered.
+         */
         addCentToHertz(initFreq, addCents) {
             let resCents = HUM.DHC.freqToMc(initFreq);
             resCents += addCents;
             return HUM.DHC.mcToFreq(resCents);
         }
 
+        /**
+         * Manages and routes an incoming message from the DHC.
+         *
+         * @param {HUM.DHCmsg} msg - The incoming DHC message to process.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Handles the following message commands:
+         * - `init`: Re-fills all frequency arrays and redraws both pads.
+         * - `panic`: Calls `allNotesOff()` on both FT and HT pads.
+         * - `update/ft`: Redraws all pads targeted by the FT scale display setting.
+         * - `update/ht`: Updates `currentFreq` from the play queue and redraws
+         *   all pads targeted by the HT scale display setting.
+         * - `tone-on/ft`: Sets `ft.currentFreq` and redraws the targeted FT pads.
+         * - `tone-on/ht`: Sets `ht.currentFreq` (single note) and redraws HT pads.
+         * - `tone-off/ft`: Redraws the targeted FT pads.
+         * - `tone-off/ht`: Restores `ht.currentFreq` from the remaining play queue
+         *   and redraws the targeted HT pads.
+         */
         updatesFromDHC(msg) {
             if (msg.cmd === 'init') {
                 for (let type of ['ft', 'ht']) {
@@ -912,6 +1118,19 @@ HUM.DpPad = function() {
             }
         }
         
+        /**
+         * Re-inserts the FT, HT, and toolbar elements into the set container in
+         * the correct order for the current layout configuration.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Reads `padsOrder`, `toolbarOrientation`, and `toolbarPosition` from the
+         * PadSet parameters and re-appends the three child `<div>` elements
+         * (`ftDiv`, `htDiv`, `tbarDiv`) to `setDiv` in the computed order.
+         * Also adjusts the toolbar `float` style for the edge case where the
+         * layout is horizontal-transversal with the toolbar at the bottom.
+         */
         arrangePads() {
             let setDiv = this.uiElements.fn.setDiv,
                 padsDiv = {
@@ -941,6 +1160,21 @@ HUM.DpPad = function() {
             }
         }
         
+        /**
+         * Inverts the visual order of the FT and HT pads and mirrors key positions.
+         *
+         * @param {boolean} [alreadyInverted=false] - Pass `true` when the parameter
+         *   has already been updated externally, to skip the value toggle and only
+         *   apply the visual changes.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Toggles `padsOrder` between `['ft','ht']` and `['ht','ft']`, mirrors
+         * the `key.position` ratio for both pads (so keys appear on the opposite
+         * edge), forces a parameter-changed notification to persist the new
+         * ratios, redraws both pads, and calls `arrangePads()` to update the DOM.
+         */
         invertPads(alreadyInverted) {
             if (!alreadyInverted) {
                 let newValue = this.parameters.padsOrder.value[0] === 'ft' ? ['ht', 'ft'] : ['ft', 'ht'];
@@ -969,6 +1203,19 @@ HUM.DpPad = function() {
         //     }
         // }
 
+        /**
+         * Cycles the toolbar through all valid positions and orientations in sequence.
+         *
+         * @returns {void}
+         *
+         * @description
+         * The toolbar can be longitudinal (side) at positions 0, 1, 2 or transversal
+         * (top/bottom) at positions 0 or 2. This method advances the position by one
+         * step in the current orientation; when the last longitudinal position is
+         * reached it switches to transversal, and vice-versa. Forces a
+         * parameter-changed notification, triggers a full resize, and calls
+         * `arrangePads()` to update the DOM order.
+         */
         switchToolbarPosition() {
             let tbPosLong = this.parameters.toolbarPosition.value.longitudinal,
                 tbPosTras = this.parameters.toolbarPosition.value.transversal;
@@ -1004,7 +1251,38 @@ HUM.DpPad = function() {
      * | |  | (_| | | | (_| | | | | | |  __/ ||  __/ |  \__ \
      * |_|   \__,_|_|  \__,_|_| |_| |_|\___|\__\___|_|  |___/
      */
+    /**
+     * Container class for all {@link HUM.Param} objects belonging to a
+     * {@link HUM.DpPad.PadSet|PadSet} instance.
+     *
+     * @class
+     * @memberof HUM.DpPad.PadSet
+     *
+     * @description
+     * Instantiates and holds every configurable parameter of the PadSet:
+     * - **Layout**: `main_orientation`, `renderMode`, `padsOrder`, `toolbarOrientation`,
+     *   `toolbarPosition`, `toolbarIconOrder`, `padsRatio`, `tbLong`.
+     * - **Scale display**: `scaleDisplay.ft`, `scaleDisplay.ht`.
+     * - **Frequency ranges**: `freqRange.ft.{ambitus,min,max}`,
+     *   `freqRange.ht.{ambitus,min,max}`.
+     * - **Canvas object ratios**: `canvasObjectsRatios` (key length/position,
+     *   label positions, HZ-monitor anchor).
+     * - **Fonts**: `fonts.{ft,ht}.{hzMonitor,keyLabel}`,
+     *   `fonts.ht.lineLabel`.
+     * - **Scale orientations**: `scaleOrientation.ft`, `scaleOrientation.ht`.
+     */
     DpPad.PadSet.prototype.Parameters = class {
+        /**
+         * Creates all parameters for the given PadSet.
+         *
+         * @param {HUM.DpPad.PadSet} padSet - The parent PadSet instance.
+         *
+         * @description
+         * Every `HUM.Param` is constructed here with its IDB key, allowed
+         * values, initial value, and the UI element descriptors that wire it
+         * to the DOM. Heavy initialisation (Bootstrap collapsible setup, initial
+         * DOM writes) is deferred to `_init()`.
+         */
         constructor(padSet) {
             this.padSet = padSet;
             /*   __   ____  ____ 
@@ -1881,6 +2159,17 @@ HUM.DpPad = function() {
                 }
             });
         }
+        /**
+         * Triggers deferred initialisation for parameters that require live DOM elements.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Calls `_init()` on each font parameter and on the toolbar position,
+         * toolbar orientation, and both frequency-range ambitus parameters.
+         * These inits populate select menus and establish Bootstrap-collapsible
+         * listeners that must run after the DOM has been fully built.
+         */
         _init() {
             this.fonts.ft.hzMonitor._init();
             this.fonts.ft.keyLabel._init();
@@ -1893,6 +2182,20 @@ HUM.DpPad = function() {
             this.freqRange.ft.ambitus._init();
             this.freqRange.ht.ambitus._init();
         }
+
+        /**
+         * Populates a frequency-range `<select>` element with the available preset options.
+         *
+         * @param {tonetype}     type - The pad type (`'ft'` or `'ht'`) whose presets to enumerate.
+         * @param {HTMLElement}  elem - The `<select>` DOM element to populate.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Iterates over all entries in `freqRange[type].ambitus.presets`, appending
+         * one `<option>` per preset with its human-readable `name` as the label.
+         * Finally appends a fixed `'Custom'` option that is always present.
+         */
         _freqRangeInit(type, elem) {
             for (const [id, ambitus] of Object.entries(this.freqRange[type].ambitus.presets)) {
                 let option = document.createElement("option");
@@ -1915,7 +2218,36 @@ HUM.DpPad = function() {
      *     | | (_) | (_) | | |_) | (_| | |   
      *     |_|\___/ \___/|_|_.__/ \__,_|_|   
      */
+    /**
+     * The SVG-based icon toolbar that sits alongside the frequency pads.
+     *
+     * @class
+     * @memberof HUM.DpPad.PadSet
+     *
+     * @description
+     * `Toolbar` manages an `<svg>` element containing a row or column of
+     * `<use>` icons defined in the page's SVG sprite. Each icon dispatches
+     * pointer and touch events through
+     * {@link HUM.DpPad.PadSet.Toolbar#playProxy|playProxy()} which routes to
+     * the appropriate DHC or UI action via
+     * {@link HUM.DpPad.PadSet.Toolbar#playIcon|playIcon()}.
+     *
+     * Supported icons: `piper`, `menu`, `rotateView`, `openLog`, `toolbarPos`,
+     * `rotateFT`, `rotateHT`, `invertPads`, `panic`, `textIncrease`, `textDecrease`.
+     */
     DpPad.PadSet.Toolbar = class {
+        /**
+         * Creates a Toolbar bound to the given PadSet and SVG element.
+         *
+         * @param {HUM.DpPad.PadSet} padSet - The parent PadSet instance.
+         * @param {SVGSVGElement}    svg    - The `<svg>` element that will host the icons.
+         *
+         * @description
+         * Initialises the dimension cache and icon map, registers the
+         * `touchstart` passive-prevention listener on the SVG, and immediately
+         * calls {@link HUM.DpPad.PadSet.Toolbar#drawIcons|drawIcons(true)} to
+         * populate the SVG with icon elements.
+         */
         constructor(padSet, svg) { 
             this.svg = svg;
             this.padSet = padSet;
@@ -1933,6 +2265,24 @@ HUM.DpPad = function() {
             this.drawIcons(true);
         }
 
+        /**
+         * Renders or repositions all toolbar icons inside the SVG element.
+         *
+         * @param {boolean} [init=false] - When `true`, clears the SVG and creates
+         *   all `<use>` elements from scratch; when `false`, only updates the
+         *   position and size attributes of existing elements.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Calculates icon spacing, size strings, and `preserveAspectRatio` values
+         * based on the current pad orientation (`vertical`/`horizontal`) and
+         * toolbar placement (`longitudinal`/`transversal`). On init, each icon
+         * `<use>` element receives `mousedown`, `touchstart`, and `touchend`
+         * listeners wired to `playProxy()` and a `pointer-events` attribute.
+         * Icons that should appear rotated (e.g. `rotateView`, `invertPads`)
+         * receive a `transform="rotate(...)"` attribute.
+         */
         drawIcons(init=false) {
             // while (this.svg.lastElementChild) {
             //     this.svg.removeChild(this.svg.lastElementChild);
@@ -2043,6 +2393,23 @@ HUM.DpPad = function() {
             }
         }
 
+        /**
+         * Routes a mouse or touch event from an icon to `playIcon()`.
+         *
+         * @param {MouseEvent|TouchEvent} e - The DOM event fired by an icon `<use>` element.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Reads `e.type` to determine the interaction phase (`mousedown`,
+         * `touchstart`, or `touchend`) and resolves the icon object via
+         * `e.target.dpIcon`. For `mousedown` and `touchstart` it records the
+         * pressed icon and calls `playIcon()` with state `1`. For `touchend`
+         * it checks whether the finger lifted inside the same element
+         * (simulating a button-click style behaviour) and calls `playIcon()`
+         * with state `0` when appropriate. `window.event.preventDefault()` is
+         * called on touch events to suppress scroll interference.
+         */
         playProxy(e) {
             let icon = this.icons[e.target.dpIcon];
 
@@ -2094,6 +2461,18 @@ HUM.DpPad = function() {
                     break;
             }
         }
+        /**
+         * Handles the global `mouseup` event on behalf of the toolbar.
+         *
+         * @param {MouseEvent} e - The `mouseup` event forwarded from `DpPad.mouseUp()`.
+         *
+         * @returns {void}
+         *
+         * @description
+         * If `mouse.down` references a toolbar icon (detected via `dpIcon`), calls
+         * `playIcon()` with state `0` (release) to trigger the icon's deactivation
+         * logic (e.g. releasing the Piper HT note).
+         */
         mouseUp(e) {
             // This IF statement implements hold feature by de-click (mouseUp) outside the icon
             // if (this.padSet.dpPadComponent.mouse.down === e.target) {
@@ -2104,6 +2483,29 @@ HUM.DpPad = function() {
             // }
 
         }
+        /**
+         * Executes the action associated with a toolbar icon.
+         *
+         * @param {SVGUseElement|false} pointerDown - The currently pressed icon element, or `false` if none.
+         * @param {0|1}                 state       - `1` for press, `0` for release.
+         * @param {SVGUseElement}       icon        - The icon element whose `dpIcon` property identifies the action.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Dispatches to the appropriate DHC or UI call based on `icon.dpIcon`:
+         * - `piper`: Plays HT 0 (the Piper note) on press; mutes it on release.
+         * - `menu`: Toggles the sidebar on release.
+         * - `rotateView`: Rotates the pad layout on release.
+         * - `openLog`: Toggles the event log panel on release.
+         * - `toolbarPos`: Cycles the toolbar position on release.
+         * - `rotateFT`: Switches the FT scale orientation on release.
+         * - `rotateHT`: Switches the HT scale orientation on release.
+         * - `invertPads`: Swaps FT and HT pad positions on release.
+         * - `panic`: Triggers a DHC panic (all notes off) on release.
+         * - `textIncrease`: Increases font sizes on release.
+         * - `textDecrease`: Decreases font sizes on release.
+         */
         playIcon(pointerDown, state, icon) {
             switch (icon.dpIcon) {
                 case 'piper':
@@ -2166,10 +2568,28 @@ HUM.DpPad = function() {
                     break;
             }
         }
+        /**
+         * Increases the font size of all text labels on both pads.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Delegates to `increaseFontsize()` on the FT and HT
+         * {@link HUM.DpPad.PadSet.FrequencyPad|FrequencyPad} instances.
+         */
         textIncrease() {
             this.padSet.ft.increaseFontsize();
             this.padSet.ht.increaseFontsize();
         }
+        /**
+         * Decreases the font size of all text labels on both pads.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Delegates to `decreaseFontsize()` on the FT and HT
+         * {@link HUM.DpPad.PadSet.FrequencyPad|FrequencyPad} instances.
+         */
         textDecrease() {
             this.padSet.ft.decreaseFontsize();
             this.padSet.ht.decreaseFontsize();
@@ -2187,7 +2607,40 @@ HUM.DpPad = function() {
      *                    | |                       __/ |                 
      *                    |_|                      |___/                  
      */
+    /**
+     * A single canvas-based frequency pad that renders and plays FT or HT tones.
+     *
+     * @class
+     * @memberof HUM.DpPad.PadSet
+     *
+     * @description
+     * `FrequencyPad` owns one `<canvas>` element and all the drawing and
+     * interaction logic needed to:
+     * - Display a logarithmic frequency scale with FT key rectangles and
+     *   HT key rectangles, each annotated with note names and HT numbers.
+     * - Respond to mouse and touch events, performing hit-testing against
+     *   pre-computed key bounding boxes and dispatching `playFT`/`muteFT`
+     *   and `playHT`/`muteHT` calls to the DHC.
+     * - Render a live frequency monitor (Hz readout) in a corner of the canvas.
+     *
+     * One `FrequencyPad` is created for the FT scale and one for the HT scale
+     * within every {@link HUM.DpPad.PadSet|PadSet}.
+     */
     DpPad.PadSet.FrequencyPad = class {
+        /**
+         * Creates a FrequencyPad and registers all canvas event listeners.
+         *
+         * @param {tonetype}          type   - Whether this pad shows FT (`'ft'`) or HT (`'ht'`) tones.
+         * @param {HUM.DpPad.PadSet}  padSet - The parent PadSet instance.
+         * @param {HTMLCanvasElement} canvas - The `<canvas>` element to draw on.
+         * 
+         * @description
+         * Initialises all instance properties (dimension cache, frequency arrays,
+         * canvas object positions, active-key tracking, touch state) and
+         * obtains the 2D rendering context. Registers `mousedown`, `mousemove`,
+         * `mouseleave`, `touchstart`, `touchmove`, and `touchend` listeners on
+         * the canvas. Alerts the user if the browser lacks canvas support.
+         */
         constructor(type, padSet, canvas) { 
             // Get the specific canvas element from the HTML document passed
             this.canvas = canvas;
@@ -2244,6 +2697,15 @@ HUM.DpPad = function() {
             }
 
         }
+        /**
+         * Toggles the scale drawing orientation between vertical and horizontal.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Flips the `scaleOrientation` parameter for this pad type and immediately
+         * redraws the pad with {@link HUM.DpPad.PadSet.FrequencyPad#drawFreqUI|drawFreqUI()}.
+         */
         switchScaleOrientation() {
             this.padSet.parameters.scaleOrientation[this.type].value = this.padSet.parameters.scaleOrientation[this.type].value === 'vertical' ? 'horizontal' : 'vertical';
             // this.padSet.uiElements.in['scale_orientation_'+this.type].value = this.padSet.parameters.scaleOrientation[this.type].value;
@@ -2256,7 +2718,17 @@ HUM.DpPad = function() {
         // specific to a certain canvas - we're listening to the entire window for mouseup
         // events.
 
-        // Keep track of the mouse button being pressed and draw a dot at current location
+        /**
+         * Handles a `mousedown` event on the canvas.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Records this canvas as the currently pressed element in
+         * `dpPadComponent.mouse.down`, then calls
+         * {@link HUM.DpPad.PadSet.FrequencyPad#play|play()} to perform
+         * hit-testing and dispatch note events.
+         */
         mouseDown() {
             // Down parameter points to the target canvas on mouse down
             this.padSet.dpPadComponent.mouse.down = this.canvas;
@@ -2264,7 +2736,19 @@ HUM.DpPad = function() {
             // this.drawLine(this.padSet.dpPadComponent.mouse, 12);
 
         }
-        // Keep track of the mouse position and draw a dot if mouse button is currently pressed
+        /**
+         * Handles a `mousemove` event on the canvas.
+         *
+         * @param {MouseEvent} e - The mouse-move event.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Updates the shared mouse position. If the left button is held down
+         * on this canvas, also calls
+         * {@link HUM.DpPad.PadSet.FrequencyPad#play|play()} so that sliding
+         * the pointer across the scale triggers new note-on/off events.
+         */
         mouseMove(e) {
             if (this.padSet.dpPadComponent.mouse.down === false) {
                 // Update the mouse co-ordinates when moved
@@ -2277,6 +2761,18 @@ HUM.DpPad = function() {
                 // this.drawLine(this.padSet.dpPadComponent.mouse, 12);
             }
         }
+        /**
+         * Handles a `mouseleave` event on the canvas.
+         *
+         * @param {MouseEvent} e - The mouse-leave event.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Resets the "last position" coordinates when the pointer exits the
+         * canvas while still pressed, so that the next re-entry starts a fresh
+         * stroke rather than drawing a long line from the previous position.
+         */
         mouseLeave(e) {
             if (e.target === this.padSet.dpPadComponent.mouse.down) {
                 // Reset lastX and lastY to false to indicate that they are now invalid, since we have lifted the "pen"
@@ -2284,6 +2780,15 @@ HUM.DpPad = function() {
                 this.padSet.dpPadComponent.mouse.last.y = false;
             }
         }
+        /**
+         * Handles the `mouseup` event forwarded by the global DpPad handler.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Sends `muteFT` / `muteHT` to the DHC for any currently active FT or
+         * HT key and resets the `activeKeys` references to `false`.
+         */
         mouseUp() {
             // let frequency = this.PadPixToFreq(this.padSet.dpPadComponent.mouse);
             if (this.activeKeys.ft !== false) {
@@ -2302,10 +2807,23 @@ HUM.DpPad = function() {
         // ====================================================
         // TOUCH EVENTS
         // ====================================================
-        // Get the touch position relative to the top-left of the canvas
-        // When we get the raw values of pageX and pageY below, they take into account the scrolling on the page
-        // but not the position relative to our target div. We'll adjust them using "target.offsetLeft" and
-        // "target.offsetTop" to get the correct values in relation to the top left of the canvas.
+        /**
+         * Updates the cached touch coordinates from a `TouchEvent`.
+         *
+         * @param {TouchEvent} e - The touch event to read.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Reads the first touch point in `e.targetTouches` and stores its
+         * canvas-relative position in `this.touch.x` and `this.touch.y`.
+         * When we get the raw values of pageX and pageY below, they take into
+         * account the scrolling on the page but not the position relative to our 
+         * target div. We'll adjust them using "target.offsetLeft" and
+         * "target.offsetTop" to get the correct values in relation to the top
+         * left of the canvas.
+         * Only single-finger touches are processed; multi-touch is ignored.
+         */
         updateTouchPosition(e) {
             if(e.targetTouches) {
                 if (e.targetTouches.length === 1) { // Only deal with one finger
@@ -2315,7 +2833,19 @@ HUM.DpPad = function() {
                 }
             }
         }
-        // Draw something when a touch start is detected
+        /**
+         * Handles a `touchstart` event on the canvas.
+         *
+         * @param {TouchEvent} e - The touch-start event.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Updates the touch coordinates, marks the canvas as the active touch
+         * target, and calls {@link HUM.DpPad.PadSet.FrequencyPad#play|play()}
+         * to dispatch note events. Calls `window.event.preventDefault()` to
+         * suppress the subsequent synthetic `mousedown` event.
+         */
         touchStart(e) {
             // Update the touch co-ordinates
             this.updateTouchPosition(e);
@@ -2327,7 +2857,18 @@ HUM.DpPad = function() {
             // Prevents an additional mousedown event being triggered
             window.event.preventDefault();
         }
-        // Draw something and prevent the default scrolling when touch movement is detected
+        /**
+         * Handles a `touchmove` event on the canvas.
+         *
+         * @param {TouchEvent} e - The touch-move event.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Updates the touch coordinates and calls
+         * {@link HUM.DpPad.PadSet.FrequencyPad#play|play()} so that sliding
+         * a finger across the scale continuously fires note-on/off events.
+         */
         touchMove(e) { 
             // Update the touch co-ordinates
             this.updateTouchPosition(e);
@@ -2339,6 +2880,19 @@ HUM.DpPad = function() {
             // Prevent a scrolling action as a result of this touchmove triggering.
             // window.event.preventDefault();
         }
+        /**
+         * Handles a `touchend` event on the canvas.
+         *
+         * @param {TouchEvent} e - The touch-end event.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Marks the touch as no longer active, sends `muteFT`/`muteHT` to the
+         * DHC for any currently active keys, resets `activeKeys`, and clears
+         * the last-touch coordinates. Calls `window.event.preventDefault()`
+         * to suppress scroll behaviour.
+         */
         touchEnd(e) {
             this.updateTouchPosition(e);
             this.touch.down = false;
@@ -2367,6 +2921,25 @@ HUM.DpPad = function() {
         // PLAYING ACTIONS
         // ====================================================
 
+        /**
+         * Performs hit-testing and dispatches note-on/off events for a pointer position.
+         *
+         * @param {{x:number, y:number, down:*}} pointer - The pointer state object
+         *   (`mouse` or `touch`) providing the current coordinates and press status.
+         * @param {('mouse'|'touch')} type - The input device type (currently unused
+         *   internally but preserved for future device-specific handling).
+         *
+         * @returns {void}
+         *
+         * @description
+         * Wrapped in `requestAnimationFrame` for smooth rendering. Filters
+         * `canvasObjPos.keys` to find all key rectangles that contain the current
+         * pointer position, selects the one with the highest z-index, then:
+         * - Sends `muteFT`/`mutHT` for the previously active key if it differs.
+         * - Sends `playFT`/`playHT` for the newly hit key while the pointer is down.
+         * - Sends note-off for both types if no key is hit.
+         * Updates `currentFreq` and triggers a redraw.
+         */
         play(pointer, type) {
             // Fallback method
             // requestAnimFrame((function() {}).bind(this));
@@ -2535,6 +3108,17 @@ HUM.DpPad = function() {
             });
         }
 
+        /**
+         * Silences all active notes on this pad and redraws it.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Resets both `activeKeys.ft` and `activeKeys.ht` to `false` and calls
+         * `drawFreqUI()`. Used as a local panic handler by
+         * {@link HUM.DpPad.PadSet#updatesFromDHC|PadSet.updatesFromDHC()} when
+         * a `panic` message arrives from the DHC.
+         */
         allNotesOff() {
             this.activeKeys.ft = false;
             this.activeKeys.ht = false;
@@ -2544,6 +3128,20 @@ HUM.DpPad = function() {
         // ====================================================
         // DRAWING ACTIONS
         // ====================================================
+        /**
+         * Computes a three-stop HSL colour gradient for a given HT number.
+         *
+         * @param {xtnum} htNumber - The harmonic tone number to colourise.
+         *
+         * @returns {string[]} A three-element array of CSS HSL colour strings:
+         *   `[lighter, base, darker]`.
+         *
+         * @description
+         * Maps the harmonic number to a hue by computing the logarithm of
+         * `abs(htNumber)` in the base of the current nEDx unit, then wraps
+         * the result to `[0, 360)` degrees. Saturation and lightness are
+         * taken from `canvasObjectsRatios.ht.key`.
+         */
         getHTcolor(htNumber) {
             let colRatio = (Math.log(Math.abs(htNumber))/Math.log(this.padSet.dhc.settings.ft.nEDx.unit.value)) % 1,
                 colorH = 360 * colRatio,
@@ -2556,7 +3154,16 @@ HUM.DpPad = function() {
             ];
         }
 
-        // Clear the canvas context using the canvas width and height
+        /**
+         * Clears the entire canvas to a transparent state.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Calls `clearRect()` covering the full canvas dimensions, then begins
+         * a new path. Called at the start of every
+         * {@link HUM.DpPad.PadSet.FrequencyPad#drawFreqUI|drawFreqUI()} cycle.
+         */
         clearCanvas() {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.ctx.beginPath();
@@ -2566,6 +3173,16 @@ HUM.DpPad = function() {
         //     this.padSet.parameters.fonts[this.type][target]._objValueModified();
         //     this.drawFreqUI();
         // }
+        /**
+         * Increases the size of all font parameters for this pad type by ~11%.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Iterates over `padSet.parameters.fonts[this.type]` and multiplies
+         * each font's `size` property by `1/0.9`, rounding to the nearest
+         * integer. Triggers `drawFreqUI()` to redraw with the new sizes.
+         */
         increaseFontsize() {
             for (const [target, font] of Object.entries(this.padSet.parameters.fonts[this.type])) {
                 let newValue = Math.round(this.padSet.parameters.fonts[this.type][target].size / 0.9);
@@ -2574,6 +3191,16 @@ HUM.DpPad = function() {
             }
             this.drawFreqUI();
         }
+        /**
+         * Decreases the size of all font parameters for this pad type by ~10%.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Iterates over `padSet.parameters.fonts[this.type]` and multiplies
+         * each font's `size` property by `0.9`, rounding to the nearest
+         * integer. Triggers `drawFreqUI()` to redraw with the new sizes.
+         */
         decreaseFontsize() {
             for (const [target, font] of Object.entries(this.padSet.parameters.fonts[this.type])) {
                 let newValue = Math.round(this.padSet.parameters.fonts[this.type][target].size * 0.9);
@@ -2582,6 +3209,21 @@ HUM.DpPad = function() {
             }
             this.drawFreqUI();
         }
+        /**
+         * Draws a thin reference line across the canvas at a given pixel position.
+         *
+         * @param {number}  pxPosition     - The position in pixels along the scale axis.
+         * @param {boolean} [close=true]   - When `true`, immediately strokes the path
+         *   in grey and closes it. Pass `false` to accumulate the line segment in an
+         *   existing open path for batch rendering.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Draws a full-width (vertical orientation) or full-height (horizontal
+         * orientation) line at `pxPosition`. Used to mark FT and HT tone
+         * positions before keys are drawn on top of them.
+         */
         drawFreqLine(pxPosition, close=true) {
             let ctx = this.ctx,
                 scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value;
@@ -2601,6 +3243,25 @@ HUM.DpPad = function() {
             }
         }
 
+        /**
+         * Draws a rectangular key (or thin line) centred on a scale position.
+         *
+         * @param {number}          pxPosition        - Pixel position along the scale axis (centre of the key).
+         * @param {tonetype|false}  [type=false]      - Tone type (`'ft'` or `'ht'`) used when recording the bounding box. Pass `false` for non-interactive lines.
+         * @param {xtnum|false}     [xtNum=false]     - Tone number used when recording the bounding box.
+         * @param {number|false}    [thickness=false] - Explicit thickness in pixels; when `false` the key dimensions are derived from the canvas size and FT key ratios.
+         * @param {string[]|false}  [grdColors=false] - Three-stop gradient colour array `[lighter, mid, darker]`; `false` means no gradient fill is applied.
+         * @param {number|false}    [zindex=false]    - Z-index stored in the bounding-box registry for hit-test ordering.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Computes the key rectangle from the scale orientation and canvas
+         * object ratios, optionally applies a linear gradient fill, then draws
+         * and strokes the rectangle. If `thickness` is falsy (i.e. it is a
+         * real key, not just a line) the bounding box is pushed into
+         * `canvasObjPos.keys` for collision detection.
+         */
         drawLinKey(pxPosition, type=false, xtNum=false, thickness=false, grdColors=false, zindex=false) {
             let ctx = this.ctx,
                 scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
@@ -2707,6 +3368,27 @@ HUM.DpPad = function() {
         //     }));
         // }
 
+        /**
+         * Draws a variable-width HT key rectangle whose size is proportional to
+         * the spacing between neighbouring harmonics.
+         *
+         * @param {hertz}     thisFreq   - Frequency in hertz of the harmonic tone to draw.
+         * @param {xtnum}     htNumber   - The HT number, used for bounding-box registration.
+         * @param {number}    arrIdx     - Index of this entry within `freqArrays.ht`; used to
+         *   look up the neighbouring frequencies for computing key height/width.
+         * @param {string[]}  grdColors  - Three-stop gradient colour array `[c0, cMid, c1]`.
+         * @param {number}    zindex     - Z-index stored in the bounding-box registry.
+         *
+         * @returns {void}
+         *
+         * @description
+         * The key height (vertical) or width (horizontal) is calculated as one
+         * third of the gap to each neighbour (or to the range boundary at the
+         * edges of the array), giving a visually proportional touch target. A
+         * linear gradient is applied with its midpoint at the key-text position
+         * so the label always contrasts against the middle colour. The bounding
+         * box is pushed into `canvasObjPos.keys` for collision detection.
+         */
         drawFreqKeyHT(thisFreq, htNumber, arrIdx, grdColors, zindex) {
             let ctx = this.ctx,
                 freqRange = this.padSet.parameters.freqRange[this.type],
@@ -2813,6 +3495,22 @@ HUM.DpPad = function() {
             }));
         }
 
+        /**
+         * Draws the text label for an FT key at the given scale position.
+         *
+         * @param {number}   pxPosition  - Pixel position along the scale axis (centre of the key).
+         * @param {mcname}   note        - Tone name array `[noteName, sign, cents, isBlack]` as
+         *   returned by `DHC.mcToName()`.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Formats the note-name string (appending a cent offset when non-zero) then
+         * draws it inside the FT key rectangle. The text x-position mirrors the key
+         * side when `canvasObjectsRatios.ft.key.position` is greater than 0.5; in
+         * horizontal orientation a canvas rotation transform is applied when the
+         * ratio's `rotation` property is set.
+         */
         drawKeyLabelFT(pxPosition, note) {
             let ctx = this.ctx,
                 scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
@@ -2864,6 +3562,25 @@ HUM.DpPad = function() {
             }
         }
         
+        /**
+         * Draws both the line-label and the key-label for an HT tone.
+         *
+         * @param {number}   pxPosition  - Pixel position along the scale axis (centre of the line).
+         * @param {mcname}   note        - Tone name array `[noteName, sign, cents, isBlack]` as
+         *   returned by `DHC.mcToName()`.
+         * @param {xtnum}    htNumber    - The HT number shown inside the key rectangle.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Renders two independent text items:
+         * - **Line label**: the note name (with optional cent offset), positioned
+         *   on the open side of the pad using `canvasObjectsRatios.ht.lineText`.
+         * - **Key label**: the HT number string (`"H N"`), positioned inside the
+         *   key rectangle using `canvasObjectsRatios.ht.keyText`.
+         * Mirroring and canvas rotation transforms are applied according to key
+         * position and orientation.
+         */
         drawKeyLabelHT(pxPosition, note, htNumber) {
             let ctx = this.ctx,
                 scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
@@ -2955,6 +3672,27 @@ HUM.DpPad = function() {
             }
         }
 
+        /**
+         * Full redraw of the frequency canvas.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Clears the canvas then renders all visual layers in the following order:
+         * 1. FT reference lines (thin strokes at each FT frequency, highlighting `curr_ft`).
+         * 2. FT keys (rectangles sized by key-ratio parameters; `curr_ft` drawn last
+         *    so its drop-shadow covers adjacent keys).
+         * 3. FT key labels (note names inside each FT key rectangle).
+         * 4. HT reference lines (thin strokes at each HT frequency, highlighting `curr_ht`
+         *    and any tones in `playQueue.ht`).
+         * 5. HT keys (proportional rectangles coloured by HT colour, with drop-shadow
+         *    on `curr_ht` and played tones).
+         * 6. HT key and line labels (note names and HT numbers).
+         * 7. Frequency monitor overlay (current pointer frequency).
+         *
+         * `canvasObjPos.keys` is reset to an empty array at the start so that
+         * hit-testing always reflects the current render.
+         */
         drawFreqUI() {
             let ctx = this.ctx,
                 zindex = 0;
@@ -3180,6 +3918,19 @@ HUM.DpPad = function() {
         //     ctx.strokeStyle='grey';
         //     ctx.stroke();
         // },
+        /**
+         * Draws the current-frequency text overlay on the canvas corner.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Renders `currentFreq` (in Hz, formatted to the DHC `hz_accuracy` decimal
+         * places) as a filled-and-stroked text string. The corner position is
+         * controlled by `canvasObjectsRatios[type].hzMonitor` and mirrors to the
+         * correct corner based on `key.position` and scale orientation. The stroke
+         * is white so the label remains readable against any background. Does
+         * nothing when `currentFreq` is falsy.
+         */
         drawFreqMonitor() {
             if (this.currentFreq) {
                 let ctx = this.ctx,
@@ -3226,6 +3977,21 @@ HUM.DpPad = function() {
             }
         }
 
+        /**
+         * Rebuilds the cached FT and HT frequency arrays for the current pad range.
+         *
+         * @returns {void}
+         *
+         * @description
+         * Iterates `DHC.tables.ft` and `DHC.tables.ht`, keeping only those tones
+         * whose frequency falls within the current `freqRange.min` / `freqRange.max`
+         * bounds. Whether each tone-type is included is controlled by the
+         * `scaleDisplay.ft` and `scaleDisplay.ht` parameters. Both arrays are
+         * sorted ascending by frequency and then frozen with `Object.freeze()` so
+         * that callers can rely on their immutability until the next call.
+         * The HT entry for `htNum === '-1'` (the FT reference marker) is always
+         * excluded from the HT array.
+         */
         refillFreqArrays() {
             this.freqArrays.ft = new Array();
             this.freqArrays.ht = new Array();
@@ -3256,6 +4022,20 @@ HUM.DpPad = function() {
             Object.freeze(this.freqArrays.ht);
         }
 
+        /**
+         * Converts a frequency value to a canvas pixel position.
+         *
+         * @param {hertz} frequency  - The frequency to convert.
+         *
+         * @returns {number} Pixel offset from the canvas origin (top-left).
+         *
+         * @description
+         * Delegates to the parent `DpPad.freqToPix()` logarithmic converter, then
+         * adjusts for scale orientation:
+         * - `'vertical'`: the y-axis is inverted so that low frequencies appear at
+         *   the bottom (`height − raw pixel`).
+         * - `'horizontal'`: the x-axis is used directly (left = low, right = high).
+         */
         freqToPadPix(frequency) {
             let freqRange = this.padSet.parameters.freqRange[this.type],
                 scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value;
@@ -3269,6 +4049,20 @@ HUM.DpPad = function() {
                 alert('A "scaleOrientation" parameter is invalid: ' + scaleOrientation);
             }
         }
+        /**
+         * Converts a pointer position to a frequency.
+         *
+         * @param {mousestate|touchstate} pointer  - The mouse or touch state object
+         *   whose `x` / `y` coordinates are used.
+         *
+         * @returns {hertz} The frequency corresponding to the pointer position.
+         *
+         * @description
+         * The inverse of `freqToPadPix()`. Delegates to `DpPad.pixToFreq()` after
+         * adjusting the pixel coordinate for scale orientation:
+         * - `'vertical'`: `height − pointer.y` restores the bottom-to-top mapping.
+         * - `'horizontal'`: `pointer.x` is used directly.
+         */
         PadPixToFreq(pointer) {
             let freqRange = this.padSet.parameters.freqRange[this.type],
                 scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value;
@@ -3284,8 +4078,14 @@ HUM.DpPad = function() {
             }
         }
 
-        // Draws a dot at a specific position on the supplied canvas name
-        // Parameters are: A canvas context, the x position, the y position, the size of the dot
+        /**
+         * Draws a filled circle at the pointer position (debug/utility helper).
+         *
+         * @param {mousestate|touchstate} pointer  - Object with `x` and `y` canvas coordinates.
+         * @param {number}                size     - Radius of the dot in pixels.
+         *
+         * @returns {void}
+         */
         drawDot(pointer, size) {
             let ctx = this.ctx;
             // Let's use black by setting RGB values to 0, and 255 alpha (completely opaque)
@@ -3298,8 +4098,21 @@ HUM.DpPad = function() {
             ctx.closePath();
             ctx.fill();
         }
-        // Draws a line between the specified position on the supplied canvas name
-        // Parameters are: A canvas context, the x position, the y position, the size of the dot
+        /**
+         * Draws a line segment from the last pointer position to the current one
+         * (debug/utility helper).
+         *
+         * @param {mousestate|touchstate} pointer  - Object with `x`, `y`, and `last`
+         *   (`{x, y}`) canvas coordinates. `pointer.last` is updated to the current
+         *   position after the line is drawn.
+         * @param {number}                size     - Line width in pixels.
+         *
+         * @returns {void}
+         *
+         * @description
+         * If `pointer.last.x` is `false` (first call) the start point is
+         * initialised to the current position so no stray line is drawn.
+         */
         drawLine(pointer, size) {
             // If pointer.last.x is not set, set pointer.last.x and pointer.last.y to the current position 
             if (pointer.last.x === false) {

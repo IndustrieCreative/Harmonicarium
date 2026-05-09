@@ -76,7 +76,7 @@ browser-container to run it. As I said at this moment you should use Chrome, but
 Visit [harmonicarium.org](https://harmonicarium.org/) for the **Tutorials**.
 There is no comprehensive guide at this moment, it is currently being drafted.
 A video-guide and a step-by-step tutorial will be released as soon as possible.
-For any questions, do not hesitate to contact Walter Mantovani at armonici.it[*at*]gmail[*dot*]com.
+For any questions, do not hesitate to contact Walter G. Mantovani at armonici.it[*at*]gmail[*dot*]com.
 
 Currently (February, 2022) the **[harmonicarium.org](https://harmonicarium.org/)** site still has a basic
 documentation but you can also visit the old project site to get more information:

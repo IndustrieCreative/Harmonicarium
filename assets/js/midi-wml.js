@@ -1,58 +1,93 @@
- /**
+/**
+ * @fileoverview WebMidiLink port classes for the Harmonicarium application.
+ * This file defines the HUM.midi.WebMidiLinkIn and HUM.midi.WebMidiLinkOut
+ * classes, which implement the WebMidiLink protocol for bidirectional
+ * communication between the Harmonicarium host and external web-based
+ * synthesizer instruments opened in popup windows.
+ *
+ * @module midi-wml
+ * @memberof HUM.midi
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ *
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 "use strict";
 
-/** 
- * The WebMidiLinkIn port class.
- * Manage WebMidiLink input messages.
+/**
+ * Incoming WebMidiLink port class.
+ *
+ * @class
+ * @memberof HUM.midi
+ *
+ * @description
+ * The HUM.midi.WebMidiLinkIn class manages the WebMidiLink input side.
+ * It listens for incoming `window.message` events and routes them to the
+ * appropriate handlers:
+ * - **Link Level 0** (`midi`): Converts WebMidiLink MIDI strings into
+ *   synthetic MIDI events and forwards them to the DHC MIDI input.
+ * - **Link Level 1** (`link`): Handles handshake messages (`ready`,
+ *   `progress`, `patch`, `reqpatch`, `setpatch`) for synth-lifecycle
+ *   coordination.
+ *
+ * When Harmonicarium is embedded as a hosted synthesizer, this class also
+ * provides `sendReadyMessage()` to notify the host that it is ready.
  *
  * @see {@link https://www.g200kg.com/en/docs/webmidilink/index.html}
  */
 HUM.midi.WebMidiLinkIn = class {
     /**
-    * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
-    * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
-    */
+     * Creates a new WebMidiLinkIn instance.
+     *
+     * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
+     * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
+     *
+     * @description
+     * Initializes the WebMidiLink input port by:
+     * 1. Storing references to the parent DHC and MidiHub instances.
+     * 2. Determining the host window (via `window.opener` or `window.parent`).
+     * 3. Registering a `message` event listener on the global `window` object
+     *    to receive incoming WebMidiLink messages.
+     */
     constructor(dhc, midi) {
         /**
-        * The DHC instance.
-        *
-        * @member {HUM.DHC}
-        */
+         * The DHC instance.
+         *
+         * @member {HUM.DHC}
+         */
         this.dhc = dhc;
         /**
-        * The MidiHub instance.
-        *
-        * @member {HUM.midi.MidiHub}
-        */
+         * The MidiHub instance.
+         *
+         * @member {HUM.midi.MidiHub}
+         */
         this.midi = midi;
         /**
-        * The Window-like object of the page that opened or embedded the URL to this HUM instace.
-        *
-        * @member {Object}
-        */
+         * The Window-like object of the page that opened or embedded the URL to this HUM instance.
+         * Resolved to `window.opener` if available, otherwise `window.parent`.
+         *
+         * @member {Window}
+         */
         this.hostWindow = undefined;
         if (window.opener) {
             this.hostWindow = window.opener;
@@ -69,13 +104,29 @@ HUM.midi.WebMidiLinkIn = class {
     // ===========================
 
     /**
-     * Manage and route an incoming  message.
-     * 
-     * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent} 
-     * @see {@link https://www.g200kg.com/en/docs/webmidilink/spec.html} 
-
-     * @param {MessageEvent}    evt      - The incoming message event.
-     * @param {wmlmsg0|wmlmsg1} evt.data - A WebMidiLink Message Link 0 or 1.
+     * Manages and routes an incoming WebMidiLink `message` event.
+     *
+     * @param {MessageEvent}    evt      - The incoming window message event.
+     * @param {wmlmsg0|wmlmsg1} evt.data - A WebMidiLink Message Level 0 or Level 1 string.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Parses the comma-separated string payload of the `MessageEvent` and
+     * dispatches it by its first token:
+     * - `"midi"` (Level 0): Parses the three hex-encoded MIDI bytes, wraps
+     *   them in a synthetic MIDI event object, and forwards them to
+     *   `midi.in.midiMessageReceived()`.
+     * - `"link"` (Level 1): Identifies the originating `WebMidiLinkOut` port
+     *   by comparing `evt.source` against known synth windows, then
+     *   dispatches the sub-command (`ready`, `progress`, `patch`,
+     *   `reqpatch`, `setpatch`) to the appropriate handler or logs a warning
+     *   for unimplemented commands.
+     *
+     * Non-string payloads are silently ignored.
+     *
+     * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent}
+     * @see {@link https://www.g200kg.com/en/docs/webmidilink/spec.html}
      */
     receiveMessage(evt) {
        if (typeof evt.data === 'string') {
@@ -139,9 +190,19 @@ HUM.midi.WebMidiLinkIn = class {
         }
     }
     /**
-     * Send "ready" message to the Host WebMidiLink window.
-     * Should be called when Harmonicarium (hosted) is ready and listening.
-     * [ Synth=>Host ]
+     * Sends a `"link,ready"` message to the host WebMidiLink window.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Posts the Level 1 `"link,ready"` message to `this.hostWindow`,
+     * signalling that this Harmonicarium instance (acting as a synthesizer)
+     * has finished loading and is ready to receive MIDI data.
+     * Should be called once the application is fully initialized.
+     *
+     * Direction: **Synth → Host**
+     *
+     * @see {@link https://www.g200kg.com/en/docs/webmidilink/spec.html}
      */
     sendReadyMessage() {
         // Send message to the host web app.
@@ -149,103 +210,129 @@ HUM.midi.WebMidiLinkIn = class {
     }
 };
 
-/** 
- * The WebMidiLinkOut port class.
- * Manage WebMidiLink output messages.
+/**
+ * Outgoing WebMidiLink port class.
+ *
+ * @class
+ * @memberof HUM.midi
+ *
+ * @description
+ * The HUM.midi.WebMidiLinkOut class manages one WebMidiLink output port.
+ * Each instance represents a virtual output connection to a web-based
+ * synthesizer instrument running in a separate popup window. It handles:
+ * - Opening, loading, and closing the external synth window.
+ * - Sending MIDI messages via the WebMidiLink Level 0 protocol.
+ * - Monitoring the synth window state and updating the UI accordingly.
+ * - Populating the synth selector dropdown from the configured synth list.
+ *
+ * Multiple `WebMidiLinkOut` instances can be created to connect to
+ * multiple synth instruments simultaneously.
  *
  * @see {@link https://www.g200kg.com/en/docs/webmidilink/index.html}
  */
 HUM.midi.WebMidiLinkOut = class {
     /**
-    * @param {number}           key  - The internal number for the new virtual MIDI port (integer). It will be the
-    *                                  port number on the UI.
-    * @param {string}           id   - The ID for the new virtual MIDI port.
-    *                                  The prefix should be like `"webmidilink_out_"`, ending with the `key` number.
-    * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
-    * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
-    */
+     * Creates a new WebMidiLinkOut instance.
+     *
+     * @param {number}           key  - The internal index for this virtual MIDI port (0-based integer).
+     *                                  Displayed as `key + 1` in the UI.
+     * @param {string}           id   - The unique ID string for this virtual MIDI port.
+     *                                  Should follow the pattern `"webmidilink_out_{key}"`.
+     * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
+     * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
+     *
+     * @description
+     * Initializes the WebMidiLink output port by:
+     * 1. Setting up identification, state, and metadata properties.
+     * 2. Creating the port's UI fragment from the HTML template and appending
+     *    it to the ports container element.
+     * 3. Collecting references to all relevant DOM elements into `uiElements`.
+     * 4. Calling `_initUI()` to attach event listeners and populate the synth list.
+     */
     constructor(key, id, dhc, midi) {
         /**
-        * The DHC instance
-        *
-        * @member {HUM.DHC}
-        */
+         * The DHC instance.
+         *
+         * @member {HUM.DHC}
+         */
         this.dhc = dhc;
         /**
-        * The MidiHub instance
-        *
-        * @member {HUM.midi.MidiHub}
-        */
+         * The MidiHub instance.
+         *
+         * @member {HUM.midi.MidiHub}
+         */
         this.midi = midi;
         /**
-        * The id of this virtual MIDI port.
-        *     
-        * @member {string}
-        */
+         * The unique ID string of this virtual MIDI port.
+         *
+         * @member {string}
+         */
         this.id = id;
         /**
-        * The manufacturer of this virtual MIDI port.
-        *
-        * @member {string}
-        */
+         * The manufacturer label of this virtual MIDI port.
+         *
+         * @member {string}
+         */
         this.manufacturer = "Industrie Creative";
         /**
-        * The name of this virtual MIDI port with the `key` number.
-        *
-        * @member {string}
-        */
+         * The human-readable name of this virtual MIDI port, including the 1-based port number.
+         *
+         * @member {string}
+         */
         this.name = `WebMidiLink OUT Port (${key+1})`;
         /**
-        * The state of this virtual MIDI port.
-        *
-        * @member {string}
-        */
+         * The connection state of this virtual MIDI port.
+         * Set to `"connected"` when a synth window is open, `"disconnected"` otherwise.
+         *
+         * @member {string}
+         */
         this.state = "disconnected";
         /**
-        * The type of this virtual MIDI port.
-        *
-        * @member {string}
-        */
+         * The port type identifier. Always `"output"` for `WebMidiLinkOut`.
+         *
+         * @member {string}
+         */
         this.type = "output";
         /**
-        * The internal (and UI) number this virtual MIDI port (integer).
-        *
-        * @member {number}
-        */
+         * The 0-based internal index of this virtual MIDI port, also used as the UI port number offset.
+         *
+         * @member {number}
+         */
         this.key = key;
         /**
-        * The external ID this virtual MIDI port. It must be unique.
-        *     It should contain the DHC id and the `key`.
-        *
-        * @member {string}
-        */
+         * A globally unique key for this port, combining the DHC id and the port `key`.
+         * Used as a suffix in HTML element IDs.
+         *
+         * @member {string}
+         */
         this.uniqKey = `${dhc.id}_${key}`;
         /**
-        * The Window-like object of the page that has been opened by this HUM instace
-        * and this WebMidiLink Port.
-        *
-        * @member {Object}
-        */
+         * A reference to the popup window of the currently loaded WebMidiLink synth.
+         * Initialized with `{closed: true}` to represent a closed/absent window.
+         *
+         * @member {Window|{closed: boolean}}
+         */
         this.synthWindow = {closed: true};
         /**
-        * The current state of the "Synth" application that has been opened.
-        * `true` if the "Synth" app sent the "ready" message.
-        * (not used yet)
-        *
-        * @member {boolean}
-        */
+         * The current state of the "Synth" application that has been opened.
+         * `true` if the "Synth" app sent the "ready" message.
+         * (not used yet)
+         *
+         * @member {boolean}
+         */
         this.isReady = false;
         /**
-        * What synthlist to use.
-        * - `'adhocSynthList'`: An updated and reordered list; apps no longer reachable have been removed.
-        *   In this list there are some extra properties that indicate some useful information for re-tuning.
-        * - `'g200kgSynthList'`: The original synthlist from g200kg site
-        *   (see: {@link https://www.g200kg.com/en/docs/webmidilink/synthlist.html|SynthList - JSONP})
-        * To use the `'g200kgSynthList'`, uncomment one of the two scripts in the "./index.html" file,
-        * as explained here: {@link SynthListCallback}
-        *
-        * @member {('adhocSynthList'|'g200kgSynthList')}
-        */
+         * The synth list source to use for populating the synth selector dropdown.
+         * - `'adhocSynthList'`: A curated, reordered list with unreachable apps removed.
+         *   Includes extra properties for re-tuning guidance.
+         * - `'g200kgSynthList'`: The original synthlist from the g200kg site.
+         *   Requires uncommenting the appropriate script tag in `index.html`
+         *   as explained here: {@link SynthListCallback}
+         *
+         * @member {('adhocSynthList'|'g200kgSynthList')}
+         *
+         * @see {@link https://www.g200kg.com/en/docs/webmidilink/synthlist.html}
+         */
         this.synthList = 'adhocSynthList'; // or 'g200kgSynthList'
 
         let portsContainer = document.getElementById(`HTMLf_webMidiLinkPorts${dhc.id}`),

@@ -1,12 +1,20 @@
  /**
+ * @fileoverview PWA (Progressive Web App) lifecycle management for the Harmonicarium application.
+ * This file defines the HUM.PwaManager class which provides install, update, and
+ * reset controls for the Progressive Web App lifecycle.
+ * 
+ * @module pwa-manager
+ * @memberof HUM
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ * 
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -24,13 +32,29 @@
 
 "use strict";
 
-/** 
- * The PWA management app.
- * Some commands to manage the Progressive Web App.
+/**
+ * PWA lifecycle manager for the Harmonicarium application.
+ *
+ * @class
+ * @memberof HUM
+ *
+ * @description
+ * The HUM.PwaManager class manages the Progressive Web App lifecycle, exposing
+ * install, update, and reset commands that delegate to the global `humPWA`
+ * service-worker controller. It also checks whether the PWA feature is
+ * available and disables irrelevant UI controls accordingly.
  */
 HUM.PwaManager = class {
-     /**
-     * @param {HUM} harmonicarium - The HUM instance to which this PwaManager must refer.
+    /**
+     * Creates a new PwaManager instance bound to the given HUM instance.
+     *
+     * @param {HUM} harmonicarium - The parent HUM instance that owns this manager.
+     *
+     * @description
+     * Initializes the PwaManager by:
+     * 1. Storing the instance ID and a reference to the parent HUM instance.
+     * 2. Creating the parameter management system.
+     * 3. Performing an initial PWA availability check.
      */
     constructor(harmonicarium) {
         /**
@@ -65,7 +89,15 @@ HUM.PwaManager = class {
     }
 
     /**
-     * Try to install the app.
+     * Attempts to install the Harmonicarium app as a PWA.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Checks whether the PWA feature is available, then triggers the deferred
+     * browser install prompt. If the user accepts, the install button is hidden.
+     * If no deferred prompt is available (app already installed), an informational
+     * alert is shown and, on mobile environments, the "Open App" button is revealed.
      */
     appInstall() {
         if (this._checkHumPWA()) {
@@ -97,7 +129,13 @@ HUM.PwaManager = class {
         }
     }
     /**
-     * Try to update the app.
+     * Attempts to apply a pending service-worker update for the PWA.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Delegates to `humPWA.checkUpdates()` after verifying that the PWA
+     * feature is available via `_checkHumPWA()`.
      */
     appUpdate() {
         if (this._checkHumPWA()) {
@@ -105,7 +143,13 @@ HUM.PwaManager = class {
         }
     }
     /**
-     * Try to reset the app.
+     * Resets the PWA by unregistering the current service worker.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Delegates to `humPWA.swAppReset()` after verifying that the PWA
+     * feature is available via `_checkHumPWA()`.
      */
     appReset() {
         if (this._checkHumPWA()) {
@@ -113,7 +157,20 @@ HUM.PwaManager = class {
         }
     }
     /**
-     * Check if the PWA feature is available.
+     * Checks whether the global `humPWA` PWA controller is available.
+     *
+     * @returns {boolean} `true` if `humPWA` is a valid object, `false` otherwise.
+     *
+     * @description
+     * Inspects the global `humPWA` variable:
+     * - If it is an object, the PWA feature is considered available and the
+     *   status info text is updated accordingly.
+     * - If it is a string, it is treated as an existing error message and
+     *   displayed as-is.
+     * - If it is `undefined`, a warning is logged and `humPWA` is set to the
+     *   error message string to prevent repeated checks.
+     * - Any other type causes an error to be logged.
+     * When unavailable, all PWA action buttons are hidden via the `d-none` class.
      */
     _checkHumPWA() {
         let msg = '';
@@ -145,12 +202,22 @@ HUM.PwaManager = class {
 
 };
 
-/** 
- * Instance class-container used to create all the `HUM.Param` objects for the `HUM.PwaManager` instance.
+/**
+ * Container class for all {@link HUM.Param} objects belonging to a {@link HUM.PwaManager} instance.
+ *
+ * @class
+ * @memberof HUM.PwaManager
+ *
+ * @description
+ * Instantiates and holds the parameter that provides proxy access to the PWA
+ * management UI controls: install, update, reset, and open buttons, plus the
+ * status info text element.
  */
 HUM.PwaManager.prototype.Parameters = class {
     /**
-     * @param {HUM.PwaManager} pwaManager - The PwaManager instance in which this class is being used.
+     * Creates a Parameters instance for the given PwaManager.
+     *
+     * @param {HUM.PwaManager} pwaManager - The parent PwaManager instance.
      */
     constructor(pwaManager) {
         /**  
@@ -163,8 +230,8 @@ HUM.PwaManager.prototype.Parameters = class {
          * @property {HTMLElement} uiElements.fn.appInstall    - The HTML of the PWA install button.
          * @property {HTMLElement} uiElements.fn.appUpdate     - The HTML of the PWA update button.
          * @property {HTMLElement} uiElements.fn.appReset      - The HTML of the PWA reset button.
-         * @property {HTMLElement} uiElements.fn.appOpen       - The HTML of the PWA open button.
-         * @property {HTMLElement} uiElements.fn.appUpdateInfo - The HTML of the PWA info text box.
+         * @property {HTMLElement} uiElements.fn.appOpen        - The HTML of the PWA open button.
+         * @property {HTMLElement} uiElements.out.appUpdateInfo - The HTML of the PWA status info text box.
          */
         this.appManager = new HUM.Param({
             app:pwaManager,

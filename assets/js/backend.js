@@ -1,36 +1,64 @@
  /**
+ * @fileoverview Backend utilities and UI management for the Harmonicarium application.
+ * This file defines the HUM.BackendUtils class which provides a toolset for
+ * managing backend UI components including side panels, log panels, and modal
+ * dialogs.
+ *
+ * @module backend
+ * @memberof HUM
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ *
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 "use strict";
 
-/** 
- * The BackendUtils class.<br>
- *    A toolset to manage the backend UI.
+/**
+ * Backend utilities and UI management class for the Harmonicarium application.
+ *
+ * @class
+ * @memberof HUM
+ *
+ * @description
+ * The HUM.BackendUtils class provides a general-purpose toolset for managing
+ * backend UI components. It handles:
+ * - Side panel visibility and layout transitions
+ * - Log panel toggling and event logging
+ * - Modal dialog creation and lifecycle management
+ * - File error handling for FileReader operations
+ * - Debug utilities for inspecting DHC tone tables
  */
 HUM.BackendUtils = class {
-     /**
-     * @param {HUM} harmonicarium - The HUM instance to which this DHC must refer.
+    /**
+     * Creates a new BackendUtils instance bound to the given HUM instance.
+     *
+     * @param {HUM} harmonicarium - The parent HUM instance that owns this backend utilities manager.
+     *
+     * @description
+     * Initializes the backend utilities system by:
+     * - Storing a reference to the parent HUM instance and its ID
+     * - Assigning the component name for database parameter grouping
+     * - Instantiating the parameter management system
      */
     constructor(harmonicarium) {
         /**
@@ -65,9 +93,16 @@ HUM.BackendUtils = class {
     // ===========================
 
     /**
-     * Write into the HTML Log element the infos passed via the argument.
+     * Appends a timestamped entry to the HTML log panel.
      *
      * @param {string} str - Text string describing the event to log.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Prepends a new `<p>` element containing the current time (HH:MM:SS) and
+     * the provided message to the log panel's innerHTML, then scrolls the
+     * container to show the latest entry.
      */
     eventLog(str) {
         let time = new Date();
@@ -83,7 +118,14 @@ HUM.BackendUtils = class {
     }
 
     /**
-     * Toggle the visibility of the Log panel.
+     * Toggles the visibility of the log panel between open and closed states.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Checks the current CSS state of the log close button to determine
+     * whether the log panel is open or closed, then sets the `logPanel`
+     * parameter value accordingly.
      */
     toggleLogPanel() {
         let logCloseBtn = this.parameters.logPanel.uiElements.fn.logCloseBtn;
@@ -97,9 +139,16 @@ HUM.BackendUtils = class {
     }
 
     /**
-     * Toggle the visibility of the Side panel.
-     *     - For displays smaller than 768px in width, the toggle acts as "full" and "closed" alternatively.
-     *     - For displays larger than 768px in width, the toggle acts as "half" and "closed" alternatively.
+     * Toggles the visibility of the side panel between shown and hidden states.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Determines the current side panel state and toggles it:
+     * - For viewports smaller than 768 px in width, the panel alternates between
+     *   `"full"` (covers the entire screen) and `"closed"`.
+     * - For viewports bigger than 768 px in width, the panel alternates between
+     *   `"half"` (occupies half the screen) and `"closed"`.
      */
     toggleSidebar() {
         let sidePanel = this.parameters.sidePanel.uiElements.out.sidePanel;
@@ -115,10 +164,19 @@ HUM.BackendUtils = class {
     }
 
     /**
-     * Handle errors generated by `FileReader` when loading a file.<br>
-     * It is meant to be assigned to `FileReader.onerror` handler.
+     * Handles errors generated by `FileReader` when loading a file.
      *
-     * @param {Event} errorEvent - The error event.
+     * @param {ProgressEvent} errorEvent - The error event fired by the `FileReader`.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Inspects `errorEvent.target.error.code` and dispatches the appropriate
+     * user-facing alert or console message for the following error conditions:
+     * file not found, file not readable, operation aborted, and any other
+     * unexpected error.
+     *
+     * Intended to be assigned directly to `FileReader.onerror` handler.
      */
     fileErrorHandler(errorEvent) {
         switch (errorEvent.target.error.code) {
@@ -137,7 +195,15 @@ HUM.BackendUtils = class {
     }
 
     /**
-     * Print the DHC tone tables into the console for test/debug purposes.
+     * Prints all DHC tone tables to the browser console for test/debug purposes.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Iterates over all available DHC instances and logs their internal
+     * tables — `ctrl`, `ft`, `ht`, `reverse.ft`, and `reverse.ht` — as
+     * collapsed console groups using `console.table()`. Also appends a
+     * notification entry to the event log panel.
      */
     tester() {
         this.eventLog("TEST: Full tables printed out. Look at the console of your browser.");
@@ -162,9 +228,17 @@ HUM.BackendUtils = class {
     }
 
     /**
-     * Static tool-method for emptying an HTML element of all its child nodes.
+     * Removes all child nodes from the given HTML element.
      *
-     * @param {HTMLElement} htmlElem - The HTML element to be emptied.
+     * @static
+     *
+     * @param {HTMLElement} htmlElem - The HTML element to empty.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Iteratively removes `firstChild` nodes until none remain, effectively
+     * clearing the element's content without replacing its `innerHTML`.
      */
     static emptyHTMLElement(htmlElem) {
         while (htmlElem.firstChild) {
@@ -173,12 +247,32 @@ HUM.BackendUtils = class {
     }
 };
 
-/** 
- * Instance class-container used to create all the `HUM.Param` objects for the `HUM.BackendUtils` instance.
+/**
+ * Container class for all {@link HUM.Param} objects belonging to a {@link HUM.BackendUtils} instance.
+ *
+ * @class
+ * @memberof HUM.BackendUtils
+ *
+ * @description
+ * Instantiates and holds the parameters that control the backend UI components:
+ * side panel visibility (`sidePanel`), log panel visibility (`logPanel`),
+ * log text display (`logText`), side navigation behavior (`sideNav`),
+ * side menu proxy (`sideMenu`), and modal dialog management (`dialogModal`).
  */
 HUM.BackendUtils.prototype.Parameters = class {
     /**
-     * @param {HUM.BackendUtils} backendUtils - The BackendUtils instance in which this class is being used.
+     * Creates a new Parameters instance for the given BackendUtils controller.
+     *
+     * @param {HUM.BackendUtils} backendUtils - The BackendUtils instance that owns this parameter set.
+     *
+     * @description
+     * Instantiates all {@link HUM.Param} objects for the backend UI:
+     * - `sidePanel`: Controls side panel visibility with `"closed"`, `"half"`, and `"full"` states.
+     * - `logPanel`: Controls log panel visibility with `"closed"` and `"open"` states.
+     * - `logText`: Proxy for the log textbox DOM element.
+     * - `sideNav`: Registers the Bootstrap tab event listener for the side navigation.
+     * - `sideMenu`: Proxy for the side menu and its sub-page DOM elements.
+     * - `dialogModal`: Tool for creating and controlling Bootstrap modal dialogs.
      */
     constructor(backendUtils) {
         /**  
@@ -574,7 +668,14 @@ HUM.BackendUtils.prototype.Parameters = class {
 
     }
     /**
-     * Initializes the parameters of side panel, log panel, and dialog modal.
+     * Initializes the parameters that require deferred setup.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Calls `_init()` on the `sidePanel`, `logPanel`, and `dialogModal`
+     * parameters to register their event listeners and complete their
+     * Bootstrap widget setup.
      */
     _init() {
         this.sidePanel._init();

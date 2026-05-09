@@ -1,12 +1,21 @@
- /**
+/**
+ * @fileoverview HTML template generation system for Harmonicarium UI components.
+ * This file contains template functions that generate HTML elements for the
+ * application's user interface, including SVG icons, modal dialogs, accordions,
+ * and component-specific UI layouts.
+ * 
+ * @module templates
+ * @memberof HUM
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ * 
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -25,20 +34,48 @@
 "use strict";
 
 /**
- * Namespace for all the functions those return a rendered HTML template.
+ * Template generation namespace containing functions that create HTML elements.
+ * 
  * @namespace HUM.tmpl
+ * 
+ * @description
+ * The HUM.tmpl namespace provides a comprehensive set of template factory
+ * functions for generating HTML elements used throughout the Harmonicarium
+ * application. Each function creates and returns DOM elements configured for
+ * specific UI components.
+ * 
+ * **Template Categories:**
+ * - **Icons**: SVG icon sets and individual icons
+ * - **Containers**: Main application containers and panels
+ * - **Accordions**: Collapsible UI sections for component organization
+ * - **Modals**: Dialog boxes for user interactions
+ * - **Component UI**: Specific layouts for DHC, synthesizer, MIDI, etc.
+ * - **Form Elements**: Input controls and interaction elements
+ * 
+ * **Design Principles:**
+ * - All templates use Bootstrap CSS framework classes
+ * - Elements are created with appropriate IDs for parameter binding
+ * - Responsive design considerations are built into layouts
+ * - Accessibility attributes are included where appropriate
  */
 HUM.tmpl = {
     /**
-     * Get the full SVG iconset.
-     *
-     * @param {number} humID - The HUM instance ID.
+     * Creates the complete SVG icon set for the application interface.
      * 
-     * @returns {HTMLElement} - A `<svg>` element.
+     * @param {number} humID - The HUM instance ID.
+     * @returns {SVGElement} SVG element containing all application icons.
+     * 
+     * @description
+     * This function generates a hidden SVG element containing all the icons
+     * used throughout the Harmonicarium interface. The SVG uses symbol definitions
+     * that can be referenced via `<use>` elements elsewhere in a HUM instance.
+     * 
+     * The SVG element is created with a unique ID and hidden from display
+     * (display: none) as it serves as an icon palette-library for the application.
      */
-    dpIcons(id) {
+    dpIcons(humID) {
         let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttributeNS('http://www.w3.org/2000/svg', 'id', `HTMLf_dpToolbarIcons${id}`);
+        svg.setAttributeNS('http://www.w3.org/2000/svg', 'id', `HTMLf_dpToolbarIcons${humID}`);
         svg.style.display = 'none';
 
         let icons = {
@@ -181,7 +218,7 @@ HUM.tmpl = {
             let symbol = document.createElementNS('http://www.w3.org/2000/svg', 'symbol'),
                 path = document.createElementNS('http://www.w3.org/2000/svg', 'path'),
                 boundingRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            symbol.setAttributeNS(null, 'id', `dpIcon-${name}${id}`);
+            symbol.setAttributeNS(null, 'id', `dpIcon-${name}${humID}`);
             symbol.setAttributeNS(null, 'viewBox', icons[name].viewBox);
             boundingRect.setAttributeNS(null, 'width', '100%');
             boundingRect.setAttributeNS(null, 'height', '100%');
@@ -197,21 +234,27 @@ HUM.tmpl = {
     },
 
     /**
-     * Use a SVG icon.
-     *
-     * @param {number} iconName - Icon name.
-     * @param {number} humID    - The HUM instance ID.
-     * @param {number} svg      - The `<svg>` HTML element.
-     * @param {number} x        - The horizontal position.
-     * @param {number} y        - The vertical position.
+     * Creates a SVG use element for referencing an icon from the icon set.
      * 
-     * @returns {HTMLElement} - A `<use>` element.
+     * @memberof HUM.tmpl
+     * @param {string}        iconName - The name of the icon to use (must match an icon in the dpIcons set).
+     * @param {number}        humID    - The HUM instance ID.
+     * @param {SVGElement}    svg      - The SVG element to append the use element to.
+     * @param {number|string} x        - The horizontal position of the icon.
+     * @param {number|string} y        - The vertical position of the icon.
+     * 
+     * @returns {SVGUseElement} The created SVG use element with icon reference and styling.
+     * 
+     * @description
+     * This function creates a SVG <use> element that references an icon from the icon
+     * definitions created by dpIcons(). The use element allows for efficient reuse
+     * of icon graphics throughout the application.
      */
-    useIcon(iconName, id, svg, x, y) {
+    useIcon(iconName, humID, svg, x, y) {
         let use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
         svg.appendChild(use);
 
-        use.setAttributeNS(null, 'href', `#dpIcon-${iconName}${id}`);
+        use.setAttributeNS(null, 'href', `#dpIcon-${iconName}${humID}`);
         use.setAttributeNS(null, 'x', x);
         use.setAttributeNS(null, 'y', y);
         use.setAttributeNS(null, 'fill', '#c5c5c5');
@@ -222,97 +265,132 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the main App container for one Harmonicarium.
-     *
+     * Creates the main application container for a Harmonicarium instance.
+     * 
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} The main application container div element.
+     * 
+     * @description
+     * This function creates the primary container element that will hold the entire
+     * Harmonicarium application interface for a specific instance. The container
+     * provides the root element for all UI components and features.
      */
-    appContainer(id) {
+    appContainer(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div id="harmonicarium${id}">
+            <div id="harmonicarium${humID}">
 
             </div>`;
         return template.firstElementChild;
     },
 
     /**
-     * Get the main DiphonicPad container, one per Harmonicarium.
-     *
+     * Creates the main DiphonicPad container for a Harmonicarium instance.
+     * 
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} The DiphonicPad container div element.
+     * 
+     * @description
+     * This function creates the container element that will hold the DiphonicPad
+     * component, which is the main interactive musical interface of the Harmonicarium.
+     * Each instance gets its own unique container with proper ID attribution.
      */
-    dpPadContainer(id) {
+    dpPadContainer(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div id="HTMLf_dpPad${id}" class="hum-dppad-container">
+            <div id="HTMLf_dpPad${humID}" class="hum-dppad-container">
 
             </div>`;
         return template.firstElementChild;
     },
 
     /**
-     * Get the Log text box container, one per Harmonicarium.
-     *
+     * Creates the events log text box overlay panel for a Harmonicarium instance.
+     * 
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} The log panel overlay div element with complete UI structure.
+     * 
+     * @description
+     * This function creates a full-featured log panel overlay that displays system events,
+     * MIDI messages, and debug information.
      */
-    logTextBox(id) {
+    logTextBox(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div id="HTMLo_logPanel${id}" class="panelOverlay bottomPanel text-bg-dark" style="--bs-bg-opacity: .9;">
-                <!-- <div id="HTMLf_logCloseBtn${id}" class="panelBtnContainer">
+            <div id="HTMLo_logPanel${humID}" class="panelOverlay bottomPanel text-bg-dark" style="--bs-bg-opacity: .9;">
+                <!-- <div id="HTMLf_logCloseBtn${humID}" class="panelBtnContainer">
                     <div class="panelBtnBar1"></div>
                     <div class="panelBtnBar2"></div>
                     <div class="panelBtnBar3"></div>
                 </div> -->
-                <button id="HTMLf_logCloseBtn${id}" type="button" class="panelBtnContainer btn-close btn-close-white hum-circle-x mt-auto" aria-label="Close"></button>
+                <button id="HTMLf_logCloseBtn${humID}" type="button" class="panelBtnContainer btn-close btn-close-white hum-circle-x mt-auto" aria-label="Close"></button>
                 <div class="panelOverlay_content h-100 logText">
                     <h3>Events Log</h3>
 
-                    <button type="button" id="HTMLf_logTestBtn${id}" class="btn btn-secondary" style="margin-bottom: 10px; position: absolute; right: 20px; top: 80px;">TEST</button>
-                    <div class="logText h-100 overflow-scroll" id="HTMLo_logText${id}"></div>
+                    <button type="button" id="HTMLf_logTestBtn${humID}" class="btn btn-secondary" style="margin-bottom: 10px; position: absolute; right: 20px; top: 80px;">TEST</button>
+                    <div class="logText h-100 overflow-scroll" id="HTMLo_logText${humID}"></div>
                 </div>
             </div>`;
         return template.firstElementChild;
     },
 
     /**
-     * Get the Side Panel box container, one per Harmonicarium.
-     *
+     * Creates the side panel overlay container for a Harmonicarium instance.
+     * 
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} The side panel overlay div element with Bootstrap flex layout.
+     * 
+     * @description
+     * This function creates the main side panel container that slides in from the right
+     * side of the screen. The panel serves as a container for various application
+     * controls, settings, and information panels. It uses Bootstrap classes for
+     * responsive layout and positioning.
      */
-    sidePanel(id) {
+    sidePanel(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div id="HTMLo_sidePanel${id}" class="panelOverlay rightPanel container-fluid p-0 d-flex flex-column">
+            <div id="HTMLo_sidePanel${humID}" class="panelOverlay rightPanel container-fluid p-0 d-flex flex-column">
 
             </div>`;
         return template.firstElementChild;
     },
 
     /**
-     * Get the Side Panel Top Logo box container, one per Harmonicarium.
-     * Ti contains also the Top Navigation menu items.
-     *
+     * Creates the side panel header with logo and navigation for a Harmonicarium instance.
+     * 
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} The logo box div element with complete header structure.
+     * 
+     * @description
+     * This function creates the top section of the side panel containing:
+     * - Panel control buttons (close, half-screen, full-screen)
+     * - The Harmonicarium logo
+     * - Main navigation tabs (Settings, Info dropdown)
+     * - Responsive Bootstrap layout for different screen sizes
+     * 
+     * The navigation includes:
+     * - Settings tab for application configuration
+     * - Info dropdown with Help, Credits, App info, and source code link
      */
-    logoBox(id) {
+    logoBox(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="row m-0" id="HTML_logo${id}">
+            <div class="row m-0" id="HTML_logo${humID}">
                 <div class="sidePanelBtn col-auto h-100">
                     <div class="vstack gap-1 h-100">
-                        <button id="HTMLf_sideCloseBtn${id}" type="button" class="btn-close btn-close-white hum-circle-x mt-auto" aria-label="Close"></button>
-                        <button id="HTMLf_sideHalfBtn${id}" type="button" class="btn-close btn-close-white hum-arrow-bar-right mb-auto" aria-label="Half screen"></button>
-                        <button id="HTMLf_sideFullBtn${id}" type="button" class="btn-close btn-close-white hum-arrow-bar-left mb-auto" aria-label="Full screen"></button>
+                        <button id="HTMLf_sideCloseBtn${humID}" type="button" class="btn-close btn-close-white hum-circle-x mt-auto" aria-label="Close"></button>
+                        <button id="HTMLf_sideHalfBtn${humID}" type="button" class="btn-close btn-close-white hum-arrow-bar-right mb-auto" aria-label="Half screen"></button>
+                        <button id="HTMLf_sideFullBtn${humID}" type="button" class="btn-close btn-close-white hum-arrow-bar-left mb-auto" aria-label="Full screen"></button>
                     </div>
                 </div>
                 <div class="col px-1 px-sm-3">
@@ -320,22 +398,22 @@ HUM.tmpl = {
                         <img src="assets/img/logo.png" alt="The Harmonicarium logo">
                     </div>
                     <div class="row">
-                          <ul class="nav nav-pills nav-fill flex-column flex-sm-row" role="tablist" id="HTMLo_sideNav${id}">
+                          <ul class="nav nav-pills nav-fill flex-column flex-sm-row" role="tablist" id="HTMLo_sideNav${humID}">
                             <li class="nav-item border border-secondary rounded mx-1 mb-1">
-                              <a class="nav-link hum-nav-link active px-1 p-sm-2" data-bs-toggle="tab" href="#HTMLo_settingsObj${id}">SETTINGS</a>
+                              <a class="nav-link hum-nav-link active px-1 p-sm-2" data-bs-toggle="tab" href="#HTMLo_settingsObj${humID}">SETTINGS</a>
                             </li>
                             <li class="nav-item dropdown border border-secondary rounded mx-1 mb-1">
                                 <a class="nav-link dropdown-toggle hum-nav-link px-1 p-sm-2" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Info</a>
                                 <ul class="dropdown-menu dropdown-menu-dark w-100">
                                     <li class="nav-item">
-                                      <a class="dropdown-item py-2" data-bs-toggle="tab" href="#HTMLo_helpObj${id}">Help</a>
+                                      <a class="dropdown-item py-2" data-bs-toggle="tab" href="#HTMLo_helpObj${humID}">Help</a>
                                     </li>
                                     <li class="nav-item">
-                                      <a class="dropdown-item py-2" data-bs-toggle="tab" href="#HTMLo_creditsObj${id}">Credits</a>
+                                      <a class="dropdown-item py-2" data-bs-toggle="tab" href="#HTMLo_creditsObj${humID}">Credits</a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li class="nav-item">
-                                      <a class="dropdown-item py-2" data-bs-toggle="tab" href="#HTMLo_appObj${id}">App</a>
+                                      <a class="dropdown-item py-2" data-bs-toggle="tab" href="#HTMLo_appObj${humID}">App</a>
                                     </li>
                                     <li class="nav-item">
                                       <a class="dropdown-item py-2 bi bi-box-arrow-up-right" href="https://github.com/IndustrieCreative/Harmonicarium" target="_blank" rel="noopener noreferrer">Source code</a>
@@ -350,20 +428,34 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the Side Panel Menu Contents container, one per Harmonicarium.
-     *
+     * Creates the side panel menu content container with all tab panels for a Harmonicarium instance.
+     * 
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} The side menu div element with all tab content panels.
+     * 
+     * @description
+     * This function creates the main content area of the side panel containing multiple
+     * tab panels with scrollable content:
+     * 
+     * - **Settings Panel**: Application configuration and controls (HTMLo_settingsObj)
+     * - **Help Panel**: User guide with overview, keymaps, and fundamental tones information
+     * - **Credits Panel**: Acknowledgments and attribution information
+     * - **App Panel**: Application information and metadata
+     * 
+     * Each panel is implemented as a Bootstrap tab pane with appropriate styling
+     * and responsive behavior. The content includes detailed help text, links to
+     * external resources, and comprehensive application documentation.
      */
-    sideMenu(id) {
+    sideMenu(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div id="HTML_side_menu${id}" class="tab-content overflow-scroll">
+            <div id="HTML_side_menu${humID}" class="tab-content overflow-scroll">
                 
-                <div id="HTMLo_settingsObj${id}" class="hum-settings tab-pane fade show active"></div>
+                <div id="HTMLo_settingsObj${humID}" class="hum-settings tab-pane fade show active"></div>
                 
-                <div id="HTMLo_helpObj${id}" class="hum-help tab-pane fade">
+                <div id="HTMLo_helpObj${humID}" class="hum-help tab-pane fade">
                     <div class="container p-0 mt-3">
                         <h1>Short Help</h1>
                         <h2>This program currently under development.</h2>
@@ -389,7 +481,7 @@ HUM.tmpl = {
                     </div>
                 </div>
                 
-                <div id="HTMLo_creditsObj${id}" class="hum-credits tab-pane fade">
+                <div id="HTMLo_creditsObj${humID}" class="hum-credits tab-pane fade">
                     <div class="container p-0 mt-3">
                         <img src="assets/img/agpl.png">
                         <h1>Credits</h1>
@@ -439,23 +531,23 @@ HUM.tmpl = {
                     </div>
                 </div>
 
-                <div id="HTMLo_appObj${id}" class="appBox tab-pane fade">
+                <div id="HTMLo_appObj${humID}" class="appBox tab-pane fade">
                     <div class="container text-center mt-3 px-xl-5">
                         <p class="text-light mb-0">Under Chrome this App can be installed as a <a class="link-warning" href="https://en.wikipedia.org/wiki/Progressive_web_app" target="_blank" rel="noopener noreferrer">Progressive Web App (PWA)</a> for having a cleaner interface and using it offline.</p>
                     </div>
                     <div class="vstack gap-4 col-xl-6 mx-auto mt-2 mb-4">
-                        <button type="button" id="HTMLf_appInstall${id}" class="btn btn-success mx-3">Install this app</button>
-                        <a role="button" id="HTMLf_appOpen${id}" class="btn btn-info"
+                        <button type="button" id="HTMLf_appInstall${humID}" class="btn btn-success mx-3">Install this app</button>
+                        <a role="button" id="HTMLf_appOpen${humID}" class="btn btn-info"
                            href="${window.location.href}" target="_blank">Try to open the App</a>
                         <div class="opacity-75 alert alert-dark text-dark mx-3 logText" role="alert">
                             <h6 class="alert-heading">PWA status:</h6>
-                            <div id="HTMLo_appUpdateInfo${id}" style="font-size: 0.8em;"></div>
+                            <div id="HTMLo_appUpdateInfo${humID}" style="font-size: 0.8em;"></div>
                         </div>
                         <img src="assets/img/pwa_logo_inverse.png" alt="PWA logo" class="w-50 mx-auto">
-                        <button type="button" id="HTMLf_appUpdate${id}" class="btn btn-outline-warning mx-3">
+                        <button type="button" id="HTMLf_appUpdate${humID}" class="btn btn-outline-warning mx-3">
                             Update the App
                         </button>
-                        <button type="button"id="HTMLf_appReset${id}" class="btn btn-outline-danger mx-3">
+                        <button type="button"id="HTMLf_appReset${humID}" class="btn btn-outline-danger mx-3">
                             Reset the Cache &amp; Update the App
                         </button>
                     
@@ -467,7 +559,7 @@ HUM.tmpl = {
                             <p class="card-text">The operation cannot be undone.</p>
                             <p class="card-text">Make sure you BACKUP the presets before proceeding!</p>
                           
-                            <button type="button"id="HTMLf_user_resetDB_openBtn${id}" class="btn btn-danger w-100">
+                            <button type="button"id="HTMLf_user_resetDB_openBtn${humID}" class="btn btn-danger w-100">
                                 FACTORY RESET...
                             </button>
 
@@ -483,18 +575,29 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the User Accordion container, one per Harmonicarium.
-     *
+     * Creates the user settings accordion container for a Harmonicarium instance.
+     * 
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} The user accordion container div element with Bootstrap accordion structure.
+     * 
+     * @description
+     * This function creates the container for the user settings accordion which will hold
+     * various user-related configuration panels such as:
+     * - Preset management
+     * - User preferences
+     * - Database operations
+     * - Application settings
+     * 
+     * The accordion uses Bootstrap's accordion component for collapsible content sections.
      */
-    userAccordion(id) {
+    userAccordion(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="userSideContainer" id="HTMLf_user_container${id}">
+            <div class="userSideContainer" id="HTMLf_user_container${humID}">
 
-                <div class="accordion" id="HTMLf_accordion_user${id}">
+                <div class="accordion" id="HTMLf_accordion_user${humID}">
 
                 </div>
 
@@ -503,18 +606,29 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the DiphonicPad Accordion container, one per Harmonicarium.
-     *
+     * Creates the DiphonicPad settings accordion container for a Harmonicarium instance.
+     * 
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} The DiphonicPad accordion container div element with Bootstrap accordion structure.
+     * 
+     * @description
+     * This function creates the container for the DiphonicPad settings accordion which will hold
+     * various pad-related configuration panels such as:
+     * - Pad layout and appearance settings
+     * - Touch/mouse interaction preferences
+     * - Visual feedback options
+     * - Pad-specific MIDI configurations
+     * 
+     * The accordion uses Bootstrap's accordion component for collapsible content sections.
      */
-    dpPadAccordion(id) {
+    dpPadAccordion(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="dpPadSideContainer" id="HTMLf_dppad_container${id}">
+            <div class="dpPadSideContainer" id="HTMLf_dppad_container${humID}">
 
-                <div class="accordion" id="HTMLf_accordion_dppad${id}">
+                <div class="accordion" id="HTMLf_accordion_dppad${humID}">
 
                 </div>
 
@@ -523,18 +637,25 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the DHC Accordion container, one per DHC.
-     *
-     * @param {number} id - The DHC instance ID.
+     * Creates the DHC (Dynamic Harmonic Compression) settings accordion container for a DHC instance.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @memberof HUM.tmpl
+     * @param {number|string} dhcID - The DHC instance ID.
+     * 
+     * @returns {HTMLDivElement} The DHC accordion container div element with Bootstrap accordion structure.
+     * 
+     * @description
+     * This function creates the container for the DHC settings accordion which will hold
+     * various dynamic harmonic compression related configuration panels.
+     * The accordion uses Bootstrap's accordion component for collapsible content sections.
+     * DHC instances are separate from HUM instances and have their own configuration.
      */
-    dhcAccordion(id) {
+    dhcAccordion(dhcID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="dhcSideContainer" id="HTMLf_dhc_container${id}">
+            <div class="dhcSideContainer" id="HTMLf_dhc_container${dhcID}">
 
-                <div class="accordion" id="HTMLf_accordion_dhc${id}">
+                <div class="accordion" id="HTMLf_accordion_dhc${dhcID}">
 
                 </div>
 
@@ -543,13 +664,20 @@ HUM.tmpl = {
     },
 
     /**
-     * Get an Accordion Item container.
-     *
-     * @param {number} id     - The HUM or DHC instance ID.
-     * @param {number} idName - The app name.
-     * @param {number} title  - The title of the Accordion Item Tab.
+     * Creates a Bootstrap accordion tab item with icon and collapsible content area.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @memberof HUM.tmpl
+     * @param {number|string} id - The HUM or DHC instance ID.
+     * @param {string} idName - The app component name.
+     * @param {string} title - The title text to display in the accordion tab header.
+     * @param {string} iconName - The name of the icon to display in the accordion tab header.
+     * @param {number|boolean} [humID=false] - Optional HUM instance ID for icon reference, defaults to `id`.
+     * 
+     * @returns {HTMLDivElement} The accordion item div element with complete Bootstrap accordion structure.
+     * 
+     * @description
+     * This function creates a reusable accordion tab component.
+     * The accordion tab follows Bootstrap 5 accordion patterns with custom Harmonicarium styling.
      */
     accordionTab(id, idName, title, iconName, humID=false) {
         let template = document.createElement('div');
@@ -579,37 +707,44 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the User Preset Management controls for modal, one per Harmonicarium.
-     *
+     * Creates the user preset management controls interface for modal dialogs.
+     * 
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} The preset management controls div element with complete form interface.
+     * 
+     * @description
+     * This function creates a comprehensive preset management interface.
+     * The interface supports both rename and delete operations on user presets,
+     * with built-in protection against modifying system presets like "Default" 
+     * and "Auto-save".
      */
-    userManagePresets(id) {
+    userManagePresets(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-        <div id="HTMLo_user_managePreset_controls${id}">
+        <div id="HTMLo_user_managePreset_controls${humID}">
             <div class="position-relative">
-                <label for="HTMLi_user_managePreset_select${id}" class="form-label">Stored presets</label>
-                <select id="HTMLi_user_managePreset_select${id}" class="form-select" title="Choose a template" aria-label="Select the preset" required></select>
-                <div id="HTMLo_user_managePreset_SelectValidation${id}" class="invalid-feedback">
+                <label for="HTMLi_user_managePreset_select${humID}" class="form-label">Stored presets</label>
+                <select id="HTMLi_user_managePreset_select${humID}" class="form-select" title="Choose a template" aria-label="Select the preset" required></select>
+                <div id="HTMLo_user_managePreset_SelectValidation${humID}" class="invalid-feedback">
                     *You cannot perform the operation on the "Default" or "Auto-save" presets.
                 </div>
             </div>
-            <div id="HTMLo_user_managePreset_rename${id}" class="position-relative mt-3 d-none">
-                <label for="HTMLi_user_managePreset_newName${id}" class="form-label">New name</label>
-                <input id="HTMLi_user_managePreset_newName${id}" type="text" class="form-control" placeholder="Input the preset's new name" aria-label="Inputbox to type the name of the new preset." required>
-                <div id="HTMLo_user_managePreset_newNameValidation${id}" class="invalid-feedback">
+            <div id="HTMLo_user_managePreset_rename${humID}" class="position-relative mt-3 d-none">
+                <label for="HTMLi_user_managePreset_newName${humID}" class="form-label">New name</label>
+                <input id="HTMLi_user_managePreset_newName${humID}" type="text" class="form-control" placeholder="Input the preset's new name" aria-label="Inputbox to type the name of the new preset." required>
+                <div id="HTMLo_user_managePreset_newNameValidation${humID}" class="invalid-feedback">
                     *Please choose a unique and valid name.
                 </div>
             </div>
-            <button id="HTMLi_user_managePreset_actionBtn${id}" class="btn btn-outline-secondary mt-3 d-none" placeholder="Click to save the new preset" type="button">Perform action</button>
-            <div id="HTMLo_user_managePreset_toast${id}" class="toast hum-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position:fixed; bottom:10px; left:10px;">
+            <button id="HTMLi_user_managePreset_actionBtn${humID}" class="btn btn-outline-secondary mt-3 d-none" placeholder="Click to save the new preset" type="button">Perform action</button>
+            <div id="HTMLo_user_managePreset_toast${humID}" class="toast hum-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position:fixed; bottom:10px; left:10px;">
                 <div class="toast-header bg-success bg-gradient text-light">
                     <strong class="me-auto">Action result</strong>
                     <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
                 </div>
-                <div id="HTMLo_user_managePreset_toastMsg${id}" class="toast-body">
+                <div id="HTMLo_user_managePreset_toastMsg${humID}" class="toast-body">
                     Action performed...
                 </div>
             </div>
@@ -619,26 +754,30 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the User DB Reset controls for modal, one per Harmonicarium.
-     *
+     * Creates the database reset confirmation controls interface for modal dialogs.
+     * 
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} The database reset controls div element with confirmation interface.
+     * 
+     * @description
+     * This function creates a critical database reset interface.
      */
-    userResetDB(id) {
+    userResetDB(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-        <div id="HTMLo_user_resetDB_controls${id}" class="text-center">
+        <div id="HTMLo_user_resetDB_controls${humID}" class="text-center">
             <div class="mb-2">Are you really sure?</div>
-            <button id="HTMLi_user_resetDB_confirmBtn${id}" class="btn btn-outline-danger my-3" placeholder="Click to delete the database" type="button">
+            <button id="HTMLi_user_resetDB_confirmBtn${humID}" class="btn btn-outline-danger my-3" placeholder="Click to delete the database" type="button">
                 OK, RESET THE DB
             </button>
-            <div id="HTMLo_user_resetDB_toast${id}" class="toast hum-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position:fixed; bottom:10px; left:10px;">
+            <div id="HTMLo_user_resetDB_toast${humID}" class="toast hum-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position:fixed; bottom:10px; left:10px;">
                 <div class="toast-header bg-success bg-gradient text-light">
                     <strong class="me-auto">Action result</strong>
                     <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
                 </div>
-                <div id="HTMLo_user_resetDB_toastMsg${id}" class="toast-body">
+                <div id="HTMLo_user_resetDB_toastMsg${humID}" class="toast-body">
                     Action performed?
                 </div>
             </div>
@@ -651,16 +790,20 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the User controls container, one per Harmonicarium.
-     *
+     * Creates the comprehensive User settings' controls container with the preset management functionality.
+     * 
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} The User controls container div element with complete preset management interface.
+     * 
+     * @description
+     * This function creates a full-featured User control panel.
      */
-    userBox(id) {
+    userBox(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div id="HTML_user${id}">
+            <div id="HTML_user${humID}">
                 
                 <div class="list-group">
 
@@ -672,11 +815,11 @@ HUM.tmpl = {
                             </div>
                             <div class="col-auto">
                                 <div class="input-group">
-                                    <select id="HTMLi_user_preset_select${id}" class="form-select" aria-label="Select the preset">
+                                    <select id="HTMLi_user_preset_select${humID}" class="form-select" aria-label="Select the preset">
                                     </select>
-                                    <button id="HTMLi_user_preset_loadBtn${id}" class="btn btn-outline-secondary" aria-label="Click to load the selected preset" type="button">
+                                    <button id="HTMLi_user_preset_loadBtn${humID}" class="btn btn-outline-secondary" aria-label="Click to load the selected preset" type="button">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
-                                            <use fill-rule="evenodd" href="#dpIcon-load${id}"/>
+                                            <use fill-rule="evenodd" href="#dpIcon-load${humID}"/>
                                         </svg>
                                         Load
                                     </button>
@@ -685,7 +828,7 @@ HUM.tmpl = {
                         </div>
                     </div>
 
-                    <div class="list-group-item" id="HTMLo_user_preset_new${id}">
+                    <div class="list-group-item" id="HTMLo_user_preset_new${humID}">
                         <div class="row align-items-center">
                             <div class="col col-12 col-xl">
                                 <strong class="mb-2">Save new</strong>
@@ -693,23 +836,23 @@ HUM.tmpl = {
                             </div>
                             <div class="col">
                                 <div class="input-group has-validation">
-                                    <input id="HTMLi_user_preset_newName${id}" type="text" class="form-control" placeholder="Input the new preset's name" aria-label="Inputbox to type the name of the new preset.">
-                                    <button id="HTMLi_user_preset_saveBtn${id}" class="btn btn-outline-secondary" placeholder="Click to save the new preset" type="button">
+                                    <input id="HTMLi_user_preset_newName${humID}" type="text" class="form-control" placeholder="Input the new preset's name" aria-label="Inputbox to type the name of the new preset.">
+                                    <button id="HTMLi_user_preset_saveBtn${humID}" class="btn btn-outline-secondary" placeholder="Click to save the new preset" type="button">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
-                                            <use fill-rule="evenodd" href="#dpIcon-save${id}"/>
+                                            <use fill-rule="evenodd" href="#dpIcon-save${humID}"/>
                                         </svg>
                                         Save new
                                     </button>
                                     <div class="invalid-feedback">
                                         The name must be unique and not empty.
                                     </div>
-                                    <!-- <button id="HTMLi_user_preset_clearName${id}" class="btn btn-outline-secondary" type="button">Button</button> -->
+                                    <!-- <button id="HTMLi_user_preset_clearName${humID}" class="btn btn-outline-secondary" type="button">Button</button> -->
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="list-group-item" id="HTMLo_user_preset_manage${id}">
+                    <div class="list-group-item" id="HTMLo_user_preset_manage${humID}">
                         <div class="row align-items-center">
                             <div class="col">
                                 <strong class="mb-2">Manage</strong>
@@ -717,15 +860,15 @@ HUM.tmpl = {
                             </div>
                             <div class="col-auto">
                                 <div class="vstack gap-2 mx-auto">
-                                    <button id="HTMLi_user_preset_renameBtn${id}" class="btn btn-secondary">
+                                    <button id="HTMLi_user_preset_renameBtn${humID}" class="btn btn-secondary">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
-                                            <use fill-rule="evenodd" href="#dpIcon-edit${id}"/>
+                                            <use fill-rule="evenodd" href="#dpIcon-edit${humID}"/>
                                         </svg>
                                         Rename a preset
                                     </button>
-                                    <button id="HTMLi_user_preset_deleteBtn${id}" class="btn btn-secondary">
+                                    <button id="HTMLi_user_preset_deleteBtn${humID}" class="btn btn-secondary">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
-                                            <use fill-rule="evenodd" href="#dpIcon-trash${id}"/>
+                                            <use fill-rule="evenodd" href="#dpIcon-trash${humID}"/>
                                         </svg>
                                         Delete a preset
                                     </button>
@@ -734,7 +877,7 @@ HUM.tmpl = {
                         </div>
                     </div>
 
-                    <div class="list-group-item" id="HTMLo_user_preset_import${id}">
+                    <div class="list-group-item" id="HTMLo_user_preset_import${humID}">
                         <div class="row align-items-center">
                             <div class="col col-12 col-xl">
                                 <strong class="mb-2">Import</strong>
@@ -742,44 +885,44 @@ HUM.tmpl = {
                             </div>
                             <div class="col-auto">
                                 
-                                <div class="form-label" id="HTMLi_user_preset_importFileName${id}">
+                                <div class="form-label" id="HTMLi_user_preset_importFileName${humID}">
                                     Import a JSON preset file
                                 </div>
-                                <input type="file" id="HTMLi_user_preset_importFile${id}" accept=".json" class="form-control" aria-label="Select and upload a JSON preset file">
+                                <input type="file" id="HTMLi_user_preset_importFile${humID}" accept=".json" class="form-control" aria-label="Select and upload a JSON preset file">
                                 
-                                <div id="HTMLo_user_preset_import_options${id}" class="d-none">
+                                <div id="HTMLo_user_preset_import_options${humID}" class="d-none">
 
-                                    <div id="HTMLo_user_preset_import_checks${id}" class="mt-2"></div>
-                                    <button id="HTMLi_user_preset_importBtn${id}" class="btn btn-outline-secondary mt-2" type="button" aria-label="Click to import the selected presets from JSON file">
+                                    <div id="HTMLo_user_preset_import_checks${humID}" class="mt-2"></div>
+                                    <button id="HTMLi_user_preset_importBtn${humID}" class="btn btn-outline-secondary mt-2" type="button" aria-label="Click to import the selected presets from JSON file">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
-                                            <use fill-rule="evenodd" href="#dpIcon-upload${id}"/>
+                                            <use fill-rule="evenodd" href="#dpIcon-upload${humID}"/>
                                         </svg>
                                         Import selected presets
                                     </button>
 
-                                    <button id="HTMLi_user_preset_clearBtn${id}" class="btn btn-outline-secondary mt-2" type="button" aria-label="Click to clear and reset the import tool.">
+                                    <button id="HTMLi_user_preset_clearBtn${humID}" class="btn btn-outline-secondary mt-2" type="button" aria-label="Click to clear and reset the import tool.">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
-                                            <use fill-rule="evenodd" href="#dpIcon-clear${id}"/>
+                                            <use fill-rule="evenodd" href="#dpIcon-clear${humID}"/>
                                         </svg>
                                         Clear
                                     </button>
 
                                     <!-- TOAST NOTIFICATION -->
-                                    <div id="HTMLo_user_preset_import_toast${id}" class="toast hum-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position:fixed; bottom:10px; left:10px;">
+                                    <div id="HTMLo_user_preset_import_toast${humID}" class="toast hum-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position:fixed; bottom:10px; left:10px;">
                                         <div class="toast-header bg-success bg-gradient text-light">
                                             <strong class="me-auto">Import results</strong>
                                             <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
                                         </div>
-                                        <div id="HTMLo_user_preset_import_toastMsg${id}" class="toast-body">
+                                        <div id="HTMLo_user_preset_import_toastMsg${humID}" class="toast-body">
                                             Presets imported...
                                         </div>
                                     </div>
 
                                     <div class="form-check form-control-lg form-switch pb-0">
-                                        <label for="HTMLi_user_preset_importReverb${id}" class="form-label fs-6" style="vertical-align: text-top;">
+                                        <label for="HTMLi_user_preset_importReverb${humID}" class="form-label fs-6" style="vertical-align: text-top;">
                                             Import IR reverb <small>(use device memory)</small>
                                         </label>
-                                        <input type="checkbox" id="HTMLi_user_preset_importReverb${id}"
+                                        <input type="checkbox" id="HTMLi_user_preset_importReverb${humID}"
                                                class="form-check-input" role="switch">
                                     </div>
                                 
@@ -788,7 +931,7 @@ HUM.tmpl = {
                             </div>
                         </div>
                     </div>
-                    <div class="list-group-item" id="HTMLo_user_preset_import${id}">
+                    <div class="list-group-item" id="HTMLo_user_preset_import${humID}">
                         <div class="row align-items-center">
                             <div class="col col-12 col-lg">
                                 <strong class="mb-2">Export</strong>
@@ -796,20 +939,20 @@ HUM.tmpl = {
                             </div>
                             <div class="col-auto">
                                 <div class="row mx-0">
-                                    <button id="HTMLi_user_preset_exportBtn${id}" class="btn btn-secondary">
+                                    <button id="HTMLi_user_preset_exportBtn${humID}" class="btn btn-secondary">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16">
-                                            <use fill-rule="evenodd" href="#dpIcon-download${id}"/>
+                                            <use fill-rule="evenodd" href="#dpIcon-download${humID}"/>
                                         </svg>
-                                        <span id="HTMLo_user_preset_exportBtnSpinner${id}" class="spinner-border-sm mx-2" role="status" aria-hidden="true"></span>
+                                        <span id="HTMLo_user_preset_exportBtnSpinner${humID}" class="spinner-border-sm mx-2" role="status" aria-hidden="true"></span>
                                         Export JSON preset file
                                     </button>
                                 </div>
                                 <div class="row mx-0">
                                     <div class="form-check form-control-lg form-switch pb-0">
-                                        <label for="HTMLi_user_preset_exportReverb${id}" class="form-label fs-6" style="vertical-align: text-top;">
+                                        <label for="HTMLi_user_preset_exportReverb${humID}" class="form-label fs-6" style="vertical-align: text-top;">
                                             Export IR reverb <small>(larger file)</small>
                                         </label>
-                                        <input type="checkbox" id="HTMLi_user_preset_exportReverb${id}"
+                                        <input type="checkbox" id="HTMLi_user_preset_exportReverb${humID}"
                                                class="form-check-input" role="switch">
                                     </div>
                                 </div>
@@ -820,16 +963,16 @@ HUM.tmpl = {
 
                <div class="accordion mt-3">
                     <div class="accordion-item">
-                        <h2 class="accordion-header" id="accordionSessionHeading${id}">
-                          <button class="accordion-button collapsed hum-section-title" type="button" data-bs-toggle="collapse" data-bs-target="#accordionSession${id}" aria-expanded="false" aria-controls="accordionSession${id}">
+                        <h2 class="accordion-header" id="accordionSessionHeading${humID}">
+                          <button class="accordion-button collapsed hum-section-title" type="button" data-bs-toggle="collapse" data-bs-target="#accordionSession${humID}" aria-expanded="false" aria-controls="accordionSession${humID}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
-                                <use fill-rule="evenodd" href="#dpIcon-sessions${id}"/>
+                                <use fill-rule="evenodd" href="#dpIcon-sessions${humID}"/>
                             </svg>
                             Sessions
                           </button>
                         </h2>
 
-                        <div id="accordionSession${id}" class="accordion-collapse collapse" aria-labelledby="accordionSessionHeading${id}">
+                        <div id="accordionSession${humID}" class="accordion-collapse collapse" aria-labelledby="accordionSessionHeading${humID}">
                           <div class="accordion-body p-1 p-sm-2 p-md-3">
                             
                             <ul class="list-group">
@@ -841,7 +984,7 @@ HUM.tmpl = {
                                             <div><small class="text-muted">The session of this window/tab.</small></div>
                                         </div>
                                         <div class="col">
-                                            <div id="HTMLo_user_session_current${id}"></div>
+                                            <div id="HTMLo_user_session_current${humID}"></div>
                                         </div>
                                     </div>
                                 </li>
@@ -854,10 +997,10 @@ HUM.tmpl = {
                                         </div>
                                         <div class="col">
                                             <div class="input-group has-validation">
-                                                <input id="HTMLi_user_session_newName${id}" type="text" class="form-control" placeholder="Input the new session's name" aria-label="Inputbox to type the new name of the session.">
-                                                <button id="HTMLi_user_session_renameBtn${id}" class="btn btn-outline-secondary" placeholder="Click to save the new name" type="button">
+                                                <input id="HTMLi_user_session_newName${humID}" type="text" class="form-control" placeholder="Input the new session's name" aria-label="Inputbox to type the new name of the session.">
+                                                <button id="HTMLi_user_session_renameBtn${humID}" class="btn btn-outline-secondary" placeholder="Click to save the new name" type="button">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="1.25em" height="1.25em" fill="currentColor" viewBox="0 0 16 16" class="me-2">
-                                                        <use fill-rule="evenodd" href="#dpIcon-edit${id}"/>
+                                                        <use fill-rule="evenodd" href="#dpIcon-edit${humID}"/>
                                                     </svg>
                                                     Rename
                                                 </button>
@@ -876,7 +1019,7 @@ HUM.tmpl = {
                                             <div><small class="text-muted">Sessions currently open in another windows/tabs.</small></div>
                                         </div>
                                         <div class="col">
-                                            <div id="HTMLo_user_session_concurrent${id}"></div>
+                                            <div id="HTMLo_user_session_concurrent${humID}"></div>
                                         </div>
                                     </div>
                                 </li>
@@ -893,16 +1036,21 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the Hstack controls container, one per DHC.
-     *
-     * @param {number} id - The DHC instance ID.
+     * Creates the Harmonic Stack (Hstack) UI container for a DHC instance.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @memberof HUM.tmpl
+     * @param {string} dhcID - The DHC instance ID.
+     * 
+     * @returns {HTMLDivElement} The Hstack container div element with its settings.
+     * 
+     * @description
+     * This function creates the settings UI for the Hstack, which
+     * shows the mathematical relationships and frequencies of harmonic series.
      */
-    hstackBox(id) {
+    hstackBox(dhcID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div id="HTML_hstack${id}">
+            <div id="HTML_hstack${dhcID}">
 
                 <div class="list-group mb-3">
 
@@ -914,7 +1062,7 @@ HUM.tmpl = {
                             </div>
                             <div class="col-auto">
                                 <input type="range" min="14" max="30" step="0.1"
-                                       id="HTMLf_hstack_zoom${id}"
+                                       id="HTMLf_hstack_zoom${dhcID}"
                                        class="form-range">
                             </div>
                         </div>
@@ -922,21 +1070,21 @@ HUM.tmpl = {
 
                 </div>
 
-                <button class="TODO" id="HTMLi_hstackDuplicate${id}">Add another H Stack</button>
+                <button class="TODO" id="HTMLi_hstackDuplicate${dhcID}">Add another H Stack</button>
 
-                <div id="HTMLo_hstack_fontsize${id}">
-                    <div id="HTMLo_hstackHT${id}" class="table-responsive"></div>
+                <div id="HTMLo_hstack_fontsize${dhcID}">
+                    <div id="HTMLo_hstackHT${dhcID}" class="table-responsive"></div>
                     
                     <hr/>
                     
                     <div class="table-responsive">
                         <table class="table table-sm monospaced">
                             <tbody>
-                                <tr id="HTMLo_hstackFTrow${id}" class="hum-hstack-ft-off">
-                                    <td width="12%"><span id="HTMLo_hstackFT_tone${id}"></span></td>
-                                    <td width="20%"><span id="HTMLo_hstackFT_note${id}"></span></td>
-                                    <td width="25%"><span id="HTMLo_hstackFT_cents${id}"></span></td>
-                                    <td width="43%"><span id="HTMLo_hstackFT_hz${id}"></span></td>
+                                <tr id="HTMLo_hstackFTrow${dhcID}" class="hum-hstack-ft-off">
+                                    <td width="12%"><span id="HTMLo_hstackFT_tone${dhcID}"></span></td>
+                                    <td width="20%"><span id="HTMLo_hstackFT_note${dhcID}"></span></td>
+                                    <td width="25%"><span id="HTMLo_hstackFT_cents${dhcID}"></span></td>
+                                    <td width="43%"><span id="HTMLo_hstackFT_hz${dhcID}"></span></td>
                                 </tr>
                             </tbody>
                             <tfoot class="table-light">
@@ -959,16 +1107,24 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the Piano/Keymap controls container, one per DHC.
-     *
-     * @param {number} id - The DHC instance ID.
+     * Creates the piano/keymap settings' controls container for a DHC instance.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @memberof HUM.tmpl
+     * @param {string} dhcID - The DHC instance ID.
+     * 
+     * @returns {HTMLDivElement} The piano/keymap controls container div element with mapping and virtual piano interface.
+     * 
+     * @description
+     * This function creates the piano and keymap settings UI.
+     * 
+     * @example
+     * // Create piano controls for DHC instance '1-0'
+     * const pianoControls = HUM.tmpl.pianoBox('1-0');
      */
-    pianoBox(id) {
+    pianoBox(dhcID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div id="HTML_piano${id}">
+            <div id="HTML_piano${dhcID}">
     
                 <div>The <b>Keymap</b> is used to map FTs and HTs to the <b><i>MIDI controller</i></b>'s keys (input).
                      There are some pre-built maps but you can write your own and upload them.</div>
@@ -984,10 +1140,10 @@ HUM.tmpl = {
                             </div>
                             <div class="col-auto">
                                 <div class="input-group">
-                                    <select id="HTMLi_controllerKeymapPresets${id}" class="form-select"></select>
-                                    <button id="HTMLf_controllerKeymapTableShow${id}" data-bs-toggle="modal" data-bs-target="#HTMLo_controllerKeymapModal${id}" class="btn btn-secondary">Show</button>
+                                    <select id="HTMLi_controllerKeymapPresets${dhcID}" class="form-select"></select>
+                                    <button id="HTMLf_controllerKeymapTableShow${dhcID}" data-bs-toggle="modal" data-bs-target="#HTMLo_controllerKeymapModal${dhcID}" class="btn btn-secondary">Show</button>
                                 </div>
-                                <input type="file" accept=".hcmap" id="HTMLi_controllerKeymapFile${id}" class="form-control mt-2">
+                                <input type="file" accept=".hcmap" id="HTMLi_controllerKeymapFile${dhcID}" class="form-control mt-2">
                             </div>
                         </div>
                     </div>
@@ -1000,7 +1156,7 @@ HUM.tmpl = {
                         <div class="list-group">
 
                             <div class="list-group-item p-0 border-0 overflow-scroll">
-                                <div id="HTMLo_hancockContainer${id}" class="hmHancockContainer mb-5"></div>
+                                <div id="HTMLo_hancockContainer${dhcID}" class="hmHancockContainer mb-5"></div>
                             </div>
 
                             <div class="list-group-item border-top">
@@ -1011,18 +1167,18 @@ HUM.tmpl = {
                                     </div>
                                     <div class="col-auto">
                                         <div class="input-group mb-2">
-                                            <label for="HTMLi_piano_offset${id}" class="input-group-text bg-transparent border-0">Offset:</label>
+                                            <label for="HTMLi_piano_offset${dhcID}" class="input-group-text bg-transparent border-0">Offset:</label>
                                             <input type="range" min="0" max="119" step="1"
-                                                   id="HTMLi_piano_offset${id}"
+                                                   id="HTMLi_piano_offset${dhcID}"
                                                    class="form-range h-auto"
                                                    aria-label="...">
                                             <!-- NOTE: 119 (B9) is max startNote for Qwerty Hancock-->
                                         </div>
 
                                         <div class="input-group">
-                                            <label for="HTMLi_piano_range${id}" class="input-group-text bg-transparent border-0">Range:</label>
+                                            <label for="HTMLi_piano_range${dhcID}" class="input-group-text bg-transparent border-0">Range:</label>
                                             <input type="range" min="1" max="10" step="1"
-                                                   id="HTMLi_piano_range${id}"
+                                                   id="HTMLi_piano_range${dhcID}"
                                                    class="form-range h-auto"
                                                    aria-label="...">
                                         </div>
@@ -1038,14 +1194,14 @@ HUM.tmpl = {
                                     </div>
                                     <div class="col-auto">
                                         <div class="input-group mb-2">
-                                            <label for="HTMLi_piano_height${id}" class="input-group-text bg-transparent border-0">Height</label>
+                                            <label for="HTMLi_piano_height${dhcID}" class="input-group-text bg-transparent border-0">Height</label>
                                             <input type="range" min="40" max="400" step="20"
-                                                   id="HTMLi_piano_height${id}" class="form-range h-auto">
+                                                   id="HTMLi_piano_height${dhcID}" class="form-range h-auto">
                                         </div>
                                         <div class="input-group">
-                                            <label for="HTMLi_piano_width${id}" class="input-group-text bg-transparent border-0">Width</label>
+                                            <label for="HTMLi_piano_width${dhcID}" class="input-group-text bg-transparent border-0">Width</label>
                                             <input type="range" min="300" max="2000" step="50"
-                                                   id="HTMLi_piano_width${id}" class="form-range h-auto">
+                                                   id="HTMLi_piano_width${dhcID}" class="form-range h-auto">
                                             <output name="ageOutputName" id="ageOutputId"></output>
                                         </div>
                                     </div>
@@ -1060,14 +1216,14 @@ HUM.tmpl = {
                                     </div>
                                     <div class="col-auto">
                                         <div class="input-group mb-2">
-                                            <label for="HTMLi_piano_velocity${id}" class="input-group-text bg-transparent border-0">Velocity</label>
+                                            <label for="HTMLi_piano_velocity${dhcID}" class="input-group-text bg-transparent border-0">Velocity</label>
                                             <input type="range" min="1" max="127" step="1"
-                                                   id="HTMLi_piano_velocity${id}" class="form-range h-auto">
+                                                   id="HTMLi_piano_velocity${dhcID}" class="form-range h-auto">
                                         </div>
                                         <div class="input-group">
-                                            <label for="HTMLi_piano_channel${id}" class="input-group-text bg-transparent border-0">Channel</label>
+                                            <label for="HTMLi_piano_channel${dhcID}" class="input-group-text bg-transparent border-0">Channel</label>
                                             <input type="number" min="1" max="16" step="1"
-                                                   id="HTMLi_piano_channel${id}" class="form-control">
+                                                   id="HTMLi_piano_channel${dhcID}" class="form-control">
                                         </div>
                                     </div>
                                 </div>
@@ -1084,16 +1240,27 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the DHC controls container, one per DHC.
-     *
-     * @param {number} id - The DHC instance ID.
+     * Creates the DHC settings' controls container for a DHC instance.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @memberof HUM.tmpl
+     * @param {string} dhcID - The DHC instance ID.
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLDivElement} The DHC controls container div element with computational engine settings.
+     * 
+     * @description
+     * This function creates the settings UI for the Dynamic Harmonics Calculator,
+     * which is the computational engine responsible for compiling frequency tables and
+     * managing harmonic calculations. 
+     * 
+     * @example
+     * // Create DHC controls for DHC instance 1 associated with HUM instance 1
+     * const dhcControls = HUM.tmpl.dhcBox('1-0', 1);
      */
-    dhcBox(id, humID) {
+    dhcBox(dhcID, humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="dhc" id="HTML_dhc${id}">
+            <div class="dhc" id="HTML_dhc${dhcID}">
                 <div>DHC stands for <b><i>Dynamic Harmonics Calculator</i></b>,
                 that is the computational engine that compiles the frequency tables.
                 These are the settings for the UI appearance and other features.</div>
@@ -1106,7 +1273,7 @@ HUM.tmpl = {
                             </div>
                             <div class="col-auto">
                                 <input type="number" min="0" max="50" step="1"
-                                       id="HTMLi_dhc_hzAccuracy${id}"
+                                       id="HTMLi_dhc_hzAccuracy${dhcID}"
                                        class="form-control"
                                        aria-label="Places of decimal precision">
                             </div>
@@ -1120,7 +1287,7 @@ HUM.tmpl = {
                             </div>
                             <div class="col-auto">
                                 <input type="number" min="0" max="50" step="1"
-                                       id="HTMLi_dhc_mcAccuracy${id}"
+                                       id="HTMLi_dhc_mcAccuracy${dhcID}"
                                        class="form-control"
                                        aria-label="Places of decimal precision">
                             </div>
@@ -1133,7 +1300,7 @@ HUM.tmpl = {
                                 <div><small class="text-muted"># or <i>b</i>.</small></div>
                             </div>
                             <div class="col-auto">
-                                <select id="HTMLi_dhc_enharmonicNN${id}" class="form-select">
+                                <select id="HTMLi_dhc_enharmonicNN${dhcID}" class="form-select">
                                     <option value="sharp">Sharp</option>
                                     <option value="flat">Flat</option>
                                 </select>
@@ -1149,10 +1316,10 @@ HUM.tmpl = {
                             <div class="col-auto">
                                 <div class="input-group">
 
-                                    <label for="HTMLi_dhc_middleC${id}"
+                                    <label for="HTMLi_dhc_middleC${dhcID}"
                                            class="input-group-text">C</label>
                                     <input type="number" min="-100" max="100" step="1"
-                                           id="HTMLi_dhc_middleC${id}"
+                                           id="HTMLi_dhc_middleC${dhcID}"
                                            class="form-control"
                                            aria-label="In which MIDI octave is the Middle C">
                                 </div>
@@ -1170,7 +1337,7 @@ HUM.tmpl = {
                             </div>
                             <div class="col-auto">
                                 <input type="number" min="1" max=9999 step="1"
-                                       id="HTMLi_dhc_piperSteps${id}"
+                                       id="HTMLi_dhc_piperSteps${dhcID}"
                                        class="form-control"
                                        aria-label="HTs stored">
                             </div>
@@ -1182,17 +1349,26 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the DiphonicPad controls container, one per DHC.
-     *
-     * @param {number} id    - The DHC instance ID.
-     * @param {number} humID - The DHC instance ID.
+     * Creates the DiphonicPad settings' controls container for a DHC instance.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @memberof HUM.tmpl
+     * @param {string} dhcID - The DHC instance ID.
+     * @param {number} humID - The HUM instance ID.
+     * 
+     * @returns {HTMLDivElement} The DiphonicPad controls container div element with comprehensive pad settings.
+     * 
+     * @description
+     * This function creates the complete settings UI for the DiphonicPad, which is
+     * the main interactive musical interface of the Harmonicarium.
+     * 
+     * @example
+     * // Create DiphonicPad controls for DHC instance '1-0' associated with HUM instance 1
+     * const padControls = HUM.tmpl.dpPadBox('1-0', 1);
      */
-    dpPadBox(id, humID) {
+    dpPadBox(dhcID, humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="dpPadBackend" id="HTMLf_dpPadSettings${id}">
+            <div class="dpPadBackend" id="HTMLf_dpPadSettings${dhcID}">
 
                 <div class="list-group mb-3">
                     <div class="list-group-item hum-section-title p-2 ps-3">
@@ -1207,8 +1383,8 @@ HUM.tmpl = {
                             <div class="col-auto">
 
                                 <div class="input-group">
-                                    <select id="HTMLi_dppad_freq_range_ft${id}" class="form-select"></select>
-                                    <button id="HTMLi_dppad_freq_range_custom_save_ft${id}" class="btn btn-secondary" style="display:none;">Save</button>
+                                    <select id="HTMLi_dppad_freq_range_ft${dhcID}" class="form-select"></select>
+                                    <button id="HTMLi_dppad_freq_range_custom_save_ft${dhcID}" class="btn btn-secondary" style="display:none;">Save</button>
                                 </div>
 
                             </div>
@@ -1224,24 +1400,24 @@ HUM.tmpl = {
                             <div class="col-auto">
 
                                 <div class="input-group mb-3">
-                                    <label for="HTMLi_dppad_freq_range_custom_max_ft${id}" class="input-group-text bg-transparent border-0">Max:</label>
+                                    <label for="HTMLi_dppad_freq_range_custom_max_ft${dhcID}" class="input-group-text bg-transparent border-0">Max:</label>
                                     <input type="number" min="0" max="127" step="1"
-                                           id="HTMLi_dppad_freq_range_custom_max_ft${id}"
+                                           id="HTMLi_dppad_freq_range_custom_max_ft${dhcID}"
                                            class="form-control"
                                            aria-label="Note in midicents notation">
                                     <span class="input-group-text">midi#.&cent;</span>
-                                    <span id="HTMLo_dppad_freq_range_custom_max_trad_ft${id}" class="input-group-text bg-transparent border-0"></span>
+                                    <span id="HTMLo_dppad_freq_range_custom_max_trad_ft${dhcID}" class="input-group-text bg-transparent border-0"></span>
                                 </div>
 
                                 <div class="input-group mb-3">
-                                    <label for="HTMLi_dppad_freq_range_custom_min_ft${id}" class="input-group-text bg-transparent border-0">Min:</label>
+                                    <label for="HTMLi_dppad_freq_range_custom_min_ft${dhcID}" class="input-group-text bg-transparent border-0">Min:</label>
                                     <input type="number" min="0" max="127" step="1"
-                                           id="HTMLi_dppad_freq_range_custom_min_ft${id}"
+                                           id="HTMLi_dppad_freq_range_custom_min_ft${dhcID}"
                                            class="form-control"
                                            aria-label="Note in midicents notation"
                                            title="Note in midicents notation">
                                     <span class="input-group-text">midi#.&cent;</span>
-                                    <span id="HTMLo_dppad_freq_range_custom_min_trad_ft${id}" class="input-group-text bg-transparent border-0"></span>
+                                    <span id="HTMLo_dppad_freq_range_custom_min_trad_ft${dhcID}" class="input-group-text bg-transparent border-0"></span>
                                 </div>
 
                             </div>
@@ -1255,7 +1431,7 @@ HUM.tmpl = {
                                 <div><small class="text-muted">Copy the range of HT pad to the FT one.</small></div>
                             </div>
                             <div class="col-auto">
-                                <button id="HTMLi_dppad_freq_range_copy_to_ft${id}" class="btn btn-secondary">FT same as HT</button>
+                                <button id="HTMLi_dppad_freq_range_copy_to_ft${dhcID}" class="btn btn-secondary">FT same as HT</button>
                             </div>
                         </div>
                     </div>
@@ -1277,8 +1453,8 @@ HUM.tmpl = {
                             <div class="col-auto">
 
                                 <div class="input-group">
-                                    <select id="HTMLi_dppad_freq_range_ht${id}" class="form-select"></select>
-                                    <button id="HTMLi_dppad_freq_range_custom_save_ht${id}" class="btn btn-secondary" style="display:none;">Save</button>
+                                    <select id="HTMLi_dppad_freq_range_ht${dhcID}" class="form-select"></select>
+                                    <button id="HTMLi_dppad_freq_range_custom_save_ht${dhcID}" class="btn btn-secondary" style="display:none;">Save</button>
                                 </div>
 
                             </div>
@@ -1294,25 +1470,25 @@ HUM.tmpl = {
                             <div class="col-auto">
 
                                 <div class="input-group mb-3">
-                                    <label for="HTMLi_dppad_freq_range_custom_max_ht${id}" class="input-group-text bg-transparent border-0">Max:</label>
+                                    <label for="HTMLi_dppad_freq_range_custom_max_ht${dhcID}" class="input-group-text bg-transparent border-0">Max:</label>
                                     <input type="number" min="1" max="99999" step="1"
-                                           id="HTMLi_dppad_freq_range_custom_max_ht${id}"
+                                           id="HTMLi_dppad_freq_range_custom_max_ht${dhcID}"
                                            class="form-control"
                                            aria-label="Frequency in hertz"
                                            title="Frequency in hertz">
                                     <span class="input-group-text">Hz</span>
-                                    <span id="HTMLo_dppad_freq_range_custom_max_trad_ht${id}" class="input-group-text bg-transparent border-0"></span>
+                                    <span id="HTMLo_dppad_freq_range_custom_max_trad_ht${dhcID}" class="input-group-text bg-transparent border-0"></span>
                                 </div>
 
                                 <div class="input-group mb-3">
-                                    <label for="HTMLi_dppad_freq_range_custom_min_ht${id}" class="input-group-text bg-transparent border-0">Min:</label>
+                                    <label for="HTMLi_dppad_freq_range_custom_min_ht${dhcID}" class="input-group-text bg-transparent border-0">Min:</label>
                                     <input type="number" min="1" max="99999" step="1"
-                                           id="HTMLi_dppad_freq_range_custom_min_ht${id}"
+                                           id="HTMLi_dppad_freq_range_custom_min_ht${dhcID}"
                                            class="form-control"
                                            aria-label="Frequency in hertz"
                                            title="Frequency in hertz">
                                     <span class="input-group-text">Hz</span>
-                                    <span id="HTMLo_dppad_freq_range_custom_min_trad_ht${id}" class="input-group-text bg-transparent border-0"></span>
+                                    <span id="HTMLo_dppad_freq_range_custom_min_trad_ht${dhcID}" class="input-group-text bg-transparent border-0"></span>
                                 </div>
 
                             </div>
@@ -1327,7 +1503,7 @@ HUM.tmpl = {
                             </div>
                             <div class="col-auto">
 
-                                <button id="HTMLi_dppad_freq_range_copy_to_ht${id}" class="btn btn-secondary">HT same as FT</button>
+                                <button id="HTMLi_dppad_freq_range_copy_to_ht${dhcID}" class="btn btn-secondary">HT same as FT</button>
 
                             </div>
                         </div>
@@ -1358,7 +1534,7 @@ HUM.tmpl = {
                                         <div><small class="text-muted">Rotate the entire viewport.</small></div>
                                     </div>
                                     <div class="col-auto">
-                                        <select id="HTMLi_dppad_main_orientation${id}" class="form-select">
+                                        <select id="HTMLi_dppad_main_orientation${dhcID}" class="form-select">
                                             <option value="vertical">Vertical</option>
                                             <option value="horizontal">Horizontal</option>
                                         </select>
@@ -1376,7 +1552,7 @@ HUM.tmpl = {
                                         <div><small class="text-muted">Rotate only the FT pad.</small></div>
                                     </div>
                                     <div class="col-auto">
-                                        <select id="HTMLi_dppad_scale_orientation_ft${id}" class="form-select">
+                                        <select id="HTMLi_dppad_scale_orientation_ft${dhcID}" class="form-select">
                                             <option value="vertical">Vertical</option>
                                             <option value="horizontal">Horizontal</option>
                                         </select>
@@ -1394,7 +1570,7 @@ HUM.tmpl = {
                                         <div><small class="text-muted">Rotate only the HT pad.</small></div>
                                     </div>
                                     <div class="col-auto">
-                                        <select id="HTMLi_dppad_scale_orientation_ht${id}" class="form-select">
+                                        <select id="HTMLi_dppad_scale_orientation_ht${dhcID}" class="form-select">
                                             <option value="vertical">Vertical</option>
                                             <option value="horizontal">Horizontal</option>
                                         </select>
@@ -1412,7 +1588,7 @@ HUM.tmpl = {
                                         <div><small class="text-muted">Swap the pads.</small></div>
                                     </div>
                                     <div class="col-auto">
-                                        <select id="HTMLi_dppad_pads_order${id}" class="form-select">
+                                        <select id="HTMLi_dppad_pads_order${dhcID}" class="form-select">
                                             <option value="ftht">FT - HT</option>
                                             <option value="htft">HT - FT</option>
                                         </select>
@@ -1447,7 +1623,7 @@ HUM.tmpl = {
                                         <div><small class="text-muted">Rotate the toolbar.</small></div>
                                     </div>
                                     <div class="col-auto">
-                                        <select id="HTMLi_dppad_toolbar_orientation${id}" class="form-select">
+                                        <select id="HTMLi_dppad_toolbar_orientation${dhcID}" class="form-select">
                                             <option value="longitudinal">Longitudinal</option>
                                             <option value="transversal">Transversal</option>
                                         </select>
@@ -1465,7 +1641,7 @@ HUM.tmpl = {
                                         <div><small class="text-muted">Place the toolbar before, in between or after the pads.</small></div>
                                     </div>
                                     <div class="col-auto">
-                                        <select id="HTMLi_dppad_toolbar_position${id}" class="form-select">
+                                        <select id="HTMLi_dppad_toolbar_position${dhcID}" class="form-select">
                                             <option value="0">Pre</option>
                                             <option value="1">Mid</option>
                                             <option value="2">Post</option>
@@ -1482,103 +1658,103 @@ HUM.tmpl = {
                                     </div>
                                     <div class="col-auto">
                                         <ul class="list-group">
-                                            <li id="HTMLf_toolbar_icon_menu${id}" class="list-group-item d-flex justify-content-between">
+                                            <li id="HTMLf_toolbar_icon_menu${dhcID}" class="list-group-item d-flex justify-content-between">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                     <use fill-rule="evenodd" href="#dpIcon-menu${humID}"/>
                                                 </svg>
                                                 <div class="ms-1 me-auto">Settings</div>
                                                 <div class="form-check form-switch ms-3">
-                                                    <input disabled id="HTMLi_toolbar_icon_menu_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                    <input disabled id="HTMLi_toolbar_icon_menu_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
-                                            <li id="HTMLf_toolbar_icon_rotateView${id}" class="list-group-item d-flex justify-content-between">
+                                            <li id="HTMLf_toolbar_icon_rotateView${dhcID}" class="list-group-item d-flex justify-content-between">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                     <use fill-rule="evenodd" href="#dpIcon-rotateView${humID}"/>
                                                 </svg>
                                                 <div class="ms-1 me-auto">Rotate viewport</div>
                                                 <div class="form-check form-switch ms-3">
-                                                    <input id="HTMLi_toolbar_icon_rotateView_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                    <input id="HTMLi_toolbar_icon_rotateView_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
-                                            <li id="HTMLf_toolbar_icon_toolbarPos${id}" class="list-group-item d-flex justify-content-between">
+                                            <li id="HTMLf_toolbar_icon_toolbarPos${dhcID}" class="list-group-item d-flex justify-content-between">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                     <use fill-rule="evenodd" href="#dpIcon-toolbarPos${humID}"/>
                                                 </svg>
                                                 <div class="ms-1 me-auto">Toolbar position</div>
                                                 <div class="form-check form-switch ms-3">
-                                                    <input id="HTMLi_toolbar_icon_toolbarPos_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                    <input id="HTMLi_toolbar_icon_toolbarPos_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
-                                            <li id="HTMLf_toolbar_icon_invertPads${id}" class="list-group-item d-flex justify-content-between">
+                                            <li id="HTMLf_toolbar_icon_invertPads${dhcID}" class="list-group-item d-flex justify-content-between">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                     <use fill-rule="evenodd" href="#dpIcon-invertPads${humID}"/>
                                                 </svg>
                                                 <div class="ms-1 me-auto">Swap/invert pads</div>
                                                 <div class="form-check form-switch ms-3">
-                                                    <input id="HTMLi_toolbar_icon_invertPads_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                    <input id="HTMLi_toolbar_icon_invertPads_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
-                                            <li id="HTMLf_toolbar_icon_rotateFT${id}" class="list-group-item d-flex justify-content-between">
+                                            <li id="HTMLf_toolbar_icon_rotateFT${dhcID}" class="list-group-item d-flex justify-content-between">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                     <use fill-rule="evenodd" href="#dpIcon-rotateFT${humID}"/>
                                                 </svg>
                                                 <div class="ms-1 me-auto">Rotate FT pad</div>
                                                 <div class="form-check form-switch ms-3">
-                                                    <input id="HTMLi_toolbar_icon_rotateFT_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                    <input id="HTMLi_toolbar_icon_rotateFT_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
-                                            <li id="HTMLf_toolbar_icon_rotateHT${id}" class="list-group-item d-flex justify-content-between">
+                                            <li id="HTMLf_toolbar_icon_rotateHT${dhcID}" class="list-group-item d-flex justify-content-between">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                     <use fill-rule="evenodd" href="#dpIcon-rotateHT${humID}"/>
                                                 </svg>
                                                 <div class="ms-1 me-auto">Rotate HT pad</div>
                                                 <div class="form-check form-switch ms-3">
-                                                    <input id="HTMLi_toolbar_icon_rotateHT_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                    <input id="HTMLi_toolbar_icon_rotateHT_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
-                                            <li id="HTMLf_toolbar_icon_textIncrease${id}" class="list-group-item d-flex justify-content-between">
+                                            <li id="HTMLf_toolbar_icon_textIncrease${dhcID}" class="list-group-item d-flex justify-content-between">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                     <use fill-rule="evenodd" href="#dpIcon-textIncrease${humID}"/>
                                                 </svg>
                                                 <div class="ms-1 me-auto">Increase fonts size</div>
                                                 <div class="form-check form-switch ms-3">
-                                                    <input id="HTMLi_toolbar_icon_textIncrease_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                    <input id="HTMLi_toolbar_icon_textIncrease_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
-                                            <li id="HTMLf_toolbar_icon_textDecrease${id}" class="list-group-item d-flex justify-content-between">
+                                            <li id="HTMLf_toolbar_icon_textDecrease${dhcID}" class="list-group-item d-flex justify-content-between">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                     <use fill-rule="evenodd" href="#dpIcon-textDecrease${humID}"/>
                                                 </svg>
                                                 <div class="ms-1 me-auto">Decrease fonts size</div>
                                                 <div class="form-check form-switch ms-3">
-                                                    <input id="HTMLi_toolbar_icon_textDecrease_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                    <input id="HTMLi_toolbar_icon_textDecrease_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
-                                            <li id="HTMLf_toolbar_icon_piper${id}" class="list-group-item d-flex justify-content-between">
+                                            <li id="HTMLf_toolbar_icon_piper${dhcID}" class="list-group-item d-flex justify-content-between">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                     <use fill-rule="evenodd" href="#dpIcon-piper${humID}"/>
                                                 </svg>
                                                 <div class="ms-1 me-auto">Piper button</div>
                                                 <div class="form-check form-switch ms-3">
-                                                    <input id="HTMLi_toolbar_icon_piper_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                    <input id="HTMLi_toolbar_icon_piper_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
-                                            <li id="HTMLf_toolbar_icon_panic${id}" class="list-group-item d-flex justify-content-between">
+                                            <li id="HTMLf_toolbar_icon_panic${dhcID}" class="list-group-item d-flex justify-content-between">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                     <use fill-rule="evenodd" href="#dpIcon-panic${humID}"/>
                                                 </svg>
                                                 <div class="ms-1 me-auto">Panic (all notes off)</div>
                                                 <div class="form-check form-switch ms-3">
-                                                    <input id="HTMLi_toolbar_icon_panic_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                    <input id="HTMLi_toolbar_icon_panic_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
-                                            <li id="HTMLf_toolbar_icon_openLog${id}" class="list-group-item d-flex justify-content-between">
+                                            <li id="HTMLf_toolbar_icon_openLog${dhcID}" class="list-group-item d-flex justify-content-between">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                     <use fill-rule="evenodd" href="#dpIcon-openLog${humID}"/>
                                                 </svg>
                                                 <div class="ms-1 me-auto">Open/close the log</div>
                                                 <div class="form-check form-switch ms-3">
-                                                    <input id="HTMLi_toolbar_icon_openLog_switch${id}" class="form-check-input" type="checkbox" role="switch"/>
+                                                    <input id="HTMLi_toolbar_icon_openLog_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
                                         </ul>
@@ -1613,7 +1789,7 @@ HUM.tmpl = {
                                     <div class="col-auto">
                                         <div class="input-group">
                                             <input type="number" min="1" max="9999" step="1"
-                                                   id="HTMLi_dppad_fontsize_hzMonitor_ft${id}"
+                                                   id="HTMLi_dppad_fontsize_hzMonitor_ft${dhcID}"
                                                    class="form-control"
                                                    aria-label="Size in Pixels"
                                                    title="Size in Pixels">
@@ -1632,7 +1808,7 @@ HUM.tmpl = {
                                     <div class="col-auto">
                                         <div class="input-group">
                                             <input type="number" min="1" max="9999" step="1"
-                                                   id="HTMLi_dppad_fontsize_keyLabel_ft${id}"
+                                                   id="HTMLi_dppad_fontsize_keyLabel_ft${dhcID}"
                                                    class="form-control"
                                                    aria-label="Size in percentage"
                                                    title="Size in &percnt;">
@@ -1651,7 +1827,7 @@ HUM.tmpl = {
                                     <div class="col-auto">
                                         <div class="input-group">
                                             <input type="number" min="1" max="9999" step="1"
-                                                   id="HTMLi_dppad_fontsize_hzMonitor_ht${id}"
+                                                   id="HTMLi_dppad_fontsize_hzMonitor_ht${dhcID}"
                                                    class="form-control"
                                                    aria-label="Size in Pixels"
                                                    title="Size in Pixels">
@@ -1670,7 +1846,7 @@ HUM.tmpl = {
                                     <div class="col-auto">
                                         <div class="input-group">
                                             <input type="number" min="1" max="9999" step="1"
-                                                   id="HTMLi_dppad_fontsize_keyLabel_ht${id}"
+                                                   id="HTMLi_dppad_fontsize_keyLabel_ht${dhcID}"
                                                    class="form-control"
                                                    aria-label="Size in percentage"
                                                    title="Size in &percnt;">
@@ -1689,7 +1865,7 @@ HUM.tmpl = {
                                     <div class="col-auto">
                                         <div class="input-group">
                                             <input type="number" min="1" max="9999" step="1"
-                                                   id="HTMLi_dppad_fontsize_lineLabel_ht${id}"
+                                                   id="HTMLi_dppad_fontsize_lineLabel_ht${dhcID}"
                                                    class="form-control"
                                                    aria-label="Size in percentage"
                                                    title="Size in &percnt;">
@@ -1705,16 +1881,16 @@ HUM.tmpl = {
                   </div>
 
                     <!-- <div>
-                        <label for="HTMLi_dppad_fontsize_noteMonitor_ft${id}" title="Pixels">FT Font size note monitor</label>
-                        <input type="number" min="1" max="100" step="1" id="HTMLi_dppad_fontsize_noteMonitor_ft${id}" title="Pixels">
+                        <label for="HTMLi_dppad_fontsize_noteMonitor_ft${dhcID}" title="Pixels">FT Font size note monitor</label>
+                        <input type="number" min="1" max="100" step="1" id="HTMLi_dppad_fontsize_noteMonitor_ft${dhcID}" title="Pixels">
                     </div> -->
                     <!-- <div>
-                        <label for="HTMLi_dppad_fontsize_lineLabel_ft${id}" title="Pixels">FT Font size Lines labels</label>
-                        <input type="number" min="1" max="100" step="1" id="HTMLi_dppad_fontsize_lineLabel_ft${id}" title="Pixels">
+                        <label for="HTMLi_dppad_fontsize_lineLabel_ft${dhcID}" title="Pixels">FT Font size Lines labels</label>
+                        <input type="number" min="1" max="100" step="1" id="HTMLi_dppad_fontsize_lineLabel_ft${dhcID}" title="Pixels">
                     </div> -->
                     <!-- <div>
-                        <label for="HTMLi_dppad_fontsize_noteMonitor_ht${id}" title="Pixels">HT Font size note monitor</label>
-                        <input type="number" min="1" max="100" step="1" id="HTMLi_dppad_fontsize_noteMonitor_ht${id}" title="Pixels">
+                        <label for="HTMLi_dppad_fontsize_noteMonitor_ht${dhcID}" title="Pixels">HT Font size note monitor</label>
+                        <input type="number" min="1" max="100" step="1" id="HTMLi_dppad_fontsize_noteMonitor_ht${dhcID}" title="Pixels">
                     </div> -->
 
                   <div class="accordion-item">
@@ -1736,7 +1912,7 @@ HUM.tmpl = {
                                     </div>
                                     <div class="col-auto">
                                         <div class="form-check form-control-lg form-switch">
-                                            <input type="checkbox" id="HTMLi_dppad_scale_display_ft${id}"
+                                            <input type="checkbox" id="HTMLi_dppad_scale_display_ft${dhcID}"
                                                    class="form-check-input" role="switch">
                                         </div>
                                     </div>
@@ -1751,7 +1927,7 @@ HUM.tmpl = {
                                     </div>
                                     <div class="col-auto">
                                         <div class="form-check form-control-lg form-switch">
-                                            <input type="checkbox" id="HTMLi_dppad_scale_display_ht${id}"
+                                            <input type="checkbox" id="HTMLi_dppad_scale_display_ht${dhcID}"
                                                    class="form-check-input" role="switch">
                                         </div>
 
@@ -1767,7 +1943,7 @@ HUM.tmpl = {
                                         <div><small class="text-muted"><i>NOTE: It applies only on HiDPI displays.</i></small></div>
                                     </div>
                                     <div class="col-auto">
-                                        <select id="HTMLi_dppad_render_mode${id}" class="form-select">
+                                        <select id="HTMLi_dppad_render_mode${dhcID}" class="form-select">
                                             <option value="classic">Low resolution</option>
                                             <option value="hidpi">High resolution</option>
                                         </select>
@@ -1788,17 +1964,28 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the Synth controls container, one per DHC.
-     *
-     * @param {number} id    - The DHC instance ID.
+     * Creates the synthesizer controls container for a DHC instance.
+     * 
+     * @memberof HUM.tmpl
+     * @param {string} dhcID - The DHC instance ID.
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} The synthesizer controls container div element with comprehensive audio synthesis settings.
+     * 
+     * @description
+     * This function creates the complete synthesizer control interface that manages all
+     * audio synthesis aspects of a Harmonicarium's DHC.
+     * The synthesizer is the audio engine that converts the tones into actual
+     * sound output through the Web Audio API.
+     * 
+     * @example
+     * // Create synthesizer controls for DHC instance '1-0' associated with HUM instance 1
+     * const synthControls = HUM.tmpl.synthBox('1-0', 1);
      */
-    synthBox(id, humID) {
+    synthBox(dhcID, humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="synth" id="HTML_synth${id}">
+            <div class="synth" id="HTML_synth${dhcID}">
 
                 <div class="container-fluid px-0">
                     <div class="row g-2">
@@ -1813,21 +2000,21 @@ HUM.tmpl = {
                                 <div class="row">
                                     <div class="col-lg-12 d-flex">
                                         <div class="form-check form-control-lg form-switch mx-auto">
-                                            <label for="HTMLi_synth_power${id}" class="form-label">ON/OFF</label>
-                                            <input type="checkbox" name="synt" id="HTMLi_synth_power${id}" class="form-check-input" role="switch">
+                                            <label for="HTMLi_synth_power${dhcID}" class="form-label">ON/OFF</label>
+                                            <input type="checkbox" name="synt" id="HTMLi_synth_power${dhcID}" class="form-check-input" role="switch">
                                         </div>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-lg-12 hum-range-param">
-                                        <label for="HTMLi_synth_volume${id}" class="hum-justify">&minus; &nbsp;&nbsp;MASTER &nbsp;VOLUME &nbsp;&nbsp;&plus;</label>
-                                        <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volume${id}" class="form-range">
+                                        <label for="HTMLi_synth_volume${dhcID}" class="hum-justify">&minus; &nbsp;&nbsp;MASTER &nbsp;VOLUME &nbsp;&nbsp;&plus;</label>
+                                        <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volume${dhcID}" class="form-range">
                                     </div>
                                 </div>
 
                                 <div class="row">
                                     <div class="col-lg-12">
-                                        <div id="HTMLo_synth_meter${id}" class="hmVUmeter mx-auto"></div>
+                                        <div id="HTMLo_synth_meter${dhcID}" class="hmVUmeter mx-auto"></div>
                                     </div>
                                 </div>
                               </div>
@@ -1847,26 +2034,26 @@ HUM.tmpl = {
 
                                         <div class="row">
                                             <div class="col-lg-6 hum-range-param">
-                                                <label for="HTMLi_synth_attack${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Attack &nbsp;&nbsp;&plus;</label>
+                                                <label for="HTMLi_synth_attack${dhcID}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Attack &nbsp;&nbsp;&plus;</label>
                                                 <!-- time (sec) -->
-                                                <input type="range" min="0.02" max="5" step="0.01" id="HTMLi_synth_attack${id}" class="form-range">
+                                                <input type="range" min="0.02" max="5" step="0.01" id="HTMLi_synth_attack${dhcID}" class="form-range">
                                             </div>
                                             <div class="col-lg-6 hum-range-param">
-                                                <label for="HTMLi_synth_decay${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Decay &nbsp;&nbsp;&plus;</label>
+                                                <label for="HTMLi_synth_decay${dhcID}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Decay &nbsp;&nbsp;&plus;</label>
                                                 <!-- time (timeconstant) -->
-                                                <input type="range" min="0.001" max="1" step="0.001" id="HTMLi_synth_decay${id}" class="form-range">
+                                                <input type="range" min="0.001" max="1" step="0.001" id="HTMLi_synth_decay${dhcID}" class="form-range">
                                             </div>
                                         </div>
                                         <div class="row">
                                             <div class="col-lg-6 hum-range-param">
-                                                <label for="HTMLi_synth_sustain${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Sustain &nbsp;&nbsp;&plus;</label>
+                                                <label for="HTMLi_synth_sustain${dhcID}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Sustain &nbsp;&nbsp;&plus;</label>
                                                 <!-- gain value amount (0 > 1) -->
-                                                <input type="range" min="0.018" max="1" step="0.001" id="HTMLi_synth_sustain${id}" class="form-range">
+                                                <input type="range" min="0.018" max="1" step="0.001" id="HTMLi_synth_sustain${dhcID}" class="form-range">
                                             </div>
                                             <div class="col-lg-6 hum-range-param">
-                                                <label for="HTMLi_synth_release${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Release &nbsp;&nbsp;&plus;</label>
+                                                <label for="HTMLi_synth_release${dhcID}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Release &nbsp;&nbsp;&plus;</label>
                                                 <!-- time (sec) -->
-                                                <input type="range" min="0.02" max="5" step="0.01" id="HTMLi_synth_release${id}" class="form-range">
+                                                <input type="range" min="0.02" max="5" step="0.01" id="HTMLi_synth_release${dhcID}" class="form-range">
                                             </div>
                                         </div>
 
@@ -1886,14 +2073,14 @@ HUM.tmpl = {
 
                                         <div class="row">
                                             <div class="col-lg-12 hum-range-param">
-                                                <label for="HTMLi_synth_volumeFT${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;FT Volume &nbsp;&nbsp;&plus;</label>
-                                                <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volumeFT${id}" class="form-range">
+                                                <label for="HTMLi_synth_volumeFT${dhcID}" class="form-label hum-justify">&minus; &nbsp;&nbsp;FT Volume &nbsp;&nbsp;&plus;</label>
+                                                <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volumeFT${dhcID}" class="form-range">
                                             </div>
                                         </div>
                                         <div class="row">
                                             <div class="col-lg-12">
-                                                <label for="HTMLi_synth_waveformFT${id}" class="form-label">FT Waveform</label>
-                                                <select id="HTMLi_synth_waveformFT${id}" class="form-select">
+                                                <label for="HTMLi_synth_waveformFT${dhcID}" class="form-label">FT Waveform</label>
+                                                <select id="HTMLi_synth_waveformFT${dhcID}" class="form-select">
                                                     <option value="sine">Sine</option>
                                                     <option value="sawtooth">Sawtooth</option>
                                                     <option value="square">Square</option>
@@ -1903,8 +2090,8 @@ HUM.tmpl = {
                                         </div>
                                         <div class="row">
                                             <div class="col-lg-12 hum-range-param">
-                                                <label for="HTMLi_synth_portamento${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Portamento &nbsp;&nbsp;&plus;</label>
-                                                <input type="range" min="0" max="0.20" step="0.01" id="HTMLi_synth_portamento${id}" class="form-range">
+                                                <label for="HTMLi_synth_portamento${dhcID}" class="form-label hum-justify">&minus; &nbsp;&nbsp;Portamento &nbsp;&nbsp;&plus;</label>
+                                                <input type="range" min="0" max="0.20" step="0.01" id="HTMLi_synth_portamento${dhcID}" class="form-range">
                                             </div>
                                         </div>
                                       </div>
@@ -1921,14 +2108,14 @@ HUM.tmpl = {
 
                                         <div class="row">
                                             <div class="col-lg-12 hum-range-param">
-                                                <label for="HTMLi_synth_volumeHT${id}" class="form-label hum-justify">&minus; &nbsp;&nbsp;HTs Volume &nbsp;&nbsp;&plus;</label>
-                                                <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volumeHT${id}" class="form-range">
+                                                <label for="HTMLi_synth_volumeHT${dhcID}" class="form-label hum-justify">&minus; &nbsp;&nbsp;HTs Volume &nbsp;&nbsp;&plus;</label>
+                                                <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_volumeHT${dhcID}" class="form-range">
                                             </div>
                                         </div>
                                         <div class="row">
                                             <div class="col-lg-12">
-                                                <label for="HTMLi_synth_waveformHT${id}" class="form-label">HTs Waveform</label>
-                                                <select id="HTMLi_synth_waveformHT${id}" class="form-select">
+                                                <label for="HTMLi_synth_waveformHT${dhcID}" class="form-label">HTs Waveform</label>
+                                                <select id="HTMLi_synth_waveformHT${dhcID}" class="form-select">
                                                     <option value="sine">Sine</option>
                                                     <option value="sawtooth">Sawtooth</option>
                                                     <option value="square">Square</option>
@@ -1958,20 +2145,20 @@ HUM.tmpl = {
 
                                 <div class="row">
                                     <div class="col-lg-4 hum-range-param">
-                                        <label for="HTMLi_synth_reverb${id}" class="form-label hum-justify">DRY &nbsp;&ndash; &nbsp;Reverb &nbsp;&ndash; &nbsp;WET</label>
-                                        <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_reverb${id}" class="form-range">
+                                        <label for="HTMLi_synth_reverb${dhcID}" class="form-label hum-justify">DRY &nbsp;&ndash; &nbsp;Reverb &nbsp;&ndash; &nbsp;WET</label>
+                                        <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_reverb${dhcID}" class="form-range">
                                     </div>
                                     <div class="col-lg-8">
                                       <div class="form-label d-flex align-items-center">IR wave file:&nbsp;
-                                        <span id="HTMLo_synth_irFileName${id}" class="fw-bold fst-italic"></span>
-                                        <button type="button" id="HTMLi_synth_irFileClearBtn${id}" class="btn btn-sm btn-outline-secondary ms-auto" title="Clear (restore the default reverb)" aria-label="Clear and restore the default reverb.">
+                                        <span id="HTMLo_synth_irFileName${dhcID}" class="fw-bold fst-italic"></span>
+                                        <button type="button" id="HTMLi_synth_irFileClearBtn${dhcID}" class="btn btn-sm btn-outline-secondary ms-auto" title="Clear (restore the default reverb)" aria-label="Clear and restore the default reverb.">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                 <use fill-rule="evenodd" href="#dpIcon-clear${humID}"/>
                                             </svg>
                                             <!-- <span class="align-middle">&nbsp;Settings...</span> -->
                                         </button>
                                     </div>
-                                      <input type="file" id="HTMLi_synth_irFile${id}" accept=".wav" class="form-control">
+                                      <input type="file" id="HTMLi_synth_irFile${dhcID}" accept=".wav" class="form-control">
                                     </div>
                                 </div>
 
@@ -1990,19 +2177,19 @@ HUM.tmpl = {
     /**
      * Get the MIDI controls container, one per DHC.
      *
-     * @param {number} id    - The DHC instance ID.
+     * @param {number} dhcID    - The DHC instance ID.
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} - 
      */
-    midiBox(id, humID) {
+    midiBox(dhcID, humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="io" id="HTML_io${id}">
+            <div class="io" id="HTML_io${dhcID}">
 
                 <div class="list-group px-0">
                     
-                    <button type="button" data-bs-toggle="modal" data-bs-target="#HTMLf_motPanelModal${id}" class="btn btn-secondary mx-auto">
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#HTMLf_motPanelModal${dhcID}" class="btn btn-secondary mx-auto">
                         <svg xmlns="http://www.w3.org/2000/svg" width="2.2em" height="2.2em" fill="currentColor" viewBox="0 0 24 24">
                             <use fill-rule="evenodd" href="#dpIcon-midi${humID}"/>
                         </svg>
@@ -2023,10 +2210,10 @@ HUM.tmpl = {
                                         <th>Velocity</th>
                                     </tr>
                                     <tr>
-                                        <td><span id="HTMLo_midiMonitor1_port${id}"></span></td>
-                                        <td><span id="HTMLo_midiMonitor1_channel${id}"></span></td>
-                                        <td><span id="HTMLo_midiMonitor1_note${id}"></span></td>
-                                        <td><span id="HTMLo_midiMonitor1_velocity${id}"></span></td>
+                                        <td><span id="HTMLo_midiMonitor1_port${dhcID}"></span></td>
+                                        <td><span id="HTMLo_midiMonitor1_channel${dhcID}"></span></td>
+                                        <td><span id="HTMLo_midiMonitor1_note${dhcID}"></span></td>
+                                        <td><span id="HTMLo_midiMonitor1_velocity${dhcID}"></span></td>
                                     </tr>
                                 </table>
                             </div>
@@ -2047,23 +2234,23 @@ HUM.tmpl = {
                                     </tr>
                                     <tr>
                                         <th scope="row">#</th>
-                                        <td><span id="HTMLo_monFT_tone${id}"></span></td>
-                                        <td><span id="HTMLo_monHT_tone${id}"></span></td>
+                                        <td><span id="HTMLo_monFT_tone${dhcID}"></span></td>
+                                        <td><span id="HTMLo_monHT_tone${dhcID}"></span></td>
                                     </tr>
                                     <tr>
                                         <th scope="row">Note</th>
-                                        <td><span id="HTMLo_monFT_notename${id}"></span></td>
-                                        <td><span id="HTMLo_monHT_notename${id}"></span></td>
+                                        <td><span id="HTMLo_monFT_notename${dhcID}"></span></td>
+                                        <td><span id="HTMLo_monHT_notename${dhcID}"></span></td>
                                     </tr>
                                     <tr>
                                         <th scope="row">Hz</th>
-                                        <td><span id="HTMLo_monFT_frequency${id}"></span></td>
-                                        <td><span id="HTMLo_monHT_frequency${id}"></span></td>
+                                        <td><span id="HTMLo_monFT_frequency${dhcID}"></span></td>
+                                        <td><span id="HTMLo_monHT_frequency${dhcID}"></span></td>
                                     </tr>
                                     <tr>
                                         <th scope="row" title="MIDI.cent">m#.&cent;</th>
-                                        <td><span id="HTMLo_monFT_midicents${id}"></span></td>
-                                        <td><span id="HTMLo_monHT_midicents${id}"></span></td>
+                                        <td><span id="HTMLo_monFT_midicents${dhcID}"></span></td>
+                                        <td><span id="HTMLo_monHT_midicents${dhcID}"></span></td>
                                     </tr>
                                 </table>
 
@@ -2082,13 +2269,13 @@ HUM.tmpl = {
      *
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} - 
      */
-    splashModal(id) {
+    splashModal(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
             <!-- The Modal -->
-            <div id="HTMLo_splashModal${id}" class="modal fade hum-splash-modal" tabindex="-1"
+            <div id="HTMLo_splashModal${humID}" class="modal fade hum-splash-modal" tabindex="-1"
                      aria-labelledby="Loading..." aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered d-flex justify-content-center">
                     <div class="spinner-border text-light" role="status" style="width: 5rem; height: 5rem;">
@@ -2103,22 +2290,22 @@ HUM.tmpl = {
      *
      * @param {number} humID - The HUM instance ID.
      * 
-     * @returns {HTMLElement} - A `<div>` element.
+     * @returns {HTMLDivElement} - 
      */
-    dialogModal(id) {
+    dialogModal(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div id="HTMLo_dialogModalContainer${id}" class="modal fade" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
-                <div id="HTMLo_dialogModal${id}" class="modal-dialog modal-dialog-centered d-flex justify-content-center">
-                    <div class="modal-content" id="HTMLo_dialogModalContent${id}">
-                        <div class="modal-header" id="HTMLo_dialogModalHeader${id}">
-                            <h5 class="modal-title" id="HTMLo_dialogModalHeaderTitle${id}">Modal title</h5>
-                            <button type="button" class="btn-close" id="HTMLo_dialogModalHeaderCancel${id}" data-bs-dismiss="modal" aria-label="Cancel"></button>
+            <div id="HTMLo_dialogModalContainer${humID}" class="modal fade" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+                <div id="HTMLo_dialogModal${humID}" class="modal-dialog modal-dialog-centered d-flex justify-content-center">
+                    <div class="modal-content" id="HTMLo_dialogModalContent${humID}">
+                        <div class="modal-header" id="HTMLo_dialogModalHeader${humID}">
+                            <h5 class="modal-title" id="HTMLo_dialogModalHeaderTitle${humID}">Modal title</h5>
+                            <button type="button" class="btn-close" id="HTMLo_dialogModalHeaderCancel${humID}" data-bs-dismiss="modal" aria-label="Cancel"></button>
                         </div>
-                        <div class="modal-body" id="HTMLo_dialogModalBody${id}"></div>
-                        <div class="modal-footer" id="HTMLo_dialogModalFooter${id}">
-                            <button type="button" class="btn btn-secondary" id="HTMLo_dialogModalFooterCancel${id}" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="HTMLo_dialogModalFooterOK${id}">OK</button>
+                        <div class="modal-body" id="HTMLo_dialogModalBody${humID}"></div>
+                        <div class="modal-footer" id="HTMLo_dialogModalFooter${humID}">
+                            <button type="button" class="btn btn-secondary" id="HTMLo_dialogModalFooterCancel${humID}" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="HTMLo_dialogModalFooterOK${humID}">OK</button>
                         </div>
                     </div>
                 </div>
@@ -2133,30 +2320,37 @@ HUM.tmpl = {
      * 
      * @returns {HTMLElement} - A `<div>` element.
      */
-    dialogModalContents(id) {
+    dialogModalContents(humID) {
         let template = document.createElement('div');
         template.innerHTML = `
-        <div id="HTMLo_dialogModalContents${id}" class="d-none">
+        <div id="HTMLo_dialogModalContents${humID}" class="d-none">
         </div>`;
         return template.firstElementChild;
     },
 
-    keymapModal(id) {
+    /**
+     * Get the controller keymap modal container, one per DHC.
+     * 
+     * @param {string} dhcID - The DHC instance ID.
+     * 
+     * @returns {HTMLDivElement}
+     */
+    keymapModal(dhcID) {
         let template = document.createElement('div');
         template.innerHTML = `
             <!-- The Modal -->
-            <div id="HTMLo_controllerKeymapModal${id}" class="modal fade" tabindex="-1"
+            <div id="HTMLo_controllerKeymapModal${dhcID}" class="modal fade" tabindex="-1"
                  aria-labelledby="Current Keymap table" aria-hidden="true">
                 <!-- Modal content -->
                 <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
-                    <!-- <span id="HTMLf_controllerKeymapClose${id}" class="modalOverlay_close">&times;</span> -->
+                    <!-- <span id="HTMLf_controllerKeymapClose${dhcID}" class="modalOverlay_close">&times;</span> -->
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Current Controller Keymap table</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="container-fluid" id="HTMLo_controllerKeymapTable${id}">
+                            <div class="container-fluid" id="HTMLo_controllerKeymapTable${dhcID}">
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -2168,11 +2362,28 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
-    midiModal(id) {
+    /**
+     * Get the MIDI settings modal container, one per DHC.
+     * 
+     * @param {string} dhcID - The DHC instance ID.
+     * 
+     * @returns {HTMLDivElement} - 
+     * 
+     * @description
+     * This function creates the complete MIDI settings modal that allows users to configure
+     * MIDI input and output settings for a specific DHC instance.
+     * The modal includes options for MIDI input ports, pitch bend range, note receiving mode,
+     * HT snap tolerance, and FT channel settings.
+     * 
+     * @example
+     * // Create MIDI settings modal for DHC instance '1-0'
+     * const midiSettingsModal = HUM.tmpl.midiModal('1-0');
+     * */
+    midiModal(dhcID) {
         let template = document.createElement('div');
         template.innerHTML = `
             <!-- The Modal -->
-            <div id="HTMLf_motPanelModal${id}" class="modal fade" tabindex="-1"
+            <div id="HTMLf_motPanelModal${dhcID}" class="modal fade" tabindex="-1"
                  aria-labelledby="MIDI Settings panel" aria-hidden="true">
                 <!-- Modal content -->
                 <div class="modal-dialog modal-xl modal-fullscreen-xl-down modal-dialog-centered modal-dialog-scrollable">
@@ -2197,7 +2408,7 @@ HUM.tmpl = {
                                                     Input ports
                                                   </div>
                                                   <div class="card-body">
-                                                    <div id="HTMLo_inputPorts${id}"></div>
+                                                    <div id="HTMLo_inputPorts${dhcID}"></div>
                                                   </div>
                                                 </div>
 
@@ -2217,10 +2428,10 @@ HUM.tmpl = {
                                                                 <div class="col mt-2">
                                                                     <div class="input-group">
                                                                         <input type="number" min="0" max=9600 step="100"
-                                                                                id="HTMLi_midiPitchbendRange${id}"
+                                                                                id="HTMLi_midiPitchbendRange${dhcID}"
                                                                                 class="form-control"
                                                                                 aria-label="Pitch Bend input sensitivity">
-                                                                        <label for="HTMLi_dhc_middleC${id}"
+                                                                        <label for="HTMLi_dhc_middleC${dhcID}"
                                                                                 class="input-group-text">cents</label>
                                                                     </div>
                                                                 </div>
@@ -2235,7 +2446,7 @@ HUM.tmpl = {
                                                                 </div>
                                                                 <div class="col mt-2">
 
-                                                                    <select id="HTMLi_midiReceiveMode${id}" class="form-select">
+                                                                    <select id="HTMLi_midiReceiveMode${dhcID}" class="form-select">
                                                                         <option value="keymap">Controller Keymapped MIDI note #</option>
                                                                         <option value="tsnap-channel">Tone snapping – Channel</option>
                                                                         <option value="tsnap-divider">Tone snapping – Divider</option>
@@ -2248,7 +2459,7 @@ HUM.tmpl = {
                                                             </div>
                                                         </label>
 
-                                                        <label class="list-group-item" id="HTMLo_midiTsnapTolerance_box${id}">
+                                                        <label class="list-group-item" id="HTMLo_midiTsnapTolerance_box${dhcID}">
                                                             <div class="row row-cols-1 align-items-center">
                                                                 <div class="col">
                                                                     <strong class="mb-2">HT snap tolerance</strong>
@@ -2257,7 +2468,7 @@ HUM.tmpl = {
                                                                 <div class="col">
 
                                                                     <div class="input-group">
-                                                                        <input type="number" min="0" max="100" step="1" id="HTMLi_midiTsnapTolerance${id}"
+                                                                        <input type="number" min="0" max="100" step="1" id="HTMLi_midiTsnapTolerance${dhcID}"
                                                                                class="form-control"
                                                                                aria-label="MIDI cents delta (1 mc = 100 c)">
                                                                         <span class="input-group-text">mc delta</span>
@@ -2267,7 +2478,7 @@ HUM.tmpl = {
                                                             </div>
                                                         </label>
 
-                                                        <label class="list-group-item" id="HTMLo_midiTsnapChanFT_box${id}">
+                                                        <label class="list-group-item" id="HTMLo_midiTsnapChanFT_box${dhcID}">
                                                             <div class="row row-cols-1 align-items-center">
                                                                 <div class="col">
                                                                     <strong class="mb-2">FT channel</strong>
@@ -2275,7 +2486,7 @@ HUM.tmpl = {
                                                                 </div>
                                                                 <div class="col">
 
-                                                                    <select id="HTMLi_midiTsnapChanFT${id}" class="form-select"
+                                                                    <select id="HTMLi_midiTsnapChanFT${dhcID}" class="form-select"
                                                                             aria-label="Channel for receiving FT">
                                                                         <option value="0">1</option>
                                                                         <option value="1">2</option>
@@ -2299,7 +2510,7 @@ HUM.tmpl = {
                                                             </div>
                                                         </label>
 
-                                                        <label class="list-group-item" id="HTMLo_midiTsnapChanHT_box${id}">
+                                                        <label class="list-group-item" id="HTMLo_midiTsnapChanHT_box${dhcID}">
                                                             <div class="row row-cols-1 align-items-center">
                                                                 <div class="col">
                                                                     <strong class="mb-2">HTs channel</strong>
@@ -2307,7 +2518,7 @@ HUM.tmpl = {
                                                                 </div>
                                                                 <div class="col">
 
-                                                                    <select id="HTMLi_midiTsnapChanHT${id}" class="form-select"
+                                                                    <select id="HTMLi_midiTsnapChanHT${dhcID}" class="form-select"
                                                                             aria-label="Channel for receiving HTs">
                                                                         <option value="0">1</option>
                                                                         <option value="1">2</option>
@@ -2331,7 +2542,7 @@ HUM.tmpl = {
                                                             </div>
                                                         </label>
 
-                                                        <label class="list-group-item" id="HTMLo_midiTsnapDividerKey_box${id}">
+                                                        <label class="list-group-item" id="HTMLo_midiTsnapDividerKey_box${dhcID}">
                                                             <div class="row row-cols-1 align-items-center">
                                                                 <div class="col">
                                                                     <strong class="mb-2">Divider key</strong>
@@ -2339,14 +2550,14 @@ HUM.tmpl = {
                                                                 </div>
                                                                 <div class="col">
 
-                                                                    <input type="number" min="0" max="127" step="1" class="form-control" id="HTMLi_midiTsnapDividerKey${id}"
+                                                                    <input type="number" min="0" max="127" step="1" class="form-control" id="HTMLi_midiTsnapDividerKey${dhcID}"
                                                                            aria-label="MIDI note number">
 
                                                                 </div>
                                                             </div>
                                                         </label>
 
-                                                        <label class="list-group-item" id="HTMLo_midiTsnapDividerChan_box${id}">
+                                                        <label class="list-group-item" id="HTMLo_midiTsnapDividerChan_box${dhcID}">
                                                             <div class="row row-cols-1 align-items-center">
                                                                 <div class="col">
                                                                     <strong class="mb-2">Channel</strong>
@@ -2354,7 +2565,7 @@ HUM.tmpl = {
                                                                 </div>
                                                                 <div class="col">
 
-                                                                    <select id="HTMLi_midiTsnapDividerChan${id}" class="form-select"
+                                                                    <select id="HTMLi_midiTsnapDividerChan${dhcID}" class="form-select"
                                                                             aria-label="Channel to use for receiving">
                                                                         <option value="0">1</option>
                                                                         <option value="1">2</option>
@@ -2391,21 +2602,21 @@ HUM.tmpl = {
                                                         <table class="table table-sm table-hover monospaced">
                                                             <tr>
                                                                 <th>Port</th>
-                                                                <td><span id="HTMLo_midiMonitor0_port${id}"></span></td>
+                                                                <td><span id="HTMLo_midiMonitor0_port${dhcID}"></span></td>
                                                             </tr>
                                                             <tr>
                                                                 <th>Channel</th>
-                                                                <td><span id="HTMLo_midiMonitor0_channel${id}"></span></td>
+                                                                <td><span id="HTMLo_midiMonitor0_channel${dhcID}"></span></td>
                                                             </tr>
 
                                                             <tr>
                                                                 <th>Note #</th>
-                                                                <td><span id="HTMLo_midiMonitor0_note${id}"></span></td>
+                                                                <td><span id="HTMLo_midiMonitor0_note${dhcID}"></span></td>
                                                             </tr>
 
                                                             <tr>
                                                                 <th>Velocity</th>
-                                                                <td><span id="HTMLo_midiMonitor0_velocity${id}"></span></td>
+                                                                <td><span id="HTMLo_midiMonitor0_velocity${dhcID}"></span></td>
                                                             </tr>
 
                                                         </table>
@@ -2427,8 +2638,8 @@ HUM.tmpl = {
                                                     Output ports
                                                   </div>
                                                   <div class="card-body">
-                                                    <div id="HTMLo_outputPorts${id}"></div>
-                                                    <div class="list-group" id="HTMLf_webMidiLinkPorts${id}"></div>
+                                                    <div id="HTMLo_outputPorts${dhcID}"></div>
+                                                    <div class="list-group" id="HTMLf_webMidiLinkPorts${dhcID}"></div>
                                                   </div>
                                                 </div>
                                             </div>
@@ -2441,7 +2652,7 @@ HUM.tmpl = {
                                                     MIDI-Out Tuning &nbsp;&ndash; &nbsp;PitchBend method
                                                   </div>
                                                   <div class="card-body">
-                                                    <div id="HTMLf_motPanelContent${id}">
+                                                    <div id="HTMLf_motPanelContent${dhcID}">
                                                     </div>
                                                 </div>
                                             </div>
@@ -2461,13 +2672,23 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
-    visualiserBox(id) {
+    /**
+     * Get the visualiser box container, one per DHC.
+     * 
+     * @param {string} dhcID 
+     * 
+     * @returns {HTMLElement} -
+     * 
+     * @description
+     * This function creates the visualiser box that displays the audio visualisation options for a specific DHC instance.
+     */
+    visualiserBox(dhcID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="visualiser TODO" id="HTML_visualiser${id}">
+            <div class="visualiser TODO" id="HTML_visualiser${dhcID}">
                 <div>
                     <div class="synthVisualiser">
-                        <select id="HTMLi_visualiser${id}" name="visual">
+                        <select id="HTMLi_visualiser${dhcID}" name="visual">
                           <option value="sinewave">Sinewave</option>
                           <option value="frequencybars" selected>Frequency bars</option>
                           <option value="off">Off</option>
@@ -2479,10 +2700,19 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
-    fmBox(id) {
+    /**
+     * Get the FM box container, one per DHC.
+     * 
+     * @param {string} dhcID 
+     * 
+     * @returns {HTMLDivElement} - 
+     * 
+     * @description 
+     */
+    fmBox(dhcID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="fm" id="HTML_fm${id}">
+            <div class="fm" id="HTML_fm${dhcID}">
                 <div>This is the <b><i>main root</i></b> tone on which all other tones are calculated.</div>
                 <div>You can set the FM by <b>MIDI note number</b> (with decimals, that are the cents) OR by <b>frequency</b>.</div>
                 <div class="list-group mt-3">
@@ -2495,12 +2725,12 @@ HUM.tmpl = {
                             <div class="col-12 col-md-auto">
                                 <div class="row align-items-center">
                                     <div class="col-12 col-lg">
-                                        <span id="HTMLo_fm_mc_monitor${id}" class="hmFMout"></span>
+                                        <span id="HTMLo_fm_mc_monitor${dhcID}" class="hmFMout"></span>
                                     </div>
                                     <div class="col-12 col-lg-auto">
                                         <div class="input-group">
                                             <input type="number" min="-9999" max="9999" step="1"
-                                                   id="HTMLi_fm_mc${id}"
+                                                   id="HTMLi_fm_mc${dhcID}"
                                                    class="form-control"
                                                    aria-label="Frequency expressed in MIDI units with decimals">
                                             <span class="input-group-text">midi#.&cent;</span>
@@ -2519,12 +2749,12 @@ HUM.tmpl = {
                             <div class="col-12 col-md-auto">
                                 <div class="row align-items-center">
                                     <div class="col-12 col-lg hmFMout">
-                                        <span id="HTMLo_fm_hz_monitor${id}"></span> Hz
+                                        <span id="HTMLo_fm_hz_monitor${dhcID}"></span> Hz
                                     </div>
                                     <div class="col-12 col-lg-auto">
                                         <div class="input-group">
                                             <input type="number" min="1" max="99999" step="1"
-                                                   id="HTMLi_fm_hz${id}"
+                                                   id="HTMLi_fm_hz${dhcID}"
                                                    class="form-control"
                                                    aria-label="Note in hertz">
                                             <span class="input-group-text">Hz</span>
@@ -2539,21 +2769,30 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
-    ftBox(id) {
+    /**
+     * 
+     * @param {string} dhcID
+     * 
+     * @returns {HTMLDivElement} - 
+     * 
+     * @description 
+     * 
+     */
+    ftBox(dhcID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="ft" id="HTML_ft${id}">
+            <div class="ft" id="HTML_ft${dhcID}">
                 <div>This is the <b><i>tuning system</i></b> on which the Fundamental Tones (FTs) "palette" is calculated.</div>
                 <div>You can calculate the FTs by <b>Equal Temperaments</b> method or by <b>Harmonic/Subharmonic</b> tones.</div>
                 <div>Remember that all computation are based on the <i>Fundamental Mother</i> (FM) frequency.</div>
                 <div class="card mt-3">
-                  <label class="card-header" for="HTMLf_ftSys_NEDX${id}">
+                  <label class="card-header" for="HTMLf_ftSys_NEDX${dhcID}">
                     <h6 class="d-flex">
-                        <input class="me-2" type="radio" name="ftTuningSystem" value="n-edx" id="HTMLf_ftSys_NEDX${id}">
+                        <input class="me-2" type="radio" name="ftTuningSystem" value="n-edx" id="HTMLf_ftSys_NEDX${dhcID}">
                         <div class="fw-bold">n-EDx (Equal Temperaments)</div>
                     </h6>
                   </label>
-                  <div class="card-body" id="HTMLo_ftNEDX${id}">
+                  <div class="card-body" id="HTMLo_ftNEDX${dhcID}">
 
                     <div class="row align-items-center">
 
@@ -2573,7 +2812,7 @@ HUM.tmpl = {
                                             <div class="input-group">
                                                 <span class="ftNEDX_VarsTxt input-group-text"> x = </span>
                                                 <input type="number" min="0" max="9999" step="1"
-                                                       id="HTMLi_ftNEDX_unit${id}"
+                                                       id="HTMLi_ftNEDX_unit${dhcID}"
                                                        class="form-control"
                                                        aria-label="...">
                                             </div>
@@ -2590,7 +2829,7 @@ HUM.tmpl = {
                                             <div class="input-group">
                                                 <span class="ftNEDX_VarsTxt input-group-text"> n = </span>
                                                 <input type="number" min="0" max="9999" step="1"
-                                                       id="HTMLi_ftNEDX_division${id}"
+                                                       id="HTMLi_ftNEDX_division${dhcID}"
                                                        class="form-control"
                                                        aria-label="...">
                                             </div>
@@ -2607,19 +2846,19 @@ HUM.tmpl = {
                 </div>
 
                 <div class="card">
-                  <label class="card-header" for="HTMLf_ftSys_HSnat${id}">
+                  <label class="card-header" for="HTMLf_ftSys_HSnat${dhcID}">
                     <h6 class="d-flex">
-                        <input class="me-2" type="radio" name="ftTuningSystem" value="h_s-nat" id="HTMLf_ftSys_HSnat${id}">
+                        <input class="me-2" type="radio" name="ftTuningSystem" value="h_s-nat" id="HTMLf_ftSys_HSnat${dhcID}">
                         <span class="fw-bold">Harm./Sub. Natural (for Diphonic Pad)</span>
                     </h6>
                   </label>
-                  <label class="card-header" for="HTMLf_ftSys_HStrans${id}">
+                  <label class="card-header" for="HTMLf_ftSys_HStrans${dhcID}">
                     <h6 class="d-flex">
-                        <input class="me-2" type="radio" name="ftTuningSystem" value="h_s-trans" id="HTMLf_ftSys_HStrans${id}">
+                        <input class="me-2" type="radio" name="ftTuningSystem" value="h_s-trans" id="HTMLf_ftSys_HStrans${dhcID}">
                         <span class="fw-bold">Harm./Sub. Same Octave (for Keymap)</span>
                     </h6>
                   </label>
-                  <div class="card-body" id="HTMLo_ftHS${id}">
+                  <div class="card-body" id="HTMLo_ftHS${dhcID}">
 
                     <div class="row align-items-center">
                         <div class="col col-md col-12 text-center text-md-start">
@@ -2640,9 +2879,9 @@ HUM.tmpl = {
                         </div>
                         <div class="col">
                             <div class="input-group mb-3 align-items-center">
-                                <button id="HTMLi_ftHStranspose_h_minus${id}" class="btn btn-secondary">&minus;</button>
-                                <span id="HTMLo_ftHStranspose_h_ratio${id}" class="form-control mx-auto text-center"></span>
-                                <button id="HTMLi_ftHStranspose_h_plus${id}" class="btn btn-secondary">&plus;</button>
+                                <button id="HTMLi_ftHStranspose_h_minus${dhcID}" class="btn btn-secondary">&minus;</button>
+                                <span id="HTMLo_ftHStranspose_h_ratio${dhcID}" class="form-control mx-auto text-center"></span>
+                                <button id="HTMLi_ftHStranspose_h_plus${dhcID}" class="btn btn-secondary">&plus;</button>
                             </div>
                         </div>
                     </div>
@@ -2653,9 +2892,9 @@ HUM.tmpl = {
                         </div>
                         <div class="col">
                             <div class="input-group mb-3 align-items-center">
-                                <button id="HTMLi_ftHStranspose_s_minus${id}" class="btn btn-secondary">&minus;</button>
-                                <span id="HTMLo_ftHStranspose_s_ratio${id}" class="form-control mx-auto text-center"></span>
-                                <button id="HTMLi_ftHStranspose_s_plus${id}" class="btn btn-secondary">&plus;</button>
+                                <button id="HTMLi_ftHStranspose_s_minus${dhcID}" class="btn btn-secondary">&minus;</button>
+                                <span id="HTMLo_ftHStranspose_s_ratio${dhcID}" class="form-control mx-auto text-center"></span>
+                                <button id="HTMLi_ftHStranspose_s_plus${dhcID}" class="btn btn-secondary">&plus;</button>
                             </div>
                         </div>
                     </div>
@@ -2667,10 +2906,19 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
-    htBox(id) {
+    /**
+     * Method for
+     * 
+     * @param {HTMLDivElement} dhcID
+     * 
+     * @returns {HTMLDivElement}
+     * 
+     * @description
+     */
+    htBox(dhcID) {
         let template = document.createElement('div');
         template.innerHTML = `
-            <div class="ht overflow-scroll" id="HTML_ht${id}">
+            <div class="ht overflow-scroll" id="HTML_ht${dhcID}">
                 <div>With this <b><i>transposition tool</i></b> you can move the Harmonic Tones (HTs) up or down by octaves.</div>
                 <div>The HTs table includes both <b>Harmonics</b> and <b>Subharmonics</b> tones
                      (note that you may have to transpose up the subharmonics in order to hear them).
@@ -2702,28 +2950,28 @@ HUM.tmpl = {
 
                         <div class="row align-items-center">
                             <div class="col col-md col-12 text-center text-md-start">
-                                <label for="HTMLi_htTranspose_h_ratio${id}" class="form-label h6">Harmonics</label>
+                                <label for="HTMLi_htTranspose_h_ratio${dhcID}" class="form-label h6">Harmonics</label>
                             </div>
                             <div class="col">
                                 <div class="input-group mb-3 align-items-center flex-nowrap">
-                                    <button id="HTMLi_htTranspose_h_minus${id}" class="btn btn-secondary">&minus;</button>
-                                    <input type="number" min="0" max="9999" step="1" id="HTMLi_htTranspose_h_ratio${id}"
+                                    <button id="HTMLi_htTranspose_h_minus${dhcID}" class="btn btn-secondary">&minus;</button>
+                                    <input type="number" min="0" max="9999" step="1" id="HTMLi_htTranspose_h_ratio${dhcID}"
                                            class="form-control w-auto m-auto text-center" aria-label="...">
-                                    <button id="HTMLi_htTranspose_h_plus${id}" class="btn btn-secondary">&plus;</button>
+                                    <button id="HTMLi_htTranspose_h_plus${dhcID}" class="btn btn-secondary">&plus;</button>
                                 </div>
                             </div>
                         </div>
 
                         <div class="row align-items-center">
                             <div class="col col-md col-12 text-center text-md-start">
-                                <label for="HTMLi_htTranspose_s_ratio${id}" class="form-label h6">Subharmonics</label>
+                                <label for="HTMLi_htTranspose_s_ratio${dhcID}" class="form-label h6">Subharmonics</label>
                             </div>
                             <div class="col">
                                 <div class="input-group mb-3 align-items-center flex-nowrap">
-                                    <button id="HTMLi_htTranspose_s_minus${id}" class="btn btn-secondary">&minus;</button>
-                                    <input type="number" min="0" max="9999" step="1" id="HTMLi_htTranspose_s_ratio${id}"
+                                    <button id="HTMLi_htTranspose_s_minus${dhcID}" class="btn btn-secondary">&minus;</button>
+                                    <input type="number" min="0" max="9999" step="1" id="HTMLi_htTranspose_s_ratio${dhcID}"
                                            class="form-control w-auto m-auto text-center" aria-label="...">
-                                    <button id="HTMLi_htTranspose_s_plus${id}" class="btn btn-secondary">&plus;</button>
+                                    <button id="HTMLi_htTranspose_s_plus${dhcID}" class="btn btn-secondary">&plus;</button>
                                 </div>
                             </div>
                         </div>
@@ -2734,6 +2982,17 @@ HUM.tmpl = {
         return template.firstElementChild;
     },
 
+    /**
+     * La funzione webMidiLinkPorts
+     * 
+     * @param {string} id - An unique identifier.
+     * @param {string} key - 
+     * @param {number} humID - 
+     * 
+     * @returns
+     * 
+     * @description 
+     */
     webMidiLinkPorts(id, key, humID) {
         let template = document.createElement('div');
         template.innerHTML = `

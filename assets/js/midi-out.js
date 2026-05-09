@@ -1,38 +1,65 @@
  /**
+ * @fileoverview MIDI Output message preparation and routing for Harmonicarium.
+ * This file defines the HUM.midi.MidiOut class which manages MIDI output ports,
+ * multichannel polyphony assignment, and outgoing MIDI message construction.
+ *
+ * @module midi-out
+ * @memberof HUM.midi
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ *
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
- *  
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 "use strict";
 
-/** 
- * The MidiOut class.
- *     Prepare the MIDI Output messages and send them to the MIDI-OUT ports.
+/**
+ * MIDI Output message router and port manager for Harmonicarium.
+ *
+ * @class
+ * @memberof HUM.midi
+ *
+ * @description
+ * The HUM.midi.MidiOut class manages all outgoing MIDI operations. It handles:
+ * - Routing outgoing MIDI messages to the selected output ports
+ * - Multichannel polyphony assignment via the PitchBend tuning method
+ * - Construction of Note-ON/OFF and Pitch Bend MIDI messages
+ * - Retiming active notes when the tuning changes (FT or HT update)
+ * - Building the MIDI-OUT Tuning UI for per-port channel assignment
  */
 HUM.midi.MidiOut = class MidiOut {
     /**
-    * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
-    * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
-    */
+     * Creates a new MidiOut instance and binds it to the given DHC and MidiHub.
+     *
+     * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
+     * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
+     *
+     * @description
+     * Initializes the MidiOut controller by:
+     * 1. Storing references to the parent DHC and MidiHub instances.
+     * 2. Setting up the per-port instrument settings cache.
+     * 3. Obtaining the MIDI-OUT Tuning modal container from the DOM.
+     * 4. Registering this instance as a DHC subscriber for real-time updates.
+     */
     constructor(dhc, midi) {
         /**
         * The id of this MidiOut instance (same as the DHC id).
@@ -68,7 +95,9 @@ HUM.midi.MidiOut = class MidiOut {
          */
         this.settings = {};
         /**
-         * Get the "MIDI-OUT Tuning" HTML element and store to global
+         * The HTML container element for the MIDI-OUT Tuning modal panel content.
+         * Used by {@link HUM.midi.MidiOut#updateMidiOutUI} to inject the per-port
+         * channel assignment UI.
          *
          * @member {HTMLElement}
          */
@@ -82,9 +111,21 @@ HUM.midi.MidiOut = class MidiOut {
     // ===========================
 
     /**
-     * Manage and route an incoming DHC message.
-     * 
-     * @param {HUM.DHCmsg} msg - The incoming message.
+     * Manages and routes an incoming DHC message to the appropriate handler.
+     *
+     * @param {HUM.DHCmsg} msg - The incoming message from the DHC.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Processes DHC messages according to their command type:
+     * - `panic`: Calls `allNotesOff('soft')` to silence all active notes immediately.
+     * - `update/ft`: Calls `updateMIDInoteON('ft')` to retune all held FT notes.
+     * - `update/ht`: Calls `updateMIDInoteON('ht')` to retune all held HT notes.
+     * - `tone-on/ft`: Sends a Note-ON via `midiOut()` for the given FT.
+     * - `tone-on/ht`: Sends a Note-ON via `midiOut()` for the given HT (HT 0 / Piper is skipped).
+     * - `tone-off/ft`: Sends a Note-OFF via `midiOut()` for the given FT.
+     * - `tone-off/ht`: Sends a Note-OFF via `midiOut()` for the given HT (HT 0 / Piper is skipped).
      */
     updatesFromDHC(msg) {
 
@@ -138,8 +179,23 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * Update the MIDI-OUT Tuning UI.
-     * Create the UI to manage the MIDI port channels assignment.
+     * Rebuilds the MIDI-OUT Tuning UI for all currently selected output ports.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Clears the MIDI-OUT Tuning modal content area, then iterates over all
+     * selected output ports and, for each one:
+     * 1. Initialises per-port settings with defaults if the port is new.
+     * 2. Creates a channel assignment table with checkboxes for FT and HT rows,
+     *    allowing the user to map MIDI channels to Fundamental or Harmonic Tones.
+     * 3. Adds number inputs for PitchBend sensitivity range (in semitones) and
+     *    Note-ON delay (in milliseconds), together with a "Send" button that
+     *    transmits the RPN Pitch Bend Sensitivity message to the instrument.
+     * 4. Appends the composed port block to the modal container.
+     *
+     * Channel 10 (index 9) is visually marked as the General MIDI percussion
+     * channel.
      */
     updateMidiOutUI() {
         let dhcID = this.dhc.id;
@@ -353,11 +409,23 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * What to do if a MIDI channel is selected in the MIDI-OUT PitchBend Method UI.
+     * Handles a channel selection change in the MIDI-OUT PitchBend Method UI.
      *
-     * @param {Event}          event              - OnClick Event on the MIDI-OUT PitchBend Method channel checkboxes.
-     * @param {Object}         event.target       - The event's target HTML element (could be just a namespace).
-     * @param {ChanAssignment} event.target.value - JSON string containing the informations about the assignment of the channel.
+     * @param {Event}          event              - `click` event fired by a channel assignment checkbox.
+     * @param {Object}         event.target       - The checkbox element that was clicked.
+     * @param {ChanAssignment} event.target.value - JSON string with the channel assignment data.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Parses the {@link ChanAssignment} JSON from the clicked checkbox, then:
+     * - **On check**: adds the channel to the selected tone-type's `used` array,
+     *   removes it from the opposite tone-type's array, and unchecks the
+     *   corresponding checkbox on the other row to prevent double-assignment.
+     * - **On uncheck**: calls `allNotesOffChannel()` to silence any active notes,
+     *   then removes the channel from the `used` array.
+     *
+     * Both FT and HT `used` arrays are sorted numerically after every change.
      */
     chanSelect(event) {
         // console.log(event);
@@ -402,9 +470,17 @@ HUM.midi.MidiOut = class MidiOut {
         this.dhc.harmonicarium.components.backendUtils.eventLog("MIDI multichannel polyphony assignment:\n| Output port = " + this.midi.port.selectedOutputs.get(chanSet.port).name + "\n| " + chanSet.fn.toUpperCase() + " selected channels = " + this.settings[chanSet.port].pb.channels[chanSet.fn].used + "\n| " + chanSet.not.toUpperCase() + " selected channels = " + this.settings[chanSet.port].pb.channels[chanSet.not].used + "\n| ---------------------------------------");
     }
     /**
-     * Try turning off all currently instruments' playing notes across all output used MIDI ports.
-     * 
-     * @param {('soft'|'hard')} mode - The way the command must be executed.
+     * Sends All Notes Off across every selected MIDI output port.
+     *
+     * @param {('soft'|'hard')} mode - Execution mode: `'soft'` sends a MIDI CC 123
+     *   (All Notes Off) on each channel; `'hard'` sends an explicit Note-OFF for
+     *   every MIDI note number (0–127) on each channel.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Iterates over all ports in `midi.port.selectedOutputs` and delegates
+     * to {@link HUM.midi.MidiOut#allNotesOffPort} for each one.
      */
     allNotesOff(mode) {
         this.midi.port.selectedOutputs.forEach((port, portID) => {
@@ -412,10 +488,18 @@ HUM.midi.MidiOut = class MidiOut {
         });
     }
     /**
-     * Try turning off all currently instruments' playing-notes on the given MIDI Port.
-     * 
-     * @param {string}          portID - The MIDI output Port ID.
-     * @param {('soft'|'hard')} mode   - The way the command must be executed.
+     * Sends All Notes Off on every active channel of the given MIDI output port.
+     *
+     * @param {string}          portID - The ID of the MIDI output port.
+     * @param {('soft'|'hard')} mode   - Execution mode passed through to
+     *   {@link HUM.midi.MidiOut#allNotesOffChannel}.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Collects all channels that are either in the `used` or `held` arrays for
+     * both FT and HT tone types, de-duplicates them, and calls
+     * {@link HUM.midi.MidiOut#allNotesOffChannel} for each one.
      */
     allNotesOffPort(portID, mode) {
         // Get all used ports (used + held)
@@ -443,11 +527,19 @@ HUM.midi.MidiOut = class MidiOut {
         // this.settings[portID].pb.channels.ht.held = [];
     }
     /**
-     * Try turning off all currently instruments' playing-notes on the given MIDI Channel of a MIDI Port.
-     * 
-     * @param {string}          portID  - The MIDI output Port ID.
-     * @param {midichan}        channel - The Channel on that MIDI Port.
-     * @param {('soft'|'hard')} mode    - The way the command must be executed.
+     * Sends All Notes Off on a single channel of the given MIDI output port.
+     *
+     * @param {string}          portID  - The ID of the MIDI output port.
+     * @param {midichan}        channel - The MIDI channel number (0–15) to silence.
+     * @param {('soft'|'hard')} mode    - Execution mode: `'soft'` sends CC 123
+     *   (All Notes Off); `'hard'` sends an explicit Note-OFF for every note 0–127.
+     *
+     * @returns {void}
+     *
+     * @description
+     * After sending the MIDI silencing message, cleans up internal state by
+     * moving any entries in the `held` object whose channel matches back into
+     * the `used` array for both FT and HT tone types.
      */
     allNotesOffChannel(portID, channel, mode) {
         let midiOutput = this.midi.port.selectedOutputs.get(portID),
@@ -475,10 +567,24 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * Send the MIDI Pitch Bend Sensitivity (range) message over all the ports of a given Tone Type and MIDI Port.
+     * Sends a MIDI Pitch Bend Sensitivity (RPN 0) message to all assigned channels
+     * of a given tone type on the specified output port.
      *
-     * @param {string}   portID - The MIDI-OUT port on which to send the message.
-     * @param {tonetype} type   - If the ports to which the message should be sent are assigned to FTs or HTs.
+     * @param {string}   portID - The ID of the MIDI-OUT port to target.
+     * @param {tonetype} type   - The tone type (`'ft'` or `'ht'`) whose assigned
+     *   channels should receive the message.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Iterates over the `used` channel array for the given `type` and sends the
+     * standard RPN sequence that sets Pitch Bend Sensitivity on each channel:
+     * CC 100 (RPN LSB = 0), CC 101 (RPN MSB = 0), CC 6 (Data Entry MSB = range
+     * in semitones), CC 100 (RPN LSB = 127 / null), CC 101 (RPN MSB = 127 / null).
+     *
+     * If any notes are currently held on that port/type, an alert is shown asking
+     * the user to stop playing before retrying, since sending RPN messages while
+     * notes are active can cause stuck notes on some instruments.
      */
     sendMIDIoutPBrange(portID, type) {
         let midiOutput = this.midi.port.selectedOutputs.get(portID);
@@ -509,14 +615,19 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * Create a MIDI Note ON/OFF message.
+     * Creates a MIDI Note-ON or Note-OFF message.
      *
-     * @param {midichan} ch       - MIDI Channel to which the message should be sent.
-     * @param {(0|1)}    state    - Note ON or OFF; 1 is Note-ON, 0 is Note-OFF.
-     * @param {midinnum} note     - MIDI Note number (from 0 to 127).
-     * @param {velocity} velocity - MIDI Velocity amount (from 0 to 127).
+     * @param {midichan} ch       - MIDI channel (0–15) on which to send the message.
+     * @param {(0|1)}    state    - `1` for Note-ON, `0` for Note-OFF.
+     * @param {midinnum} note     - MIDI note number (0–127).
+     * @param {velocity} velocity - MIDI velocity amount (0–127).
      *
-     * @return {Array} - The MIDI Note ON/OFF message.
+     * @returns {Array.<number>} A three-byte MIDI message array
+     *   (`[statusByte, noteNumber, velocity]`).
+     *
+     * @description
+     * Builds a standard three-byte MIDI Note-ON (`0x9n`) or Note-OFF (`0x8n`)
+     * message where `n` is the zero-based channel number.
      */
     makeMIDIoutNoteMsg(ch, state, note, velocity) {
         let msg = [];
@@ -529,12 +640,18 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * Create a MIDI Pitch Bend Change message.
+     * Creates a MIDI Pitch Bend Change message.
      *
-     * @param {midichan} ch     - MIDI Channel to which the message should be sent (from 0 to 15).
-     * @param {number}   amount - Pitch Bend amount (from 0 to 16383).
+     * @param {midichan} ch     - MIDI channel (0–15) on which to send the message.
+     * @param {number}   amount - Pitch Bend amount (0–16383; centre value 8192 = no bend).
      *
-     * @return {Array} - The MIDI Pitch Bend Change message.
+     * @returns {Array.<number>} A three-byte MIDI message array
+     *   (`[statusByte, lsb, msb]`).
+     *
+     * @description
+     * Builds a standard three-byte MIDI Pitch Bend Change (`0xEn`) message where
+     * `n` is the zero-based channel number. The 14-bit `amount` is split into a
+     * 7-bit LSB and a 7-bit MSB.
      */
     makeMIDIoutPitchBendMsg(ch, amount) {
         let lsb = amount & 0x7F;
@@ -544,14 +661,28 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * @todo - The voice stealing implementation of the MIDI-OUT has not the same results of the DHC/Synth.
-     *         When voices are overloaded on HT and you release a key on the controller there is a different behavior.
-     */
-
-    /**
-     * Update the frequency of every sill pending Note-ON.
+     * Retunes every still-pending Note-ON by sending a Note-OFF/Note-ON pair
+     * with the updated pitch data.
      *
-     * @param {tonetype} type - If the notes/channels to be updated are the FT or HT ones.
+     * @param {tonetype} type - The tone type (`'ft'` or `'ht'`) whose held notes
+     *   should be retuned.
+     *
+     * @returns {void}
+     *
+     * @description
+     * For each selected output port using the PitchBend tuning method, iterates
+     * over the currently held channels and re-sends each active note as a
+     * Note-OFF (velocity 64) followed by a new Note-ON with the fresh pitch
+     * data from the DHC tables. Notes that were originally placed by Tsnap are
+     * skipped, as their pitch is managed independently.
+     *
+     * When `type` is `'ft'`, both FT-held and HT-held notes are retuned,
+     * because changing the Fundamental Tone also shifts all derived Harmonic Tones.
+     * When `type` is `'ht'`, only HT-held notes are retuned.
+     *
+     * @todo The voice-stealing implementation of the MIDI-OUT does not produce
+     *   the same result as the DHC/Synth: when voices are overloaded on HT and a
+     *   key is released on the controller, the behaviour differs.
      */
     updateMIDInoteON(type) {
         // For each selected MIDI-OUT ports
@@ -612,15 +743,27 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * For each selected MIDI-OUT Port, prepare and send the MIDI-OUT message according
-     * to the selected MIDI-OUT Tuning Method of the Port.
+     * Prepares and dispatches a MIDI-OUT message to every selected output port
+     * for the given tone event.
      *
-     * @param {midinnum} ctrlNum  - MIDI Note number of the original MIDI-IN message from the controller.
+     * @param {midinnum} ctrlNum  - MIDI note number of the original MIDI-IN message from the controller.
      * @param {xtnum}    xtNum    - Outgoing FT or HT relative tone number.
-     * @param {velocity} velocity - MIDI Velocity amount (from 0 to 127) of the original MIDI-IN message from the controller.
-     * @param {(0|1)}    state    - Note ON or OFF; 1 is Note-ON, 0 is Note-OFF.
-     * @param {tonetype} type     - If the outgoing MIDI message is for FTs or HTs.
-     * @param {boolean=} tsnap    - If the note is managed by Tsnap.
+     * @param {velocity} velocity - MIDI velocity (0\u2013127) of the original MIDI-IN message.
+     * @param {(0|1)}    state    - `1` for Note-ON, `0` for Note-OFF.
+     * @param {tonetype} type     - Whether the message is for FTs (`'ft'`) or HTs (`'ht'`).
+     * @param {boolean=} tsnap    - `true` if the note is managed by Tsnap.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Looks up the tone object from the DHC tables and iterates over all selected
+     * output ports. For each port using the PitchBend tuning method, checks that
+     * the computed MIDI note number is in the valid 0\u2013127 range, then delegates
+     * to {@link HUM.midi.MidiOut#sendMIDIoutPB}.
+     *
+     * If a Note-ON arrives for a `ctrlNum` that already has a held entry (Double
+     * Note-ON), a Note-OFF is sent first to avoid stuck notes before the new
+     * Note-ON.
      */
     midiOut(ctrlNum, xtNum, velocity, state, type, tsnap=false) {
         let xtObj = this.dhc.tables[type][xtNum];
@@ -648,18 +791,48 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
     /**
-     * MIDI-OUT Tuning - PITCHBEND METHOD core.
-     * The main function to manage the multichannel poly-assignment and send the MIDI messages.
-     * This is to implement the "MIDI Channel Mode 4" (aka "Guitar Mode") for outgoing messages.
+     * Core of the PitchBend tuning method: manages multichannel polyphony
+     * assignment and sends the outgoing MIDI messages for a single port.
      *
-     * @param {midinnum}      ctrlNum  - MIDI Note number of the original MIDI-IN message from the controller
-     * @param {xtnum}         xt       - Outgoing FT or HT relative tone number
-     * @param {HUM.DHC#Xtone} xtObj    - FT or HT object of the outgoing tone
-     * @param {velocity}      velocity - MIDI Velocity amount (from 0 to 127) of the original MIDI-IN message from the controller
-     * @param {(0|1)}         state    - Note ON or OFF; 1 is Note-ON, 0 is Note-OFF
-     * @param {tonetype}      type     - If the outgoing MIDI message is for FTs or HTs
-     * @param {string}        portID   - ID of the MIDI-OUT Port to send the message to
-     * @param {boolean=}      tsnap    - If the note is managed by Tsnap
+     * This implements "MIDI Channel Mode 4" (aka "Guitar Mode") for outgoing
+     * messages: each simultaneously active note is assigned its own MIDI channel
+     * so that per-note Pitch Bend can be applied without affecting other voices.
+     *
+     * @param {midinnum}      ctrlNum  - MIDI note number of the original MIDI-IN message from the controller.
+     * @param {xtnum}         xt       - Outgoing FT or HT relative tone number.
+     * @param {HUM.DHC#Xtone} xtObj    - FT or HT tone object containing `mc` (midicent) and `hz`.
+     * @param {velocity}      velocity - MIDI velocity (0\u2013127) of the original MIDI-IN message.
+     * @param {(0|1)}         state    - `1` for Note-ON, `0` for Note-OFF.
+     * @param {tonetype}      type     - Whether the message is for FTs (`'ft'`) or HTs (`'ht'`).
+     * @param {string}        portID   - ID of the MIDI-OUT port to send the message to.
+     * @param {boolean=}      tsnap    - `true` if the note is managed by Tsnap.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Converts the midicent value of the tone object into an integer MIDI note
+     * number and a fractional cent offset, then scales the offset into a 14-bit
+     * Pitch Bend value.
+     *
+     * **Note-ON** — Finds the next available channel (round-robin from the last
+     * used one). If all channels are occupied (overload), the oldest held channel
+     * is stolen. The selected channel is moved from `used` to `held`, and a
+     * Pitch Bend message followed by a Note-ON message are queued.
+     *
+     * FT polyphony is monophonic by design (only one FT channel is typically
+     * active at a time); when a new FT Note-ON arrives while a channel is held,
+     * the previous note is closed first.
+     *
+     * HT polyphony is truly multi-voice; `heldOrder` tracks the assignment
+     * sequence to enable oldest-first voice stealing.
+     *
+     * **Note-OFF** — Retrieves the channel stored in `held` for `ctrlNum`,
+     * queues a Note-OFF, and returns the channel to the `used` pool.
+     *
+     * The outgoing message queue is sent with a configurable delay between the
+     * Pitch Bend and Note-ON messages to avoid timing issues on some instruments.
+     * Channel checkboxes in the UI are enabled/disabled to reflect the
+     * current hold state of each channel.
      */
     sendMIDIoutPB(ctrlNum, xt, xtObj, velocity, state, type, portID, tsnap=false) {
         // @todo - Some functional Note-OFF must be sent without delay?!?
@@ -915,9 +1088,29 @@ HUM.midi.MidiOut = class MidiOut {
 
 
 /**
- * Default Port settings for MIDI-OUT tuning methods; each out Port has its own settings.
- */            
+ * Default per-port settings for MIDI-OUT tuning methods.
+ *
+ * @class
+ * @memberof HUM.midi.MidiOut
+ *
+ * @description
+ * Each time a new MIDI output port is encountered, an instance of this class
+ * is created and stored in {@link HUM.midi.MidiOut#settings} under the port ID.
+ * It holds all mutable state needed by the PitchBend tuning method: channel
+ * assignment arrays, Pitch Bend sensitivity range, Note-ON delay, and
+ * voice-stealing flags.
+ */
 HUM.midi.MidiOut.prototype.InstrumentSettings = class {
+    /**
+     * Creates a new InstrumentSettings instance with factory defaults.
+     *
+     * @description
+     * Initialises the PitchBend method settings (`pb`) with three FT channels
+     * (0\u20132) and five HT channels (3\u20137), a 2-semitone PB range, a 5 ms Note-ON
+     * delay, and voice stealing enabled for both tone types.
+     * Also reserves a namespace for the MIDI Tuning Standard method (`mts`,
+     * currently not implemented) and sets the active tuning method to `'pb'`.
+     */
     constructor() {
         /**
         * Pitch Bend method settings namespace.

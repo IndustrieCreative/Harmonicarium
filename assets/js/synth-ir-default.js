@@ -1,51 +1,65 @@
 /**
+ * @fileoverview Default Impulse Response (IR) reverb data for the Harmonicarium synthesizer.
+ * This file contains a Base64-encoded WAV impulse response used as the built-in
+ * reverb convolution preset when no external IR file has been loaded by the user.
+ *
+ * @module synth-ir-default
+ * @memberof HUM
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ *
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
- /**
- * @fileoverview DEFAULT IR REVERB FILE<br>
- *     The IR .wav file is encoded in Base64
+ *
+ * @note The IR WAV file is embedded as a Base64 data URI so that it can be
+ * loaded automatically under the `file://` protocol without triggering CORS
+ * errors that would block a `fetch()` of an external resource.
  */
 
 "use strict";
 
 /**
- * IR file from the Voxengo Free Reverb Impulse Responses library by Aleksey Vaneev (The Musikvereinssaal, Vienna).
- * NB: The audio file is encoded in Base64 so that it can be auto-loaded under the local file:// protocol.
- * 
- * @see {@link http://www.voxengo.com/impulses/}
- * @see Voxengo_LICENSE in the ./ir/ directory
- *
- * @example
- * <caption>To make a Base64 file with OpenSSL:</caption>
- * #openssl base64 -in /path/ir.wav -out /path/ir.base64 
+ * Default reverb impulse response (IR) bundled with the synthesizer.
  *
  * @memberof HUM.Synth
- * 
+ *
  * @type {Object}
  *
- * @property {string} name - Filename.
- * @property {string} data - The WAV audio file encoded in Base64.
+ * @property {string} name - Human-readable label for this IR preset
+ *   (filename / description shown in the UI).
+ * @property {string} data - The WAV audio file encoded as a Base64 data URI
+ *   (`data:audio/wav;base64,…`), ready to be decoded by the Web Audio API
+ *   `AudioContext.decodeAudioData()`.
+ *
+ * @description
+ * IR file from the Voxengo Free Reverb Impulse Responses library by
+ * Aleksey Vaneev — recorded in The Musikvereinssaal, Vienna.
+ * The audio data is stored inline as a Base64 data URI so that it loads
+ * correctly under the `file://` protocol without requiring a web server.
+ *
+ * @see {@link http://www.voxengo.com/impulses/} Voxengo Free Impulse Responses
+ * @see Voxengo_LICENSE in the `./ir/` directory
+ *
+ * @example <caption>Re-encode a WAV file to Base64 with OpenSSL:</caption>
+ * #openssl base64 -in /path/to/ir.wav -out /path/to/ir.base64
  */
 HUM.Synth.defaultReverb = {
     // The IR file name or description

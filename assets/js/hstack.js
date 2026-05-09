@@ -1,12 +1,21 @@
- /**
+/**
+ * @fileoverview Harmonic Stack visualizer for the Harmonicarium application.
+ * This file defines the HUM.Hstack class which renders the active harmonics and
+ * fundamental tone in a tabular UI panel, updating in real-time as notes are
+ * played or the keymap changes.
+ * 
+ * @module hstack
+ * @memberof HUM
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ * 
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,53 +31,75 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 "use strict";
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
-/** 
- * The H-Stack class<br>
- *    A tool for visualizing the Harmonic Series in the UI.
+/**
+ * The Hstack class, a tool for visualizing the Harmonic Series in the UI in a tabular format.
+ *
+ * @class
+ * @memberof HUM
+ *
+ * @description
+ * The HUM.Hstack class manages the H-Stack panel, a live table that shows all
+ * Harmonic Tones (HTs) mapped in the current controller keymap alongside their
+ * note name, cent deviation, and frequency in Hz. It also tracks the active
+ * Fundamental Tone (FT) at the bottom of the table. The panel can be
+ * collapsed to suspend rendering and save resources.
+ *
+ * @example
+ * // Hstack is instantiated internally by HUM.DHC
+ * const hstack = new HUM.Hstack(dhc);
  */
 HUM.Hstack = class {
     /**
-    * @param {HUM.DHC} dhc - The DHC instance to which it belongs
-    */
+     * Creates an instance of the {@link HUM.Hstack} class.
+     *
+     * @param {HUM.DHC} dhc - The DHC instance to which it belongs.
+     *
+     * @description
+     * Initializes the H-Stack component by:
+     * 1. Storing a reference to the parent DHC instance and its ID.
+     * 2. Initializing the list of used Harmonic Tones to an empty array.
+     * 3. Creating the Parameters management system.
+     * 4. Running parameter initialization.
+     * 5. Registering this component with the DHC for real-time update callbacks.
+     */
     constructor(dhc) {
         /**
-        * The id of this Hstack instance (same as the DHC id)
-        *
-        * @member {string}
-        */
+         * The id of this Hstack instance (same as the DHC id).
+         *
+         * @type {string}
+         */
         this.id = dhc.id;
         this._id = dhc._id;
 
         /**
-        * The name of the `HUM.Hstack`, useful for group the parameters on the DB.
-        * Currently hard-coded as `"hstack"`.
-        *
-        * @member {string}
-        */
+         * The name of the `HUM.Hstack`, useful for group the parameters on the DB.
+         * Currently hard-coded as `"hstack"`.
+         *
+         * @type {string}
+         */
         this.name = 'hstack';
         /**
-        * The DHC instance
-        *
-        * @member {HUM.DHC}
-        */
+         * The DHC instance.
+         *
+         * @type {HUM.DHC}
+         */
         this.dhc = dhc;
         /**
-         * An array containing all the used Harmonic/Subharmonic in the controller Keymap
+         * An array containing all the used Harmonic/Subharmonic in the controller Keymap.
          *
-         * @member {Array.<xtnum>}
+         * @type {Array.<xtnum>}
          */
         this.usedHT = [];
 
         /**
-        * Instance of `HUM.Hstack#Parameters`.
-        *
-        * @member {HUM.Hstack.prototype.Parameters}
-        */
+         * Instance of `HUM.Hstack#Parameters`.
+         *
+         * @type {HUM.Hstack.prototype.Parameters}
+         */
         this.parameters = new this.Parameters(this);
 
         this.parameters._init();
@@ -81,9 +112,20 @@ HUM.Hstack = class {
     // ===========================
 
     /**
-     * Manage and route an incoming message.
+     * Manages and routes an incoming message from the DHC.
      *
-     * @param {HUM.DHCmsg} msg - The incoming message.
+     * @param {HUM.DHCmsg} msg - The incoming DHC message to process.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Handles the following message commands:
+     * - `init`: Fills in the HT table and updates the FT monitor row.
+     * - `panic`: Turns off all active note rows.
+     * - `update/ht`: Re-fills the HT table if the panel is active.
+     * - `update/ctrlmap`: Re-initializes the HT table rows to reflect the new keymap.
+     * - `tone-on`: Highlights the corresponding FT or HT row.
+     * - `tone-off`: Removes the highlight from the corresponding FT or HT row.
      */
     updatesFromDHC(msg) {
         if (msg.cmd === 'init') {
@@ -139,7 +181,15 @@ HUM.Hstack = class {
      * UI HSTACK
      *==============================================================================*/
     /**
-     * Update the {@link HUM.Hstack#usedHT} property.
+     * Updates the {@link HUM.Hstack#usedHT} property from the current controller keymap.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Iterates over all entries in the DHC controller table, collects the HT
+     * numbers that are actually mapped (excluding HT 0 and 129), sorts them
+     * in descending order, and stores the de-duplicated result in
+     * {@link HUM.Hstack#usedHT}.
      */
     updateUsedHT() {
         let usedHT = [];
@@ -155,7 +205,14 @@ HUM.Hstack = class {
         this.usedHT = this.dhc.constructor.uniqArray(usedHT);
     }
     /**
-     * Turns off all the rows.
+     * Turns off all active rows in the H-Stack table.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Iterates over all currently used HT numbers and calls {@link HUM.Hstack#playFx}
+     * with state `0` (off) for each one, then also turns off the FT row for
+     * the currently active fundamental tone.
      */
     allNotesOff() {
         for (let htNum of this.usedHT) {
@@ -164,7 +221,17 @@ HUM.Hstack = class {
         this.playFx("ft", 0, this.dhc.settings.ht.curr_ft);
     }
     /**
-     * Fill-in the H-Stack table data.
+     * Fills in the H-Stack table with the current harmonic tone data.
+     *
+     * @returns {void}
+     *
+     * @description
+     * For each HT number in {@link HUM.Hstack#usedHT}:
+     * 1. Reads the tone data (MIDI cents and Hz) from the DHC HT table.
+     * 2. Applies any active controller pitchbend offset.
+     * 3. Converts MIDI cents to a human-readable note name with cent deviation.
+     * 4. Writes the HT number, note name, cent deviation, and Hz value into
+     *    the corresponding table row UI elements.
      */
     fillin() {
         // Empty object to store the HTn data
@@ -191,9 +258,17 @@ HUM.Hstack = class {
         }
     }
     /**
-     * Print the data about the FT at the bottom of the H-Stack.
-     * 
-     * @param {xtnum} ftNum - The FT number.
+     * Updates the Fundamental Tone row at the bottom of the H-Stack table.
+     *
+     * @param {xtnum} ftNum - The FT number to display.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Reads the frequency data for the given FT from the DHC FT table,
+     * applies any active pitchbend, converts the MIDI cent value to a note
+     * name, and writes the tone number, note name, cent deviation, and Hz
+     * value into the FT monitor row DOM elements.
      */
     ftMonitor(ftNum) {
         let dhcID = this.dhc.id;
@@ -212,11 +287,21 @@ HUM.Hstack = class {
         document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = ftObj.hz.toFixed(hzAccuracy);
     }
     /**
-     * Turn ON or OFF the rows of the H-Stack.
+     * Turns ON or OFF a row in the H-Stack table.
      *
-     * @param {tonetype} type  - If the note to turn ON/OFF is a FT or HT.
-     * @param {0|1}      state - Note ON/OFF; 0 is OFF, 1 is ON.
-     * @param {xtnum}    xtNum - FT or HT number.
+     * @param {tonetype} type  - Whether the target row is a FT (`"ft"`) or HT (`"ht"`).
+     * @param {0|1}      state - `1` for note-on, `0` for note-off.
+     * @param {xtnum}    xtNum - The FT or HT number identifying the row to update.
+     *
+     * @returns {void}
+     *
+     * @description
+     * For FT rows: on note-on, clones the FT row element to restart its CSS
+     * animation, applies the active CSS class, and calls {@link HUM.Hstack#ftMonitor}.
+     * On note-off, removes the active CSS class if the row belongs to the
+     * current fundamental tone.
+     * For HT rows: toggles the active/inactive CSS classes on the matching
+     * table row, provided the HT is present in {@link HUM.Hstack#usedHT}.
      */
     playFx(type, state, xtNum) {
         let dhcID = this.dhc.id;
@@ -268,45 +353,61 @@ HUM.Hstack = class {
 
 
 /**
- * A HTML table's row for the H-Stack.
+ * A single HTML table row representing one Harmonic Tone in the H-Stack.
+ *
+ * @class
+ * @memberof HUM.Hstack
+ *
+ * @description
+ * Encapsulates the four `<td>` cells that make up one HT row in the H-Stack
+ * table: the HT number, the note name, the cent deviation, and the frequency
+ * in Hz. Also holds the wrapping `<tr>` element used for note-on/off
+ * CSS class toggling.
  */
 HUM.Hstack.prototype.HstackRow = class {
     /**
-     * @property {xtnum}  htNum - The number of HTs.
-     * @property {string} dhcID - The DHC instance ID.
+     * Creates an HstackRow instance for the given harmonic tone number.
+     *
+     * @param {xtnum}  htNum - The harmonic tone number this row represents.
+     * @param {string} dhcID - The ID of the parent DHC instance.
+     *
+     * @description
+     * Creates and configures the `<tr>` and four `<td>` elements, assigns
+     * the appropriate CSS classes and element IDs, and appends all cells
+     * to the row.
      */
     constructor(htNum, dhcID) {
         this.htNum = htNum;
         this.dhcID = dhcID;
         /**
-        * The HTML row element.
-        *
-        * @member {HTMLElement}
-        */
+         * The HTML row element.
+         *
+         * @type {HTMLElement}
+         */
         this.elemRow = document.createElement("tr");
         /**
-        * The HTML cell for the HT number.
-        *
-        * @member {HTMLElement}
-        */
+         * The HTML cell for the HT number.
+         *
+         * @type {HTMLElement}
+         */
         this.elemHtNum = document.createElement("td");
         /**
-        * The HTML cell for the note name.
-        *
-        * @member {HTMLElement}
-        */
+         * The HTML cell for the note name.
+         *
+         * @type {HTMLElement}
+         */
         this.elemNote = document.createElement("td");
         /**
-        * The HTML cell for the +/- cent amount.
-        *
-        * @member {HTMLElement}
-        */
+         * The HTML cell for the +/- cent amount.
+         *
+         * @type {HTMLElement}
+         */
         this.elemCents = document.createElement("td");
         /**
-        * The HTML cell for the hertz amount.
-        *
-        * @member {HTMLElement}
-        */
+         * The HTML cell for the hertz amount.
+         *
+         * @type {HTMLElement}
+         */
         this.elemHz = document.createElement("td");
 
         this.elemRow.className = "hum-hstack-ht-off";
@@ -322,12 +423,25 @@ HUM.Hstack.prototype.HstackRow = class {
     }
 };
 
-/** 
- * Instance class-container used to create all the `HUM.Param` objects for the `HUM.Hstack` instance.
+/**
+ * Container class for all {@link HUM.Param} objects belonging to an {@link HUM.Hstack} instance.
+ *
+ * @class
+ * @memberof HUM.Hstack
+ *
+ * @description
+ * Instantiates and holds the parameters that control the H-Stack panel:
+ * visibility state (`active`), table font size (`fontSize`), and proxy
+ * references to the FT row (`frow`) and HT table (`hstack`) DOM elements.
  */
 HUM.Hstack.prototype.Parameters = class {
+    /**
+     * Creates a Parameters instance for the given Hstack.
+     *
+     * @param {HUM.Hstack} hstack - The parent Hstack instance.
+     */
     constructor(hstack) {
-        /**  
+        /**
          * This property controls the state of the H-Stack; if `false`, it is turned off in order to avoid
          * unuseful computations and uptates of the UI when the panel is closed.
          * It also initialises the eventListener of the UIelems related to it.
@@ -335,8 +449,8 @@ HUM.Hstack.prototype.Parameters = class {
          * NOTE: These uiElements are the same object because, given the current implementation of
          * Param.UIelem, it's not possible to set more event listeners using a single UIelem.
          *
-         * @member {HUM.Param}
-         * 
+         * @type {HUM.Param}
+         *
          * @property {boolean}     value                         - The visibility one wants to achieve. If `false` the tab will be collapsed.
          * @property {Object}      uiElements                    - Namespace for the "in", "out" and "fn" objects.
          * @property {Object}      uiElements.fn                 - Namespace for the "fn" HTML elements.
@@ -401,14 +515,14 @@ HUM.Hstack.prototype.Parameters = class {
 
             }
         });
-        /**  
+        /**
          * This property controls the font size of the H-Stack table and initialises the
          * eventListener of the UIelems related to it.
          * It's stored on the DB.
          *
-         * @member {HUM.Param}
-         * 
-         * @property {number}     value                          - The font size in pixels.
+         * @type {HUM.Param}
+         *
+         * @property {number}      value                          - The font size in pixels.
          * @property {Object}      uiElements                     - Namespace for the "in", "out" and "fn" objects.
          * @property {Object}      uiElements.fn                  - Namespace for the "fn" HTML elements.
          * @property {Object}      uiElements.out                 - Namespace for the "out" HTML elements.
@@ -438,12 +552,12 @@ HUM.Hstack.prototype.Parameters = class {
             }
         });
 
-        /**  
-         * This property it's just a proxy for the HTML container of the FT row of the H-Stack.
+        /**
+         * This property is just a proxy for the HTML container of the FT row of the H-Stack.
          * It's not stored on the DB.
          *
-         * @member {HUM.Param}
-         * 
+         * @type {HUM.Param}
+         *
          * @property {Object}      uiElements                 - Namespace for the "in", "out" and "fn" objects.
          * @property {Object}      uiElements.out             - Namespace for the "out" HTML elements.
          * @property {HTMLElement} uiElements.out.hstackFTrow - The HTML of the H-Stack FT row.
@@ -462,12 +576,12 @@ HUM.Hstack.prototype.Parameters = class {
             presetRestore: false,
         });
 
-        /**  
-         * This property it's just a proxy for the HTML containers of HT table and its rows.
+        /**
+         * This property is just a proxy for the HTML containers of HT table and its rows.
          * It's not stored on the DB.
          *
-         * @member {HUM.Param}
-         * 
+         * @type {HUM.Param}
+         *
          * @property {Object}      uiElements              - Namespace for the "in", "out" and "fn" objects.
          * @property {Object}      uiElements.out          - Namespace for the "out" HTML elements.
          * @property {HTMLElement} uiElements.out.hstackHT - The HTML of the H-Stack HT table.
@@ -532,7 +646,14 @@ HUM.Hstack.prototype.Parameters = class {
         });
     }
     /**
-     * Initializes the parameter "active" and "hstack".
+     * Initializes the `active` and `hstack` parameters.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Calls `_init()` on the `active` parameter to set up the Bootstrap
+     * collapsible and its event listeners, then calls `_init()` on the
+     * `hstack` parameter to build the HT table and populate it with rows.
      */
     _init() {
         this.active._init();

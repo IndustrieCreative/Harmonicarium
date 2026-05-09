@@ -1,69 +1,91 @@
 /**
+ * @fileoverview Built-in Controller Keymap Presets for Harmonicarium.
+ * This file defines the HUM.CtrlKeymapPresets class which provides a
+ * collection of factory-supplied controller keymap configurations for the
+ * different FT Tuning Systems supported by Harmonicarium.
+ *
+ * @module keymap-preset
+ * @memberof HUM
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ *
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 "use strict";
 
-/** 
- * The CtrlKeymapPreset class.
- *     A container for the Controller Keymaps Preset.
+/**
+ * Container for all built-in Controller Keymap Presets.
+ *
+ * @class
+ * @memberof HUM
+ *
+ * @description
+ * The HUM.CtrlKeymapPresets class holds the factory-supplied controller keymap
+ * configurations organised by FT Tuning System. Each preset defines a complete
+ * MIDI-note-to-{@link CtrlKeymapKey} mapping that assigns Fundamental Tones
+ * (FTs) and Harmonic/Subharmonic Tones (HTs) to physical MIDI note numbers.
+ *
+ * Two preset collections are provided:
+ * - {@link HUM.CtrlKeymapPresets#nEDx} — presets for the n-EDx FT Tuning System
+ * - {@link HUM.CtrlKeymapPresets#h_s}  — presets for the Harmonic/Subharmonic FT Tuning System
  */
 HUM.CtrlKeymapPresets = class {
+    /**
+     * Creates a new CtrlKeymapPresets instance and populates all built-in preset maps.
+     *
+     * @description
+     * Initialises the two preset collections:
+     * - `nEDx`: keymap presets for the n-Equal Divisions of the Octave FT Tuning System.
+     * - `h_s`:  keymap presets for the Harmonic/Subharmonic FT Tuning System.
+     *
+     * Each collection is an object whose numeric keys index individual
+     * {@link CtrlKeymapPreset} entries, each carrying a `name`, `notes`, and `map`.
+     */
     constructor() {
         /**
-        * Controller keymaps presets for the n-EDx FT Tuning System
-        *
-        * @member {Object.<number, CtrlKeymap>}
-        */
+         * Controller keymap presets for the n-EDx (n-Equal Divisions of the Octave) FT Tuning System.
+         *
+         * @member {Object.<number, CtrlKeymapPreset>}
+         *
+         * @description
+         * Each numeric key indexes a {@link CtrlKeymapPreset} entry. Available presets:
+         * - `0`  — ctrl_nEDx(7-7)_bonkaA(16h)_p
+         * - `1`  — ctrl_nEDx(7-7)_bonkaA(16s)i_p
+         * - `2`  — ctrl_nEDx(12-12)_bonkaA(16h)_2p
+         * - `3`  — ctrl_nEDx(7-7)_bonkaB(16h)_p
+         * - `4`  — ctrl_nEDx(7-7)_bonkaB(32h)_p
+         * - `5`  — ctrl_nEDx(12-12)_sanga(16h)_p
+         * - `6`  — ctrl_nEDx(12-12)_sanga(16s)i_p
+         * - `7`  — ctrl_nEDx(7-7)_giora(4-16h)_p
+         * - `8`  — ctrl_nEDx(12-12)_bonkaA(16-16hs)_2p
+         * - `9`  — ctrl_nEDx(12-16)_sanga(16-16hs)_3p
+         * - `10` — ctrl_nEDx_(-31+31)_(-32+32h)_p_tsnap
+         */
         this.nEDx = {
-            /**
-             * A Controller keymap preset
-             * 
-             * @typedef {Object} CtrlKeymapPreset
-             *
-             * @global
-             *
-             * @property {string}     name  - Original filename of the Controller keymap (without extension)
-             * @property {string}     notes - User-friendly description of the Controller keymap
-             * @property {CtrlKeymap} map   - The Controller keymap
-             */
             0: {
                 name: "ctrl_nEDx(7-7)_bonkaA(16h)_p",
                 notes: "FT: 1-octave / HT: 16 bonka A Harmonics / Piper",
-                /**
-                 * A Controller keymap; each key of the Object is a MIDI Note number 
-                 * 
-                 * @typedef {Object.<midinnum, CtrlKeymapKey>} CtrlKeymap
-                 */
                 map: {
-                    /**
-                     * A single key of the Controller keymap
-                     * 
-                     * @typedef {Object} CtrlKeymapKey
-                     *
-                     * @property {xtnum} ft - Fundamental Tone (FT) relative number; +/-64, FT0 is the FM, 129 is no FT
-                     * @property {xtnum} ht - Harmonic/Subharmonic Tone (HT) relative number; +/-128, 0 is Piper feature, 129 is no HT
-                     */
                     41: { ft: -7, ht: 129 },
                     42: { ft: -6, ht: 129 },
                     43: { ft: -5, ht: 129 },
@@ -709,10 +731,17 @@ HUM.CtrlKeymapPresets = class {
             }
         };
         /**
-        * Controller keymaps presets for the Harmonic/Subharmonic FT Tuning System
-        *
-        * @member {Object.<number, CtrlKeymap>}
-        */
+         * Controller keymap presets for the Harmonic/Subharmonic (H-S) FT Tuning System.
+         *
+         * @member {Object.<number, CtrlKeymapPreset>}
+         *
+         * @description
+         * Each numeric key indexes a {@link CtrlKeymapPreset} entry. Available presets:
+         * - `0` — ctrl_HSt(8-4-8hs)_bonkaA(16h)_p
+         * - `1` — ctrl_HSt(16-8-16hs)_bonkaA(16h)_p
+         * - `3` — ctrl_HSt(32-16-32hs)_bonkaA(16h)_p
+         * - `4` — ctrl_HSt(16-8-16hs)m_bonkaA(16h)_p
+         */
         this.h_s = {
             0: {
                 name: "ctrl_HSt(8-4-8hs)_bonkaA(16h)_p",

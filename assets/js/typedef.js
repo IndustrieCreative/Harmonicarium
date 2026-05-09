@@ -158,6 +158,36 @@
  *==============================================================================*/
 
 /**
+ * A Controller keymap preset entry.
+ *
+ * @global
+ * @typedef  {Object}     CtrlKeymapPreset
+ *
+ * @property {string}     name  - Original filename of the controller keymap (without extension).
+ * @property {string}     notes - Human-readable description of the controller keymap.
+ * @property {CtrlKeymap} map   - The controller keymap object.
+ */
+
+/**
+ * A controller keymap; each property key is a MIDI note number mapping to a {@link CtrlKeymapKey}.
+ *
+ * @global
+ * @typedef {Object.<midinnum, CtrlKeymapKey>} CtrlKeymap
+ */
+
+/**
+ * A single entry in the controller keymap for one MIDI note number.
+ *
+ * @global
+ * @typedef  {Object} CtrlKeymapKey
+ *
+ * @property {xtnum} ft - Fundamental Tone (FT) relative number; range +/-64.
+ *                        FT 0 is the FM, 129 means no FT.
+ * @property {xtnum} ht - Harmonic/Subharmonic Tone (HT) relative number; range +/-128.
+ *                        0 is the Piper feature, 129 means no HT.
+ */
+
+/**
  * The original g200kg's Synth object definition
  *
  * @see {@link https://www.g200kg.com/en/docs/webmidilink/synthlist.html}
@@ -304,3 +334,14 @@
  * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel}
  */
 
+/**
+ * @name IDBDatabase
+ * @typedef IDBDatabase
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/IDBDatabase}
+ */
+
+/**
+ * @name IDBTransaction
+ * @typedef IDBTransaction
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/IDBTransaction}
+ */

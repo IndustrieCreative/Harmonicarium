@@ -1,3 +1,38 @@
+/**
+ * @fileoverview WebMidiLink synthesizer list data for the Harmonicarium application.
+ * This file defines the synth list data structures used by the
+ * {@link HUM.midi.WebMidiLinkOut} component: the JSONP callback that populates
+ * the original g200kg synthesizer list, and the Harmonicarium-curated ad-hoc
+ * list of polyphonic, multichannel, and multitimbral synthesizers compatible
+ * with its microtonal playback model.
+ *
+ * @module midi-wml-synthlist
+ * @memberof HUM.midi
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ *
+ * @description
+ * This file is part of HARMONICARIUM, a web app which allows users to play
+ * the Harmonic Series dynamically by changing its fundamental tone in real-time.
+ * It is available in its latest version from:
+ * https://github.com/IndustrieCreative/Harmonicarium
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 "use strict";
 
 /**
@@ -12,13 +47,17 @@
 HUM.midi.WebMidiLinkOut.g200kgSynthList = [];
 
 /**
- * Define the global function for the original WebMidiLink JSONP script (`synthlist.js`).
- * It populate the {@link HUM.midi.WebMidiLinkOut.g200kgSynthList}.
+ * Global JSONP callback defined by the original WebMidiLink `synthlist.js` script.
+ * When the external script loads, it calls this function to populate
+ * {@link HUM.midi.WebMidiLinkOut.g200kgSynthList} with the full g200kg synth catalog.
+ *
  * @name SynthListCallback
  * @function
  * @global
- * 
- * @param {Array.<WmlSynth>} synthlist - The search term to highlight.
+ *
+ * @param {Array.<WmlSynth>} synthlist - The synthesizer list data provided by the JSONP script.
+ *
+ * @see {@link https://www.g200kg.com/en/docs/webmidilink/index.html}
  */
 window.SynthListCallback = function(synthlist) {
         HUM.midi.WebMidiLinkOut.g200kgSynthList = synthlist;
@@ -33,12 +72,18 @@ window.SynthListCallback = function(synthlist) {
     //------------------------|
 
 /**
- * The Harmonicarium's adhoc WebMidiLink Synth List.
- * It is a sub-selection from the original g200kg's WebMidiLink Synth List
- * with some extra infos. Only Polyphonic, Multichannel and Multitimbral
- * instruments with MIDI Channel mode 3: OMNI OFF, POLY (aka guitar mode).
- * 
+ * The Harmonicarium's ad-hoc WebMidiLink Synth List.
+ * A curated sub-selection of the original g200kg WebMidiLink Synth List,
+ * extended with additional metadata. Only synthesizers that support
+ * MIDI Channel Mode 3: OMNI OFF, POLY (aka guitar mode)  — i.e. polyphonic,
+ * multichannel, and multitimbral instruments — are included, as this is the
+ * mode required for Harmonicarium's per-channel microtonal pitch-bend playback
+ * model.
+ *
  * @type {Array.<WmlSynthHum>}
+ *
+ * @see {@link WmlSynthHum}
+ * @see {@link https://www.g200kg.com/en/docs/webmidilink/index.html}
  */
 HUM.midi.WebMidiLinkOut.adhocSynthList = [{
     "name": "Yamaha XG Sound Set.sf2",

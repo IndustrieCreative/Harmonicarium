@@ -1,78 +1,109 @@
  /**
+ * @fileoverview MIDI Ports manager for the Harmonicarium application.
+ * This file defines the HUM.midi.MidiPorts class which manages Web MIDI API
+ * access, port discovery, hot-plugging, and port selection for both input and
+ * output MIDI devices, as well as WebMidiLink virtual output ports.
+ *
+ * @module midi-ports
+ * @memberof HUM.midi
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ *
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 "use strict";
 
-/** The MidiPorts class */
+/**
+ * MIDI Ports manager for the Harmonicarium application.
+ *
+ * @class
+ * @memberof HUM.midi
+ *
+ * @description
+ * The HUM.midi.MidiPorts class handles all Web MIDI API interactions:
+ * - Requesting and managing the global MIDIAccess object
+ * - Discovering and listing available input and output MIDI ports
+ * - Creating and managing WebMidiLink virtual output ports
+ * - Rendering per-port checkboxes in the MIDI settings UI
+ * - Reacting to hot-plug events when ports are connected or disconnected
+ * - Tracking selected (open) ports and routing messages accordingly
+ */
 HUM.midi.MidiPorts = class {
     /**
-    * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
-    * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
-    */
+     * Creates a new MidiPorts instance bound to the given DHC and MidiHub.
+     *
+     * @param {HUM.DHC}          dhc  - The DHC instance to which it belongs.
+     * @param {HUM.midi.MidiHub} midi - The MidiHub instance to which it belongs.
+     *
+     * @description
+     * Initializes the MIDI port management system by:
+     * 1. Setting up identification and references to the parent DHC and MidiHub instances
+     * 2. Creating the parameter management system for port UI elements
+     * 3. Requesting Web MIDI API access and registering the success and error callbacks
+     * 4. Initializing WebMidiLink virtual output ports after the MIDI request completes
+     */
     constructor(dhc, midi) {
         /**
-        * The id of this MidiIn instance (same as the DHC id).
-        *
-        * @member {string}
-        */
+         * The id of this MidiPorts instance (same as the DHC id).
+         *
+         * @type {string}
+         */
         this.id = dhc.id;
         this._id = dhc._id;
         /**
-        * The name of the `HUM.MidiIn`, useful for group the parameters on the DB.
-        * Currently hard-coded as `"midiIn"`.
-        *
-        * @member {string}
-        */
+         * The name of the `HUM.midi.MidiPorts`, useful for grouping the parameters on the DB.
+         * Currently hard-coded as `"midiPorts"`.
+         *
+         * @type {string}
+         */
         this.name = 'midiPorts';
         /**
-        * The DHC instance.
-        *
-        * @member {HUM.DHC}
-        */
+         * The DHC instance.
+         *
+         * @type {HUM.DHC}
+         */
         this.dhc = dhc;
         /**
-        * The MidiHub instance.
-        *
-        * @member {HUM.midi.MidiHub}
-        */
+         * The MidiHub instance.
+         *
+         * @type {HUM.midi.MidiHub}
+         */
         this.midi = midi;
         /**
          * The global MIDIAccess object.
-         * 
-         * @see {@link https://webaudio.github.io/web-midi-api/#MIDIAccess|Web MIDI API specs} for 'MIDIAccess'.
          *
-         * @member {MIDIAccess}
+         * @type {MIDIAccess}
+         * @see {@link https://webaudio.github.io/web-midi-api/#MIDIAccess|Web MIDI API specs}
          */
         this.midiAccess = null;
 
         /**
          * Namespace for WebMidiLink.
          *
-         * @member {Object}
-         * 
+         * @type {Object}
+         *
          * @property {HUM.midi.WebMidiLinkIn}                   input   - The WebMidiLinkIn instance.
-         * @property {Object.<string, HUM.midi.WebMidiLinkOut>} outputs - An array containing all the WebMidiLinkOut instances; the <em>key</em> is the {@link HUM.midi.WebMidiLinkOut#id}.
+         * @property {Object.<string, HUM.midi.WebMidiLinkOut>} outputs - Map of all WebMidiLinkOut instances; the key is the {@link HUM.midi.WebMidiLinkOut#id}.
          * @property {number}                                   outQty  - How many WebMidiLinkOut instances must be created (integer).
          */
         this.webMidi = {
@@ -84,16 +115,16 @@ HUM.midi.MidiPorts = class {
         /**
          * The global map of selected MIDI outputs.
          *
-         * @member {Map.<string, MIDIPort>}
+         * @type {Map.<string, MIDIPort>}
          */
         this.selectedOutputs = new Map();
 
         /**
          * Data structure to keep track of how many ports are available and how many are used.
-         *     Just used to inform the user about the current MIDI port situation and give the right advices.
+         * Used to inform the user about the current MIDI port situation and provide appropriate guidance.
          *
-         * @member {Object}
-         * 
+         * @type {Object}
+         *
          * @property {Object} availablePort        - Available ports namespace
          * @property {number} availablePort.input  - Number of available input ports
          * @property {number} availablePort.output - Number of available output ports
@@ -129,7 +160,16 @@ HUM.midi.MidiPorts = class {
     // ===========================
 
     /**
-     * Inintialize the WebMidiLink Output and make accessible the UI modal panel 
+     * Initializes the WebMidiLink output ports and makes the UI MIDI panel accessible.
+     *
+     * @private
+     *
+     * @returns {void}
+     *
+     * @description
+     * Called after the Web MIDI API request completes (both on success and failure)
+     * to ensure WebMidiLink virtual ports are always available regardless of
+     * native MIDI API support.
      */
     _postRequestMIDI() {
         this._initWebMidiLinkOut();
@@ -138,7 +178,16 @@ HUM.midi.MidiPorts = class {
     }
 
     /**
-     * Inintialize the WebMidiLink Output
+     * Initializes all WebMidiLink virtual output ports.
+     *
+     * @private
+     *
+     * @returns {void}
+     *
+     * @description
+     * Creates the number of WebMidiLink output ports defined by `webMidi.outQty`,
+     * registers each in `webMidi.outputs`, creates the corresponding UI checkbox,
+     * and logs the port information to the event log.
      */
     _initWebMidiLinkOut() {
         for (let key = 0; key < this.webMidi.outQty; key++) {
@@ -154,11 +203,19 @@ HUM.midi.MidiPorts = class {
     }
 
     /**
-     * What to do on MIDI Access error, if MIDIAccess exist but there is another kind of problem.
+     * Handles a Web MIDI API access error.
+     *
+     * @private
+     *
+     * @param  {DOMException} error - The error thrown when MIDI access was denied or failed.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Called when `navigator.requestMIDIAccess()` rejects. Logs the error message
+     * to the event log and falls back to WebMidiLink-only mode via `_postRequestMIDI()`.
      *
      * @see {@link https://webaudio.github.io/web-midi-api/#extensions-to-the-navigator-interface|Web MIDI API specs}
-     *
-     * @param  {DOMException} error - Possible error.
      */
     _onMidiReject(error) {
         this.dhc.harmonicarium.components.backendUtils.eventLog("Failed to get MIDI access because: " + error);
@@ -166,9 +223,21 @@ HUM.midi.MidiPorts = class {
     }
 
     /**
-     * What to do on MIDI Access, when MIDI is initialized
+     * Handles a successful Web MIDI API access grant.
      *
-     * @param {MIDIAccess} midiAccess - The MIDIAccess object; see the {@link https://webaudio.github.io/web-midi-api/#MIDIAccess|Web MIDI API specs}
+     * @private
+     *
+     * @param {MIDIAccess} midiAccess - The MIDIAccess object.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Called when `navigator.requestMIDIAccess()` resolves. Stores the
+     * MIDIAccess instance, iterates over all available input and output ports
+     * to create their UI checkboxes, registers the `onstatechange` handler for
+     * hot-plug events, checks port availability, and finalizes initialization.
+     *
+     * @see {@link https://webaudio.github.io/web-midi-api/#MIDIAccess|Web MIDI API specs}
      */
     _onMidiInit(midiAccess) {
         this.dhc.harmonicarium.components.backendUtils.eventLog("Luckily, your browser seems to support the Web MIDI API!");
@@ -196,9 +265,17 @@ HUM.midi.MidiPorts = class {
     }
 
     /**
-     * Log on the Event Log the informations about a single input or output port.
+     * Logs information about a single MIDI port to the event log.
      *
-     * @param {MIDIPort} midiPort - The MIDI port.
+     * @param {MIDIPort} midiPort - The MIDI port to log.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Formats a human-readable string containing the port type, name, state,
+     * and connection status, then forwards it to the application event log.
+     *
+     * @see {@link https://webaudio.github.io/web-midi-api/#MIDIPort|Web MIDI API specs}
      */
     portLogger(midiPort) {
         // let icPortInfos = icPort.state + " " + icPort.type + " port | id: " + icPort.id + " | name: " + icPort.name + " | manufacturer: " + icPort.manufacturer + " | version:" + icPort.version + " | connection: " + icPort.connection;
@@ -207,11 +284,22 @@ HUM.midi.MidiPorts = class {
     }
 
     /**
-     * Create a single checkbox and its label in a div.
-     * Assign the onclick event to the the checkbox.
+     * Creates a checkbox UI element for a MIDI port and appends it to the given container.
      *
-     * @param {MIDIPort}    midiPort    - The MIDI port; see the {@link https://webaudio.github.io/web-midi-api/#MIDIPort|Web MIDI API specs}
-     * @param {HTMLElement} htmlElement - The 'div' containers of the ports on UI ('this.parameters.inputPorts.uiElements.out.inputPorts' or 'this.parameters.outputPorts.uiElements.out.outputPorts')
+     * @param {MIDIPort}    midiPort    - The MIDI port to represent.
+     * @param {HTMLElement} htmlElement - The container element for the port checkboxes
+     *                                   (e.g. `this.parameters.inputPorts.uiElements.out.inputPorts`
+     *                                   or `this.parameters.outputPorts.uiElements.out.outputPorts`).
+     *
+     * @returns {void}
+     *
+     * @description
+     * Builds a `<div>` containing a labeled `<input type="checkbox">` for the given
+     * MIDI port. The checkbox value is set to the port's ID and its `click` event
+     * is wired to `portSelect()`. The constructed element is appended to
+     * `htmlElement`.
+     *
+     * @see {@link https://webaudio.github.io/web-midi-api/#MIDIPort|Web MIDI API specs}
      */
     createPortCheckbox(midiPort, htmlElement) {
         let dhcID = this.dhc.id;
@@ -255,14 +343,27 @@ HUM.midi.MidiPorts = class {
     }
 
     /**
-     * If an Input port has been selected, open that port and start to listen from it.
-     * If an Output port has been selected, start to send MIDI messages to that port.
-     * The function is invoked when a HTML checkbox has been clicked.
-     * 
-     * @param {Event}   event                - OnClick event on the MIDI I/O Ports checkboxes
-     * @param {Object}  event.target         - The event's target HTML element (could be just a namespace)
-     * @param {boolean} event.target.value   - The ID of the port
-     * @param {boolean} event.target.checked - Checkbox checked or not
+     * Handles a MIDI port checkbox click event, opening or closing the port accordingly.
+     *
+     * @param {Event}   event                - The `click` event fired on a MIDI I/O port checkbox.
+     * @param {Object}  event.target         - The checkbox element that was clicked.
+     * @param {string}  event.target.value   - The ID of the MIDI port.
+     * @param {boolean} event.target.checked - Whether the checkbox is now checked or not.
+     *
+     * @returns {void}
+     *
+     * @description
+     * When a checkbox is checked:
+     * - Input ports: attaches `onmidimessage` and increments the open input counter.
+     * - Output ports: adds the port to `selectedOutputs`, opens WebMidiLink ports
+     *   as needed, and triggers a MIDI out UI update.
+     *
+     * When a checkbox is unchecked:
+     * - Input ports: sends an all-notes-off panic, closes the port, and decrements
+     *   the open input counter.
+     * - Output ports: sends an all-notes-off on the port, removes it from
+     *   `selectedOutputs`, closes WebMidiLink ports as needed, and triggers
+     *   a MIDI out UI update.
      */
     portSelect(event) {
         let elem = event.target;
@@ -335,11 +436,22 @@ HUM.midi.MidiPorts = class {
         // });
     }
     /**
-     * Midi State Refresh for hot (un)plugging.
-     * Update the informations about the state of the MIDI ports/devices in the HTML UI.
+     * Handles MIDI port hot-plug events, updating the UI when ports are connected or disconnected.
      *
-     * @param  {MIDIConnectionEvent} event      - Event from MidiAccess.onstatechange; see the {@link https://webaudio.github.io/web-midi-api/#MIDIConnectionEvent|Web MIDI API specs}
-     * @param  {MIDIPort}            event.port - The MIDI Port; see the {@link https://webaudio.github.io/web-midi-api/#MIDIPort|Web MIDI API specs}
+     * @param  {MIDIConnectionEvent} event      - The connection event from `MIDIAccess.onstatechange`.
+     * @param  {MIDIPort}            event.port - The MIDI port that triggered the event.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Logs the port state change, then:
+     * - On `"disconnected"`: sends all-notes-off if it was an input port, decrements
+     *   the relevant open-port counter, checks minimum port availability, and removes
+     *   the port's checkbox from the UI.
+     * - On `"connected"`: if no checkbox for that port already exists, creates a new
+     *   one in the appropriate input or output container.
+     *
+     * @see {@link https://webaudio.github.io/web-midi-api/#MIDIConnectionEvent|Web MIDI API specs}
      */
     midiStateRefresh(event) {
         let dhcID = this.dhc.id,
@@ -401,12 +513,20 @@ HUM.midi.MidiPorts = class {
         }
     }
     /**
-     * Check if there is at least one available MIDI port (Input or Output)
-     * Check if there is at least one open MIDI port (Input or Output)
+     * Checks whether at least one MIDI port is available or open and logs a warning if not.
      *
-     * @param  {('i'|'o'|'io')} xPut   - Check for Input ('i'), Output port ('o') or both ('io')
-     * @param  {boolean}        isOpen - false: Check if there are ports selected and used by the user
-     *                                   true:  Check if there are available ports
+     * @param  {('i'|'o'|'io')} xPut   - Which direction to check: input (`'i'`), output (`'o'`), or both (`'io'`).
+     * @param  {boolean}        isOpen - `false` to check available (detected) ports;
+     *                                   `true` to check currently selected (open) ports.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Refreshes the available port counts from the MIDIAccess object, then
+     * evaluates the requested combination. If the condition is not met, an
+     * advisory message is written to the event log (and, for the `isOpen` path,
+     * also displayed in an alert dialog). The `isOpen === true` path is not yet
+     * fully integrated into the call flow.
      */
      checkAtLeastOneMidi(xPut, isOpen) {
         this.atLeastOneMidi.availablePort.input = this.midiAccess.inputs.size;
@@ -469,7 +589,28 @@ HUM.midi.MidiPorts = class {
 };
 
 
+/**
+ * Parameter container for the `HUM.midi.MidiPorts` instance.
+ *
+ * @class
+ * @memberof HUM.midi.MidiPorts
+ *
+ * @description
+ * Container class that instantiates and exposes all `HUM.Param` objects used
+ * by a `HUM.midi.MidiPorts` instance. Each parameter holds a reference to the
+ * corresponding DOM container element used to render MIDI port checkboxes.
+ */
 HUM.midi.MidiPorts.prototype.Parameters = class {
+    /**
+     * Creates a new Parameters instance for the given MidiPorts controller.
+     *
+     * @param {HUM.midi.MidiPorts} midiports - The MidiPorts instance that owns this parameter set.
+     *
+     * @description
+     * Instantiates all `HUM.Param` objects for the MidiPorts controller:
+     * - `inputPorts`: Proxy for the DOM container that holds MIDI-IN port checkboxes.
+     * - `outputPorts`: Proxy for the DOM container that holds MIDI-OUT port checkboxes.
+     */
     constructor(midiports) {
         this.inputPorts = new HUM.Param({
             app: midiports,

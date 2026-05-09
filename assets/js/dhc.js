@@ -1,76 +1,116 @@
  /**
+ * @fileoverview Dynamic Harmonics Calculator (DHC) for the Harmonicarium application.
+ * This file defines the HUM.DHC class, which is the computational kernel for all
+ * frequency and midicent table calculations, as well as the message routing system
+ * that coordinates communication between the other application components.
+ *
+ * @module dhc
+ * @memberof HUM
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ *
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 "use strict";
 
-/** 
- * The Dynamic Harmonics Calculator class<br>
- *    This is the computational kernel for the frequency/midicent tables.
- *    Manage and route the communications from and to the other App components.
+/**
+ * The Dynamic Harmonics Calculator class.
+ *
+ * @class
+ * @memberof HUM
+ *
+ * @description
+ * The HUM.DHC class is the computational kernel of the Harmonicarium application.
+ * It manages:
+ * - Computing frequency and midicent lookup tables for Fundamental Tones (FT) and
+ *   Harmonic/Subharmonic Tones (HT) based on the selected tuning system
+ * - Routing {@link HUM.DHCmsg} messages to and from all registered app components
+ *   (Synth, MIDI, Hancock, Hstack, etc.)
+ * - Managing the play queues for FT and HT tone events, including stuck-note prevention
+ * - Handling the Piper feature (HT 0) for melody step-sequencer playback
+ * - Loading, parsing, and processing controller keymaps from presets or `.hcmap` files
+ *
+ * @example
+ * // DHC is instantiated internally by HUM during initialization
+ * const dhc = new HUM.DHC('1-0', 0, harmonicarium);
  */
 HUM.DHC = class {
     /**
-     * @param {string} id            - The DHC full ID, composed by the HUM ID and the DHC ID (eg. '1-0', '1-1', '1-2' etc.)
-     * @param {number} idx           - The DHC ID (eg. 0, 1, 2 etc.)
-     * @param {HUM}    harmonicarium - The HUM instance to which this DHC must refer.
+     * Creates a new DHC instance and binds it to the given HUM instance.
+     *
+     * @param {string} id            - The DHC full ID, composed of the HUM ID and the DHC index (e.g. `'1-0'`, `'1-1'`).
+     * @param {number} idx           - The DHC index within the parent HUM instance (e.g. `0`, `1`).
+     * @param {HUM}    harmonicarium - The HUM instance to which this DHC belongs.
+     *
+     * @description
+     * Initializes the core tables, play queues, and all sub-component instances
+     * (Hancock, Synth, MidiHub, Hstack) in the correct dependency order.
+     * Parameter initialization (`settings._init()`) is called after the sub-components
+     * are constructed so that UI bindings and table computations have all
+     * required objects in place.
      */
     constructor(id, idx, harmonicarium) {
         /**
-        * The HUM instance.
-        *
-        * @member {HUM}
-        */
+         * The HUM instance.
+         *
+         * @type {HUM}
+         */
         this.harmonicarium = harmonicarium;
-        
+
         /**
-        * The id of this DHC instance.
-        *
-        * @member {string}
-        */
+         * The full ID of this DHC instance (e.g. `'1-0'`).
+         *
+         * @type {string}
+         */
         this.id = id;
 
+        /**
+         * The numeric index of this DHC instance within the parent HUM instance.
+         *
+         * @type {number}
+         * @private
+         */
         this._id = idx;
         
         /**
-        * The name of the `HUM.DHC`, useful for group the parameters on the DB.
-        * Currently hard-coded as `"dhc"`.
-        *
-        * @member {string}
-        */
+         * The name of the `HUM.DHC`, useful for grouping parameters in the DB.
+         * Currently hard-coded as `"dhc"`.
+         *
+         * @type {string}
+         */
         this.name = 'dhc';
         
         /**
-         * DHC Tables
+         * DHC lookup tables.
          *
-         * @member {Object}
-         * 
+         * @type {Object}
+         *
          * @property {CtrlKeymap}                    ctrl       - The current Controller Keymap.
          * @property {Object.<xtnum, HUM.DHC#Xtone>} ft         - The current Fundamental Tones table.
          * @property {Object.<xtnum, HUM.DHC#Xtone>} ht         - The current Harmonic/Subharmonic Tones table.
-         * @property {Object}                        reverse    - Namespace for the everse tables.
-         * @property {Object.<midinnum, xtnum>}      reverse.ft - Reverse Fundamental Tones table.
-         * @property {Object.<midinnum, xtnum>}      reverse.ht - Reverse Harmonic/Subharmonic Tones table.
+         * @property {Object}                        reverse    - Namespace for the reverse tables.
+         * @property {Object.<midinnum, xtnum>}      reverse.ft - Reverse Fundamental Tones table (midicent → FT number).
+         * @property {Object.<midinnum, xtnum>}      reverse.ht - Reverse Harmonic/Subharmonic Tones table (midicent → HT number).
          */
         this.tables = {
             ctrl: {},
@@ -83,22 +123,23 @@ HUM.DHC = class {
         };
         
         /**
-         * Registered Apps<br>
-         *     The <em>key</em> of each record is an app Object and the <em>value</em> is the metod that must be invoked
-         *     to send messages towards the app.
-         * @todo Pass by constructor parameters and if false, no signals will be sent to the component.
+         * Map of registered app components.
+         * Each key is an app instance and each value is an object containing the
+         * method name used to dispatch messages and the numeric priority.
          *
-         * @member {Map.<Object, string>}
+         * @todo Pass registrations via constructor parameters; a `false` value should suppress message delivery.
+         *
+         * @type {Map.<Object, {method: string, priority: number}>}
          */
         this.registeredApps = new Map();
         
         /**
-         * Queues for FT/HT playing and muting management
+         * Active note queues for stuck-note prevention and monophonic FT logic.
          *
-         * @member {Object}
+         * @type {Object}
          *
-         * @property {Array.<HUM.DHCmsg>} ft - Queue for FT key-press tracking
-         * @property {Array.<HUM.DHCmsg>} ht - Queue for HT key-press tracking
+         * @property {Array.<HUM.DHCmsg>} ft - Queue of currently pressed FT events.
+         * @property {Array.<HUM.DHCmsg>} ht - Queue of currently pressed HT events.
          */
         this.playQueue = {
             ft: [],
@@ -106,61 +147,67 @@ HUM.DHC = class {
         };
         
         /**
-        * The Backend Utils instance
-        *
-        * @member {BackendUtils}
-        */
+         * The BackendUtils instance shared by the parent HUM.
+         *
+         * @type {HUM.BackendUtils}
+         */
         this.backendUtils = this.harmonicarium.components.backendUtils;
 
         /**
-         * DHC Settings
-         * @todo Rename "settings" to "parameters".
+         * DHC parameters container.
          *
-         * @member {HUM.DHC#Parameters}
-         * 
+         * @todo Rename `settings` to `parameters` for consistency with other components.
+         *
+         * @type {HUM.DHC.prototype.Parameters}
          */
         this.settings = new this.Parameters(this);
 
         /**
-        * The Hancock instance
-        *
-        * @member {HUM.Hancock}
-        */
+         * The Hancock (virtual keyboard) instance.
+         *
+         * @type {HUM.Hancock}
+         */
         this.hancock = new HUM.Hancock(this);
 
         /**
-        * The Synth instance
-        *
-        * @member {HUM.Synth}
-        */
+         * The built-in synthesizer instance.
+         *
+         * @type {HUM.Synth}
+         */
         this.synth = new HUM.Synth(this);
 
         /**
-        * The MidiHub instance
-        *
-        * @member {HUM.midi.MidiHub}
-        */
+         * The MIDI hub instance (manages all MIDI I/O ports).
+         *
+         * @type {HUM.midi.MidiHub}
+         */
         this.midi = new HUM.midi.MidiHub(this);
 
         this.settings._init();
 
         /**
-        * The Hstack instance
-        *
-        * @member {HUM.Hstack}
-        */
+         * The Hstack visualizer instance.
+         *
+         * @type {HUM.Hstack}
+         */
         this.hstack = new HUM.Hstack(this);
         // =======================
     } // end class Constructor
     // ===========================
     
     /**
-     * Register a new App (module) with a specified method and priority, and rearranges
-     * the registered apps by priority.
-     * 
-     * @param {Object} app      - The instance of the app to be registered.
-     * @param {string} method   - The name of the method to use to send messages to the app.
-     * @param {number} priority - The priority with which the registered app will receive messages.
+     * Registers a new app component as a DHC subscriber and re-sorts all subscribers by priority.
+     *
+     * @param {Object} app      - The app component instance to register.
+     * @param {string} method   - The name of the method on `app` that will receive {@link HUM.DHCmsg} messages.
+     * @param {number} priority - Dispatch priority; lower values receive messages first.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Adds `app` to {@link HUM.DHC#registeredApps} keyed by `{method, priority}`, then
+     * rebuilds the Map in ascending priority order so that `sendMessageToApps` always
+     * iterates subscribers in the correct sequence.
      */
     registerApp(app, method, priority) {
         let rA = this.registeredApps;
@@ -170,9 +217,15 @@ HUM.DHC = class {
     }
 
     /**
-     * Send a DHCmsg message to all the registered apps
-     * 
-     * @param {HUM.DHCmsg} dhcMsg - The message to send
+     * Dispatches a DHC message to all registered app components in priority order.
+     *
+     * @param {HUM.DHCmsg} dhcMsg - The message to broadcast.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Iterates over {@link HUM.DHC#registeredApps} and calls the registered handler
+     * method on each subscriber, passing `dhcMsg` as the sole argument.
      */
     sendMessageToApps(dhcMsg) {
         for (const [app, handler] of this.registeredApps) {
@@ -185,7 +238,15 @@ HUM.DHC = class {
      *==============================================================================*/
 
     /**
-     * Recompile FT & HT tables in the right order
+     * Recompiles the FT and HT lookup tables in the correct dependency order and
+     * refreshes the UI monitors.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Calls {@link HUM.DHC#createFTtable} first, then {@link HUM.DHC#createHTtable}
+     * using the currently active FT frequency, and finally {@link HUM.DHC#initUImonitors}
+     * to push the updated values to all UI output elements.
      */
     initTables() {
         // Create the FT tables
@@ -199,8 +260,20 @@ HUM.DHC = class {
     }
 
     /**
-     * Recompile the Fundamental Tones (FT) table in accordance with the current FT Tuning System
-     * and send a message to the other apps.
+     * Recompiles the Fundamental Tones (FT) lookup table according to the currently
+     * selected FT tuning system and broadcasts the result to all registered apps.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Supports three tuning systems controlled by `settings.ft.selected.value`:
+     * - `'nEDx'`: n-EDx equal temperament, computing each step via {@link HUM.DHC.compute_nEDx}.
+     * - `'h_s'`: Harmonics/Subharmonics, in either `'natural'` or `'sameOctave'` sub-mode.
+     * - `'file'`: Tuning file import (not yet implemented).
+     *
+     * In each case the reverse table (midicent → FT number) is populated only for
+     * tones that appear in the current controller keymap. After building both tables,
+     * an `'update/ft'` {@link HUM.DHCmsg} is sent to all registered apps.
      */
     createFTtable() {
         // Temp object
@@ -323,11 +396,20 @@ HUM.DHC = class {
     }
 
     /**
-     * Recompile the Harmonic/Subarmonic Tones (HT) table and the reverse one and send a message to the other apps.
-     * 
-     * @todo Implement custom H/S table length (16>32>64>128) to increase performances if needed.
-     * 
-     * @param {hertz} fundamental - The tone on which to build the table, expressed in hertz (Hz).
+     * Recompiles the Harmonic/Subharmonic Tones (HT) lookup table for a given
+     * fundamental frequency and broadcasts the result to all registered apps.
+     *
+     * @todo Implement configurable table length (16/32/64/128 tones) for performance tuning.
+     *
+     * @param {hertz} fundamental - The reference frequency (in Hz) on which to build the series.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Computes 256 tones: subharmonics from −128 to −1 (`fundamental / |i| × s_transpose`)
+     * and harmonics from 1 to 128 (`fundamental × i × h_transpose`). Both the forward
+     * table and the reverse (midicent → HT number) table are stored, and an
+     * `'update/ht'` {@link HUM.DHCmsg} is sent to all registered apps.
      */
     createHTtable(fundamental) {
         let harmonicsTable = {},
@@ -354,10 +436,18 @@ HUM.DHC = class {
      * FM UI tools
      *==============================================================================*/
     /**
-     * Print the Fundamental Mother (FM) data to the UI output monitor.
+     * Writes the current Fundamental Mother (FM) data to the UI output monitor.
      *
      * @param {hertz}    hz - Frequency expressed in hertz (Hz).
      * @param {midicent} mc - MIDI note number expressed in midicent.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Constructs a temporary {@link HUM.DHC#Xtone}, applies any active controller
+     * pitch-bend via {@link HUM.DHC#bendXtone}, then converts the result to a
+     * human-readable note name with {@link HUM.DHC#mcToName} and writes the
+     * formatted midicent and hertz values to their respective UI output elements.
      */
     printFundamentalMother(hz, mc){
         let xtObj = new this.Xtone(hz, mc);
@@ -376,7 +466,16 @@ HUM.DHC = class {
      * KEYMAP HANDLING METHODS
      *==============================================================================*/
     /**
-     * Update the preset list according to the selected FTs Tuning System
+     * Refreshes the controller keymap preset dropdown to match the currently
+     * selected FT tuning system, then loads the last-selected preset.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Clears the HTML `<select>` element, repopulates it with the presets
+     * available for the current `settings.ft.selected` tuning system, appends
+     * a "Load from file…" option, restores the previously chosen option, and
+     * calls {@link HUM.DHC#loadKeymapPreset} to apply it.
      */
     updateKeymapPreset() {
         let htmlElem = this.settings.keymap.presets.uiElements.in.controllerKeymapPresets;
@@ -403,10 +502,19 @@ HUM.DHC = class {
 
     /**
      * Load a Controller keymap from 'ctrlKeymapPreset' according to the selection on UI.
-     * It performs various actions such as updating global variables, initializing tables,
-     * and sending a message to apps.
      *
-     * @param {Event} changeEvent - Change HTML event object on 'select' element (ctrl keymap dropdown).
+     * @param {Event} changeEvent - The `change` event from the `<select>` element.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Reads the selected `<option>` value from `changeEvent.target.value`.
+     * If the value is not `99` (the "Load from file…" sentinel), the corresponding
+     * preset is written to `tables.ctrl`, the stored selection index is updated,
+     * the Piper queue is reinitialised, all tables are recompiled via
+     * {@link HUM.DHC#initTables}, and a `'update/ctrlmap'` {@link HUM.DHCmsg}
+     * is sent to all registered apps. If the value is `99`, the file input widget
+     * is revealed instead.
      */
     loadKeymapPreset(changeEvent) {
         let indexValue = changeEvent.target.value;
@@ -436,7 +544,14 @@ HUM.DHC = class {
     /**
      * Initialize the reading process of the Controller Keymap file.
      *
-     * @param {File} file - The file object that represents the keymap to be read.
+     * @param {File} file - The `File` object representing the `.hcmap` file to read.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Creates a `FileReader`, attaches an error handler from the backend utilities,
+     * and reads the file as UTF-8 text. Once the read completes, delegates to
+     * {@link HUM.DHC#processKeymapData} with the raw text content and filename.
      */
     readKeymapFile(file) {
         let reader = new FileReader();
@@ -453,14 +568,21 @@ HUM.DHC = class {
     }
 
     /**
-     * Build the Controller Keymap table on the incoming raw data from .hcmap file.
-     * In particular, it splits the data into lines, parses each line into elements, 
-     * and writes the parsed elements into a new slot in the settings keymap presets.
+     * Parses the raw text of a `.hcmap` file and registers it as a new keymap preset.
      *
-     * @param {string} data - The text content of the Controller keymap file. It is expected to
-     *                        be in a specific format where each line represents a key and its
-     *                        corresponding values. The values can be separated by spaces or tabs.
-     * @param {string} name - The filename, that represents the name of the keymap preset.
+     * @param {string} data - The UTF-8 text content of the controller keymap file.
+     *                        Each non-empty line must contain three whitespace-separated
+     *                        integers: `<midiNoteNumber> <ftNum> <htNum>`.
+     * @param {string} name - The filename, used as the display label in the preset dropdown.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Splits `data` into lines, parses each line into a `{ft, ht}` mapping keyed by
+     * MIDI note number, stores the result as a new entry in
+     * `settings.keymap.presets.ctrlKeymapPreset` for the current tuning system,
+     * and calls {@link HUM.DHC#updateKeymapPreset} to refresh the UI dropdown
+     * and apply the newly loaded keymap.
      */
     processKeymapData(data, name) {
         // Get the key for the new slot
@@ -485,7 +607,16 @@ HUM.DHC = class {
     }
 
     /**
-     * Create an HTML table from the controller keymap and write it to the UI under a modal element.
+     * Renders the current controller keymap as an HTML table and injects it into
+     * the keymap modal dialog.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Iterates over all entries in `tables.ctrl`, formats FT/HT values of `129`
+     * as `"N/A"`, and builds a Bootstrap-styled `<table>` string. The resulting
+     * HTML is written to the `controllerKeymapTable` UI output element so it is
+     * displayed when the modal is opened.
      */
     keymap2Html() {
         let txt = "";
@@ -514,12 +645,20 @@ HUM.DHC = class {
      *==============================================================================*/
     
     /**
-     * Play a Fundamental Tone.
-     * It recalculates the HT table.
-     * It avoids stucking notes by stopping any currently playing FTs with the same xtNum or ctrlNum.
-     * It manages the play queue, sends the message to the registered apps and updates the UI monitors.
+     * Plays a Fundamental Tone: recomputes the HT table, prevents stuck notes,
+     * updates the play queue, and dispatches the message to all registered apps.
      *
-     * @param {HUM.DHCmsg} dhcMsg - The message containing the FT to be played.
+     * @param {HUM.DHCmsg} dhcMsg - A `'tone-on'` message for the FT to play.
+     *
+     * @returns {void}
+     *
+     * @description
+     * 1. Recomputes the HT table using the new FT's frequency.
+     * 2. Searches the play queue for any already-sounding note with the same
+     *    `xtNum` (if `ctrlNum` is absent) or the same `ctrlNum` (if present),
+     *    sends a `'tone-off'` for it, and removes it from the queue.
+     * 3. Pushes `dhcMsg` onto `playQueue.ft` and stores the new FT in `settings.ht.curr_ft`.
+     * 4. Broadcasts `dhcMsg` to all registered apps and updates the UI monitor.
      */
     playFT(dhcMsg) {
         // Recalculate the ht table passing the frequency (Hz)
@@ -570,11 +709,19 @@ HUM.DHC = class {
     }
 
     /**
-     * Stop playing a Fundamental Tone.
-     * It manages the play queue and sends the message to the registered apps.
-     * If there are other notes in the play queue, it plays the next note and updates the UI monitors.
+     * Stops a playing Fundamental Tone: removes it from the play queue and
+     * dispatches the message to all registered apps.
      *
-     * @param {HUM.DHCmsg} dhcMsg - The message containing the FT to be muted.
+     * @param {HUM.DHCmsg} dhcMsg - A `'tone-off'` message for the FT to mute.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Finds the matching entry in `playQueue.ft` by `xtNum`, removes it, and
+     * broadcasts `dhcMsg`. If other FTs remain in the queue, the most recently
+     * added one is promoted: the HT table is recomputed for its frequency,
+     * `curr_ft` is updated, the promoting `'tone-on'` message is re-sent, and
+     * the UI monitor is refreshed.
      */
     muteFT(dhcMsg) {            
         // Search the FT number in the playQueue array
@@ -616,11 +763,23 @@ HUM.DHC = class {
     }
 
     /**
-     * Play a Harmonic/Subharmonic Tone.
-     * It avoids stucking notes by stopping any currently playing FTs with the same xtNum or ctrlNum.
-     * It manages the play queue, sends the message to the registered apps and updates the UI monitors.
-     * 
-     * @param {HUM.DHCmsg} dhcMsg - The message containing the HT to be played.
+     * Plays a Harmonic/Subharmonic Tone: prevents stuck notes, updates the play
+     * queue, handles the Piper feature, and dispatches the message to all
+     * registered apps.
+     *
+     * @param {HUM.DHCmsg} dhcMsg - A `'tone-on'` message for the HT to play.
+     *
+     * @returns {void}
+     *
+     * @description
+     * - Searches the play queue for any already-sounding note matching by
+     *   `xtNum` or `ctrlNum` and sends a `'tone-off'` for it before proceeding.
+     * - For a normal HT (`xtNum !== 0`): updates `curr_ht`, pushes the message
+     *   onto `playQueue.ht`, adds it to the Piper queue (unless already piper-marked),
+     *   and refreshes the UI monitor.
+     * - For HT 0 (Piper trigger): calls {@link HUM.DHC#piping} with state `1`
+     *   to advance and play the next step in the Piper's pipe.
+     * - Finally broadcasts `dhcMsg` to all registered apps.
      */
     playHT(dhcMsg) {
         // - - - - - - - - - - - - - -
@@ -685,10 +844,19 @@ HUM.DHC = class {
     }
 
     /**
-     * Stop playing a Harmonic/Subharmonic Tone
-     * It manages the play queue and sends the message to the registered apps.
+     * Stops a playing Harmonic/Subharmonic Tone: removes it from the play queue
+     * and dispatches the message to all registered apps.
      *
-     * @param {HUM.DHCmsg} dhcMsg - The message containing the HT to be muted.
+     * @param {HUM.DHCmsg} dhcMsg - A `'tone-off'` message for the HT to mute.
+     *
+     * @returns {void}
+     *
+     * @description
+     * - For a normal HT (`xtNum !== 0`): finds and removes the entry from
+     *   `playQueue.ht` by `xtNum`, updates `curr_ht` to the most recently
+     *   queued HT (if any), and broadcasts `dhcMsg`.
+     * - For HT 0 (Piper trigger, non-panic only): calls {@link HUM.DHC#piping}
+     *   with state `0` to release the current Piper step, then broadcasts `dhcMsg`.
      */
     muteHT(dhcMsg) {
         // If it's a normal HT
@@ -723,8 +891,14 @@ HUM.DHC = class {
     }
 
     /**
-     * Force to stop playing all Fundamental and Harmonic/Subharmonic Tones.
-     * It clears the play queues and sends a message to the registered apps to turn off all notes.
+     * Forces all Fundamental and Harmonic/Subharmonic Tones to stop immediately.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Clears both `playQueue.ft` and `playQueue.ht`, then broadcasts a
+     * `'panic'` {@link HUM.DHCmsg} to all registered apps so that every
+     * component can silence its active voices.
      */
     panic() {
         this.playQueue.ft = [];
@@ -739,9 +913,16 @@ HUM.DHC = class {
      *==============================================================================*/
 
     /**
-     * Store a play-HT message into the Piper's queue.
+     * Stores a `'tone-on'` HT message into the Piper's queue.
      *
-     * @param {HUM.DHCmsg} dhcMsg - The message containing the HT to be piped.
+     * @param {HUM.DHCmsg} dhcMsg - The HT play message to enqueue.
+     *
+     * @returns {void}
+     *
+     * @description
+     * If the queue has not yet reached `settings.piper.maxLength`, `dhcMsg` is
+     * appended. Otherwise the oldest entry is dropped (`shift()`) before
+     * the new message is appended, keeping the queue at a fixed maximum length.
      */
     piper(dhcMsg) {
         // Prepare the fake MIDI message
@@ -759,10 +940,21 @@ HUM.DHC = class {
     }
 
     /**
-     * Play or mute the next HT available in the Piper's queue
-     * (usually when HT0 is pressed or released).
+     * Plays or mutes the next step in the Piper's pipe (triggered by HT 0).
      *
-     * @param {(0|1)} state - Note ON/OFF; 1 is ON (play), 0 is OFF (mute)
+     * @param {0|1} state - `1` to play the next step (note-on), `0` to release it (note-off).
+     *
+     * @returns {void}
+     *
+     * @description
+     * When a new batch of HT messages exists in the Piper queue, they are first
+     * spliced into the pipe at the current step position before playback proceeds.
+     * - `state === 1` (note-on): Plays the message at the current step by calling
+     *   {@link HUM.DHC#playHT} with a piper-marked copy, advancing `currStep`.
+     * - `state === 0` (note-off): Releases the `currTone` via {@link HUM.DHC#muteHT}
+     *   and advances `currStep` to prepare the next step.
+     * - When `currStep` reaches or exceeds `maxLength`, the counter wraps to `0`
+     *   and this method calls itself recursively to restart the cycle.
      */
     piping(state) {
         // Get the index (current step)
@@ -836,12 +1028,20 @@ HUM.DHC = class {
     }
 
     /**
-     * Experimental function for setting a default/preloaded melody into the Piper.
-     * It fills the Piper's queue with a sequence of HTs.
+     * Seeds the Piper's queue with a built-in default melody.
      *
-     * @todo - The preloaded Pipe must use only the available keys.
-     * 
-     * @param {('h'|'s'|'hs')} type - The HTs scale type of the current Controller keymap.
+     * @todo The preloaded pipe should only reference HT numbers present in the active controller keymap.
+     *
+     * @param {('h'|'s'|'hs')} type - The HT scale type of the current controller keymap:
+     *                                `'h'` for harmonics, `'s'` for subharmonics, `'hs'` for both.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Selects a short pre-defined HT sequence for the given scale type, wraps each
+     * tone number in a `'tone-on'` {@link HUM.DHCmsg}, stores the array in
+     * `settings.piper.queue`, and sets `settings.piper.maxLength` to match the
+     * sequence length.
      */
     initPipeQueue(type) {
         let melodies = {
@@ -862,11 +1062,19 @@ HUM.DHC = class {
      *==============================================================================*/
 
     /**
-     * Apply the current controller pitchbend amount (if present) to a Xtone object and return a pitch-bent copy of it.
+     * Apply the current controller pitchbend amount (if present) to a Xtone object and return
+     * a pitch-bent copy of it.
      *
-     * @param {HUM.DHC#Xtone} xtObj - FT or HT object of the tone to bend
+     * @param {HUM.DHC#Xtone} xtObj - The FT or HT tone object to bend.
      *
-     * @return {HUM.DHC#Xtone} - The pitch-bent object
+     * @returns {HUM.DHC#Xtone} A new frozen {@link HUM.DHC#Xtone} with the
+     *   pitch-bend offset applied to both `hz` and `mc`.
+     *
+     * @description
+     * Reads `midi.in.parameters.pitchbend.amount` (normalised −1…+1) and
+     * `midi.in.parameters.pitchbend.range.value` (in cents), multiplies them
+     * to obtain the pitch-bend offset in cents, then computes the bent frequency
+     * and midicent values.
      */
     bendXtone(xtObj) {
         // Compute the Controller Pitchbend amount in cents
@@ -878,8 +1086,17 @@ HUM.DHC = class {
     }
 
     /**
-     * Update all parts of the UI with the last computed or set values.
-     * Send the 'init' message to all the redistered Apps. 
+     * Refreshes all UI monitor outputs with the latest computed values and
+     * sends an `'init'` message to all registered apps.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Updates the FM monitor via {@link HUM.DHC#printFundamentalMother}, sets
+     * the FT monitor to `curr_ft`, conditionally sets the HT monitor to
+     * `curr_ht` if a tone has previously been pressed, and finally broadcasts
+     * an `'init'` {@link HUM.DHCmsg} so that all subscribers can refresh
+     * their own UI elements.
      */
     initUImonitors() {
         // Compile the FM monitors
@@ -899,18 +1116,26 @@ HUM.DHC = class {
      *==============================================================================*/
 
     /**
-     * Parse a note name string to get the MIDI note number in accordance with the specified mode.
+     * Parses a note-name string into a MIDI note number under one of three
+     * octave-numbering conventions.
      *
      * @example
-     * Depending on the mode:
-     * - 'hancock' C0 == 0 midicent == 0 midinnum
-     * - 'scientific' C0 == 12 midicent == 12 midinnum
-     * - 'ui' C0 == // depends on Middle C setting ({@link DHC#Parameters.global.middle_c}) 
-     * 
-     * @param {('hancock'|'ui'|'scientific')} mode - The method in which the 'note' should be interpreted.
-     * @param {string}                        note - The note name in format <code>[A-G]#?-?\d+</code>. E.g. C0, A#4, G-3, D#-1  
-     * 
-     * @return {midinnum} - MIDI note number (based on the given mode and note).
+     * // Octave conventions (C0 = MIDI note number):
+     * // 'hancock'    C0 == 0
+     * // 'scientific' C0 == 12
+     * // 'ui'         C0 depends on settings.global.middle_c
+     *
+     * @param {('hancock'|'ui'|'scientific')} mode - The octave-numbering convention to apply.
+     * @param {string}                        note - Note name in the format `[A-G]#?-?\d+`
+     *                                               (e.g. `'C0'`, `'A#4'`, `'G-3'`, `'D#-1'`).
+     *
+     * @returns {midinnum|undefined} The corresponding MIDI note number, or `undefined`
+     *   if `note` cannot be parsed.
+     *
+     * @description
+     * Extracts the chromatic pitch class and octave number from `note` using
+     * regular expressions, looks up the semitone offset in a fixed reference
+     * table, and applies the octave offset appropriate for the chosen `mode`.
      */
     nameToMidiNumber(mode, note) {
         let ref = {
@@ -949,12 +1174,21 @@ HUM.DHC = class {
     }
 
     /**
-     * Utiity to convert a given MIDI note number to an array containing 'hancock', 'ui' and 'scientific' note name,
-     * plus the information if the key on the piano should be black or not.
+     * Converts a MIDI note number to its note names under all three octave
+     * conventions, plus a flag indicating whether the key is black.
      *
-     * @param {midinnum} midikey - MIDI note number (integer). The standard is from 0 (C-1) to 127 (G9).
+     * @param {midinnum} midikey - Integer MIDI note number. Negative values and
+     *                             values above 127 are accepted (out-of-MIDI-range pitches).
      *
-     * @return {Array.<string, string, boolean, string>} - An array with Hancock, UI and Scientific note name, and if the key is white or black.
+     * @returns {Array.<string, string, boolean, string>} A four-element array:
+     *   `[hancockName, uiName, isBlack, scientificName]`.
+     *
+     * @description
+     * Uses the enharmonic preference from `settings.global.enharmonic_nn` (`'sharp'`
+     * or `'flat'`) to select the appropriate note-name lookup table, then computes
+     * the quotient and remainder of `midikey / 12` to determine the octave and
+     * pitch class. Negative MIDI numbers are handled separately to ensure correct
+     * floor division.
      */
     midiNumberToNames(midikey) {
         let ref = {};
@@ -1025,12 +1259,19 @@ HUM.DHC = class {
     }
  
     /**
-     * Utility to convert a given midicent value to an array containing the UI note name +/- cents
-     * plus the information if the key on the piano should be black or not.
-     * 
-     * @param {midicent} mc - Pitch in midicent (float)
+     * Converts a midicent value to a human-readable UI note name with cent deviation.
      *
-     * @return {Array.<string, number, string, boolean>} - Array containing [note name, +/- sign, cents, black key y/n]
+     * @param {midicent} mc - Pitch expressed in midicent (float).
+     *
+     * @returns {Array.<string, string, number, boolean>} A four-element array:
+     *   `[noteName, sign, cents, isBlack]` where `sign` is `'+'`, `'−'`, or `''`.
+     *
+     * @description
+     * Rounds `mc` to the nearest semitone by splitting it into an integer MIDI
+     * note number and a fractional cent offset. If the offset exceeds ±0.5
+     * semitones, the note number is nudged up or down and the sign is inverted.
+     * Calls {@link HUM.DHC#midiNumberToNames} for the note name, then scales
+     * the fractional part to cents according to `settings.global.cent_accuracy`.
      */
     mcToName(mc) {
         let noteNumber = Math.trunc(mc),
@@ -1066,11 +1307,15 @@ HUM.DHC = class {
     }
  
     /**
-     * Util to get the full string of UI note name +/- cents.
+     * Returns a formatted string of the UI note name with cent deviation.
      *
-     * @param {midicent} mc - Pitch in midicent (float).
+     * @param {midicent} mc - Pitch expressed in midicent (float).
      *
-     * @return {string} - The compliled string; e.g. D#3 -45&cent;.
+     * @returns {string} A human-readable string such as `'D#3 −45¢'`.
+     *
+     * @description
+     * Delegates to {@link HUM.DHC#mcToName} and concatenates its components
+     * into a single display string.
      */
     mcToNameString(mc) {
         let result = this.mcToName(mc);
@@ -1084,11 +1329,15 @@ HUM.DHC = class {
     *==============================================================================*/
 
     /**
-     * From MIDI note number to frequency (Hz).
-     * 
-     * @param {midicent} mc - MIDI note number expressed in midicents.
-     * 
-     * @return {hertz} - Frequency expressed in hertz (Hz).
+     * Converts a MIDI note number (in midicent) to a frequency in hertz.
+     *
+     * @param {midicent} mc - MIDI note number expressed in midicent.
+     *
+     * @returns {hertz} The corresponding frequency in hertz (Hz).
+     *
+     * @description
+     * Delegates to {@link HUM.DHC.compute_nEDx} using the standard 12-EDO
+     * reference (`unit = 2`, `division = 12`, `masterTuning = 440 Hz`).
      */
     static mcToFreq(mc) {
         // Use the icCompute_nEDx() function to get frequency
@@ -1096,11 +1345,15 @@ HUM.DHC = class {
     }
 
     /**
-     * From frequency (Hz) to MIDI note number.
-     * 
+     * Converts a frequency in hertz to a MIDI note number in midicent.
+     *
      * @param {hertz} freq - Frequency expressed in hertz (Hz).
-     * 
-     * @return {midicent} - MIDI note number expressed in midicent.
+     *
+     * @returns {midicent} The corresponding MIDI note number in midicent (full floating-point accuracy).
+     *
+     * @description
+     * Uses the standard formula: `midicent = 69 + 12 × log₂(freq / 440)`,
+     * where 69 is the MIDI note number of A4 and 440 Hz is the reference pitch.
      */
     static freqToMc(freq) {
         let midicent = 69 + 12 * Math.log2(freq / 440);
@@ -1109,14 +1362,23 @@ HUM.DHC = class {
     }
 
     /**
-     * Calculate the n-EDx ("free" equal temperament) of a relative tone.
+     * Computes the frequency of a relative tone step in an n-EDx equal-temperament scale.
      *
-     * @param  {number} relativeTone - Relative number of the "step" in the scale (should be integer).
-     * @param  {number} unit         - Ratio unit (must be greater than zero).
-     * @param  {number} division     - Equal divisions of the ratio unit (must be greater than zero).
-     * @param  {hertz}  masterTuning - Reference frequency expressed in hertz (Hz).
-     * 
-     * @return {hertz} - Frequency expressed in hertz (Hz)
+     * @param  {number} relativeTone - The step number relative to the reference tone
+     *                                 (should be an integer; 0 returns `masterTuning`).
+     * @param  {number} unit         - The interval ratio to subdivide (must be > 0;
+     *                                 e.g. `2` for an octave in 12-TET).
+     * @param  {number} division     - Number of equal divisions of `unit` (must be > 0;
+     *                                 e.g. `12` for semitones).
+     * @param  {hertz}  masterTuning - Reference frequency in hertz (Hz) for step 0.
+     *
+     * @returns {hertz} The frequency of the requested step in hertz (Hz), at full
+     *   floating-point accuracy.
+     *
+     * @description
+     * Implements the formula: `f = unit^(relativeTone / division) × masterTuning`.
+     * Passing `unit = 2`, `division = 12`, and `masterTuning = 440` reproduces
+     * standard 12-TET.
      */
     static compute_nEDx(relativeTone, unit, division, masterTuning) {
         let frequency = Math.pow(unit, relativeTone / division) * masterTuning;
@@ -1125,11 +1387,12 @@ HUM.DHC = class {
     }
 
     /**
-     * Remove duplicated values on the array passed via the argument.
+     * Returns a new array containing only the unique elements of the input.
      *
-     * @param {Array.<number>} arrArg - Array of numbers.
+     * @param {Array.<number>} arrArg - Array of numbers potentially containing duplicates.
      *
-     * @return {Array.<number>} - A new array with only unique elements.
+     * @returns {Array.<number>} A new array with duplicate values removed, preserving
+     *   the original order of first occurrence.
      */
     static uniqArray(arrArg) {
           return arrArg.filter((elem, pos, arr) => arr.indexOf(elem) === pos );
@@ -1139,13 +1402,29 @@ HUM.DHC = class {
 
 
 /**
- * A FT or HT relative tone (used in `HUM.DHC#table.ft` `HUM.DHC#table.ht`).
- * It's a freezed object.
+ * A frozen tone object representing one entry in the FT or HT lookup tables.
+ *
+ * @class
+ * @memberof HUM.DHC
+ *
+ * @description
+ * Encapsulates the two representations of a single computed pitch — its
+ * frequency in hertz and its MIDI note number in midicent. Instances are
+ * immediately frozen via `Object.freeze()` to guarantee immutability once
+ * created.
+ *
+ * @example
+ * // Instantiated internally when building FT/HT tables
+ * const tone = new dhc.Xtone(440, 69); // A4
+ * tone.hz; // 440
+ * tone.mc; // 69
  */
 HUM.DHC.prototype.Xtone = class {
     /**
-     * @property {hertz}    hz - Frequency expressed in hertz (Hz).
-     * @property {midicent} mc - MIDI note number expressed in midicents.
+     * Creates a new frozen Xtone instance.
+     *
+     * @param {hertz}    hz - Frequency expressed in hertz (Hz).
+     * @param {midicent} mc - MIDI note number expressed in midicent.
      */
     constructor(hz, mc) {
         this.hz = Number(hz);
@@ -1154,12 +1433,33 @@ HUM.DHC.prototype.Xtone = class {
     }
 };
 
-/** 
- * Instance class-container used to create all the `HUM.Param` objects for the `HUM.DHC` instance.
+/**
+ * Parameter container class for a {@link HUM.DHC} instance.
+ *
+ * @class
+ * @memberof HUM.DHC
+ *
+ * @description
+ * Instantiates and exposes all {@link HUM.Param} objects used by a
+ * {@link HUM.DHC} instance. Parameters are grouped into namespaces:
+ * - `global`: Display preferences (Hz/cent accuracy, enharmonic notation, middle C).
+ * - `fm`: Fundamental Mother frequency input (Hz and midicent) and initialization mode.
+ * - `ft`: Fundamental Tones tuning system selection and its sub-parameters
+ *   (`nEDx`, `h_s.natural`, `h_s.sameOctave`, `file`).
+ * - `ht`: Harmonic/Subharmonic Tones transposition ratios and last-played state.
+ * - `piper`: Piper feature configuration (pipe length, queue, pipe, step counter).
+ * - `keymap`: Controller keymap preset selection, file loading, and modal table display.
+ * - `bsAccordion`: Bootstrap accordion scroll behaviour proxy.
  */
-HUM.DHC.prototype.Parameters = class { 
+HUM.DHC.prototype.Parameters = class {
     /**
-     * @param {HUM.DHC} dhc - The DHC instance in which this class is being used.
+     * Creates a new Parameters instance for the given DHC.
+     *
+     * @param {HUM.DHC} dhc - The DHC instance that owns this parameter set.
+     *
+     * @description
+     * Instantiates all {@link HUM.Param} objects, configures their UI element
+     * bindings, initial values, pre/post hooks, and IndexedDB keys.
      */
     constructor(dhc) {
         /**
@@ -2483,7 +2783,15 @@ HUM.DHC.prototype.Parameters = class {
     // ===========================
 
     /**
-     * Initializes the parameters of the FT tuning method and the FM.
+     * Initializes the FT tuning system selection parameter and the FM initialization parameter.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Calls `_init()` on `ft.selected` to wire up the FT tuning-system radio
+     * buttons and apply the stored tuning selection, then calls `_init()` on
+     * `fm.init` to determine whether to initialise the Fundamental Mother from
+     * an Hz or midicent value and recompute all tables accordingly.
      */
     _init() {
         this.ft.selected._init();
@@ -2494,28 +2802,40 @@ HUM.DHC.prototype.Parameters = class {
 };
 
 /**
- * DHC Message class.
- * 
- * This class is used to create instances of messages that can be sent between the different
- * registered app components. The class has various static methods to facilitate the creation of
- * different types of messages with different parameters.
+ * Message class for inter-component communication in the Harmonicarium.
+ *
+ * @class
+ * @memberof HUM
+ *
+ * @description
+ * Instances of `HUM.DHCmsg` are passed between the DHC and all registered
+ * app components (Synth, MIDI, Hancock, Hstack, etc.) to signal tone events
+ * and state changes. Static factory methods provide a convenient, self-documenting
+ * API for constructing every message variant.
+ *
+ * @example
+ * // Play FT 3 with velocity 100 from the MIDI input
+ * const msg = HUM.DHCmsg.ftON('midi-in', 3, 100, 60);
+ * dhc.playFT(msg);
+ *
+ * @example
+ * // Broadcast a panic to all registered apps
+ * dhc.sendMessageToApps(HUM.DHCmsg.allNotesOff('dhc'));
  */
 HUM.DHCmsg = class {
-     /**
-     * 
-     * @param {string}                                         source   - Name of the App component that generated the message.
-     * @param {('init'|'panic'|'update'|'tone-on'|'tone-off')} cmd      - Command code of the message.
-     * @param {tonetype=}                                      type     - The tone typeto which the message is directed; FT or HT.
-     * @param {xtnum=}                                         xtNum    - The FT or HT number.
-     * @param {velocity=}                                      velocity - The intensity of the sound to be generated in MIDI velocity format.<br>
-     *                                                                    If the `cmd` is 'tone-on' , the values must be from 1 to 127.<br>
-     *                                                                    If the `cmd` is 'tone-off' , the values must be from 0 to 127.<br>
-     * @param {midinnum=}                                      ctrlNum  - The MIDI Note Number corresponding to the FT or HT on the keymap (if present).<br>
-     *                                                                    If it is not provided, the Apps that need this information should ignore the message.
-     * @param {boolean=}                                       piper    - If the message is generated by the Piper feature.
-     * @param {boolean=}                                       panic    - Only in case of `cmd` 'note-off', it tells that the message has been generated by a "hard" All-Notes-Off request.
-     * @param {boolean=}                                       tsnap    - If the message has been converted by the Tone-Snap receiving mode.<br>
-     *                                                                    If `true`, the `ctrlNum` may not be the same as the MIDI Note Number pressed on the controller.
+    /**
+     * Creates a new DHCmsg instance.
+     *
+     * @param {string}                                         source   - Identifier of the app component that generated the message (e.g. `'dhc'`, `'midi-in'`).
+     * @param {msgcmd}                                         cmd      - Command code of the message.
+     * @param {tonetype}  [type=false]     - Tone type: `'ft'` or `'ht'` (omit for `'init'`/`'panic'`).
+     * @param {xtnum}     [xtNum=false]    - FT or HT tone number.
+     * @param {velocity}  [velocity=false] - MIDI velocity (1–127 for note-on; 0–127 for note-off).
+     * @param {midinnum}  [ctrlNum=false]  - The MIDI note number on the physical controller that triggered this event, if applicable.
+     * @param {boolean}   [piper=false]    - `true` if the message was generated by the Piper feature.
+     * @param {boolean}   [panic=false]    - `true` if this note-off was issued by a hard All-Notes-Off request.
+     * @param {boolean}   [tsnap=false]    - `true` if the event was translated by the Tone-Snap receiving mode
+     *                                       (in which case `ctrlNum` may differ from the physically pressed key).
      */
     constructor(source, cmd, type=false, xtNum=false, velocity=false, ctrlNum=false, piper=false, panic=false, tsnap=false) {
         this.source = source;
@@ -2529,65 +2849,65 @@ HUM.DHCmsg = class {
         this.tsnap = tsnap;
     }
     /**
-     * Create a new 'init' DHCmsg
+     * Creates an `'init'` DHCmsg to trigger a full UI refresh in all subscribers.
      *
-     * @param {string} source - Name of the App component that generated the message
+     * @param {string} source - Identifier of the component generating the message.
      *
-     * @return {HUM.DHCmsg} - A new instance of DHCmsg
+     * @returns {HUM.DHCmsg} A new `'init'` DHCmsg instance.
      */
     static init(source) {
         return new HUM.DHCmsg(source, 'init');
     }
     /**
-     * Create a new 'panic' DHCmsg
+     * Creates a `'panic'` DHCmsg to silence all active voices immediately.
      *
-     * @param {string} source - Name of the App component that generated the message
+     * @param {string} source - Identifier of the component generating the message.
      *
-     * @return {HUM.DHCmsg} - A new instance of DHCmsg
+     * @returns {HUM.DHCmsg} A new `'panic'` DHCmsg instance.
      */
     static allNotesOff(source) {
         return new HUM.DHCmsg(source, 'panic');
     }
     /**
-     * Create a new 'update FT' DHCmsg
+     * Creates an `'update/ft'` DHCmsg signalling that the FT table has changed.
      *
-     * @param {string} source - Name of the App component that generated the message
+     * @param {string} source - Identifier of the component generating the message.
      *
-     * @return {HUM.DHCmsg} - A new instance of DHCmsg
+     * @returns {HUM.DHCmsg} A new `'update'` DHCmsg with type `'ft'`.
      */
     static ftUpd(source) {
         return new HUM.DHCmsg(source, 'update', 'ft');
     }
     /**
-     * Create a new 'update HT' DHCmsg
+     * Creates an `'update/ht'` DHCmsg signalling that the HT table has changed.
      *
-     * @param {string} source - Name of the App component that generated the message
+     * @param {string} source - Identifier of the component generating the message.
      *
-     * @return {HUM.DHCmsg} - A new instance of DHCmsg
+     * @returns {HUM.DHCmsg} A new `'update'` DHCmsg with type `'ht'`.
      */
     static htUpd(source) {
         return new HUM.DHCmsg(source, 'update', 'ht');
     }
     /**
-     * Create a new 'update Controller Keymap' DHCmsg
+     * Creates an `'update/ctrlmap'` DHCmsg signalling that the controller keymap has changed.
      *
-     * @param {string} source - Name of the App component that generated the message
+     * @param {string} source - Identifier of the component generating the message.
      *
-     * @return {HUM.DHCmsg} - A new instance of DHCmsg
+     * @returns {HUM.DHCmsg} A new `'update'` DHCmsg with type `'ctrlmap'`.
      */
     static ctrlmapUpd(source) {
         return new HUM.DHCmsg(source, 'update', 'ctrlmap');
     }
     /**
-     * Create a new 'FT Note-ON' DHCmsg
+     * Creates a `'tone-on'` DHCmsg for a Fundamental Tone.
      *
-     * @param {string}    source   - Name of the App component that generated the message
-     * @param {xtnum}     xtNum    - The FT number
-     * @param {velocity}  velocity - The intensity of the sound to be generated in MIDI velocity format, from 1 to 127.<br>
-     * @param {midinnum=} ctrlNum  - The MIDI Note Number corresponding to the FT on the keymap (if present)
-     * @param {boolean=}  tsnap    - If the message has been converted by the Tone-Snap receiving mode
-     * 
-     * @return {HUM.DHCmsg} - A new instance of DHCmsg
+     * @param {string}   source   - Identifier of the component generating the message.
+     * @param {xtnum}    xtNum    - The FT number to play.
+     * @param {velocity} velocity - MIDI velocity (1–127).
+     * @param {midinnum} [ctrlNum=false] - Physical controller MIDI note number, if applicable.
+     * @param {boolean}  [tsnap=false]  - `true` if translated by the Tone-Snap mode.
+     *
+     * @returns {HUM.DHCmsg} A new `'tone-on'` FT DHCmsg instance.
      */
     static ftON(source, xtNum, velocity, ctrlNum=false, tsnap=false) {
         return new HUM.DHCmsg(source, 'tone-on', 'ft', 
@@ -2599,16 +2919,16 @@ HUM.DHCmsg = class {
             tsnap);
     }
     /**
-     * Create a new 'HT Note-ON' DHCmsg
+     * Creates a `'tone-on'` DHCmsg for a Harmonic/Subharmonic Tone.
      *
-     * @param {string}    source   - Name of the App component that generated the message.
-     * @param {xtnum}     xtNum    - The HT number.
-     * @param {velocity}  velocity - The intensity of the sound to be generated in MIDI velocity format, from 1 to 127.<br>
-     * @param {midinnum=} ctrlNum  - The MIDI Note Number corresponding to the HT on the keymap (if present)
-     * @param {boolean=}  piper    - If the message is generated by the Piper feature
-     * @param {boolean=}  tsnap    - If the message has been converted by the Tone-Snap receiving mode
-     * 
-     * @return {HUM.DHCmsg} - A new instance of DHCmsg
+     * @param {string}   source   - Identifier of the component generating the message.
+     * @param {xtnum}    xtNum    - The HT number to play (use `0` for the Piper trigger).
+     * @param {velocity} velocity - MIDI velocity (1–127).
+     * @param {midinnum} [ctrlNum=false] - Physical controller MIDI note number, if applicable.
+     * @param {boolean}  [piper=false]  - `true` if generated by the Piper feature.
+     * @param {boolean}  [tsnap=false]  - `true` if translated by the Tone-Snap mode.
+     *
+     * @returns {HUM.DHCmsg} A new `'tone-on'` HT DHCmsg instance.
      */
     static htON(source, xtNum, velocity, ctrlNum=false, piper=false, tsnap=false) {
         return new HUM.DHCmsg(source, 'tone-on', 'ht',
@@ -2620,15 +2940,15 @@ HUM.DHCmsg = class {
             tsnap);
     }
     /**
-     * Create a new 'FT Note-OFF' DHCmsg
+     * Creates a `'tone-off'` DHCmsg for a Fundamental Tone.
      *
-     * @param {string}    source   - Name of the App component that generated the message
-     * @param {xtnum}     xtNum    - The FT number
-     * @param {velocity=} velocity - The intensity of the sound to be generated in MIDI velocity format, from 1 to 127.<br>
-     * @param {midinnum=} ctrlNum  - The MIDI Note Number corresponding to the FT on the keymap (if present)
-     * @param {boolean=}  panic    - If `true`, it tells that the message has been generated by a "hard" All-Notes-Off request.
-     * 
-     * @return {HUM.DHCmsg} - A new instance of DHCmsg
+     * @param {string}   source          - Identifier of the component generating the message.
+     * @param {xtnum}    xtNum           - The FT number to stop.
+     * @param {velocity} [velocity=false] - Release velocity (0–127), if applicable.
+     * @param {midinnum} [ctrlNum=false]  - Physical controller MIDI note number, if applicable.
+     * @param {boolean}  [panic=false]   - `true` if triggered by a hard All-Notes-Off.
+     *
+     * @returns {HUM.DHCmsg} A new `'tone-off'` FT DHCmsg instance.
      */
     static ftOFF(source, xtNum, velocity=false, ctrlNum=false, panic=false) {
         return new HUM.DHCmsg(source, 'tone-off', 'ft',
@@ -2639,15 +2959,15 @@ HUM.DHCmsg = class {
             panic);
     }
     /**
-     * Create a new 'HT Note-OFF' DHCmsg
+     * Creates a `'tone-off'` DHCmsg for a Harmonic/Subharmonic Tone.
      *
-     * @param {string}    source   - Name of the App component that generated the message
-     * @param {xtnum}     xtNum    - The HT number
-     * @param {velocity=} velocity - The intensity of the sound to be generated in MIDI velocity format, from 1 to 127.<br>
-     * @param {midinnum=} ctrlNum  - The MIDI Note Number corresponding to the HT on the keymap (if present)
-     * @param {boolean=}  panic    - If `true`, it tells that the message has been generated by a "hard" All-Notes-Off request.
-     * 
-     * @return {HUM.DHCmsg} - A new instance of DHCmsg
+     * @param {string}   source           - Identifier of the component generating the message.
+     * @param {xtnum}    xtNum            - The HT number to stop.
+     * @param {velocity} [velocity=false] - Release velocity (0–127), if applicable.
+     * @param {midinnum} [ctrlNum=false]  - Physical controller MIDI note number, if applicable.
+     * @param {boolean}  [panic=false]    - `true` if triggered by a hard All-Notes-Off.
+     *
+     * @returns {HUM.DHCmsg} A new `'tone-off'` HT DHCmsg instance.
      */
     static htOFF(source, xtNum, velocity=false, ctrlNum=false, panic=false) {
         return new HUM.DHCmsg(source, 'tone-off', 'ht',
@@ -2658,11 +2978,12 @@ HUM.DHCmsg = class {
             panic);
     }
     /**
-     * Create a copy of a 'Note-OFF' DHCmsg
+     * Creates a `'tone-off'` copy of an existing DHCmsg.
      *
-     * @param {HUM.DHCmsg} dhcMsg - The original DHCmsg to be copied
+     * @param {HUM.DHCmsg} dhcMsg - The original `'tone-on'` message to derive a note-off from.
      *
-     * @return {HUM.DHCmsg} - A copy of the original DHCmsg
+     * @returns {HUM.DHCmsg} A new DHCmsg with `cmd` set to `'tone-off'` and all
+     *   other fields copied from `dhcMsg`.
      */
     static copyOFF(dhcMsg) {
         return new HUM.DHCmsg(dhcMsg.source, 'tone-off',

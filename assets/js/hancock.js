@@ -1,68 +1,103 @@
  /**
+ * @fileoverview Virtual piano keyboard controller for Harmonicarium.
+ * This file defines the HUM.Hancock class which manages the Qwerty Hancock
+ * virtual piano keyboard widget, handling key rendering, MIDI output, and
+ * keymap-driven display.
+ *
+ * @module hancock
+ * @memberof HUM
+ * @version 0.8.1
+ * @author Walter G. Mantovani <armonici.it@gmail.com>
+ * @copyright (C) 2017-2026 Walter G. Mantovani
+ * @license AGPL-3.0-or-later
+ *
+ * @description
  * This file is part of HARMONICARIUM, a web app which allows users to play
  * the Harmonic Series dynamically by changing its fundamental tone in real-time.
  * It is available in its latest version from:
  * https://github.com/IndustrieCreative/Harmonicarium
- * 
- * @license
- * Copyright (C) 2017-2023 by Walter G. Mantovani (http://armonici.it).
- * Written by Walter G. Mantovani.
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 "use strict";
 
-/** 
- * The Hancock class<br>
- *    A tool to manage and override the Qwerty Hancock lib
- * 
+/**
+ * Virtual piano keyboard controller wrapping the Qwerty Hancock library.
+ *
+ * @class
+ * @memberof HUM
+ *
+ * @description
+ * The HUM.Hancock class manages the Qwerty Hancock virtual piano keyboard
+ * widget. It handles:
+ * - Rendering piano keys with keymap-driven colors and labels
+ * - Emitting virtual MIDI note-on/off events via the DHC MIDI input
+ * - Synchronizing key highlight state with incoming tone-on/off messages
+ * - Adapting the keyboard range and offset to match the active keymap
+ *
  * @see {@link https://github.com/stuartmemo/qwerty-hancock}
  */
 HUM.Hancock = class {
     /**
-    * @param {HUM.DHC} dhc - The DHC instance to which this Hancock belongs
-    */
+     * Creates a new Hancock instance and binds it to the given DHC.
+     *
+     * @param {HUM.DHC} dhc - The DHC instance to which this Hancock belongs.
+     *
+     * @description
+     * Initializes the Hancock controller by:
+     * 1. Setting up identification and references to the parent DHC instance
+     * 2. Creating and initializing the parameter management system
+     * 3. Instantiating the Qwerty Hancock keyboard widget with current settings
+     * 4. Registering key-press handlers that emit virtual MIDI events
+     * 5. Registering this instance as a DHC subscriber for updates
+     */
     constructor(dhc) {
         /**
-        * The id of the DHC instance.
-        *
-        * @member {string}
-        */
+         * The id of the DHC instance.
+         *
+         * @member {string}
+         */
         this.id = dhc.id;
+        /**
+         * Internal reference to the DHC instance ID.
+         *
+         * @member {string}
+         * @private
+         */
         this._id = dhc._id;
 
         /**
-        * The name of the `HUM.Hancock`, useful for group the parameters on the DB.
-        * Currently hard-coded as `"hancock"`.
-        *
-        * @member {string}
-        */
+         * The name of the `HUM.Hancock`, useful for grouping the parameters on the DB.
+         * Currently hard-coded as `"hancock"`.
+         *
+         * @member {string}
+         */
         this.name = 'hancock';
 
         /**
-        * The DHC instance
-        *
-        * @member {HUM.DHC}
-        */
+         * The parent DHC instance.
+         *
+         * @member {HUM.DHC}
+         */
         this.dhc = dhc;
 
         /**
-        * Instance of `HUM.Hancock#Parameters`.
-        *
-        * @member {HUM.BackendUtils.prototype.Parameters}
-        */
+         * Instance of `HUM.Hancock#Parameters`.
+         *
+         * @member {HUM.Hancock.prototype.Parameters}
+         */
         this.parameters = new this.Parameters(this);
         this.parameters._init();
 
@@ -74,7 +109,7 @@ HUM.Hancock = class {
         this.keyboard = new QwertyHancock(this._getSettings());
 
         /**
-         * The method invoked when a key is pressed on Hanckock.
+         * The method invoked when a key is pressed on Hancock.
          * @function
          * @instance
          * @name keyDown
@@ -85,7 +120,7 @@ HUM.Hancock = class {
         this.keyboard.keyDown = (note) => this.sendMidiNote(note, 1);
 
         /**
-         * The method invoked when a key is released on Hanckock.
+         * The method invoked when a key is released on Hancock.
          * @function
          * @instance
          * @name keyUp
@@ -103,17 +138,28 @@ HUM.Hancock = class {
     // ===========================
 
     /**
-     * Create a Qwerty Hancock settings object
+     * Creates a settings object for the Qwerty Hancock keyboard widget.
      *
-     * @see {@link https://stuartmemo.com/qwerty-hancock/}
+     * @private
      *
-     * @member {Object}
-     *
+     * @returns {Object} Configuration object for the QwertyHancock constructor
+     *   containing: `id` (HTML element ID), `width` and `height` (pixels),
+     *   `octaves` (octave count), `startNote` (first visible key's note name).
+     * 
+     * @SEE *
      * @property {string} id        - Id of the htmlElement in which to put the keyboard
      * @property {number} width     - Width of the keyboard in pixels
      * @property {number} height    - Height of the keyboard in pixels
      * @property {number} octaves   - How many octaves to show
      * @property {string} startNote - The note name (hancock numbering) of the first key to show
+     *
+     * @description
+     * Reads current parameter values and composes the configuration object
+     * consumed by `new QwertyHancock(...)`. Appearance properties
+     * (whiteNotesColour, blackNotesColour, hoverColour, borderColour) are
+     * intentionally omitted and controlled via CSS classes instead.
+     *
+     * @see {@link https://stuartmemo.com/qwerty-hancock/}
      */
      // * @property {string} whiteNotesColour - Default released key color for white keys (bypassed by classes & css)
      // * @property {string} blackNotesColour - Default released key color for black keys (bypassed by classes & css)
@@ -134,9 +180,16 @@ HUM.Hancock = class {
     }
 
     /**
-     * Manage and route an incoming message.
+     * Manages and routes an incoming DHC message to the appropriate handler.
      *
-     * @param {HUM.DHCmsg} msg - The incoming message.
+     * @param {HUM.DHCmsg} msg - The incoming message from the DHC.
+     *
+     * @description
+     * Processes DHC messages according to their command type:
+     * - `panic`: Calls `allNotesOff()` to silence all keys immediately.
+     * - `update` / `ctrlmap`: Calls `fitToKeymap()` to adapt the keyboard to the new mapping.
+     * - `tone-on` / `tone-off`: Highlights or un-highlights the corresponding piano key,
+     *   but only when the Piano accordion tab is currently open (`active` is `true`).
      */
     updatesFromDHC(msg) {
 
@@ -172,11 +225,18 @@ HUM.Hancock = class {
         }
     }
     /**
-     * Send a fake MIDI event note ON/OFF directly to `midi.in`
-     * in order to input Qwerty Hancock as a virtual MIDI device.
+     * Sends a virtual MIDI Note-ON or Note-OFF event to `midi.in`.
      *
-     * @param {string} note  - Hancock note name (e.g. G#5)
-     * @param {(0|1)}  state - 0 is Note-OFF | 1 is Note-ON
+     * @param {string} note  - Hancock note name (e.g. `G#5`).
+     * @param {(0|1)}  state - `1` for Note-ON, `0` for Note-OFF.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Constructs a synthetic MIDI message and forwards it directly to
+     * `dhc.midi.in.midiMessageReceived()`, making Hancock behave as a
+     * virtual MIDI input device. The status byte is built by combining
+     * the Note-ON command nibble (0x9) and the configured MIDI channel.
      */
     sendMidiNote(note, state) {
         // Note ON
@@ -204,8 +264,18 @@ HUM.Hancock = class {
      * HANCOCK STYLE WRAPPER
      *==============================================================================*/
     /**
-     * Bypass the Qwerty Hancock default key colors (released).
-     * Write the key-numbers according to the keymap.
+     * Renders keymap labels and colors on the Qwerty Hancock piano keys.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Iterates over all 128 MIDI note numbers and, for each key present in the
+     * Qwerty Hancock DOM, applies CSS classes and inner label text based on the
+     * current control map (`dhc.tables.ctrl`):
+     * - **FT key**: colored as a Fundamental Tone key; labeled with its FT number.
+     * - **HT key**: colored as a Harmonic Tone key; labeled with its HT number.
+     * - **HT0 (Piper)**: colored as the Piper key; labeled with `"P"`.
+     * - **Unmapped key**: styled with the default black/white key classes.
      */
     drawKeymap() {
         for (var i = 0; i < 128; i++) {
@@ -283,7 +353,16 @@ HUM.Hancock = class {
         }
     }
     /**
-     * Adapt the Hancock UI parameters in order to fit the keymap to the piano width.
+     * Adapts the keyboard range and offset to encompass the active keymap.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Reads the MIDI note numbers present in `dhc.tables.ctrl`, computes the
+     * minimum and maximum keys, and updates the `range` and `offset` parameters
+     * so that the Qwerty Hancock widget displays exactly the octaves needed to
+     * show the full keymap. An extra octave is added when the remainder is
+     * fewer than 2 semitones.
      */
     fitToKeymap() {
         let keysArray = Object.keys(this.dhc.tables.ctrl),
@@ -303,9 +382,16 @@ HUM.Hancock = class {
         this.parameters.offset.value = keysArray[0];
     }
     /**
-     * Bypass the Qwerty Hancock default key colors and set the right color for Note-ON message.
+     * Highlights a piano key to indicate Note-ON state.
      *
-     * @param {midinnum} ctrlNum - MIDI note number
+     * @param {midinnum} ctrlNum - MIDI note number of the key to highlight.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Looks up the DOM element for the given MIDI note number and swaps its
+     * CSS class from `releasedKey` to `pressedKey`, overriding the Qwerty
+     * Hancock default key color.
      */
     keyON(ctrlNum) {
         if (ctrlNum !== false) {
@@ -317,9 +403,16 @@ HUM.Hancock = class {
         }
     }
     /**
-     * Bypass the Qwerty Hancock default key colors and set the right color for Note-OFF message.
+     * Restores a piano key to its released visual state after Note-OFF.
      *
-     * @param {midinnum} ctrlNum - MIDI note number
+     * @param {midinnum} ctrlNum - MIDI note number of the key to restore.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Looks up the DOM element for the given MIDI note number and swaps its
+     * CSS class from `pressedKey` back to `releasedKey`, overriding the
+     * Qwerty Hancock default key color.
      */
     keyOFF(ctrlNum) {
         if (ctrlNum !== false) {
@@ -331,7 +424,13 @@ HUM.Hancock = class {
         }
     }
     /**
-     * Turns off all the keys (from `{@link midinnum}` 0 to 127)
+     * Restores all 128 piano keys to their released visual state.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Calls `keyOFF()` for every MIDI note number from `{@link midinnum}` 0 to 127,
+     * ensuring no key remains visually stuck in a pressed state.
      */
     allNotesOff() {
         for (let ctrlNum = 0; ctrlNum < 128; ctrlNum++) {
@@ -343,7 +442,14 @@ HUM.Hancock = class {
      * UI KEYBOARD SETTINGS TOOLS
      *==============================================================================*/
     /**
-     * Update the Qwerty Hancock keyboard on UI setting changes
+     * Rebuilds the Qwerty Hancock keyboard widget after a settings change.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Clears the current keyboard DOM and re-instantiates a `QwertyHancock`
+     * object with the latest parameter values, then re-applies the keymap
+     * styling by calling `drawKeymap()`.
      */
     update() {
         let htmlElem = this.parameters.pianoContainer.uiElements.out.hancockContainer;
@@ -358,17 +464,39 @@ HUM.Hancock = class {
     }
 };
 
-/** 
- * Instance class-container used to create all the `HUM.Param` objects for the `HUM.Hancock` instance.
+/**
+ * Parameter container for the `HUM.Hancock` instance.
+ *
+ * @class
+ * @memberof HUM.Hancock
+ *
+ * @description
+ * Container class that instantiates and exposes all `HUM.Param` objects used
+ * by a `HUM.Hancock` instance. Each property corresponds to a configurable
+ * aspect of the virtual piano keyboard, such as velocity, MIDI channel,
+ * keyboard range, key offset, and display dimensions.
  */
 HUM.Hancock.prototype.Parameters = class {
     /**
-     * @param {HUM.Hancock} hancock - The Hancock instance in which this class is being used.
+     * Creates a new Parameters instance for the given Hancock controller.
+     *
+     * @param {HUM.Hancock} hancock - The Hancock instance that owns this parameter set.
+     *
+     * @description
+     * Instantiates all `HUM.Param` objects for the Hancock controller:
+     * - `active`: Tracks whether the Piano accordion tab is open.
+     * - `pianoContainer`: Proxy for the Hancock piano DOM container.
+     * - `velocity`: MIDI velocity sent with each key event (1–127).
+     * - `channel`: MIDI channel used for key events (1–16).
+     * - `offset`: Starting MIDI note number of the leftmost visible key.
+     * - `range`: Number of octaves displayed by the keyboard.
+     * - `width`: Keyboard width in pixels.
+     * - `height`: Keyboard height in pixels.
      */
     constructor(hancock) {
         /**  
          * This property controls the state of the Hancock; if `false`, it's turned off in order to avoid
-         * unuseful computations and uptates of the UI when the panel is closed.
+         * unnecessary computations and updates of the UI when the panel is closed.
          * It also initialises the eventListener of the UIelems related to it.
          * It's not stored on the DB.
          * NOTE: These uiElements are the same object because, given the current implementation of
@@ -654,7 +782,13 @@ HUM.Hancock.prototype.Parameters = class {
         });
     }
     /**
-     * Initializes the parameter "active".
+     * Initializes parameters that require deferred setup.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Calls `_init()` on the `active` parameter to set up its Bootstrap
+     * Collapse controller and attach the related event listeners.
      */
     _init() {
         this.active._init();
