@@ -4,7 +4,7 @@
  * reverb convolution preset when no external IR file has been loaded by the user.
  *
  * @module synth-ir-default
- * @memberof HUM
+ * @memberof HUM.Synth
  * @version 0.8.1
  * @author Walter G. Mantovani <armonici.it@gmail.com>
  * @copyright (C) 2017-2026 Walter G. Mantovani

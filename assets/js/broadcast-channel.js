@@ -1,9 +1,9 @@
- /**
+/**
  * @fileoverview BroadcastChannel messaging interface for the Harmonicarium application.
  * This file defines the HUM.BroadcastChannel and HUM.BroadcastChannel.Msg classes,
  * which manage inter-instance and multi-tab communication via the Web BroadcastChannel API.
  *
- * @module message
+ * @module broadcast-channel
  * @memberof HUM
  * @version 0.8.1
  * @author Walter G. Mantovani <armonici.it@gmail.com>

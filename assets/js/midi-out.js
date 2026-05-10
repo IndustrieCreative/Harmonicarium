@@ -1,7 +1,9 @@
  /**
  * @fileoverview MIDI Output message preparation and routing for Harmonicarium.
- * This file defines the HUM.midi.MidiOut class which manages MIDI output ports,
- * multichannel polyphony assignment, and outgoing MIDI message construction.
+ * This file defines the {@link HUM.midi.MidiOut} class which manages MIDI output
+ * ports, multichannel polyphony assignment, and outgoing MIDI message construction.
+ * The sub-components are defined in the companion file:
+ * - {@link module:midi-out-instrument-settings} — `HUM.midi.MidiOut.prototype.InstrumentSettings` class
  *
  * @module midi-out
  * @memberof HUM.midi
@@ -39,12 +41,16 @@
  * @memberof HUM.midi
  *
  * @description
- * The HUM.midi.MidiOut class manages all outgoing MIDI operations. It handles:
+ * The `HUM.midi.MidiOut` class manages all outgoing MIDI operations. It handles:
  * - Routing outgoing MIDI messages to the selected output ports
  * - Multichannel polyphony assignment via the PitchBend tuning method
  * - Construction of Note-ON/OFF and Pitch Bend MIDI messages
  * - Retiming active notes when the tuning changes (FT or HT update)
  * - Building the MIDI-OUT Tuning UI for per-port channel assignment
+ *
+ * The {@link HUM.midi.MidiOut.prototype.InstrumentSettings|InstrumentSettings} inner class is
+ * defined in the companion {@link module:midi-out-instrument-settings} file and
+ * attached to `HUM.midi.MidiOut.prototype` at load time.
  */
 HUM.midi.MidiOut = class MidiOut {
     /**
@@ -1085,167 +1091,3 @@ HUM.midi.MidiOut = class MidiOut {
     }
 
 };
-
-
-/**
- * Default per-port settings for MIDI-OUT tuning methods.
- *
- * @class
- * @memberof HUM.midi.MidiOut
- *
- * @description
- * Each time a new MIDI output port is encountered, an instance of this class
- * is created and stored in {@link HUM.midi.MidiOut#settings} under the port ID.
- * It holds all mutable state needed by the PitchBend tuning method: channel
- * assignment arrays, Pitch Bend sensitivity range, Note-ON delay, and
- * voice-stealing flags.
- */
-HUM.midi.MidiOut.prototype.InstrumentSettings = class {
-    /**
-     * Creates a new InstrumentSettings instance with factory defaults.
-     *
-     * @description
-     * Initialises the PitchBend method settings (`pb`) with three FT channels
-     * (0\u20132) and five HT channels (3\u20137), a 2-semitone PB range, a 5 ms Note-ON
-     * delay, and voice stealing enabled for both tone types.
-     * Also reserves a namespace for the MIDI Tuning Standard method (`mts`,
-     * currently not implemented) and sets the active tuning method to `'pb'`.
-     */
-    constructor() {
-        /**
-        * Pitch Bend method settings namespace.
-        *
-        * @member {Object}
-        *
-        * @property {Object}                         channels              - FTs & HTs multichannel polyphony management.
-        * @property {Object}                         channels.ft           - Multichannel polyphony for FTs.
-        * @property {Array.<midichan>}               channels.ft.used      - Sorted array containing the FT used channel numbers.
-        * @property {Object.<midinnum, HeldChannel>} channels.ft.held      - Object containing the FT busy channel; key is the original Controller MIDI Note number. Init value must be an empty Object.
-        * @property {midichan}                       channels.ft.last      - Number of the last held FT channel. Init value must be a -1.
-        * @property {Object}                         channels.ht           - Multichannel polyphony for HTs.
-        * @property {Array.<midichan>}               channels.ht.used      - Sorted array containing the HT used channel numbers.
-        * @property {Object.<midinnum, HeldChannel>} channels.ht.held      - Object containing the HT busy channels; keys are the original Controller MIDI Note number. Init value must be an empty Object.
-        * @property {Array.<midichan>}               channels.ht.heldOrder - Array of channel numbers, sorted according to the held order. Init value must be an empty Array.
-        * @property {midichan}                       channels.ht.last      - Number of the last held HT channel. Init value must be a -1.
-        * @property {Object}                         range                 - Namespace for pitchBend sensitivity settings.
-        * @property {number}                         range.ft              - PitchBend sensitivity for FT channels.
-        * @property {number}                         range.ht              - PitchBend sensitivity for HT channels.
-        * @property {Object}                         delay                 - Namespace for setting the delay between the PitchBend and Note-ON messages.
-        * @property {number}                         delay.ft              - Delay for FT channels (milliseconds).
-        * @property {number}                         delay.ht              - Delay for HT channels (milliseconds).
-        * @property {Object}                         voicestealing         - Namespace for voice stealing management ON/OFF (now stealing is always ON).
-        * @property {boolean}                        voicestealing.ft      - Voice stealing ON/OFF for FT channels.
-        * @property {boolean}                        voicestealing.ht      - Voice stealing ON/OFF for HT channels.
-        * @property {boolean}                        gm                    - General MIDI ON/OFF (when 'true', avoid channel 10) - `CURRENTLY NOT IMPLEMENTED`.
-        */
-        this.pb = {
-            channels: {
-                ft: {
-                    used:[0, 1, 2],
-                    held: {},
-                    last: -1
-                },
-                ht: {
-                    used:[3, 4, 5, 6, 7],
-                    held: {},
-                    heldOrder: [],
-                    last: -1
-                }
-            },
-            range: {
-                ft: 2,
-                ht: 2
-            },
-            delay: {
-                ft: 5,
-                ht: 5
-            },
-            voicestealing: { // @todo - Voice stealing management ON/OFF
-                ft: true,
-                ht: true
-            },
-            gm: undefined
-        };
-        
-        /**
-        * MIDI Tuning Standard method settings namespace - `CURRENTLY NOT IMPLEMENTED`.
-        *
-        * @member {Object}
-        */
-        this.mts = {}; // @todo - MIDI Tuning Standard method
-        
-        /**
-        * Selected MIDI-OUT Tuning Method for this port;
-        *     `'pb'` is PitchBend method, `'mts'` is MIDI Tuning Standard method.
-        *
-        * @member {('pb'|'mts')}
-        */
-        this.selected = "pb";
-    }
-};
-
-// /** 
-//  * Instance class-container used to create all the `HUM.Param` objects for each MIDI-OUT Port.
-//  */
-// HUM.midi.MidiOut.prototype.Parameters = class {
-//     constructor(midiin) {
-//         /**
-//          * Controller's Pitch Bend settings.
-//          * 
-//          * @member {Object}
-//          * @namespace
-//          */
-//         this.pitchbend = {
-//             /**  
-//              * This property is the MIDI input pitchbend range value in cents.
-//              * It's initialises the eventListener of the UIelem related to it.
-//              * It's stored on the DB.
-//              * @todo - Move to midi-in (one per input channel?)
-//              * @instance
-//              *
-//              * @member {HUM.Param}
-//              * 
-//              * @property {cent}        value                            - Pitchbend range value in cents (use hundreds when use MIDI-OUT and possibly the same as the instrument).
-//              * @property {Object}      uiElements                       - Namespace for the "in", "out" and "fn" objects.
-//              * @property {Object}      uiElements.in                    - Namespace for the "in" HTML elements.
-//              * @property {HTMLElement} uiElements.in.midiPitchbendRange - The HTML input text box for the pitchbend range number.
-//              */
-//             range: new HUM.Param({
-//                 app:midiin,
-//                 idbKey:'midiInPitchbendRange',
-//                 uiElements:{
-//                     'midiPitchbendRange': new HUM.Param.UIelem({
-//                         role: 'in',
-//                         opType:'set',
-//                         eventType: 'change',
-//                         htmlTargetProp:'value',
-//                         widget:'number',
-//                     })
-//                 },
-//                 dataType:'integer',
-//                 initValue:100,
-//             }),
-
-//             /**
-//              * Current input controller pitchbend amount.
-//              * Value from -8192 to +8191, normalized to the ratio from -1 to 0,99987792968750
-//              * No pitchbend is 0.
-//              * @instance
-//              * 
-//              * @member {number}
-//              */
-//             amount: 0.0
-//         };
-//         // =======================
-//     } // end class Constructor
-//     // ===========================
-
-//     /**
-//      * Initializes the parameters of the Tone Snap note-receiving mode.
-//      */
-//     _init() {
-//         this.tsnap.channelMode.chanFT._init();
-//         this.tsnap.channelMode.chanHT._init();
-//         this.receiveMode._init();
-//     }
-// };

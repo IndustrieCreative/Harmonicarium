@@ -1,9 +1,10 @@
 /**
  * @fileoverview Harmonic Stack visualizer for the Harmonicarium application.
- * This file defines the HUM.Hstack class which renders the active harmonics and
- * fundamental tone in a tabular UI panel, updating in real-time as notes are
- * played or the keymap changes.
- * 
+ * This file defines the {@link HUM.Hstack} class which renders the active harmonics
+ * and fundamental tone in a tabular UI panel, updating in real-time as notes are
+ * played or the keymap changes. The sub-components are defined in the companion file:
+ * - {@link module:hstack-parameters} — `HUM.Hstack.prototype.Parameters` class
+ *
  * @module hstack
  * @memberof HUM
  * @version 0.8.1
@@ -42,11 +43,15 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext;
  * @memberof HUM
  *
  * @description
- * The HUM.Hstack class manages the H-Stack panel, a live table that shows all
+ * The `HUM.Hstack` class manages the H-Stack panel, a live table that shows all
  * Harmonic Tones (HTs) mapped in the current controller keymap alongside their
  * note name, cent deviation, and frequency in Hz. It also tracks the active
  * Fundamental Tone (FT) at the bottom of the table. The panel can be
  * collapsed to suspend rendering and save resources.
+ *
+ * The {@link HUM.Hstack.prototype.Parameters|Parameters} inner class is
+ * defined in the companion {@link module:hstack-parameters} file and
+ * attached to `HUM.Hstack.prototype` at load time.
  *
  * @example
  * // Hstack is instantiated internally by HUM.DHC
@@ -421,243 +426,4 @@ HUM.Hstack.prototype.HstackRow = class {
 
         this.elemRow.append(this.elemHtNum, this.elemNote, this.elemCents, this.elemHz);
     }
-};
-
-/**
- * Container class for all {@link HUM.Param} objects belonging to an {@link HUM.Hstack} instance.
- *
- * @class
- * @memberof HUM.Hstack
- *
- * @description
- * Instantiates and holds the parameters that control the H-Stack panel:
- * visibility state (`active`), table font size (`fontSize`), and proxy
- * references to the FT row (`frow`) and HT table (`hstack`) DOM elements.
- */
-HUM.Hstack.prototype.Parameters = class {
-    /**
-     * Creates a Parameters instance for the given Hstack.
-     *
-     * @param {HUM.Hstack} hstack - The parent Hstack instance.
-     */
-    constructor(hstack) {
-        /**
-         * This property controls the state of the H-Stack; if `false`, it is turned off in order to avoid
-         * unuseful computations and uptates of the UI when the panel is closed.
-         * It also initialises the eventListener of the UIelems related to it.
-         * It's not stored on the DB.
-         * NOTE: These uiElements are the same object because, given the current implementation of
-         * Param.UIelem, it's not possible to set more event listeners using a single UIelem.
-         *
-         * @type {HUM.Param}
-         *
-         * @property {boolean}     value                         - The visibility one wants to achieve. If `false` the tab will be collapsed.
-         * @property {Object}      uiElements                    - Namespace for the "in", "out" and "fn" objects.
-         * @property {Object}      uiElements.fn                 - Namespace for the "fn" HTML elements.
-         * @property {HTMLElement} uiElements.fn.hstackTabShown  - The HTML of the H-Stack tab.
-         * @property {HTMLElement} uiElements.fn.hstackTabHidden - The HTML of the H-Stack tab.
-         */
-        this.active = new HUM.Param({
-            app: hstack,
-            idbKey: 'hstackActive',
-            uiElements: {
-                'hstackTabShown': new HUM.Param.UIelem({
-                    htmlID: hstack.dhc.harmonicarium.html.hstackTabs[hstack.dhc.id].children[1].id,
-                    role: 'fn',
-                    opType: 'toggle',
-                    widget: 'collapse',
-                    eventType: 'show.bs.collapse',
-                    uiSet: (value) => {
-                        if (value) {
-                            this.active.bsCollapse.show();
-                        } else {
-                            this.active.bsCollapse.hide();
-                        }
-                    },
-                    eventListener: evt => {
-                        this.active.valueUI = true;
-                    }
-                }),
-                'hstackTabHidden': new HUM.Param.UIelem({
-                    htmlID: hstack.dhc.harmonicarium.html.hstackTabs[hstack.dhc.id].children[1].id,
-                    role: 'fn',
-                    opType: 'toggle',
-                    widget: 'collapse',
-                    eventType: 'hidden.bs.collapse',
-                    uiSet: null,
-                    eventListener: evt => {
-                        this.active.valueUI = false;
-                    }
-                }),
-            },
-            init: false,
-            dataType: 'boolean',
-            initValue: false,
-            presetStore: false,
-            presetRestore: false,
-            preInit: () => {
-                // Create a Bootstrap collapsible controller
-                this.active.bsCollapse = new bootstrap.Collapse('#'+hstack.dhc.harmonicarium.html.hstackTabs[hstack.dhc.id].children[1].id, {
-                    toggle: this.active.value
-                });
-            },
-            postSet: (value, thisParam, init) => {
-                if (value) {
-                    hstack.fillin();
-                    hstack.ftMonitor(hstack.dhc.settings.ht.curr_ft);
-                } else {
-                    // Turn off all the tones currently active, if there are
-                    for (let htNum of hstack.usedHT) {
-                        hstack.playFx("ht", 0, htNum);
-                    }
-                    hstack.playFx("ft", 0, hstack.dhc.settings.ht.curr_ft);
-                }
-
-            }
-        });
-        /**
-         * This property controls the font size of the H-Stack table and initialises the
-         * eventListener of the UIelems related to it.
-         * It's stored on the DB.
-         *
-         * @type {HUM.Param}
-         *
-         * @property {number}      value                          - The font size in pixels.
-         * @property {Object}      uiElements                     - Namespace for the "in", "out" and "fn" objects.
-         * @property {Object}      uiElements.fn                  - Namespace for the "fn" HTML elements.
-         * @property {Object}      uiElements.out                 - Namespace for the "out" HTML elements.
-         * @property {HTMLElement} uiElements.fn.hstack_zoom      - The HTML of the input slider widget for setting the font size.
-         * @property {HTMLElement} uiElements.out.hstack_fontsize - The HTML of the output text showing the current font size.
-         */
-        this.fontSize = new HUM.Param({
-            app: hstack,
-            idbKey: 'hstackZoom',
-            uiElements: {
-                'hstack_zoom': new HUM.Param.UIelem({
-                    role: 'fn',
-                    opType: 'set',
-                    eventType: 'input',
-                    htmlTargetProp: 'value',
-                    widget: 'range',
-                }),
-                'hstack_fontsize': new HUM.Param.UIelem({
-                    role: 'out',
-                })
-            },
-            dataType: 'float',
-            initValue: 20,
-            postSet: (value, thisParam) => {
-                thisParam.uiElements.out.hstack_fontsize.style.fontSize = value + "px";
-                thisParam.uiElements.fn.hstack_zoom.setAttribute("data-tooltip", value + "px");
-            }
-        });
-
-        /**
-         * This property is just a proxy for the HTML container of the FT row of the H-Stack.
-         * It's not stored on the DB.
-         *
-         * @type {HUM.Param}
-         *
-         * @property {Object}      uiElements                 - Namespace for the "in", "out" and "fn" objects.
-         * @property {Object}      uiElements.out             - Namespace for the "out" HTML elements.
-         * @property {HTMLElement} uiElements.out.hstackFTrow - The HTML of the H-Stack FT row.
-         */
-        this.frow = new HUM.Param({
-            app: hstack,
-            idbKey: 'hstackFtable',
-            uiElements: {
-                'hstackFTrow': new HUM.Param.UIelem({
-                    role: 'out',
-                }),
-            },
-            init: false,
-            dataType: 'array',
-            presetStore: false,
-            presetRestore: false,
-        });
-
-        /**
-         * This property is just a proxy for the HTML containers of HT table and its rows.
-         * It's not stored on the DB.
-         *
-         * @type {HUM.Param}
-         *
-         * @property {Object}      uiElements              - Namespace for the "in", "out" and "fn" objects.
-         * @property {Object}      uiElements.out          - Namespace for the "out" HTML elements.
-         * @property {HTMLElement} uiElements.out.hstackHT - The HTML of the H-Stack HT table.
-         * @property {HTMLElement} uiElements.out.rowsHT   - The HTML of the H-Stack HT rows.
-         */
-        this.hstack = new HUM.Param({
-            app: hstack,
-            idbKey: 'hstackHtable',
-            uiElements: {
-                'hstackHT': new HUM.Param.UIelem({
-                    role: 'out',
-                }),
-                'rowsHT': new HUM.Param.UIelem({
-                    role: 'out',
-                    namespace: true,
-                }),
-            },
-            init: false,
-            dataType: 'array',
-            presetStore: false,
-            presetRestore: false,
-            postInit: (thisParam) => {
-                /**
-                 * Create the H-Stack HTML table 
-                 */
-                let dhcID = hstack.dhc.id,
-                    hstackContainer = thisParam.uiElements.out.hstackHT,
-                    hstackTable = document.createElement("table");
-                
-                hstackTable.className = "table table-sm";
-                hstackTable.innerHTML = `
-                    <thead class="table-light">
-                        <tr>
-                            <th colspan="4">Harmonics</th>
-                        </tr>
-                        <tr>
-                            <th width="12%">HT</th>
-                            <th width="20%">note</th>
-                            <th width="25%">cents</th>
-                            <th width="43%">Hz</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Here the HT rows -->
-                    </tbody>`;
-                hstack.updateUsedHT();
-                
-                thisParam.uiElements.out.rowsHT = {};
-                for (let htNum of hstack.usedHT) {
-                    let newRow = new hstack.HstackRow(htNum, dhcID);
-                    thisParam.uiElements.out.rowsHT[htNum] = newRow;
-                    hstackTable.children[1].appendChild(newRow.elemRow);
-                }
-                if (hstackContainer.firstChild) {
-                    hstackContainer.removeChild(hstackContainer.firstChild);
-                }
-                hstackContainer.appendChild(hstackTable);
-                
-                hstack.fillin();
-
-            },
-        });
-    }
-    /**
-     * Initializes the `active` and `hstack` parameters.
-     *
-     * @returns {void}
-     *
-     * @description
-     * Calls `_init()` on the `active` parameter to set up the Bootstrap
-     * collapsible and its event listeners, then calls `_init()` on the
-     * `hstack` parameter to build the HT table and populate it with rows.
-     */
-    _init() {
-        this.active._init();
-        this.hstack._init();
-    }
-
 };

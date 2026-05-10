@@ -40,13 +40,6 @@
     const VoiceAmbitus = HUM.DpPad._VoiceAmbitus;
     const CssFont = HUM.DpPad._CssFont;
 
-    /*  _____                               _                
-     * |  __ \                             | |               
-     * | |__) |_ _ _ __ __ _ _ __ ___   ___| |_ ___ _ __ ___ 
-     * |  ___/ _` | '__/ _` | '_ ` _ \ / _ \ __/ _ \ '__/ __|
-     * | |  | (_| | | | (_| | | | | | |  __/ ||  __/ |  \__ \
-     * |_|   \__,_|_|  \__,_|_| |_| |_|\___|\__\___|_|  |___/
-     */
     /**
      * Container class for all {@link HUM.Param} objects belonging to a
      * {@link HUM.DpPad.PadSet|PadSet} instance.

@@ -1,5 +1,3 @@
-
-
 /**
  * @fileoverview CssFont helper class for the Harmonicarium Diphonic Pad.
  * This file defines the {@link HUM.DpPad~CssFont|CssFont} inner class, a simple
@@ -37,13 +35,6 @@
 "use strict";
 
 {
-    /*    _____         ______          _   
-     *   / ____|       |  ____|        | |  
-     *  | |     ___ ___| |__ ___  _ __ | |_ 
-     *  | |    / __/ __|  __/ _ \| '_ \| __|
-     *  | |____\__ \__ \ | | (_) | | | | |_ 
-     *   \_____|___/___/_|  \___/|_| |_|\__|
-     */
     /**
      * A simple value object that bundles all CSS font properties for canvas text.
      *

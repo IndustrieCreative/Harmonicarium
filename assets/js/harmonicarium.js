@@ -1,8 +1,10 @@
 /**
- * @fileoverview Main HUM (HarmonicariUM) class for the Harmonicarium web application.
- * This file contains the core class that manages Harmonic Series manipulation,
- * component coordination, and multi-instance support.
- * 
+ * @fileoverview Main HUM (HarmonicariUM) top-level class for the Harmonicarium web application.
+ * This file defines the {@link HUM} class that manages Harmonic Series manipulation,
+ * component coordination, and multi-instance support. The sub-components are defined
+ * in the companion file:
+ * - {@link module:harmonicarium-parameters} — `HUM.prototype.Parameters` class
+ *
  * @module harmonicarium
  * @version 0.8.1
  * @author Walter G. Mantovani <armonici.it@gmail.com>
@@ -27,7 +29,7 @@
  * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+
  * @note Implementation Decision: 
  * No ES6 modules are used to maintain compatibility with the file:// protocol.
  * This allows the application to run locally without requiring a web server,
@@ -37,25 +39,29 @@
 "use strict";
 
 /**
- * Main HUM (HarmonicariUM) class for managing Harmonic Series manipulation.
- * 
+ * Main HUM (HarmonicariUM) top-level class for the Harmonicarium application.
+ *
  * @class
- * 
+ *
  * @description
- * The HUM class is the core of the Harmonicarium application. It manages:
+ * The `HUM` class is the core of the Harmonicarium application. It manages:
  * - Multiple DHC (Dynamic Harmonics Calculator) instances
  * - Audio synthesis and MIDI communication
  * - UI components and user interactions
  * - Data persistence and preset management
  * - Multi-instance coordination via BroadcastChannel
- * 
+ *
+ * The {@link HUM.prototype.Parameters|Parameters} inner class is
+ * defined in the companion {@link module:harmonicarium-parameters} file and
+ * attached to `HUM.prototype` at load time.
+ *
  * @example
  * // Create and initialize a new Harmonicarium instance
  * const harmonicarium = new HUM(1, 'mainDev');
  * harmonicarium.init().then(() => {
  *     console.log('Harmonicarium ready!');
  * });
- * 
+ *
  * @example
  * // Multiple instances coordination
  * const hum1 = new HUM(1, 'context1');
@@ -588,61 +594,3 @@ class HUM {
         this.viewportDim.y = document.documentElement.clientHeight - 7;
     }
 }
-
-/**
- * Parameters management class for HUM instances.
- * Container-class for all HUM.Param objects used by a Harmonicarium instance.
- * 
- * @class Parameters
- * @memberof HUM
- * 
- * @description
- * This class manages application-level parameters that are not specific to
- * individual components. Currently handles the splash screen modal parameter.
- */
-HUM.prototype.Parameters = class {
-    /**
-     * Creates a new Parameters instance.
-     * 
-     * @param {HUM} harmonicarium - The parent HUM instance
-     */
-    constructor(harmonicarium) {
-        /**
-         * Parameter controlling the initial application splash screen.
-         * 
-         * @type {HUM.Param}
-         * 
-         * @description
-         * This parameter manages the Bootstrap modal that displays during
-         * application initialization. It's not stored in the database and
-         * exists only for UI control purposes.
-         * 
-         * @property {bootstrap.Modal} bsModal - Bootstrap Modal controller instance
-         * 
-         * @example
-         * // Show splash screen
-         * harmonicarium.parameters.splashModal.bsModal.show();
-         * // Hide splash screen
-         * harmonicarium.parameters.splashModal.bsModal.hide();
-         */
-        this.splashModal = new HUM.Param({
-            app:harmonicarium,
-            idbKey:'humSplashModal',
-            uiElements:{
-                'splashModal': new HUM.Param.UIelem({
-                    role: 'out',
-                })
-            },
-            // role: 'fn',
-            presetStore: false,
-            presetAutosave: false,
-            presetRestore: false,
-            postInit: (thisParam) => {
-                thisParam.bsModal = new bootstrap.Modal(thisParam.uiElements.out.splashModal, {
-                    keyboard: false,
-                    backdrop: 'static'
-                });
-            }
-        });
-    }
-};

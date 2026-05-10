@@ -37,13 +37,6 @@
 {
     const DpPad = HUM.DpPad;
 
-    /*   _______          _ _                
-     *  |__   __|        | | |               
-     *     | | ___   ___ | | |__   __ _ _ __ 
-     *     | |/ _ \ / _ \| | '_ \ / _` | '__|
-     *     | | (_) | (_) | | |_) | (_| | |   
-     *     |_|\___/ \___/|_|_.__/ \__,_|_|   
-     */
     /**
      * The SVG-based icon toolbar that sits alongside the frequency pads.
      *

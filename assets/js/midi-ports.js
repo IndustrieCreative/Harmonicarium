@@ -1,8 +1,10 @@
  /**
  * @fileoverview MIDI Ports manager for the Harmonicarium application.
- * This file defines the HUM.midi.MidiPorts class which manages Web MIDI API
+ * This file defines the {@link HUM.midi.MidiPorts} class which manages Web MIDI API
  * access, port discovery, hot-plugging, and port selection for both input and
- * output MIDI devices, as well as WebMidiLink virtual output ports.
+ * output MIDI devices, as well as WebMidiLink virtual output ports. The sub-components
+ * are defined in the companion file:
+ * - {@link module:midi-ports-parameters} — `HUM.midi.MidiPorts.prototype.Parameters` class
  *
  * @module midi-ports
  * @memberof HUM.midi
@@ -40,13 +42,17 @@
  * @memberof HUM.midi
  *
  * @description
- * The HUM.midi.MidiPorts class handles all Web MIDI API interactions:
+ * The `HUM.midi.MidiPorts` class handles all Web MIDI API interactions:
  * - Requesting and managing the global MIDIAccess object
  * - Discovering and listing available input and output MIDI ports
  * - Creating and managing WebMidiLink virtual output ports
  * - Rendering per-port checkboxes in the MIDI settings UI
  * - Reacting to hot-plug events when ports are connected or disconnected
  * - Tracking selected (open) ports and routing messages accordingly
+ *
+ * The {@link HUM.midi.MidiPorts.prototype.Parameters|Parameters} inner class is
+ * defined in the companion {@link module:midi-ports-parameters} file and
+ * attached to `HUM.midi.MidiPorts.prototype` at load time.
  */
 HUM.midi.MidiPorts = class {
     /**
@@ -586,67 +592,4 @@ HUM.midi.MidiPorts = class {
             }
         }
     }
-};
-
-
-/**
- * Parameter container for the `HUM.midi.MidiPorts` instance.
- *
- * @class
- * @memberof HUM.midi.MidiPorts
- *
- * @description
- * Container class that instantiates and exposes all `HUM.Param` objects used
- * by a `HUM.midi.MidiPorts` instance. Each parameter holds a reference to the
- * corresponding DOM container element used to render MIDI port checkboxes.
- */
-HUM.midi.MidiPorts.prototype.Parameters = class {
-    /**
-     * Creates a new Parameters instance for the given MidiPorts controller.
-     *
-     * @param {HUM.midi.MidiPorts} midiports - The MidiPorts instance that owns this parameter set.
-     *
-     * @description
-     * Instantiates all `HUM.Param` objects for the MidiPorts controller:
-     * - `inputPorts`: Proxy for the DOM container that holds MIDI-IN port checkboxes.
-     * - `outputPorts`: Proxy for the DOM container that holds MIDI-OUT port checkboxes.
-     */
-    constructor(midiports) {
-        this.inputPorts = new HUM.Param({
-            app: midiports,
-            idbKey:'midiportsInputPorts',
-            uiElements:{
-                /**
-                 * The UI HTML elements that contain the MIDI-IN checkboxes (need to be global ??)
-                 *
-                 * @type {Object}
-                 */
-                'inputPorts': new HUM.Param.UIelem({
-                    role: 'out',
-                }),
-            },
-            init:false,
-            presetStore:false,
-            presetRestore:false,
-        });
-        this.outputPorts = new HUM.Param({
-            app: midiports,
-            idbKey:'midiportsOutputPorts',
-            uiElements:{
-                /**
-                 * The UI HTML elements that contain the MIDI-OUT checkboxes (need to be global ??)
-                 *
-                 * @type {Object}
-                 */
-                'outputPorts': new HUM.Param.UIelem({
-                    role: 'out',
-                }),
-            },
-            init:false,
-            presetStore:false,
-            presetRestore:false,
-        });
-
-    }
-
 };

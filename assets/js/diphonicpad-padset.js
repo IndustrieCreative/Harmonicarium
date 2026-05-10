@@ -39,13 +39,6 @@
 {
     const DpPad = HUM.DpPad;
 
-    /*   _____          _  _____      _   
-     *  |  __ \        | |/ ____|    | |  
-     *  | |__) |_ _  __| | (___   ___| |_ 
-     *  |  ___/ _` |/ _` |\___ \ / _ \ __|
-     *  | |  | (_| | (_| |____) |  __/ |_ 
-     *  |_|   \__,_|\__,_|_____/ \___|\__|
-     */
     /**
      * A single Diphonic Pad set, consisting of two canvas pads and an SVG toolbar.
      *

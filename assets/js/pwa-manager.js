@@ -1,8 +1,10 @@
  /**
  * @fileoverview PWA (Progressive Web App) lifecycle management for the Harmonicarium application.
- * This file defines the HUM.PwaManager class which provides install, update, and
- * reset controls for the Progressive Web App lifecycle.
- * 
+ * This file defines the {@link HUM.PwaManager} class which provides install, update, and
+ * reset controls for the Progressive Web App lifecycle. The sub-components are defined
+ * in the companion file:
+ * - {@link module:pwa-manager-parameters} — `HUM.PwaManager.prototype.Parameters` class
+ *
  * @module pwa-manager
  * @memberof HUM
  * @version 0.8.1
@@ -39,10 +41,14 @@
  * @memberof HUM
  *
  * @description
- * The HUM.PwaManager class manages the Progressive Web App lifecycle, exposing
+ * The `HUM.PwaManager` class manages the Progressive Web App lifecycle, exposing
  * install, update, and reset commands that delegate to the global `humPWA`
  * service-worker controller. It also checks whether the PWA feature is
  * available and disables irrelevant UI controls accordingly.
+ *
+ * The {@link HUM.PwaManager.prototype.Parameters|Parameters} inner class is
+ * defined in the companion {@link module:pwa-manager-parameters} file and
+ * attached to `HUM.PwaManager.prototype` at load time.
  */
 HUM.PwaManager = class {
     /**
@@ -200,88 +206,4 @@ HUM.PwaManager = class {
         }
     }
 
-};
-
-/**
- * Container class for all {@link HUM.Param} objects belonging to a {@link HUM.PwaManager} instance.
- *
- * @class
- * @memberof HUM.PwaManager
- *
- * @description
- * Instantiates and holds the parameter that provides proxy access to the PWA
- * management UI controls: install, update, reset, and open buttons, plus the
- * status info text element.
- */
-HUM.PwaManager.prototype.Parameters = class {
-    /**
-     * Creates a Parameters instance for the given PwaManager.
-     *
-     * @param {HUM.PwaManager} pwaManager - The parent PwaManager instance.
-     */
-    constructor(pwaManager) {
-        /**  
-         * This property is a proxy for the PWA management command buttons on the UI.
-         *
-         * @member {HUM.Param}
-         * 
-         * @property {Object}      uiElements                  - Namespace for the "in", "out" and "fn" objects.
-         * @property {Object}      uiElements.fn               - Namespace for the "fn" HTML elements.
-         * @property {HTMLElement} uiElements.fn.appInstall    - The HTML of the PWA install button.
-         * @property {HTMLElement} uiElements.fn.appUpdate     - The HTML of the PWA update button.
-         * @property {HTMLElement} uiElements.fn.appReset      - The HTML of the PWA reset button.
-         * @property {HTMLElement} uiElements.fn.appOpen        - The HTML of the PWA open button.
-         * @property {HTMLElement} uiElements.out.appUpdateInfo - The HTML of the PWA status info text box.
-         */
-        this.appManager = new HUM.Param({
-            app:pwaManager,
-            idbKey:'pwaAppManager',
-            uiElements:{
-                'appInstall': new HUM.Param.UIelem({
-                    role: 'fn',
-                    opType: 'run',
-                    widget:'button',
-                    eventType: 'click',
-                    eventListener: evt => {
-                        pwaManager.appInstall();
-                    }
-                }),
-                'appUpdate': new HUM.Param.UIelem({
-                    role: 'fn',
-                    opType: 'run',
-                    widget:'button',
-                    eventType: 'click',
-                    eventListener: evt => {
-                        pwaManager.appUpdate();
-                    }
-                }),
-                'appReset': new HUM.Param.UIelem({
-                    role: 'fn',
-                    opType: 'run',
-                    widget:'button',
-                    eventType: 'click',
-                    eventListener: evt => {
-                        pwaManager.appReset();
-                    }
-                }),
-                'appOpen': new HUM.Param.UIelem({
-                    role: 'fn',
-                    opType: 'run',
-                    widget:'button',
-                    eventType: 'click',
-                }),
-                'appUpdateInfo': new HUM.Param.UIelem({
-                    role: 'out',
-                }),
-            },
-            presetStore:false,
-            presetRestore:false,
-            postInit: (thisParam) => {
-                thisParam.uiElements.fn.appOpen.setAttribute("style", "display: none;");
-                if (window.matchMedia('(display-mode: standalone)').matches) {  // @todo - check also navigator.standalone for iOS (https://web.dev/customize-install/)
-                    thisParam.uiElements.fn.appInstall.setAttribute("style", "display: none;");
-                }  
-            }
-        });
-    }
 };
