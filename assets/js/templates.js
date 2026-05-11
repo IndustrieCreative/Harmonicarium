@@ -61,17 +61,17 @@
 HUM.tmpl = {
     /**
      * Creates the complete SVG icon set for the application interface.
-     * 
+     *
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
-     * @returns {SVGElement} SVG element containing all application icons.
-     * 
+     *
+     * @returns {SVGElement} SVG element containing all application icons as `<symbol>` definitions.
+     *
      * @description
-     * This function generates a hidden SVG element containing all the icons
-     * used throughout the Harmonicarium interface. The SVG uses symbol definitions
-     * that can be referenced via `<use>` elements elsewhere in a HUM instance.
-     * 
-     * The SVG element is created with a unique ID and hidden from display
-     * (display: none) as it serves as an icon palette-library for the application.
+     * Generates a hidden SVG element containing all the icons used throughout the
+     * Harmonicarium interface. The SVG uses `<symbol>` definitions that can be referenced
+     * via `<use>` elements elsewhere in a HUM instance. The element is hidden with
+     * `display: none` and acts as an icon palette-library for the application.
      */
     dpIcons(humID) {
         let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -2175,12 +2175,19 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the MIDI controls container, one per DHC.
+     * Creates the MIDI controls container for a DHC instance.
      *
-     * @param {number} dhcID    - The DHC instance ID.
+     * @memberof HUM.tmpl
+     * @param {string} dhcID - The DHC instance ID.
      * @param {number} humID - The HUM instance ID.
-     * 
-     * @returns {HTMLDivElement} - 
+     *
+     * @returns {HTMLDivElement} The MIDI controls container div element with input monitor and last-pressed-key tables.
+     *
+     * @description
+     * Creates a MIDI monitoring panel for a DHC instance, including a MIDI input monitor
+     * table (port, channel, note number, velocity) and a last-pressed-keys table showing the
+     * current FT and HT tone numbers, note names, frequencies, and midicents.
+     * A button opens the full MIDI settings modal.
      */
     midiBox(dhcID, humID) {
         let template = document.createElement('div');
@@ -2265,11 +2272,16 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the Splash modal container, one per Harmonicarium.
+     * Creates the splash screen loading modal for a Harmonicarium instance.
      *
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
-     * 
-     * @returns {HTMLDivElement} - 
+     *
+     * @returns {HTMLDivElement} The splash modal div element with a centered spinner.
+     *
+     * @description
+     * Creates a Bootstrap modal overlay displayed during application initialization.
+     * The modal contains a large centered spinner and cannot be dismissed by the user.
      */
     splashModal(humID) {
         let template = document.createElement('div');
@@ -2286,11 +2298,17 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the Dialog modal container, one per Harmonicarium.
+     * Creates the general-purpose dialog modal for a Harmonicarium instance.
      *
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
-     * 
-     * @returns {HTMLDivElement} - 
+     *
+     * @returns {HTMLDivElement} The dialog modal container div element with header, body, and footer sections.
+     *
+     * @description
+     * Creates a static Bootstrap modal dialog used as a general-purpose confirmation or
+     * information dialog throughout the application. The modal has a header with a title
+     * and cancel button, a body area for dynamic content, and a footer with cancel and OK buttons.
      */
     dialogModal(humID) {
         let template = document.createElement('div');
@@ -2314,11 +2332,16 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the Dialog modal content container, one per Harmonicarium.
+     * Creates the hidden dialog modal contents container for a Harmonicarium instance.
      *
+     * @memberof HUM.tmpl
      * @param {number} humID - The HUM instance ID.
-     * 
-     * @returns {HTMLElement} - A `<div>` element.
+     *
+     * @returns {HTMLDivElement} The hidden contents container div element used to store modal body content.
+     *
+     * @description
+     * Creates a hidden `<div>` container used to hold pre-built content fragments
+     * that are injected into the dialog modal body on demand.
      */
     dialogModalContents(humID) {
         let template = document.createElement('div');
@@ -2329,11 +2352,16 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the controller keymap modal container, one per DHC.
-     * 
+     * Creates the controller keymap table modal for a DHC instance.
+     *
+     * @memberof HUM.tmpl
      * @param {string} dhcID - The DHC instance ID.
-     * 
-     * @returns {HTMLDivElement}
+     *
+     * @returns {HTMLDivElement} The keymap modal div element with a scrollable table of the current controller keymap.
+     *
+     * @description
+     * Creates a Bootstrap modal dialog that displays the current controller keymap as a table,
+     * showing the mapping between MIDI note numbers and FT/HT assignments.
      */
     keymapModal(dhcID) {
         let template = document.createElement('div');
@@ -2363,22 +2391,23 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the MIDI settings modal container, one per DHC.
-     * 
+     * Creates the MIDI input/output settings modal for a DHC instance.
+     *
+     * @memberof HUM.tmpl
      * @param {string} dhcID - The DHC instance ID.
-     * 
-     * @returns {HTMLDivElement} - 
-     * 
+     *
+     * @returns {HTMLDivElement} The MIDI settings modal div element with full input and output configuration panels.
+     *
      * @description
-     * This function creates the complete MIDI settings modal that allows users to configure
-     * MIDI input and output settings for a specific DHC instance.
-     * The modal includes options for MIDI input ports, pitch bend range, note receiving mode,
-     * HT snap tolerance, and FT channel settings.
-     * 
+     * Creates a full-screen Bootstrap modal providing complete MIDI configuration for a DHC
+     * instance, including MIDI input ports, pitch-bend range, note-receiving mode (keymap,
+     * T-Snap channel, or T-Snap divider), snap tolerance, channel assignments, and MIDI output
+     * port and pitch-bend tuning settings.
+     *
      * @example
      * // Create MIDI settings modal for DHC instance '1-0'
      * const midiSettingsModal = HUM.tmpl.midiModal('1-0');
-     * */
+     */
     midiModal(dhcID) {
         let template = document.createElement('div');
         template.innerHTML = `
@@ -2673,14 +2702,16 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the visualiser box container, one per DHC.
-     * 
-     * @param {string} dhcID 
-     * 
-     * @returns {HTMLElement} -
-     * 
+     * Creates the audio visualiser box for a DHC instance.
+     *
+     * @memberof HUM.tmpl
+     * @param {string} dhcID - The DHC instance ID.
+     *
+     * @returns {HTMLDivElement} The visualiser box container div element with waveform selector and canvas.
+     *
      * @description
-     * This function creates the visualiser box that displays the audio visualisation options for a specific DHC instance.
+     * Creates the audio visualiser UI for a DHC instance, providing a waveform-type selector
+     * (sinewave, frequency bars, or off) and a canvas element for rendering the visualisation.
      */
     visualiserBox(dhcID) {
         let template = document.createElement('div');
@@ -2701,13 +2732,17 @@ HUM.tmpl = {
     },
 
     /**
-     * Get the FM box container, one per DHC.
-     * 
-     * @param {string} dhcID 
-     * 
-     * @returns {HTMLDivElement} - 
-     * 
-     * @description 
+     * Creates the Fundamental Mother (FM) frequency settings box for a DHC instance.
+     *
+     * @memberof HUM.tmpl
+     * @param {string} dhcID - The DHC instance ID.
+     *
+     * @returns {HTMLDivElement} The FM box container div element with MIDI note and frequency input controls.
+     *
+     * @description
+     * Creates the FM settings UI that allows users to set the root frequency (Fundamental Mother)
+     * either as a MIDI note number with cent decimals or directly as a frequency in hertz.
+     * Both input methods include live output monitors showing the current value.
      */
     fmBox(dhcID) {
         let template = document.createElement('div');
@@ -2770,13 +2805,20 @@ HUM.tmpl = {
     },
 
     /**
-     * 
-     * @param {string} dhcID
-     * 
-     * @returns {HTMLDivElement} - 
-     * 
-     * @description 
-     * 
+     * Creates the Fundamental Tones (FT) tuning system settings box for a DHC instance.
+     *
+     * @memberof HUM.tmpl
+     * @param {string} dhcID - The DHC instance ID.
+     *
+     * @returns {HTMLDivElement} The FT box container div element with n-EDx and harmonic/subharmonic tuning system controls.
+     *
+     * @description
+     * Creates the FT tuning system UI, allowing users to select and configure the tuning system
+     * used to build the Fundamental Tones palette. Supports three modes:
+     * - **n-EDx**: Equal temperament with configurable ratio unit (`x`) and equal divisions (`n`).
+     * - **Harm./Sub. Natural**: Harmonic/subharmonic series in natural form, intended for the Diphonic Pad.
+     * - **Harm./Sub. Same Octave**: Harmonic/subharmonic series transposed into one octave, intended for the Keymap.
+     * All calculations are based on the Fundamental Mother (FM) frequency.
      */
     ftBox(dhcID) {
         let template = document.createElement('div');
@@ -2907,13 +2949,17 @@ HUM.tmpl = {
     },
 
     /**
-     * Method for
-     * 
-     * @param {HTMLDivElement} dhcID
-     * 
-     * @returns {HTMLDivElement}
-     * 
+     * Creates the Harmonic Tones (HT) transposition settings box for a DHC instance.
+     *
+     * @memberof HUM.tmpl
+     * @param {string} dhcID - The DHC instance ID.
+     *
+     * @returns {HTMLDivElement} The HT box container div element with harmonic and subharmonic octave transposition controls.
+     *
      * @description
+     * Creates the HT transposition UI that allows users to shift the Harmonic and Subharmonic
+     * Tone series up or down by octaves independently. This is useful for bringing subharmonics
+     * into an audible range or adjusting the harmonic register relative to the Fundamental Tone.
      */
     htBox(dhcID) {
         let template = document.createElement('div');
@@ -2983,15 +3029,19 @@ HUM.tmpl = {
     },
 
     /**
-     * La funzione webMidiLinkPorts
-     * 
-     * @param {string} id - An unique identifier.
-     * @param {string} key - 
-     * @param {number} humID - 
-     * 
-     * @returns
-     * 
-     * @description 
+     * Creates the WebMidiLink instrument loader panel for a virtual MIDI output port.
+     *
+     * @memberof HUM.tmpl
+     * @param {string} id    - A unique identifier for the WebMidiLink port instance.
+     * @param {string} key   - The port index displayed in the panel header.
+     * @param {number} humID - The HUM instance ID used for icon references.
+     *
+     * @returns {HTMLDivElement} The WebMidiLink loader panel div element with instrument selector, URL input, and load button.
+     *
+     * @description
+     * Creates the UI panel for loading a WebMidiLink-compatible web synthesizer into a popup window.
+     * The panel displays the current port index and connection status, provides a dropdown list
+     * of known instruments and a free-text URL input, and a "Load" button to open the instrument.
      */
     webMidiLinkPorts(id, key, humID) {
         let template = document.createElement('div');

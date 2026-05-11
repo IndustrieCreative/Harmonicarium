@@ -1,4 +1,3 @@
-
 /**
  * @fileoverview Parameters class for the Harmonicarium MIDI Ports manager.
  * This file defines the {@link HUM.midi.MidiPorts.prototype.Parameters|Parameters}
@@ -59,15 +58,20 @@ HUM.midi.MidiPorts.prototype.Parameters = class {
      * - `outputPorts`: Proxy for the DOM container that holds MIDI-OUT port checkboxes.
      */
     constructor(midiports) {
+        /**
+         * DOM proxy holding the container element for MIDI-IN port checkboxes.
+         * It's not stored on the DB.
+         *
+         * @member {HUM.Param}
+         *
+         * @property {Object}      uiElements                 - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.out             - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.out.inputPorts  - The HTML container element for MIDI-IN port checkboxes.
+         */
         this.inputPorts = new HUM.Param({
             app: midiports,
             idbKey:'midiportsInputPorts',
             uiElements:{
-                /**
-                 * The UI HTML elements that contain the MIDI-IN checkboxes (need to be global ??)
-                 *
-                 * @type {Object}
-                 */
                 'inputPorts': new HUM.Param.UIelem({
                     role: 'out',
                 }),
@@ -76,15 +80,20 @@ HUM.midi.MidiPorts.prototype.Parameters = class {
             presetStore:false,
             presetRestore:false,
         });
+        /**
+         * DOM proxy holding the container element for MIDI-OUT port checkboxes.
+         * It's not stored on the DB.
+         *
+         * @member {HUM.Param}
+         *
+         * @property {Object}      uiElements                  - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.out              - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.out.outputPorts  - The HTML container element for MIDI-OUT port checkboxes.
+         */
         this.outputPorts = new HUM.Param({
             app: midiports,
             idbKey:'midiportsOutputPorts',
             uiElements:{
-                /**
-                 * The UI HTML elements that contain the MIDI-OUT checkboxes (need to be global ??)
-                 *
-                 * @type {Object}
-                 */
                 'outputPorts': new HUM.Param.UIelem({
                     role: 'out',
                 }),
@@ -93,7 +102,5 @@ HUM.midi.MidiPorts.prototype.Parameters = class {
             presetStore:false,
             presetRestore:false,
         });
-
     }
-
 };

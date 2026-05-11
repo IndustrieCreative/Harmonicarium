@@ -1,3 +1,9 @@
 .DS_Store
+.vscode
 _todo
 _old
+node_modules
+docs
+jsdoc-tmpl
+jsdoc.json
+package*.json

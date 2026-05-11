@@ -78,8 +78,8 @@ HUM.Synth.prototype.Parameters = class {
          * 
          * @property {boolean}     value                      - VU Meter meter ON/OFF. If `false` the meter is disabled.
          * @property {Object}      uiElements                 - Namespace for the "in", "out" and "fn" objects.
-         * @property {Object}      uiElements.out             - Namespace for the "fn" HTML elements.
-         * @property {HTMLElement} uiElements.out.synth_meter - The HTML of the VU Meter.
+         * @property {Object}      uiElements.out             - Namespace for the "out" HTML elements.
+         * @property {HTMLElement} uiElements.out.synth_meter - The HTML element of the VU Meter.
          */
         this.synthMeter = new HUM.Param({
             app:synth,
@@ -137,8 +137,8 @@ HUM.Synth.prototype.Parameters = class {
          * @property {boolean}     value                        - The visibility one wants to achieve. If `false` the tab will be collapsed.
          * @property {Object}      uiElements                   - Namespace for the "in", "out" and "fn" objects.
          * @property {Object}      uiElements.fn                - Namespace for the "fn" HTML elements.
-         * @property {HTMLElement} uiElements.fn.synthTabShown  - The HTML of the Synth tab.
-         * @property {HTMLElement} uiElements.fn.synthTabHidden - The HTML of the Synth tab.
+         * @property {HTMLElement} uiElements.fn.synthTabShown  - The Synth accordion collapse element (listens for `shown.bs.collapse` event).
+         * @property {HTMLElement} uiElements.fn.synthTabHidden - The Synth accordion collapse element (listens for `hidden.bs.collapse` event).
          */
         this.synthTab = new HUM.Param({
             app:synth,
@@ -203,8 +203,8 @@ HUM.Synth.prototype.Parameters = class {
          * 
          * @property {boolean}     value                     - Power ON/OFF. If `false` the synth is disabled.
          * @property {Object}      uiElements                - Namespace for the "in", "out" and "fn" objects.
-         * @property {Object}      uiElements.in             - Namespace for the "fn" HTML elements.
-         * @property {HTMLElement} uiElements.in.synth_power - The HTML of the VU Meter.
+         * @property {Object}      uiElements.in             - Namespace for the "in" HTML elements.
+         * @property {HTMLElement} uiElements.in.synth_power - The HTML element of the power ON/OFF toggle checkbox.
          */
         this.status = new HUM.Param({
             app:synth,
@@ -335,7 +335,7 @@ HUM.Synth.prototype.Parameters = class {
              * @property {number}      value                        - The HT out volume; a float-point number from 0 to 1.
              * @property {Object}      uiElements                   - Namespace for the "in", "out" and "fn" objects.
              * @property {Object}      uiElements.in                - Namespace for the "in" HTML elements.
-             * @property {HTMLElement} uiElements.in.synth_volumeFT - The HTML of the input slider widget for setting the volume.
+             * @property {HTMLElement} uiElements.in.synth_volumeHT - The HTML element of the input slider widget for setting the HT volume.
              */
             ht: new HUM.Param({
                 app:synth,
@@ -592,8 +592,8 @@ HUM.Synth.prototype.Parameters = class {
          * @property {number}      value                          - Portamento time (time-constant).
          * @property {number}      lastFreqFT                     - Last FT frequency expressed in hertz (Hz); init value should be `null`.
          * @property {Object}      uiElements                     - Namespace for the "in", "out" and "fn" objects.
-         * @property {Object}      uiElements.in                  - Namespace for the "fn" HTML elements.
-         * @property {HTMLElement} uiElements.in.synth_portamento - The HTML of the input slider widget for setting the Portamento.
+         * @property {Object}      uiElements.in                  - Namespace for the "in" HTML elements.
+         * @property {HTMLElement} uiElements.in.synth_portamento - The HTML element of the input slider widget for setting the Portamento.
          */
         this.portamento = new HUM.Param({
             app:synth,
@@ -633,8 +633,8 @@ HUM.Synth.prototype.Parameters = class {
              * 
              * @property {number}      value                      - Reverb (wet) amount, normalized to 0.0 (dry) > 1.0 (wet).
              * @property {Object}      uiElements                 - Namespace for the "in", "out" and "fn" objects.
-             * @property {Object}      uiElements.in              - Namespace for the "fn" HTML elements.
-             * @property {HTMLElement} uiElements.in.synth_reverb - The HTML of the input slider widget for setting the Reverb amount.
+             * @property {Object}      uiElements.in              - Namespace for the "in" HTML elements.
+             * @property {HTMLElement} uiElements.in.synth_reverb - The HTML element of the input slider widget for setting the Reverb amount.
              */
             amount: new HUM.Param({
                 app:synth,
@@ -680,11 +680,11 @@ HUM.Synth.prototype.Parameters = class {
              * 
              * @property {(File|'default')} value                               - The reverb wave file object.
              * @property {Object}           uiElements                          - Namespace for the "in", "out" and "fn" objects.
-             * @property {Object}           uiElements.in                       - Namespace for the "fn" HTML elements.
-             * @property {Object}           uiElements.out                      - Namespace for the "fn" HTML elements.
-             * @property {HTMLElement}      uiElements.in.synth_irFile          - The HTML of the input file widget for uploading the reverb wave file.
-             * @property {HTMLElement}      uiElements.in.synth_irFileName      - The HTML of the output text box for showing the reverb file name.
-             * @property {HTMLElement}      uiElements.out.synth_irFileClearBtn - The HTML of the input button that restores the default reverb.
+             * @property {Object}           uiElements.in                      - Namespace for the "in" HTML elements.
+             * @property {Object}           uiElements.out                     - Namespace for the "out" HTML elements.
+             * @property {HTMLElement}      uiElements.in.synth_irFile         - The HTML element of the input file widget for uploading the reverb wave file.
+             * @property {HTMLElement}      uiElements.out.synth_irFileName    - The HTML element of the output text element for displaying the reverb file name.
+             * @property {HTMLElement}      uiElements.in.synth_irFileClearBtn - The HTML element of the button for restoring the default reverb.
              */
             irFile: new HUM.Param({
                 app:synth,

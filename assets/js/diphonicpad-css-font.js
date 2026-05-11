@@ -1,6 +1,6 @@
 /**
  * @fileoverview CssFont helper class for the Harmonicarium Diphonic Pad.
- * This file defines the {@link HUM.DpPad~CssFont|CssFont} inner class, a simple
+ * This file defines the {@link HUM.DpPad.CssFont} class, a simple
  * value object that bundles all CSS font properties needed to draw text on a
  * `CanvasRenderingContext2D`. It is split out from the main
  * {@link module:diphonicpad} module.
@@ -34,60 +34,55 @@
 
 "use strict";
 
-{
+/**
+ * A simple value object that bundles all CSS font properties for canvas text.
+ *
+ * @class
+ * @alias HUM.DpPad.CssFont
+ *
+ * @description
+ * `CssFont` groups the six CSS font properties needed to draw text on a
+ * `CanvasRenderingContext2D`. The {@link HUM.DpPad.CssFont#getCss} getter
+ * assembles them into the shorthand string accepted by
+ * `CanvasRenderingContext2D.font`. Instances are stored as parameter values
+ * inside {@link HUM.DpPad.PadSet.prototype.Parameters#fonts}.
+ */
+    HUM.DpPad.CssFont = class {
     /**
-     * A simple value object that bundles all CSS font properties for canvas text.
-     *
-     * @class
-     * @alias HUM.DpPad~CssFont
-     * @inner
-     *
-     * @description
-     * `CssFont` groups the six CSS font properties needed to draw text on a
-     * `CanvasRenderingContext2D`. The {@link HUM.DpPad~CssFont#getCss} getter
-     * assembles them into the shorthand string accepted by
-     * `CanvasRenderingContext2D.font`. Instances are stored as parameter values
-     * inside {@link HUM.DpPad.PadSet.prototype.Parameters#fonts}.
+     * @constructs HUM.DpPad.CssFont
+     * 
+     * @param {string} [style='']       - The CSS font-style.
+     * @param {string} [weight='']      - The CSS font-weight.
+     * @param {number} [size=12]        - The CSS font-size.
+     * @param {string} [unit=px]        - The CSS font-size unit.
+     * @param {string} [family='Arial'] - The CSS font-family.
+     * @param {string} [color='black']  - The CSS color.
      */
-    class CssFont {
-        /**
-         * @constructs HUM.DpPad~CssFont
-         * 
-         * @param {string} [style='']       - The CSS font-style.
-         * @param {string} [weight='']      - The CSS font-weight.
-         * @param {number} [size=12]        - The CSS font-size.
-         * @param {string} [unit=px]        - The CSS font-size unit.
-         * @param {string} [family='Arial'] - The CSS font-family.
-         * @param {string} [color='black']  - The CSS color.
-         */
-        constructor(style, weight, size, unit, family, color) {
-            this.style = style || ''; // italic
-            this.weight = weight || ''; // bold
-            this.size = size || 12;
-            this.unit = unit || 'px';
-            this.family = family || 'Arial';
-            this.color = color || 'black';
-        }
-        /**
-         * This is a getter property that returns the font definition string for applying it
-         * to the `font` property of the `CanvasRenderingContext2D` objects.
-         * This string uses the same syntax as the {@link https://developer.mozilla.org/en-US/docs/Web/CSS/font|CSS font} specifier.
-         * 
-         * @member {string}
-         */
-        get getCss() {
-            return [this.style, this.weight, this.getSize, this.family].filter(Boolean).join(' ');
-        }
-        /**
-         * This is a getter property that returns the font-size definition string for using it
-         * the `getCss` getter.
-         * 
-         * @member {string}
-         */
-        get getSize() {
-            return this.size ? this.size + this.unit : '';
-        }
+    constructor(style, weight, size, unit, family, color) {
+        this.style = style || ''; // italic
+        this.weight = weight || ''; // bold
+        this.size = size || 12;
+        this.unit = unit || 'px';
+        this.family = family || 'Arial';
+        this.color = color || 'black';
     }
-
-    HUM.DpPad._CssFont = CssFont;
-}
+    /**
+     * This is a getter property that returns the font definition string for applying it
+     * to the `font` property of the `CanvasRenderingContext2D` objects.
+     * This string uses the same syntax as the {@link https://developer.mozilla.org/en-US/docs/Web/CSS/font|CSS font} specifier.
+     * 
+     * @member {string}
+     */
+    get getCss() {
+        return [this.style, this.weight, this.getSize, this.family].filter(Boolean).join(' ');
+    }
+    /**
+     * This is a getter property that returns the font-size definition string for using it
+     * the `getCss` getter.
+     * 
+     * @member {string}
+     */
+    get getSize() {
+        return this.size ? this.size + this.unit : '';
+    }
+};
