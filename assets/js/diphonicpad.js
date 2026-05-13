@@ -455,7 +455,10 @@ HUM.DpPad = function() {
                     padSet.ht.cssDimensions.width = padSet.ht.canvas.clientWidth;
                     padSet.ht.cssDimensions.height = padSet.ht.canvas.clientHeight;
                 }
-            
+
+                // Resize spectrogram canvases to match CSS pad dimensions
+                padSet.spectrogram.resize(ftCnvWidth, ftCnvHeight, htCnvWidth, htCnvHeight);
+
             }
 
             // For every padSet created

@@ -325,6 +325,7 @@ so they don't overlap */
     /*transition: width 0.4s;*/
     background: rgb(255 212 224);
     background: linear-gradient(90deg, rgb(255 212 224) 0%, rgb(255,255,255) 50%, rgb(255 212 224) 100%);
+    position: relative;
 }
 .padHT {
     /*background-color:#def;*/
@@ -332,6 +333,13 @@ so they don't overlap */
     /*transition: width 0.4s;*/
     background: #def;
     background: linear-gradient(90deg, #c8e3ff 0%, rgb(255,255,255) 50%, #c8e3ff 100%);
+    position: relative;
+}
+.spectrogramPad {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
 }
 .toolbar {
     background-color:#000;

@@ -942,6 +942,35 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                 }
             }
         });
+        /*  ____  ____  ____  ___  ____  ____  __  ___  ____  __   __  _  _ 
+         * / ___)(  _ \( ___)(  _)(_  _)(  _ \(  )/ __)(_  _)(  ) /  \( \( )
+         * \___ \ )___/ ) _)  ) _)  )(   )   / )(( (_-. _)(_  )(_ ( ()) )  (
+         * (____/(__)  (____)(___) (__) (_)\_)(__)\___)(____)(____)_\__/(_)\_)
+         */
+        this.spectrogramEnabled = new HUM.Param({
+            app: padSet,
+            idbKey: 'padsetSpectrogramEnabled',
+            uiElements: {
+                'dppad_spectrogram_enabled': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    eventType: 'change',
+                    htmlTargetProp: 'checked',
+                    widget: 'checkbox',
+                })
+            },
+            dataType: 'boolean',
+            initValue: false,
+            postSet: (value, thisParam, init) => {
+                if (!init) {
+                    if (value) {
+                        padSet.spectrogram.enable();
+                    } else {
+                        padSet.spectrogram.disable();
+                    }
+                }
+            }
+        });
     }
     /**
      * Triggers deferred initialisation for parameters that require live DOM elements.

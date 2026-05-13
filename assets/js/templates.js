@@ -1372,6 +1372,28 @@ HUM.tmpl = {
 
                 <div class="list-group mb-3">
                     <div class="list-group-item hum-section-title p-2 ps-3">
+                        Spectrogram
+                    </div>
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-lg">
+                                <strong class="mb-2">Microphone spectrogram</strong>
+                                <div><small class="text-muted">Show a live scrolling spectrogram behind each frequency pad. Requires microphone access.</small></div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           id="HTMLi_dppad_spectrogram_enabled${dhcID}"
+                                           role="switch">
+                                    <label class="form-check-label" for="HTMLi_dppad_spectrogram_enabled${dhcID}">Enable</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="list-group mb-3">
+                    <div class="list-group-item hum-section-title p-2 ps-3">
                         FT Pad
                     </div>
                     <div class="list-group-item">

@@ -94,6 +94,9 @@ HUM.DpPad.PadSet = class {
             htDiv = document.createElement('div'),
             tbarDiv = document.createElement('div'),
             
+            ftSpectrogramCanvas = document.createElement('canvas'),
+            htSpectrogramCanvas = document.createElement('canvas'),
+
             ftCanvas = document.createElement('canvas'),
             htCanvas = document.createElement('canvas'),
             tbarSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -103,6 +106,9 @@ HUM.DpPad.PadSet = class {
         htDiv.id = 'padHT'+setKey;
         tbarDiv.id = 'toolbar'+setKey;
         
+        ftSpectrogramCanvas.id = 'spectrogramFT'+setKey;
+        htSpectrogramCanvas.id = 'spectrogramHT'+setKey;
+
         ftCanvas.id = 'canvasFT'+setKey;
         htCanvas.id = 'canvaspadHT'+setKey;
         tbarSvg.id = 'svgToolbar'+setKey;
@@ -111,6 +117,8 @@ HUM.DpPad.PadSet = class {
         ftDiv.className = 'padFT';
         htDiv.className = 'padHT';
         tbarDiv.className = 'toolbar';
+        ftSpectrogramCanvas.className = 'spectrogramPad';
+        htSpectrogramCanvas.className = 'spectrogramPad';
         ftCanvas.className = 'canvasPad ';
         htCanvas.className = 'canvasPad';
         tbarSvg.setAttributeNS(null, 'class', 'toolbarPad');
@@ -119,6 +127,9 @@ HUM.DpPad.PadSet = class {
         setDiv.appendChild(ftDiv);
         setDiv.appendChild(htDiv);
         setDiv.appendChild(tbarDiv);
+        // Spectrogram canvases go first (behind the main pad canvases in z-order)
+        ftDiv.appendChild(ftSpectrogramCanvas);
+        htDiv.appendChild(htSpectrogramCanvas);
         ftDiv.appendChild(ftCanvas);
         htDiv.appendChild(htCanvas);
         tbarDiv.appendChild(tbarSvg);
@@ -152,6 +163,7 @@ HUM.DpPad.PadSet = class {
         this.ft = new HUM.DpPad.PadSet.FrequencyPad('ft', this, ftCanvas);
         this.ht = new HUM.DpPad.PadSet.FrequencyPad('ht', this, htCanvas);
         this.toolbar = new HUM.DpPad.PadSet.Toolbar(this, tbarSvg);
+        this.spectrogram = new HUM.DpPad.PadSet.Spectrogram(this, ftSpectrogramCanvas, htSpectrogramCanvas);
         
         this.parameters._init();
 
