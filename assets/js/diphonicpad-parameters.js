@@ -988,6 +988,38 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
             initValue: false,
             restoreStage: 'post',
         });
+        this.spectrogramBrightness = new HUM.Param({
+            app: padSet,
+            idbKey: 'padsetSpectrogramBrightness',
+            uiElements: {
+                'dppad_spectrogram_brightness': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    eventType: 'input',
+                    htmlTargetProp: 'value',
+                    widget: 'range',
+                })
+            },
+            dataType: 'integer',
+            initValue: 0,
+            restoreStage: 'post',
+        });
+        this.spectrogramContrast = new HUM.Param({
+            app: padSet,
+            idbKey: 'padsetSpectrogramContrast',
+            uiElements: {
+                'dppad_spectrogram_contrast': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    eventType: 'input',
+                    htmlTargetProp: 'value',
+                    widget: 'range',
+                })
+            },
+            dataType: 'float',
+            initValue: 1.0,
+            restoreStage: 'post',
+        });
     }
     /**
      * Triggers deferred initialisation for parameters that require live DOM elements.

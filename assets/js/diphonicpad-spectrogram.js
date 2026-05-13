@@ -377,18 +377,24 @@ HUM.DpPad.PadSet.Spectrogram = class {
      * @private
      */
     _amplitudeToRGBA(amp, type) {
-        const alpha = Math.round(amp * 0.85);
+        // Apply contrast (scale around midpoint 128) then brightness (additive offset).
+        const brightness = this.padSet.parameters.spectrogramBrightness.value;
+        const contrast   = this.padSet.parameters.spectrogramContrast.value;
+        let a = (amp - 128) * contrast + 128 + brightness;
+        if (a < 0)   { a = 0; }
+        if (a > 255) { a = 255; }
+        const alpha = Math.round(a * 0.85);
         if (type === 'ft') {
             return [
                 255,
-                Math.round(255 - amp * 0.72),
-                Math.round(255 - amp * 0.45),
+                Math.round(255 - a * 0.72),
+                Math.round(255 - a * 0.45),
                 alpha
             ];
         } else {
             return [
-                Math.round(255 - amp * 0.72),
-                Math.round(255 - amp * 0.45),
+                Math.round(255 - a * 0.72),
+                Math.round(255 - a * 0.45),
                 255,
                 alpha
             ];
