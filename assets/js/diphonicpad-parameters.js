@@ -961,8 +961,9 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
             },
             dataType: 'boolean',
             initValue: false,
-            postSet: (value, thisParam, init) => {
-                if (!init) {
+            restoreStage: 'post',
+            postSet: (value, thisParam, init, fromUI, oldValue, fromRestore) => {
+                if (!init || fromRestore) {
                     if (value) {
                         padSet.spectrogram.enable();
                     } else {
