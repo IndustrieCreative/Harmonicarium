@@ -260,6 +260,11 @@ HUM.DpPad.PadSet.Spectrogram = class {
      *   (high frequencies). The canvas is shifted up (time scrolls bottom-to-top)
      *   and a new row is written at `canvas.height − 1`.
      *   Each pixel column `x` maps to `freq = pixToFreq(x, range, width)`.
+     *
+     * After writing the new edge data, the key band is erased with `clearRect`
+     * using the same geometry as `drawLinKey`/`drawFreqKeyHT` (`canvasObjectsRatios[type].key`),
+     * so the spectrogram is only ever visible in the key-free area of the pad —
+     * regardless of key position, pad orientation, or scale orientation.
      */
     _renderPad(canvas, type) {
         const w = canvas.width,
@@ -277,11 +282,22 @@ HUM.DpPad.PadSet.Spectrogram = class {
         const dataArray      = this.dataArray;
         const dataLen        = dataArray.length;
 
-        if (scaleOrient === 'vertical') {
-            // Shift existing image left by 1px (time scrolls right-to-left)
-            ctx.drawImage(canvas, -1, 0);
+        // Key band geometry — mirrors the formula in drawLinKey() / drawFreqKeyHT().
+        // customProperties are spread onto the Param via Object.assign, so
+        // canvasObjectsRatios[type].key is directly accessible.
+        const keyRatios = this.padSet.parameters.canvasObjectsRatios[type].key;
 
-            // Build new column at the right edge
+        // New data must be written into the key-free area.
+        // When keys are at the far end (position >= 0.5), the free area is at the
+        // near end — so we scroll *toward* the far end and write at edge 0.
+        // When keys are at the near end (position < 0.5), we scroll toward 0 and
+        // write at the far edge (original behaviour, e.g. FT default).
+        const keysAtFarEnd = keyRatios.position >= 0.5;
+
+        if (scaleOrient === 'vertical') {
+            // Cross-axis = X.
+            // keys left  (position 0) → free area right  → scroll left,  write at x = w-1
+            // keys right (position 1) → free area left   → scroll right, write at x = 0
             const imgData = ctx.createImageData(1, h);
             const pixels  = imgData.data;
 
@@ -297,13 +313,25 @@ HUM.DpPad.PadSet.Spectrogram = class {
                 pixels[i + 2] = rgba[2];
                 pixels[i + 3] = rgba[3];
             }
-            ctx.putImageData(imgData, w - 1, 0);
+
+            if (keysAtFarEnd) {
+                ctx.drawImage(canvas, 1, 0);
+                ctx.putImageData(imgData, 0, 0);
+            } else {
+                ctx.drawImage(canvas, -1, 0);
+                ctx.putImageData(imgData, w - 1, 0);
+            }
+
+            // Erase key band (cross-axis = X) so spectrogram stays in the free area.
+            // Formula: xBegin = width * (1 - length) * position
+            const keyBandX = w * (1 - keyRatios.length) * keyRatios.position;
+            const keyBandW = w * keyRatios.length;
+            ctx.clearRect(keyBandX, 0, keyBandW, h);
 
         } else {
-            // Horizontal orientation: shift image up (time scrolls bottom-to-top)
-            ctx.drawImage(canvas, 0, -1);
-
-            // Build new row at the bottom edge
+            // Horizontal orientation.  Cross-axis = Y.
+            // keys top    (position 0) → free area bottom → scroll up,   write at y = h-1
+            // keys bottom (position 1) → free area top    → scroll down, write at y = 0
             const imgData = ctx.createImageData(w, 1);
             const pixels  = imgData.data;
 
@@ -319,7 +347,20 @@ HUM.DpPad.PadSet.Spectrogram = class {
                 pixels[i + 2] = rgba[2];
                 pixels[i + 3] = rgba[3];
             }
-            ctx.putImageData(imgData, 0, h - 1);
+
+            if (keysAtFarEnd) {
+                ctx.drawImage(canvas, 0, 1);
+                ctx.putImageData(imgData, 0, 0);
+            } else {
+                ctx.drawImage(canvas, 0, -1);
+                ctx.putImageData(imgData, 0, h - 1);
+            }
+
+            // Erase key band (cross-axis = Y) so spectrogram stays in the free area.
+            // Formula: yBegin = height * (1 - length) * position
+            const keyBandY = h * (1 - keyRatios.length) * keyRatios.position;
+            const keyBandH = h * keyRatios.length;
+            ctx.clearRect(0, keyBandY, w, keyBandH);
         }
     }
 
