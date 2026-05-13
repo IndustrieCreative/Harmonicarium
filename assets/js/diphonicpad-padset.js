@@ -184,7 +184,7 @@ HUM.DpPad.PadSet = class {
      */
     updatePadRangeUI(type, ambitus=false, target=false, value=false, copy=false) {
         if (ambitus) {
-            this.parameters.freqRange[type].ambitus._setValue(ambitus, false, false, true, false);
+            this.parameters.freqRange[type].ambitus._setValue(ambitus, { postSet: false });
         } else {
             // Init
             ambitus = this.parameters.freqRange[type].ambitus.value;
@@ -211,10 +211,10 @@ HUM.DpPad.PadSet = class {
                     // Add or remove 50 cents to draw the first/last FT key entirely
                     let mcFix = target === 'min' ? -nEDxFixStepCent : nEDxFixStepCent;
 
-                    this.parameters.freqRange.ft[target]._setValue(this.addCentToHertz(HUM.DHC.mcToFreq(mcFT), mcFix), false, !copy, true, false);
+                    this.parameters.freqRange.ft[target]._setValue(this.addCentToHertz(HUM.DHC.mcToFreq(mcFT), mcFix), { fromUI: !copy, postSet: false });
                 
                 }  else {
-                    this.parameters.freqRange.ft[target]._setValue(HUM.DHC.mcToFreq(mcFT), false, !copy, true, false);
+                    this.parameters.freqRange.ft[target]._setValue(HUM.DHC.mcToFreq(mcFT), { fromUI: !copy, postSet: false });
                 }
                 
                 this.parameters.freqRange.ft[target].mcValue = mcFT;
@@ -224,7 +224,7 @@ HUM.DpPad.PadSet = class {
             } else if (type === 'ht') {
                 let hzHT = Number(value);
                 
-                this.parameters.freqRange.ht[target]._setValue(hzHT, false, false, true, false);
+                this.parameters.freqRange.ht[target]._setValue(hzHT, { postSet: false });
                 
                 this.parameters.freqRange.ht[target].uiElements.out['dppad_freq_range_custom_'+target+'_trad_ht'].innerText = this.dhc.mcToNameString(HUM.DHC.freqToMc(hzHT));
             }
@@ -254,12 +254,12 @@ HUM.DpPad.PadSet = class {
                         // Add or remove 50 cents to draw the first/last FT key entirely
                         let mcFix = presetTarget === 'min' ? -nEDxFixStepCent : nEDxFixStepCent;
                         
-                        this.parameters.freqRange.ft[presetTarget]._setValue(this.addCentToHertz(xtRange.hz[presetTarget], mcFix), false, true, true, false);
+                        this.parameters.freqRange.ft[presetTarget]._setValue(this.addCentToHertz(xtRange.hz[presetTarget], mcFix), { fromUI: true, postSet: false });
 
                 }  else {
-                        this.parameters.freqRange[type][presetTarget]._setValue(xtRange.hz[presetTarget], false, true, true, false);
-                        // this.parameters.freqRange[type].min._setValue(xtRange.hz.min, false, true, true, false);
-                        // this.parameters.freqRange[type].max._setValue(xtRange.hz.max, false, true, true, false);
+                        this.parameters.freqRange[type][presetTarget]._setValue(xtRange.hz[presetTarget], { fromUI: true, postSet: false });
+                        // this.parameters.freqRange[type].min._setValue(xtRange.hz.min, { fromUI: true, postSet: false });
+                        // this.parameters.freqRange[type].max._setValue(xtRange.hz.max, { fromUI: true, postSet: false });
 
                         // this.parameters.freqRange.ft[target].value = HUM.DHC.mcToFreq(mcFT);
                 }
@@ -498,7 +498,7 @@ HUM.DpPad.PadSet = class {
     invertPads(alreadyInverted) {
         if (!alreadyInverted) {
             let newValue = this.parameters.padsOrder.value[0] === 'ft' ? ['ht', 'ft'] : ['ft', 'ht'];
-            this.parameters.padsOrder._setValue(newValue, false, false, true, false);
+            this.parameters.padsOrder._setValue(newValue, { postSet: false });
         }
         // this.uiElements.in.pads_order.value = this.parameters.padsOrder.value[0] === 'ft' ? 'ftht' : 'htft';
         for (let type of ['ft', 'ht']) {

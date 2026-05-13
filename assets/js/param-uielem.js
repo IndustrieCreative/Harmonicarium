@@ -229,9 +229,7 @@ HUM.Param.UIelem = class {
      * @throws {Error} If htmlID is not a string or undefined
      */
     _checkHtmlID() {
-        if (!['string', 'undefined'].includes(typeof this.opType)) {
-        // @todo: Is this check correct? Should it be on opType or htmlID?
-        // if (!['string', 'undefined'].includes(typeof this.htmlID)) {
+        if (!['string', 'undefined'].includes(typeof this.htmlID)) {
             this._errorMsg('htmlID');
         }
     }

@@ -253,6 +253,64 @@ HUM.User = class {
         this.presetServiceDB = new HUM.User.IDBPresetService(this);
         // this.backupServiceDB = new HUM.User.IDBBackupService(this);
 
+        // Register the autosave callback on the HUM instance.
+        // HUM.Param._setValue() calls this after every value change.
+        this.harmonicarium._onParamChange = (param, init, fromRestore) => {
+            // @todo: if (now() - param.last_autosave > 1second) {update the 'autosave' idb store}
+            if (!init && (param._presetStore && param._presetAutosave) && (!fromRestore && this.autosave)) {
+                if (this.parameters.preset.value !== this.session.id) {
+                    console.group(`PARAM AUTOSAVE - START: Param "${param.idbKeyPath}" changed. The selected preset has been modified. The "Auto-save" preset will be initialized and set as the active one...`);
+
+                    // Inits
+                    this.autosave = false;
+                    this.autosaveQueue = [];
+
+                    this.presetServiceDB.updateParams(this.session.id, 'live')
+                    .then(() => {
+                        console.log('PARAM AUTOSAVE: The "Auto-save" preset has been initialized.');
+                        return this.presetServiceDB.updateSession({
+                            sessionID: this.session.id,
+                            currentPreset: this.session.id
+                        });
+                    })
+                    .then(() => {
+                        // Update the select option on the html elem
+                        this.parameters.preset._setValue(this.session.id, { init: true });
+                        console.groupEnd();
+                        console.log('PARAM AUTOSAVE - STOP: "Auto-save" has been set as current preset of the active session.');
+
+                        // Restore the autosave
+                        this.autosave = true;
+
+                        // If other Params changed during the autosave preset initialisation, store them too.
+                        if (this.autosaveQueue.length > 0) {
+                            console.group(`PARAM AUTOSAVE (queue) - START: There are ${this.autosaveQueue.length} Params changed during the initialization of the "Auto-save" preset.`);
+                            for (let p of this.autosaveQueue) {
+                                console.log(`PARAM AUTOSAVE (queue) - Param "${p.idbKeyPath}" changed. Post-autosave.`);
+                                this.presetServiceDB.updateParam(this.session.id, p.idbKeyPath, 'live')
+                                .then(() => {
+                                    // ... @todo: ? return this somewhere to chain or "await" for this changes?
+                                });
+                            }
+                            console.groupEnd();
+                            console.log(`PARAM AUTOSAVE (queue) - STOP: The Params changed during the initialization of the "Auto-save" preset have been saved.`);
+                        }
+                        // Close the queue
+                        this.autosaveQueue = false;
+                    });
+                } else {
+                    console.log(`PARAM AUTOSAVE: Param "${param.idbKeyPath}" changed. Autosave.`);
+                    this.presetServiceDB.updateParam(this.session.id, param.idbKeyPath, 'live')
+                    .then(() => {
+                        // ... @todo: ? return this somewhere to chain or "await" for this changes?
+                    });
+                }
+            // If the autosaveQueue is active (is an array)
+            } else if (param._presetStore && param._presetAutosave && this.autosaveQueue && this.autosaveQueue.push) {
+                this.autosaveQueue.push(param);
+            }
+        };
+
         let storedSessions;
 
         // @todo: Check if the system date is after 2000
@@ -723,7 +781,7 @@ HUM.User = class {
                                 currentPreset: key
                             });
                             // Select the new preset just created
-                            this.parameters.preset._setValue(key, true);
+                            this.parameters.preset._setValue(key, { init: true });
                             this.harmonicarium.broadcastChannel.send('presetsChange');
                             resolve();
                         })
@@ -831,7 +889,7 @@ HUM.User = class {
                                 }
 
                                 // Set the value to the Param
-                                paramObjLive._setValue(value, true, false, true, true, true);
+                                paramObjLive._setValue(value, { init: true, fromUI: false, preSet: true, postSet: true, fromRestore: true });
 
                                 // Run optional postRestore
                                 if (paramObjLive._postRestore) {
@@ -872,8 +930,8 @@ HUM.User = class {
             .finally(() => {
                 if (!fromParam) {
                     // Set the current preset on the Param
-                    this.parameters.preset._setValue(presetID, true);
-                    // this.parameters.preset._setValue(presetID, false, false, true, false);
+                    this.parameters.preset._setValue(presetID, { init: true });
+                    // this.parameters.preset._setValue(presetID, { fromUI: false, preSet: true, postSet: false });
                 }
                 if (this.presetServiceDB.available && !init) {
                     // Re-enable the autosave feature

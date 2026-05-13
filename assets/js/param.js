@@ -399,16 +399,17 @@ HUM.Param = class {
             }
         }
 
+        // Register this parameter in global parameter tracking first,
+        // so postInit hooks can safely look it up in the registry.
+        this._compileParamList();
+        this._compileParamMap();
+
         // Initialize the parameter if requested
         if (init && !initAsync) {
             this._init();
         } else if (init && initAsync) {
             this._initAsync();
         }
-
-        // Register this parameter in global parameter tracking
-        this._compileParamList();
-        this._compileParamMap();
 
         // =======================
     } // end class Constructor
@@ -523,7 +524,7 @@ HUM.Param = class {
                     store.dpPad[name][idx][idbKey] = value;
                 }
             }
-        } else if (['dhc', 'hstack', 'synth', 'midi', 'hancock'].includes(name)) {
+        } else if (['dhc', 'hstack', 'synth', 'hancock'].includes(name)) {
             if (!store.dhc) {
                 store.dhc = {};
             }
@@ -537,6 +538,24 @@ HUM.Param = class {
                 this._errorIdbKeyUniq(idbKey, name, id);
             } else {
                 store.dhc[idx][name][idbKey] = value;
+            }
+        } else if (['midiPorts', 'midiIn', 'midiOut'].includes(name)) {
+            if (!store.dhc) {
+                store.dhc = {};
+            }
+            if (!store.dhc[idx]) {
+                store.dhc[idx] = {};
+            }
+            if (!store.dhc[idx].midi) {
+                store.dhc[idx].midi = {};
+            }
+            if (!store.dhc[idx].midi[name]) {
+                store.dhc[idx].midi[name] = {};
+            }
+            if (store.dhc[idx].midi[name][idbKey] && mode === 'parameterObject') {
+                this._errorIdbKeyUniq(idbKey, name, id);
+            } else {
+                store.dhc[idx].midi[name][idbKey] = value;
             }
         }
     }
@@ -562,16 +581,6 @@ HUM.Param = class {
         throw new Error(msg);
     }
 
-    /**
-     * Parameter validation method (currently placeholder).
-     * 
-     * @param {Object} params - Parameters to validate
-     * @private
-     * @todo Implement parameter validation logic
-     */
-    _checkParams(params) {
-        if (params['']) {}
-    }
     
     /**
      * Initializes the parameter with its initial value and lifecycle hooks.
@@ -597,15 +606,15 @@ HUM.Param = class {
      * 
      * @todo Add context parameter for better lifecycle hook support
      */
-    _init() { // @todo: pass a context!
+    _init() {
         if (this._preInit) {
-            this._preInit(this); // @todo: pass a context!
+            this._preInit(this);
         }
 
-        this._setValue(this.initValue, true); // @todo: pass a context!
+        this._setValue(this.initValue, { init: true });
         
         if (this._postInit) {
-            this._postInit(this); // @todo: pass a context!
+            this._postInit(this);
         }
     }
     
@@ -628,13 +637,13 @@ HUM.Param = class {
      */
     async _initAsync() {
         if (this._preInit) {
-            await this._preInit(this); // @todo: pass a context!
+            await this._preInit(this);
         }
 
-        this._setValue(this.initValue, true); // @todo: pass a context!
+        this._setValue(this.initValue, { init: true });
         
         if (this._postInit) {
-            await this._postInit(this); // @todo: pass a context!
+            await this._postInit(this);
         }
     }
 
@@ -649,19 +658,20 @@ HUM.Param = class {
      * infinite feedback loops (UI -> value -> UI -> value...).
      */
     _setUI2Value(value) {
-        this._setValue(value, false, true);
+        this._setValue(value, { fromUI: true });
     }
     
     /**
      * Core method for setting parameter values with comprehensive validation and lifecycle support.
      * 
-     * @param {*} value - The new value to set
-     * @param {boolean} [init=false] - Whether this is being called during initialization
-     * @param {boolean} [fromUI=false] - Whether the value comes from a UI element
-     * @param {boolean} [preSet=true] - Whether to execute preSet hook
-     * @param {boolean} [postSet=true] - Whether to execute postSet hook  
-     * @param {boolean} [fromRestore=false] - Whether this is being called during preset restoration
-     * @param {boolean} [fromQueue=false] - Whether this is being called from a queued operation
+     * @param {*}       value                   - The new value to set.
+     * @param {Object}  [ctx={}]                - Context object controlling set behaviour.
+     * @param {boolean} [ctx.init=false]        - Whether this is being called during initialization.
+     * @param {boolean} [ctx.fromUI=false]      - Whether the value comes from a UI element.
+     * @param {boolean} [ctx.preSet=true]       - Whether to execute the preSet hook.
+     * @param {boolean} [ctx.postSet=true]      - Whether to execute the postSet hook.
+     * @param {boolean} [ctx.fromRestore=false] - Whether this is being called during preset restoration.
+     * @param {boolean} [ctx.fromQueue=false]   - Whether this is being called from a queued operation.
      * 
      * @description
      * This is the central value-setting method that:
@@ -671,7 +681,7 @@ HUM.Param = class {
      * 4. Updates the internal value storage
      * 5. Synchronizes with UI elements if not from UI
      * 6. Executes postSet lifecycle hook if enabled
-     * 7. Triggers autosave if configured
+     * 7. Notifies the autosave system via harmonicarium._onParamChange
      * 
      * The method handles various scenarios including initialization, UI updates,
      * preset restoration, and queued operations with appropriate behavior for each.
@@ -682,11 +692,9 @@ HUM.Param = class {
      * 
      * @example
      * // Value setting during initialization without triggering hooks
-     * param._setValue(initialValue, true, false, false, false);
-     * 
-     * @todo Add context parameter for better lifecycle hook support
+     * param._setValue(initialValue, { init: true, preSet: false, postSet: false });
      */
-    _setValue(value, init=false, fromUI=false, preSet=true, postSet=true, fromRestore=false, fromQueue=false) {  // @todo: pass a context!
+    _setValue(value, { init=false, fromUI=false, preSet=true, postSet=true, fromRestore=false, fromQueue=false }={}) {
         let oldValue;
         if (this.dataType === 'object') {
             oldValue = JSON.parse(JSON.stringify(this.value));
@@ -754,61 +762,10 @@ HUM.Param = class {
             this.postSet.bind(this.app)(value, this, init, fromUI, oldValue, fromRestore); // @todo: pass a context!
         }
 
-        // @todo: if (now() - this.last_autosave > 1second) {update the "autosave" idb store}
-        if (!init && (this._presetStore && this._presetAutosave) && (!fromRestore && this.harmonicarium.components.user.autosave)) {
-            if (this.harmonicarium.components.user.parameters.preset.value !== this.harmonicarium.components.user.session.id) {
-                console.group(`PARAM AUTOSAVE - START: Param "${this.idbKeyPath}" changed. The selected preset has been modified. The "Auto-save" preset will be initialized and set as the active one...`);
-            
-                // Inits
-                this.harmonicarium.components.user.autosave = false;    
-                this.harmonicarium.components.user.autosaveQueue = [];    
-
-                this.harmonicarium.components.user.presetServiceDB.updateParams(this.harmonicarium.components.user.session.id, 'live')
-                .then(() => {
-                    // this.harmonicarium.components.user.parameters.preset._setValue(this.harmonicarium.components.user.session.id, false, false, true, false);
-                    console.log('PARAM AUTOSAVE: The "Auto-save" preset has been initialized.');
-                    return this.harmonicarium.components.user.presetServiceDB.updateSession({
-                        sessionID: this.harmonicarium.components.user.session.id,
-                        currentPreset: this.harmonicarium.components.user.session.id
-                    });
-                })
-                .then(() => {
-                    // Update the select option on the html elem
-                    this.harmonicarium.components.user.parameters.preset._setValue(this.harmonicarium.components.user.session.id, true);
-                    // this.harmonicarium.components.user.parameters.updatePresetsOnUI();
-                    console.groupEnd();
-                    console.log('PARAM AUTOSAVE - STOP: "Auto-save" has been set as current preset of the active session.');
-                    
-                    // Restore the autosave
-                    this.harmonicarium.components.user.autosave = true;
-                    
-                    // If there are other changes to other Params fired during the initialization
-                    // of the autosave preset, store them too.
-                    if (this.harmonicarium.components.user.autosaveQueue.length > 0) {
-                        console.group(`PARAM AUTOSAVE (queue) - START: There are ${this.harmonicarium.components.user.autosaveQueue.length} Params changed during the initialization of the "Auto-save" preset.`);
-                        for (let param of this.harmonicarium.components.user.autosaveQueue) {
-                            console.log(`PARAM AUTOSAVE (queue) - Param "${param.idbKeyPath}" changed. Post-autosave.`);
-                            this.harmonicarium.components.user.presetServiceDB.updateParam(this.harmonicarium.components.user.session.id, param.idbKeyPath, 'live')
-                            .then(() => {
-                                // ... @todo: ? return this somehere to chain or "await" for this changes?
-                            });
-                        }
-                        console.groupEnd();
-                        console.log(`PARAM AUTOSAVE (queue) - STOP: The Params changed during the initialization of the "Auto-save" preset have been saved.`);
-                    }
-                    // Close the queue
-                    this.harmonicarium.components.user.autosaveQueue = false;
-                });
-            } else {
-                console.log(`PARAM AUTOSAVE: Param "${this.idbKeyPath}" changed. Autosave.`);
-                this.harmonicarium.components.user.presetServiceDB.updateParam(this.harmonicarium.components.user.session.id, this.idbKeyPath, 'live')
-                .then(() => {
-                    // ... @todo: ? return this somehere to chain or "await" for this changes?
-                });
-            }
-        // If the autosaveQueue is active (is an array)
-        } else if (this._presetStore && this._presetAutosave && this.harmonicarium.components.user.autosaveQueue.push) {
-            this.harmonicarium.components.user.autosaveQueue.push(this);
+        // Notify the autosave system about this parameter change.
+        // The handler is registered by HUM.User._init() and lives in user.js.
+        if (this.harmonicarium._onParamChange) {
+            this.harmonicarium._onParamChange(this, init, fromRestore);
         }
 
     }
@@ -838,19 +795,17 @@ HUM.Param = class {
      * formatting logic when the displayed value needs to differ from
      * the internal value.
      * 
-     * Currently this is a placeholder implementation that should be
-     * customized based on specific UI requirements.
+     * Returns {@link HUM.Param#_value|_value} by default. Override via `customSetGet`
+     * to format the value differently for UI display.
      * 
      * @example
      * // Custom implementation for percentage display
      * param._getValue2UI = function() {
      *     return Math.round(this._value * 100) + '%';
      * };
-     * 
-     * @todo Implement default UI value formatting logic
      */
     _getValue2UI() {
-
+        return this._value;
     }
 
     /**
@@ -932,7 +887,7 @@ HUM.Param = class {
         let res = {};
         if (uiElements) {
             for (const [uiName, props] of Object.entries(uiElements)) {
-                if (!['in', 'fn', 'out'].includes(props.role)) {
+                if (!['in', 'fn', 'out', 'prompt'].includes(props.role)) {
                     alert(`The "role" key is missing for the uiElement "${uiName}" during the parameter definition.`);
                 } else if (!(props.role in res)) {
                     res[props.role] = {};
@@ -943,6 +898,11 @@ HUM.Param = class {
                 } else {
                     props.htmlID = props.htmlID || `HTML${props.role[0]}_${uiName}${this._getAppID()}`;
                     res[props.role][uiName] = document.getElementById(props.htmlID);
+                    if (res[props.role][uiName] === null) {
+                        let msg = `HUM.Param (idbKey: "${this.idbKey}"): DOM element not found: id="${props.htmlID}" (uiElement "${uiName}").`;
+                        console.error(msg);
+                        throw new Error(msg);
+                    }
 
                     let eventListeners = [];
 

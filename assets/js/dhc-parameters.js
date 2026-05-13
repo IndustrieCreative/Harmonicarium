@@ -406,7 +406,7 @@ HUM.DHC.prototype.Parameters = class {
             postSet: (value, thisParam, init) => {
                 if (value === 'hz') {
                     let midicents = dhc.constructor.freqToMc(this.fm.hz.value);
-                    this.fm.mc._setValue(midicents, true);
+                    this.fm.mc._setValue(midicents, { init: true });
                     // if (!init) {
                         // Recreate all tables
                         dhc.initTables();
@@ -414,7 +414,7 @@ HUM.DHC.prototype.Parameters = class {
                     this.fm.mc.uiElements.in.fm_mc.value = "";
                 } else if (value === 'mc') {
                     let freq = dhc.constructor.mcToFreq(this.fm.mc.value);
-                    this.fm.hz._setValue(freq, true);
+                    this.fm.hz._setValue(freq, { init: true });
                     // if (!init) {
                         // Recreate all tables
                         dhc.initTables();
