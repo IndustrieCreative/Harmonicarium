@@ -1390,6 +1390,22 @@ HUM.tmpl = {
                             </div>
                         </div>
                     </div>
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-lg">
+                                <strong class="mb-2">Invert scroll direction</strong>
+                                <div><small class="text-muted">Reverse the direction the spectrogram scrolls in both pads.</small></div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           id="HTMLi_dppad_spectrogram_inverted${dhcID}"
+                                           role="switch">
+                                    <label class="form-check-label" for="HTMLi_dppad_spectrogram_inverted${dhcID}">Invert</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="list-group mb-3">

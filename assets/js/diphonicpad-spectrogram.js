@@ -287,20 +287,32 @@ HUM.DpPad.PadSet.Spectrogram = class {
         // canvasObjectsRatios[type].key is directly accessible.
         const keyRatios = this.padSet.parameters.canvasObjectsRatios[type].key;
 
-        // New data must be written into the key-free area.
-        // When keys are at the far end (position >= 0.5), the free area is at the
-        // near end — so we scroll *toward* the far end and write at edge 0.
-        // When keys are at the near end (position < 0.5), we scroll toward 0 and
-        // write at the far edge (original behaviour, e.g. FT default).
+        // New data must always land in the key-free area.
+        // keysAtFarEnd: true  → keys are at the high-coordinate side (e.g. HT, position 1).
+        //               false → keys are at the low-coordinate side (e.g. FT, position 0).
+        // For each case the free area has two edges: edgeA (low-coordinate end)
+        // and edgeB (high-coordinate end).  Normally we write at the "natural" edge
+        // so the waterfall scrolls away from the keys.  The `spectrogramInverted` flag
+        // writes at the opposite edge instead, reversing the scroll direction while
+        // keeping the new pixel inside the visible free area.
         const keysAtFarEnd = keyRatios.position >= 0.5;
+        const inverted     = this.padSet.parameters.spectrogramInverted.value;
 
         if (scaleOrient === 'vertical') {
             // Cross-axis = X.
-            // keys left  (position 0) → free area right  → scroll left,  write at x = w-1
-            // keys right (position 1) → free area left   → scroll right, write at x = 0
+            const keyBandX = w * (1 - keyRatios.length) * keyRatios.position;
+            const keyBandW = w * keyRatios.length;
+            // edgeA = lowest free-area pixel, edgeB = highest free-area pixel
+            const edgeA    = keysAtFarEnd ? 0                           : Math.ceil(keyBandX + keyBandW);
+            const edgeB    = keysAtFarEnd ? Math.floor(keyBandX) - 1   : w - 1;
+            // Normally write at edgeA when keys are at far end (scroll →),
+            // and at edgeB when keys are at near end (scroll ←). Invert flips this.
+            const useEdgeA = keysAtFarEnd !== inverted;
+            const writeX   = useEdgeA ? edgeA : edgeB;
+            const dx       = useEdgeA ? 1 : -1;
+
             const imgData = ctx.createImageData(1, h);
             const pixels  = imgData.data;
-
             for (let y = 0; y < h; y++) {
                 // Mirror freqToPadPix inverse: pxPosition = height - y
                 const freq     = dpPad.pixToFreq(h - y, freqRange, h);
@@ -313,28 +325,22 @@ HUM.DpPad.PadSet.Spectrogram = class {
                 pixels[i + 2] = rgba[2];
                 pixels[i + 3] = rgba[3];
             }
-
-            if (keysAtFarEnd) {
-                ctx.drawImage(canvas, 1, 0);
-                ctx.putImageData(imgData, 0, 0);
-            } else {
-                ctx.drawImage(canvas, -1, 0);
-                ctx.putImageData(imgData, w - 1, 0);
-            }
-
-            // Erase key band (cross-axis = X) so spectrogram stays in the free area.
-            // Formula: xBegin = width * (1 - length) * position
-            const keyBandX = w * (1 - keyRatios.length) * keyRatios.position;
-            const keyBandW = w * keyRatios.length;
+            ctx.drawImage(canvas, dx, 0);
+            ctx.putImageData(imgData, writeX, 0);
             ctx.clearRect(keyBandX, 0, keyBandW, h);
 
         } else {
             // Horizontal orientation.  Cross-axis = Y.
-            // keys top    (position 0) → free area bottom → scroll up,   write at y = h-1
-            // keys bottom (position 1) → free area top    → scroll down, write at y = 0
+            const keyBandY = h * (1 - keyRatios.length) * keyRatios.position;
+            const keyBandH = h * keyRatios.length;
+            const edgeA    = keysAtFarEnd ? 0                           : Math.ceil(keyBandY + keyBandH);
+            const edgeB    = keysAtFarEnd ? Math.floor(keyBandY) - 1   : h - 1;
+            const useEdgeA = keysAtFarEnd !== inverted;
+            const writeY   = useEdgeA ? edgeA : edgeB;
+            const dy       = useEdgeA ? 1 : -1;
+
             const imgData = ctx.createImageData(w, 1);
             const pixels  = imgData.data;
-
             for (let x = 0; x < w; x++) {
                 // Mirror freqToPadPix: pxPosition = x
                 const freq     = dpPad.pixToFreq(x, freqRange, w);
@@ -347,19 +353,8 @@ HUM.DpPad.PadSet.Spectrogram = class {
                 pixels[i + 2] = rgba[2];
                 pixels[i + 3] = rgba[3];
             }
-
-            if (keysAtFarEnd) {
-                ctx.drawImage(canvas, 0, 1);
-                ctx.putImageData(imgData, 0, 0);
-            } else {
-                ctx.drawImage(canvas, 0, -1);
-                ctx.putImageData(imgData, 0, h - 1);
-            }
-
-            // Erase key band (cross-axis = Y) so spectrogram stays in the free area.
-            // Formula: yBegin = height * (1 - length) * position
-            const keyBandY = h * (1 - keyRatios.length) * keyRatios.position;
-            const keyBandH = h * keyRatios.length;
+            ctx.drawImage(canvas, 0, dy);
+            ctx.putImageData(imgData, 0, writeY);
             ctx.clearRect(0, keyBandY, w, keyBandH);
         }
     }

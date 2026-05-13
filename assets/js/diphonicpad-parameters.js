@@ -972,6 +972,22 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                 }
             }
         });
+        this.spectrogramInverted = new HUM.Param({
+            app: padSet,
+            idbKey: 'padsetSpectrogramInverted',
+            uiElements: {
+                'dppad_spectrogram_inverted': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    eventType: 'change',
+                    htmlTargetProp: 'checked',
+                    widget: 'checkbox',
+                })
+            },
+            dataType: 'boolean',
+            initValue: false,
+            restoreStage: 'post',
+        });
     }
     /**
      * Triggers deferred initialisation for parameters that require live DOM elements.
