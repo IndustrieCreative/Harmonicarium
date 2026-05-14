@@ -91,6 +91,13 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             ft: false,
             ht: false
         };
+        // Keys currently held (ringing without physical pointer press).
+        // Set when a key is released in the spectrogram zone; cleared on
+        // normal in-key-area release or panic.
+        this.holdKeys = {
+            ft: false,
+            ht: false
+        };
         this.currentFreq = 0;
         this.touch = {
             // Variables to keep track of the touch position
@@ -138,6 +145,42 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         this.padSet.parameters.scaleOrientation[this.type].value = this.padSet.parameters.scaleOrientation[this.type].value === 'vertical' ? 'horizontal' : 'vertical';
         // this.padSet.uiElements.in['scale_orientation_'+this.type].value = this.padSet.parameters.scaleOrientation[this.type].value;
         this.drawFreqUI();
+    }
+    /**
+     * Returns `true` if `pointer` is in the spectrogram (non-key) zone of
+     * this pad canvas.
+     *
+     * @param {{x:number, y:number}} pointer - Object with canvas-relative x/y.
+     *
+     * @returns {boolean}
+     *
+     * @description
+     * The key zone occupies one side of the canvas (left/right in vertical
+     * orientation, top/bottom in horizontal orientation) as determined by
+     * `canvasObjectsRatios[type].key.position`.  The spectrogram zone is the
+     * opposite side.  When `position <= 0.5` the keys are on the
+     * left/top, so the spectrogram zone is to the right/below; when
+     * `position > 0.5` the keys are on the right/bottom and the spectrogram
+     * zone is to the left/above.
+     */
+    _isInSpectrogramZone(pointer) {
+        const scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value;
+        const keyRatios = this.padSet.parameters.canvasObjectsRatios[this.type].key;
+        if (scaleOrientation === 'vertical') {
+            const keyWidth = this.cssDimensions.width * keyRatios.length;
+            const keyLeft  = (this.cssDimensions.width - keyWidth) * keyRatios.position;
+            const keyRight = keyLeft + keyWidth;
+            return keyRatios.position <= 0.5
+                ? pointer.x > keyRight    // keys on left  → spectrogram is to the right
+                : pointer.x < keyLeft;    // keys on right → spectrogram is to the left
+        } else {
+            const keyHeight = this.cssDimensions.height * keyRatios.length;
+            const keyTop    = (this.cssDimensions.height - keyHeight) * keyRatios.position;
+            const keyBottom = keyTop + keyHeight;
+            return keyRatios.position <= 0.5
+                ? pointer.y > keyBottom   // keys on top    → spectrogram is below
+                : pointer.y < keyTop;     // keys on bottom → spectrogram is above
+        }
     }
     // ====================================================
     // MOUSE EVENTS
@@ -219,16 +262,42 @@ HUM.DpPad.PadSet.FrequencyPad = class {
      */
     mouseUp() {
         // let frequency = this.PadPixToFreq(this.padSet.dpPadComponent.mouse);
+        const mouse = this.padSet.dpPadComponent.mouse;
+        const inSpectrogramZone = this._isInSpectrogramZone(mouse);
+
         if (this.activeKeys.ft !== false) {
-            // console.log('MOUSEUP FT NOTE OFF: ' + this.activeKeys.ft.toneNumber);
-            this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.activeKeys.ft.toneNumber));
-            this.activeKeys.ft = false;
+            if (inSpectrogramZone) {
+                // Hold gesture: transfer the active key to hold; note keeps ringing.
+                this.holdKeys.ft = this.activeKeys.ft;
+                this.activeKeys.ft = false;
+            } else {
+                // Normal release: mute the active key and cancel any existing hold.
+                // console.log('MOUSEUP FT NOTE OFF: ' + this.activeKeys.ft.toneNumber);
+                this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.activeKeys.ft.toneNumber));
+                this.activeKeys.ft = false;
+                if (this.holdKeys.ft !== false) {
+                    this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.holdKeys.ft.toneNumber));
+                    this.holdKeys.ft = false;
+                }
+            }
         }
         if (this.activeKeys.ht !== false) {
-            // console.log('MOUSEUP HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
-            this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber));
-            this.activeKeys.ht = false;
+            if (inSpectrogramZone) {
+                this.holdKeys.ht = this.activeKeys.ht;
+                this.activeKeys.ht = false;
+            } else {
+                // console.log('MOUSEUP HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
+                this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber));
+                this.activeKeys.ht = false;
+                if (this.holdKeys.ht !== false) {
+                    this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.holdKeys.ht.toneNumber));
+                    this.holdKeys.ht = false;
+                }
+            }
         }
+        // Redraw to reflect the updated hold state (no DHC message fires when
+        // hold is activated, so we must trigger the redraw manually).
+        this.drawFreqUI();
         // this.drawFreqUI();
     }
 
@@ -321,23 +390,55 @@ HUM.DpPad.PadSet.FrequencyPad = class {
      * to suppress scroll behaviour.
      */
     touchEnd(e) {
-        this.updateTouchPosition(e);
         this.touch.down = false;
+
+        // Determine final touch position from changedTouches (the lifted finger).
+        // e.targetTouches would already omit it, so we must use changedTouches.
+        let finalX = this.touch.x;
+        let finalY = this.touch.y;
+        if (e.changedTouches && e.changedTouches.length > 0) {
+            const ct = e.changedTouches[0];
+            const rect = ct.target.getBoundingClientRect();
+            finalX = ct.clientX - rect.left;
+            finalY = ct.clientY - rect.top;
+        }
+        const finalPos = { x: finalX, y: finalY };
+        const inSpectrogramZone = this._isInSpectrogramZone(finalPos);
 
         // let frequency = this.PadPixToFreq(this.touch);
 
         if (this.activeKeys.ft !== false) {
-            // console.log('TOUCHEND FT NOTE OFF: ' + this.activeKeys.ft.toneNumber);
-            this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.activeKeys.ft.toneNumber));
-            this.activeKeys.ft = false;
+            if (inSpectrogramZone) {
+                // Hold gesture: transfer the active key to hold; note keeps ringing.
+                this.holdKeys.ft = this.activeKeys.ft;
+                this.activeKeys.ft = false;
+            } else {
+                // Normal release: mute the active key and cancel any existing hold.
+                // console.log('TOUCHEND FT NOTE OFF: ' + this.activeKeys.ft.toneNumber);
+                this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.activeKeys.ft.toneNumber));
+                this.activeKeys.ft = false;
+                if (this.holdKeys.ft !== false) {
+                    this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.holdKeys.ft.toneNumber));
+                    this.holdKeys.ft = false;
+                }
+            }
         }
         if (this.activeKeys.ht !== false) {
-            // console.log('TOUCHEND HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
-            this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber));
-            this.activeKeys.ht = false;
+            if (inSpectrogramZone) {
+                this.holdKeys.ht = this.activeKeys.ht;
+                this.activeKeys.ht = false;
+            } else {
+                // console.log('TOUCHEND HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
+                this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber));
+                this.activeKeys.ht = false;
+                if (this.holdKeys.ht !== false) {
+                    this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.holdKeys.ht.toneNumber));
+                    this.holdKeys.ht = false;
+                }
+            }
         }
-        // this.drawFreqUI();
-
+        // Redraw to reflect the updated hold state.
+        this.drawFreqUI();
 
         // Reset lastX and lastY to false to indicate that they are now invalid, since we have lifted the "pen"
         this.touch.last.x = false;
@@ -400,21 +501,26 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 for (let type of ['ft', 'ht']) {
                     if (objectFound.type === type) {
                         keyFound[type] = objectFound;
-                        // If there isn't a key alreadypressed 
-                        if (this.activeKeys[type] === false ) {
-                            // note on the pressed
+                        // Determine the currently sounding key: actively pressed, or held.
+                        const currentSounding = this.activeKeys[type] !== false
+                            ? this.activeKeys[type]
+                            : this.holdKeys[type];
+                        if (currentSounding === false) {
+                            // Nothing is sounding: just play the pressed key
                             noteON[type] = objectFound;
-                        // If there is a pressed key
+                        } else if (currentSounding.toneNumber !== objectFound.toneNumber) {
+                            // A different key is sounding: switch to the pressed key
+                            noteOFF[type] = currentSounding;
+                            noteON[type] = objectFound;
                         } else {
-                            // If the new pressed key is different from the previous
-                            if (this.activeKeys[type].toneNumber !== objectFound.toneNumber) {
-                                // note off the previous
-                                noteOFF[type] = this.activeKeys[type];
-                                // note on the pressed
-                                noteON[type] = objectFound;
-                            } else {
-                                // do nothing
+                            // Same key already sounding.
+                            // If it's a held note (no pointer actively pressing it),
+                            // tapping it cancels the hold and silences the voice.
+                            if (this.activeKeys[type] === false && this.holdKeys[type] !== false) {
+                                noteOFF[type] = currentSounding;
                             }
+                            // If activeKeys[type] is set, pointer is still down on the
+                            // same key — do nothing (natural re-press while sliding).
                         }
                     }
                 }
@@ -462,6 +568,10 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                     // console.log('PLAY FT NOTE OFF: ' + noteOFF.ft.toneNumber);
                     this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', noteOFF.ft.toneNumber));
                     this.activeKeys.ft = false;
+                    // Also clear the hold if it was the held key that got displaced
+                    if (this.holdKeys.ft !== false && this.holdKeys.ft.toneNumber === noteOFF.ft.toneNumber) {
+                        this.holdKeys.ft = false;
+                    }
                 }
                 if (noteON.ft !== false && pointer.down !== false) {
                 // if (noteON.ft !== false) {
@@ -475,6 +585,10 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                     // console.log('PLAY HT NOTE OFF: ' + noteOFF.ht.toneNumber);
                     this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', noteOFF.ht.toneNumber));
                     this.activeKeys.ht = false;
+                    // Also clear the hold if it was the held key that got displaced
+                    if (this.holdKeys.ht !== false && this.holdKeys.ht.toneNumber === noteOFF.ht.toneNumber) {
+                        this.holdKeys.ht = false;
+                    }
                 }
                 if (noteON.ht !== false && pointer.down !== false) {
                     // console.log('PLAY HT NOTE ON: ' + noteON.ht.toneNumber);
@@ -513,16 +627,25 @@ HUM.DpPad.PadSet.FrequencyPad = class {
 
                 if (!keyFound.ft) {
                     if (this.activeKeys.ft !== false) {
-                        // console.log('PLAY FT NOTE OFF: ' + this.activeKeys.ft.toneNumber);
-                        this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.activeKeys.ft.toneNumber));
-                        this.activeKeys.ft = false;
+                        if (this._isInSpectrogramZone(pointer)) {
+                            // Pointer is sliding in the spectrogram zone: keep the note
+                            // ringing so the hold gesture can complete on pointer-up.
+                        } else {
+                            // console.log('PLAY FT NOTE OFF: ' + this.activeKeys.ft.toneNumber);
+                            this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.activeKeys.ft.toneNumber));
+                            this.activeKeys.ft = false;
+                        }
                     }
                 }
                 if (!keyFound.ht) {
                     if (this.activeKeys.ht !== false) {
-                        // console.log('PLAY HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
-                        this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber));
-                        this.activeKeys.ht = false;
+                        if (this._isInSpectrogramZone(pointer)) {
+                            // Same pre-hold logic for HT
+                        } else {
+                            // console.log('PLAY HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
+                            this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber));
+                            this.activeKeys.ht = false;
+                        }
                     }
                 }
 
@@ -547,6 +670,16 @@ HUM.DpPad.PadSet.FrequencyPad = class {
      * a `panic` message arrives from the DHC.
      */
     allNotesOff() {
+        // Silence any held notes (they are still sending audio even though
+        // no pointer is down).
+        if (this.holdKeys.ft !== false) {
+            this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.holdKeys.ft.toneNumber));
+            this.holdKeys.ft = false;
+        }
+        if (this.holdKeys.ht !== false) {
+            this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.holdKeys.ht.toneNumber));
+            this.holdKeys.ht = false;
+        }
         this.activeKeys.ft = false;
         this.activeKeys.ht = false;
         this.drawFreqUI();
@@ -1180,7 +1313,17 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 curr_ft = [pxPosition, ft[0]];
                 continue;
             }
-            if (this.padSet.dhc.playQueue.ft.findIndex(findIdxFn, ft[0]) > -1) {
+            if (this.holdKeys.ft !== false && this.holdKeys.ft.toneNumber === ft[0]) {
+                // Held key: draw with cyan glow toward the spectrogram side
+                ctx.shadowColor = '#00e5ff';
+                if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
+                    ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
+                } else if (this.padSet.parameters.scaleOrientation.ft.value === 'horizontal') {
+                    ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
+                }
+                ctx.shadowBlur = 20;
+                this.drawLinKey(pxPosition, 'ft', ft[0], false, ['#00e5ff', '#80f0ff', '#00e5ff'], zindex);
+            } else if (this.padSet.dhc.playQueue.ft.findIndex(findIdxFn, ft[0]) > -1) {
                 // this.drawLinKey(pxPosition, 'ft', ft[0], false, ['#DarkSalmon', 'DarkSalmon', '#110e23']);
                 this.drawLinKey(pxPosition, 'ft', ft[0], false, ['darksalmon', 'darksalmon', '#db9c57'], zindex);
                 // this.drawLinKey(pxPosition, 'ft', ft[0]);
@@ -1202,14 +1345,26 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         // (it's shadow must cover the adjacent keys)
         if (curr_ft) {
             ctx.save();
-            ctx.shadowColor = 'red';
-            if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
-                ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
-            } else if (this.padSet.parameters.scaleOrientation.ft.value === 'horizontal') {
-                ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
+            if (this.holdKeys.ft !== false && this.holdKeys.ft.toneNumber === curr_ft[1]) {
+                // curr_ft is held: override with cyan hold visual
+                ctx.shadowColor = '#00e5ff';
+                if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
+                    ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
+                } else if (this.padSet.parameters.scaleOrientation.ft.value === 'horizontal') {
+                    ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
+                }
+                ctx.shadowBlur = 20;
+                this.drawLinKey(curr_ft[0], 'ft', curr_ft[1], false, ['#00e5ff', '#80f0ff', '#00e5ff'], this.freqArrays.ft.length);
+            } else {
+                ctx.shadowColor = 'red';
+                if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
+                    ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
+                } else if (this.padSet.parameters.scaleOrientation.ft.value === 'horizontal') {
+                    ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
+                }
+                ctx.shadowBlur = 20;
+                this.drawLinKey(curr_ft[0], 'ft', curr_ft[1], false, ['darksalmon', 'darksalmon', '#db9c57'], this.freqArrays.ft.length);
             }
-            ctx.shadowBlur = 20;
-            this.drawLinKey(curr_ft[0], 'ft', curr_ft[1], false, ['darksalmon', 'darksalmon', '#db9c57'], this.freqArrays.ft.length);
             ctx.restore();
         }
 
@@ -1303,7 +1458,17 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 }
                 ctx.shadowBlur = 20;
             }
-            if (this.padSet.dhc.playQueue.ht.findIndex(findIdxFn, ht[0]) > -1) {
+            if (this.holdKeys.ht !== false && this.holdKeys.ht.toneNumber === ht[0]) {
+                // Held key: draw with cyan glow toward the spectrogram side
+                ctx.shadowColor = '#00e5ff';
+                if (this.padSet.parameters.scaleOrientation.ht.value === 'vertical') {
+                    ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
+                } else if (this.padSet.parameters.scaleOrientation.ht.value === 'horizontal') {
+                    ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
+                }
+                ctx.shadowBlur = 20;
+                this.drawFreqKeyHT(ht[1].hz, ht[0], arrIdx, ['#00e5ff', '#80f0ff', '#00e5ff'], zindex);
+            } else if (this.padSet.dhc.playQueue.ht.findIndex(findIdxFn, ht[0]) > -1) {
                 ctx.shadowColor = color[2];
                 if (this.padSet.parameters.scaleOrientation.ht.value === 'vertical') {
                     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
