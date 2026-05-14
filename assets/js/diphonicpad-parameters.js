@@ -985,7 +985,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                 })
             },
             dataType: 'boolean',
-            initValue: false,
+            initValue: true,
             restoreStage: 'post',
         });
         this.spectrogramFftSize = new HUM.Param({
@@ -1001,7 +1001,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                 })
             },
             dataType: 'integer',
-            initValue: 32768,
+            initValue: 16384,
             restoreStage: 'post',
             postSet: (value, thisParam, init, fromUI, oldValue, fromRestore) => {
                 if ((!init || fromRestore) && padSet.spectrogram.enabled) {

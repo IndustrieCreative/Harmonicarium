@@ -372,7 +372,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
             const edgeB    = keysAtFarEnd ? Math.floor(keyBandX) - 1   : w - 1;
             // Normally write at edgeA when keys are at far end (scroll →),
             // and at edgeB when keys are at near end (scroll ←). Invert flips this.
-            const useEdgeA = keysAtFarEnd !== inverted;
+            const useEdgeA = keysAtFarEnd == inverted;
             const writeX   = useEdgeA ? edgeA : edgeB;
             const dx       = useEdgeA ? 1 : -1;
 
@@ -403,7 +403,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
             const keyBandH = h * keyRatios.length;
             const edgeA    = keysAtFarEnd ? 0                           : Math.ceil(keyBandY + keyBandH);
             const edgeB    = keysAtFarEnd ? Math.floor(keyBandY) - 1   : h - 1;
-            const useEdgeA = keysAtFarEnd !== inverted;
+            const useEdgeA = keysAtFarEnd == inverted;
             const writeY   = useEdgeA ? edgeA : edgeB;
             const dy       = useEdgeA ? 1 : -1;
 
