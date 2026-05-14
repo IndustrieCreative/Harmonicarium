@@ -30,7 +30,7 @@ var keepOldCache = false;
  * 
  * @member {string}
  */
-const appCacheName = 'kepler-cache-beta-v28';
+const appCacheName = 'kepler-cache-beta-v29';
 
 /**
  * The current Cache's name.
@@ -80,6 +80,7 @@ const deprecatedCaches = [
     'kepler-cache-beta-v25',
     'kepler-cache-beta-v26',
     'kepler-cache-beta-v27',
+    'kepler-cache-beta-v28',
 ];
 
 /**
@@ -105,33 +106,60 @@ const staticAssets = [
     './assets/css/lib/bootstrap.min.css.map',
 
     // './assets/js/',
-    './assets/js/backend.js',
+    './assets/js/backend-utils-parameters.js',
+    './assets/js/backend-utils.js',
+    './assets/js/broadcast-channel.js',
+    './assets/js/dhc-message.js',
+    './assets/js/dhc-parameters.js',
+    './assets/js/dhc-xtone.js',
     './assets/js/dhc.js',
+    './assets/js/diphonicpad-css-font.js',
+    './assets/js/diphonicpad-frequencypad.js',
+    './assets/js/diphonicpad-padset.js',
+    './assets/js/diphonicpad-parameters.js',
+    './assets/js/diphonicpad-spectrogram.js',
+    './assets/js/diphonicpad-toolbar.js',
+    './assets/js/diphonicpad-voice-ambitus.js',
     './assets/js/diphonicpad.js',
+    './assets/js/hancock-parameters.js',
     './assets/js/hancock.js',
+    './assets/js/harmonicarium-parameters.js',
     './assets/js/harmonicarium.js',
+    './assets/js/hstack-parameters.js',
     './assets/js/hstack.js',
     './assets/js/keymap-preset.js',
     './assets/js/midi-hub.js',
+    './assets/js/midi-in-parameters.js',
     './assets/js/midi-in.js',
+    './assets/js/midi-out-instrument-settings.js',
+    './assets/js/midi-out-parameters.js',
     './assets/js/midi-out.js',
+    './assets/js/midi-ports-parameters.js',
     './assets/js/midi-ports.js',
     './assets/js/midi-wml-synthlist.js',
     './assets/js/midi-wml.js',
-    './assets/js/parameter.js',
-    './assets/js/message.js',
+    './assets/js/param-uielem.js',
+    './assets/js/param.js',
+    './assets/js/pwa-manager-parameters.js',
     './assets/js/pwa-manager.js',
     './assets/js/synth-ir-default.js',
+    './assets/js/synth-parameters.js',
+    './assets/js/synth-voice.js',
     './assets/js/synth.js',
     './assets/js/templates.js',
+    './assets/js/typedef.js',
+    './assets/js/user-idb-preset-service.js',
+    './assets/js/user-parameters.js',
     './assets/js/user.js',
 
     // './assets/js/lib/',
-    './assets/js/lib/web-audio-peak-meter_v2.js',
+    './assets/js/lib/bootstrap.bundle.min.js',
+    './assets/js/lib/bootstrap.bundle.min.js.map',
+    './assets/js/lib/bootstrap.bundle.min_new.js',
     './assets/js/lib/qwerty-hancock-dist.js',
     './assets/js/lib/synthlist.js',
-    './assets/js/lib/bootstrap.bundle.min.js.map',
-    './assets/js/lib/bootstrap.bundle.min.js',
+    './assets/js/lib/synthlist_2020.js',
+    './assets/js/lib/web-audio-peak-meter_v2.js',
 
     // './assets/img/',
     './assets/img/agpl.png',

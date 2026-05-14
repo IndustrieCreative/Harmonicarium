@@ -8,7 +8,7 @@
  *
  * @module dhc-message
  * @memberof HUM
- * @version 0.8.1
+ * @version 0.8.2
  * @author Walter G. Mantovani <armonici.it@gmail.com>
  * @copyright (C) 2017-2026 Walter G. Mantovani
  * @license AGPL-3.0-or-later

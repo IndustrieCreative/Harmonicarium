@@ -330,7 +330,7 @@ if (window.location.protocol !== 'file:') {
         // Add PWA MANIFEST meta element
         let link = document.createElement('link');
         link.setAttribute('rel', 'manifest');
-        link.setAttribute('href', '/apps/0.7.0-dev/manifest.webmanifest');
+        link.setAttribute('href', '/apps/0.8-dev/manifest.webmanifest');
         link.setAttribute('type', 'application/manifest+json');
         document.getElementsByTagName('head')[0].appendChild(link);
 
