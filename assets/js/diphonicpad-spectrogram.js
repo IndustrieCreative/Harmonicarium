@@ -77,6 +77,18 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this.padSet = padSet;
         this.canvases = { ft: ftCanvas, ht: htCanvas };
 
+        // Overlay canvases for trace lines — one per pad, inserted between the
+        // spectrogram canvas and the FrequencyPad canvas in DOM order so they
+        // appear in front of the waterfall but behind the keys/monitor text.
+        // Cleared entirely each frame so lines vanish instantly when detection stops.
+        const ftOverlay = document.createElement('canvas');
+        ftOverlay.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;';
+        ftCanvas.insertAdjacentElement('afterend', ftOverlay);
+        const htOverlay = document.createElement('canvas');
+        htOverlay.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;';
+        htCanvas.insertAdjacentElement('afterend', htOverlay);
+        this.overlayCanvases = { ft: ftOverlay, ht: htOverlay };
+
         this.audioCtx = null;
         this.analyser = null;
         this.dataArray = null;
@@ -210,6 +222,10 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this.canvases.ft.height = ftH;
         this.canvases.ht.width  = htW;
         this.canvases.ht.height = htH;
+        this.overlayCanvases.ft.width  = ftW;
+        this.overlayCanvases.ft.height = ftH;
+        this.overlayCanvases.ht.width  = htW;
+        this.overlayCanvases.ht.height = htH;
     }
 
     // -------------------------------------------------------------------------
@@ -222,6 +238,10 @@ HUM.DpPad.PadSet.Spectrogram = class {
      */
     _clearCanvases() {
         for (const canvas of Object.values(this.canvases)) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        for (const canvas of Object.values(this.overlayCanvases)) {
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
@@ -364,6 +384,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
             ctx.clearRect(keyBandX, 0, keyBandW, h);
             this._drawPitchOverlay(canvas, type);
             this._drawFormantOverlay(canvas, type);
+            this._drawTraceOverlay(this.overlayCanvases[type], type);
 
         } else {
             // Horizontal orientation.  Cross-axis = Y.
@@ -394,6 +415,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
             ctx.clearRect(0, keyBandY, w, keyBandH);
             this._drawPitchOverlay(canvas, type);
             this._drawFormantOverlay(canvas, type);
+            this._drawTraceOverlay(this.overlayCanvases[type], type);
         }
     }
 
@@ -1058,6 +1080,77 @@ HUM.DpPad.PadSet.Spectrogram = class {
         }
 
         ctx.restore();
+    }
+
+    /**
+     * Draws pitch / formant trace lines on the dedicated overlay canvas for the
+     * given pad type. The overlay is cleared entirely every frame so lines
+     * disappear immediately when detection returns `null` — no scrolling
+     * residue accumulates in the waterfall history.
+     *
+     * @param {HTMLCanvasElement} overlayCanvas - The trace overlay canvas.
+     * @param {tonetype}          type          - `'ft'` (pitch) or `'ht'` (F1 + F2).
+     * @private
+     *
+     * @description
+     * Lines are drawn as filled rectangles spanning the key-free area of the pad:
+     * - **Vertical orientation**: horizontal lines (3 px tall) at the detected
+     *   frequency's row position.
+     * - **Horizontal orientation**: vertical lines (3 px wide) at the detected
+     *   frequency's column position.
+     * Frequencies outside the visible pad range are silently skipped.
+     */
+    _drawTraceOverlay(overlayCanvas, type) {
+        const w   = overlayCanvas.width;
+        const h   = overlayCanvas.height;
+        const ctx = overlayCanvas.getContext('2d');
+        // Clear every frame — this is what makes lines vanish instantly on silence.
+        ctx.clearRect(0, 0, w, h);
+
+        const freqs = type === 'ft'
+            ? [this.detectedPitch]
+            : [this.detectedF1, this.detectedF2];
+        if (freqs.every(f => f === null || f === undefined)) return;
+
+        const scaleOrient = this.padSet.parameters.scaleOrientation[type].value;
+        const freqRange   = this.padSet.parameters.freqRange[type];
+        const dpPad       = this.padSet.dpPadComponent;
+        const keyRatios   = this.padSet.parameters.canvasObjectsRatios[type].key;
+
+        // Key-free area bounds along the cross-axis (X for vertical, Y for
+        // horizontal) — mirrors the clearRect geometry used in _renderPad.
+        const keysAtFarEnd = keyRatios.position >= 0.5;
+        let freeStart, freeEnd;
+        if (scaleOrient === 'vertical') {
+            const keyBandX = w * (1 - keyRatios.length) * keyRatios.position;
+            const keyBandW = w * keyRatios.length;
+            freeStart = keysAtFarEnd ? 0                     : Math.ceil(keyBandX + keyBandW);
+            freeEnd   = keysAtFarEnd ? Math.floor(keyBandX) : w;
+        } else {
+            const keyBandY = h * (1 - keyRatios.length) * keyRatios.position;
+            const keyBandH = h * keyRatios.length;
+            freeStart = keysAtFarEnd ? 0                     : Math.ceil(keyBandY + keyBandH);
+            freeEnd   = keysAtFarEnd ? Math.floor(keyBandY) : h;
+        }
+
+        ctx.fillStyle = 'rgba(60, 60, 60, 0.85)';
+        for (const freq of freqs) {
+            if (freq === null || freq === undefined) continue;
+            if (scaleOrient === 'vertical') {
+                // Frequency axis = Y (bottom = low freq, top = high freq).
+                const rawPx = dpPad.freqToPix(freq, freqRange, h);
+                const px    = Math.round(h - rawPx);
+                if (px < 0 || px >= h) continue;   // outside pad range — skip silently
+                // Horizontal line spanning the key-free x-range, 3 pixels tall.
+                ctx.fillRect(freeStart, px - 1, freeEnd - freeStart, 3);
+            } else {
+                // Frequency axis = X (left = low freq, right = high freq).
+                const px = Math.round(dpPad.freqToPix(freq, freqRange, w));
+                if (px < 0 || px >= w) continue;   // outside pad range — skip silently
+                // Vertical line spanning the key-free y-range, 3 pixels wide.
+                ctx.fillRect(px - 1, freeStart, 3, freeEnd - freeStart);
+            }
+        }
     }
 
     /**
