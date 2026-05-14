@@ -245,19 +245,18 @@ HUM.DpPad.PadSet.FrequencyPad = class {
      * @description
      * Reads the first touch point in `e.targetTouches` and stores its
      * canvas-relative position in `this.touch.x` and `this.touch.y`.
-     * When we get the raw values of pageX and pageY below, they take into
-     * account the scrolling on the page but not the position relative to our 
-     * target div. We'll adjust them using "target.offsetLeft" and
-     * "target.offsetTop" to get the correct values in relation to the top
-     * left of the canvas.
+     * Uses `getBoundingClientRect()` to compute the canvas-relative position,
+     * which remains correct regardless of the CSS positioning context of
+     * ancestor elements (e.g. `position: relative` on the pad container).
      * Only single-finger touches are processed; multi-touch is ignored.
      */
     updateTouchPosition(e) {
         if(e.targetTouches) {
             if (e.targetTouches.length === 1) { // Only deal with one finger
                 let thisTouch = e.targetTouches[0]; // Get the information for finger #1
-                this.touch.x = thisTouch.pageX - thisTouch.target.offsetLeft;
-                this.touch.y = thisTouch.pageY - thisTouch.target.offsetTop;
+                const rect = thisTouch.target.getBoundingClientRect();
+                this.touch.x = thisTouch.clientX - rect.left;
+                this.touch.y = thisTouch.clientY - rect.top;
             }
         }
     }

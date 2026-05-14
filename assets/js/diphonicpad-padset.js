@@ -127,7 +127,12 @@ HUM.DpPad.PadSet = class {
         setDiv.appendChild(ftDiv);
         setDiv.appendChild(htDiv);
         setDiv.appendChild(tbarDiv);
-        // Spectrogram canvases go first (behind the main pad canvases in z-order)
+        // Spectrogram canvases go first (behind the main pad canvases in z-order).
+        // Start at 0×0 so they take no space before resize() sets the correct dimensions.
+        ftSpectrogramCanvas.width = 0;
+        ftSpectrogramCanvas.height = 0;
+        htSpectrogramCanvas.width = 0;
+        htSpectrogramCanvas.height = 0;
         ftDiv.appendChild(ftSpectrogramCanvas);
         htDiv.appendChild(htSpectrogramCanvas);
         ftDiv.appendChild(ftCanvas);

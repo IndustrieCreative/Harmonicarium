@@ -82,9 +82,13 @@ HUM.DpPad.PadSet.Spectrogram = class {
         // appear in front of the waterfall but behind the keys/monitor text.
         // Cleared entirely each frame so lines vanish instantly when detection stops.
         const ftOverlay = document.createElement('canvas');
+        ftOverlay.width = 0;
+        ftOverlay.height = 0;
         ftOverlay.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;';
         ftCanvas.insertAdjacentElement('afterend', ftOverlay);
         const htOverlay = document.createElement('canvas');
+        htOverlay.width = 0;
+        htOverlay.height = 0;
         htOverlay.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;';
         htCanvas.insertAdjacentElement('afterend', htOverlay);
         this.overlayCanvases = { ft: ftOverlay, ht: htOverlay };
