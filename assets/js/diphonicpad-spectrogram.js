@@ -1144,7 +1144,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
             freeEnd   = keysAtFarEnd ? Math.floor(keyBandY) : h;
         }
 
-        ctx.fillStyle = 'rgba(60, 60, 60, 0.85)';
+        ctx.fillStyle = 'rgba(5, 138, 5, 0.85)';
         for (const freq of freqs) {
             if (freq === null || freq === undefined) continue;
             if (scaleOrient === 'vertical') {
@@ -1153,13 +1153,13 @@ HUM.DpPad.PadSet.Spectrogram = class {
                 const px    = Math.round(h - rawPx);
                 if (px < 0 || px >= h) continue;   // outside pad range — skip silently
                 // Horizontal line spanning the key-free x-range, 3 pixels tall.
-                ctx.fillRect(freeStart, px - 1, freeEnd - freeStart, 3);
+                ctx.fillRect(freeStart, px - 1, freeEnd - freeStart, 4);
             } else {
                 // Frequency axis = X (left = low freq, right = high freq).
                 const px = Math.round(dpPad.freqToPix(freq, freqRange, w));
                 if (px < 0 || px >= w) continue;   // outside pad range — skip silently
                 // Vertical line spanning the key-free y-range, 3 pixels wide.
-                ctx.fillRect(px - 1, freeStart, 3, freeEnd - freeStart);
+                ctx.fillRect(px - 1, freeStart, 4, freeEnd - freeStart);
             }
         }
     }
