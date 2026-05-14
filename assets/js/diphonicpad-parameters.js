@@ -337,7 +337,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                 }
             },
         });
-        /*  ____   __   ____ 
+           /*  ____   __   ____ 
             * (  _ \ / _\ (    \
             *  ) __//    \ ) D (
             * (__)  \_/\_/(____/
@@ -1023,8 +1023,12 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                 })
             },
             dataType: 'integer',
-            initValue: 0,
+            initValue: 32,
             restoreStage: 'post',
+            postSet: (value, thisParam) => {
+                // Update the UI slider's tooltip
+                thisParam.uiElements.in.dppad_spectrogram_brightness.setAttribute('data-tooltip', value);
+            },
         });
         this.spectrogramContrast = new HUM.Param({
             app: padSet,
@@ -1039,8 +1043,12 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                 })
             },
             dataType: 'float',
-            initValue: 1.0,
+            initValue: 3.3,
             restoreStage: 'post',
+            postSet: (value, thisParam) => {
+                // Update the UI slider's tooltip
+                thisParam.uiElements.in.dppad_spectrogram_contrast.setAttribute('data-tooltip', value);
+            },
         });
     }
     /**

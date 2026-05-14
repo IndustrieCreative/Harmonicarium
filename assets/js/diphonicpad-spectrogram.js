@@ -137,7 +137,14 @@ HUM.DpPad.PadSet.Spectrogram = class {
             return;
         }
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: false,   // allow speaker output to be picked up
+                    noiseSuppression: false,   // preserve full spectral content
+                    autoGainControl:  false,   // keep raw amplitude for RMS gating
+                },
+                video: false
+            });
 
             this.audioCtx = new AudioContext();
             this.analyser = this.audioCtx.createAnalyser();

@@ -1429,10 +1429,11 @@ HUM.tmpl = {
                                 <div><small class="text-muted">Shift the amplitude level up or down.</small></div>
                             </div>
                             <div class="col-auto d-flex align-items-center gap-2">
+                                <span id="HTMLo_dppad_spectrogram_brightness${dhcID}" style="min-width:2.5em;text-align:right">-128</span>
                                 <input type="range" min="-128" max="128" step="1"
                                        id="HTMLi_dppad_spectrogram_brightness${dhcID}"
                                        class="form-range" style="width:120px">
-                                <span id="HTMLo_dppad_spectrogram_brightness${dhcID}" style="min-width:2.5em;text-align:right">0</span>
+                                <span id="HTMLo_dppad_spectrogram_brightness${dhcID}" style="min-width:2.5em;text-align:left">128</span>
                             </div>
                         </div>
                     </div>
@@ -1443,10 +1444,11 @@ HUM.tmpl = {
                                 <div><small class="text-muted">Expand or compress the dynamic range.</small></div>
                             </div>
                             <div class="col-auto d-flex align-items-center gap-2">
+                                <span id="HTMLo_dppad_spectrogram_contrast${dhcID}" style="min-width:2.5em;text-align:right">0.1</span>
                                 <input type="range" min="0.1" max="4.0" step="0.1"
                                        id="HTMLi_dppad_spectrogram_contrast${dhcID}"
                                        class="form-range" style="width:120px">
-                                <span id="HTMLo_dppad_spectrogram_contrast${dhcID}" style="min-width:2.5em;text-align:right">1.0</span>
+                                <span id="HTMLo_dppad_spectrogram_contrast${dhcID}" style="min-width:2.5em;text-align:left">4.0</span>
                             </div>
                         </div>
                     </div>
