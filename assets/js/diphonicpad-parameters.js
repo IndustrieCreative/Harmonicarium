@@ -1028,6 +1028,10 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
             postSet: (value, thisParam) => {
                 // Update the UI slider's tooltip
                 thisParam.uiElements.in.dppad_spectrogram_brightness.setAttribute('data-tooltip', value);
+                // Re-apply the silence background colour if the spectrogram is running
+                // if (thisParam.app.spectrogram && thisParam.app.spectrogram.enabled) {
+                //     thisParam.app.spectrogram._updatePadBackgrounds(true);
+                // }
             },
         });
         this.spectrogramContrast = new HUM.Param({
@@ -1048,6 +1052,10 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
             postSet: (value, thisParam) => {
                 // Update the UI slider's tooltip
                 thisParam.uiElements.in.dppad_spectrogram_contrast.setAttribute('data-tooltip', value);
+                // Re-apply the silence background colour if the spectrogram is running
+                // if (thisParam.app.spectrogram && thisParam.app.spectrogram.enabled) {
+                //     thisParam.app.spectrogram._updatePadBackgrounds(true);
+                // }
             },
         });
     }

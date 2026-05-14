@@ -159,6 +159,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
 
             this.micStream = stream;
             this.enabled = true;
+            this._updatePadBackgrounds(true);
             this._startLoop();
 
         } catch (err) {
@@ -210,6 +211,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this._f2Buffer  = [];
 
         this._clearCanvases();
+        this._updatePadBackgrounds(false);
         this.enabled = false;
     }
 
@@ -242,6 +244,39 @@ HUM.DpPad.PadSet.Spectrogram = class {
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * Sets or restores the CSS background of the FT and HT pad divs.
+     *
+     * While the spectrogram is active the CSS gradient is replaced with a solid
+     * colour matching the spectrogram's silence colour — i.e. the opaque RGB
+     * that `_amplitudeToRGBA(0, type)` produces with the current brightness and
+     * contrast settings.  This makes the waterfall emerge seamlessly from the
+     * background: silence pixels (alpha = 0) are visually identical to the
+     * pad background, so there is no border between "no signal" and "low signal".
+     *
+     * When the spectrogram is disabled the inline style is cleared so the CSS
+     * class gradient takes effect again.
+     *
+     * @param {boolean} active - `true` to apply the silence colour; `false` to
+     *   restore the CSS gradient.
+     * @private
+     */
+    _updatePadBackgrounds(active) {
+        const ftDiv = this.padSet.uiElements.fn.ftDiv;
+        const htDiv = this.padSet.uiElements.fn.htDiv;
+        if (!active) {
+            ftDiv.style.background = '';
+            htDiv.style.background = '';
+            return;
+        }
+        // Use only the RGB components (ignore alpha) so the background is fully
+        // opaque and matches the colour the spectrogram would show at silence.
+        const [fR, fG, fB] = this._amplitudeToRGBA(0, 'ft');
+        const [hR, hG, hB] = this._amplitudeToRGBA(0, 'ht');
+        ftDiv.style.background = `rgb(${fR}, ${fG}, ${fB})`;
+        htDiv.style.background = `rgb(${hR}, ${hG}, ${hB})`;
+    }
 
     /**
      * Clears both spectrogram canvases to fully transparent.
@@ -390,7 +425,10 @@ HUM.DpPad.PadSet.Spectrogram = class {
                 pixels[i + 2] = rgba[2];
                 pixels[i + 3] = rgba[3];
             }
+            ctx.save();
+            ctx.globalCompositeOperation = 'copy';
             ctx.drawImage(canvas, dx, 0);
+            ctx.restore();
             ctx.putImageData(imgData, writeX, 0);
             ctx.clearRect(keyBandX, 0, keyBandW, h);
             this._drawPitchOverlay(canvas, type);
@@ -421,7 +459,10 @@ HUM.DpPad.PadSet.Spectrogram = class {
                 pixels[i + 2] = rgba[2];
                 pixels[i + 3] = rgba[3];
             }
+            ctx.save();
+            ctx.globalCompositeOperation = 'copy';
             ctx.drawImage(canvas, 0, dy);
+            ctx.restore();
             ctx.putImageData(imgData, 0, writeY);
             ctx.clearRect(0, keyBandY, w, keyBandH);
             this._drawPitchOverlay(canvas, type);
