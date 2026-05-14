@@ -86,6 +86,8 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this.enabled = false;
         this.rafId = null;
         this._lastTimestamp = 0;
+        this.detectedPitch = null;
+        this.timeDomainArray = null;
     }
 
     /**
@@ -113,6 +115,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
             this.analyser.fftSize = this.padSet.parameters.spectrogramFftSize.value;
             this.analyser.smoothingTimeConstant = 0.8;
             this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+            this.timeDomainArray = new Float32Array(2048);
 
             this.micSource = this.audioCtx.createMediaStreamSource(stream);
             // Connect to analyser only — NOT to destination (prevents feedback)
@@ -154,6 +157,8 @@ HUM.DpPad.PadSet.Spectrogram = class {
 
         this.analyser = null;
         this.dataArray = null;
+        this.timeDomainArray = null;
+        this.detectedPitch = null;
         this._clearCanvases();
         this.enabled = false;
     }
@@ -238,6 +243,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
      */
     _drawFrame() {
         this.analyser.getByteFrequencyData(this.dataArray);
+        this._detectPitch();
         this._renderPad(this.canvases.ft, 'ft');
         this._renderPad(this.canvases.ht, 'ht');
     }
@@ -328,6 +334,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
             ctx.drawImage(canvas, dx, 0);
             ctx.putImageData(imgData, writeX, 0);
             ctx.clearRect(keyBandX, 0, keyBandW, h);
+            this._drawPitchOverlay(canvas, type);
 
         } else {
             // Horizontal orientation.  Cross-axis = Y.
@@ -356,7 +363,199 @@ HUM.DpPad.PadSet.Spectrogram = class {
             ctx.drawImage(canvas, 0, dy);
             ctx.putImageData(imgData, 0, writeY);
             ctx.clearRect(0, keyBandY, w, keyBandH);
+            this._drawPitchOverlay(canvas, type);
         }
+    }
+
+    /**
+     * Estimates the fundamental frequency of the microphone input using
+     * time-domain autocorrelation (ACF).
+     *
+     * @returns {void}
+     *
+     * @description
+     * Fills `timeDomainArray` with the latest 2048 samples via
+     * `getFloatTimeDomainData()`. Skips detection when RMS < 0.015 (silence).
+     * Searches for the autocorrelation peak in the lag range corresponding
+     * to 50–1500 Hz, requiring a normalised correlation ≥ 0.5. Applies
+     * parabolic interpolation around the peak for sub-sample accuracy.
+     * The result is stored in `this.detectedPitch` (Hz) or `null` when
+     * no confident pitch is found.
+     * @private
+     */
+    _detectPitch() {
+        const buf = this.timeDomainArray;
+        this.analyser.getFloatTimeDomainData(buf);
+        const n  = buf.length;
+        const sr = this.audioCtx.sampleRate;
+
+        // RMS check — skip silence or near-silence
+        let rms = 0;
+        for (let i = 0; i < n; i++) rms += buf[i] * buf[i];
+        rms = Math.sqrt(rms / n);
+        if (rms < 0.015) { this.detectedPitch = null; return; }
+
+        // Lag search range: 80 Hz – 1000 Hz
+        const minLag = Math.floor(sr / 1000);
+        const maxLag = Math.min(Math.ceil(sr / 80), n - 1);
+        // Fixed inner-loop length (only the overlap valid for every lag in range)
+        const len = n - maxLag;
+
+        // Zero-lag energy (denominator for normalised correlation)
+        let r0 = 0;
+        for (let i = 0; i < len; i++) r0 += buf[i] * buf[i];
+        if (r0 === 0) { this.detectedPitch = null; return; }
+
+        // Find the lag with the highest normalised autocorrelation
+        let bestLag = -1, bestCorr = -Infinity;
+        for (let lag = minLag; lag <= maxLag; lag++) {
+            let corr = 0;
+            for (let i = 0; i < len; i++) corr += buf[i] * buf[i + lag];
+            if (corr > bestCorr) { bestCorr = corr; bestLag = lag; }
+        }
+
+        if (bestLag < 0 || bestCorr / r0 < 0.5) { this.detectedPitch = null; return; }
+
+        // Parabolic interpolation around the peak for sub-sample accuracy
+        if (bestLag > minLag && bestLag < maxLag) {
+            let prev = 0, next = 0;
+            for (let i = 0; i < len; i++) prev += buf[i] * buf[i + bestLag - 1];
+            for (let i = 0; i < len; i++) next += buf[i] * buf[i + bestLag + 1];
+            const denom = 2 * bestCorr - prev - next;
+            if (denom > 0) bestLag += (prev - next) / (2 * denom);
+        }
+
+        this.detectedPitch = sr / bestLag;
+    }
+
+    /**
+     * Returns the exact anchor coordinates used by `FrequencyPad.drawFreqMonitor()`
+     * for the FT pad, plus the hz-monitor font size.
+     *
+     * @param {HTMLCanvasElement} canvas - The spectrogram canvas (same pixel dimensions
+     *   as the FrequencyPad canvas's `cssDimensions`).
+     * @returns {{ x:number, y:number, textAlign:string, textBaseline:string, fontSize:number }}
+     * @private
+     */
+    _getMonitorAnchor(canvas) {
+        const w           = canvas.width;
+        const h           = canvas.height;
+        const scaleOrient = this.padSet.parameters.scaleOrientation.ft.value;
+        const ratios      = this.padSet.parameters.canvasObjectsRatios.ft;
+        const fontSize    = this.padSet.parameters.fonts.ft.hzMonitor.value.size;
+
+        let x, y, textAlign, textBaseline;
+
+        if (scaleOrient === 'vertical') {
+            x             = w * ratios.hzMonitor.width;
+            y             = h * ratios.hzMonitor.height;
+            textBaseline  = 'bottom';
+            if (ratios.key.position > 0.5) {
+                x         = w * (1 - ratios.hzMonitor.width);
+                textAlign = 'left';
+            } else {
+                textAlign = 'right';
+            }
+        } else {
+            // horizontal
+            x             = w * ratios.hzMonitor.height;
+            y             = h * ratios.hzMonitor.width;
+            textAlign     = 'right';
+            textBaseline  = 'bottom';
+            if (ratios.key.position > 0.5) {
+                y             = h * (1 - ratios.hzMonitor.width);
+                textBaseline  = 'top';
+            }
+        }
+
+        return { x, y, textAlign, textBaseline, fontSize };
+    }
+
+    /**
+     * Draws the detected fundamental pitch as a fixed-position text overlay
+     * on the FT spectrogram canvas, just above the hz-monitor corner.
+     *
+     * @param {HTMLCanvasElement} canvas - The spectrogram canvas to annotate.
+     * @param {tonetype}          type   - Only acts when `'ft'`.
+     * @private
+     *
+     * @description
+     * Calls `_getMonitorAnchor()` to obtain the exact (x, y, textAlign,
+     * textBaseline, fontSize) used by `FrequencyPad.drawFreqMonitor()`, then
+     * positions the pitch label adjacent to the monitor's bounding-box edge
+     * (never inside it):
+     * - When the monitor baseline is `'bottom'`: the monitor body spans
+     *   `[y − fontSize, y]`; pitch text is drawn with `textBaseline='bottom'`
+     *   at `pitchY = y − fontSize − gap`.
+     * - When the monitor baseline is `'top'` (horizontal, key at top): the
+     *   monitor body spans `[y, y + fontSize]`; pitch text is drawn with
+     *   `textBaseline='bottom'` at `pitchY = y − gap` (baseline just above the
+     *   monitor's top anchor, scrolling upward away from it).
+     * The text area is cleared each frame so the label stays pinned despite
+     * the waterfall scrolling beneath it.
+     */
+    _drawPitchOverlay(canvas, type) {
+        if (type !== 'ft') return;
+
+        const ctx           = canvas.getContext('2d');
+        const pitchFontSize = 13;
+        const gap           = 4;
+
+        const { x, y, textAlign, textBaseline, fontSize } = this._getMonitorAnchor(canvas);
+
+        // Place pitch label just above the hz-monitor bounding box.
+        const pitchY = textBaseline === 'top'
+            ? y - gap               // monitor grows downward; place above its top edge
+            : y - fontSize - gap;   // monitor grows upward; place above its top edge
+
+        // Set font now so measureText uses the correct metrics for clearRect sizing.
+        ctx.save();
+        ctx.font = pitchFontSize + 'px monospace';
+
+        // Read accuracy settings to derive fixed field widths.
+        const centAcc   = this.padSet.dhc.settings.global.cent_accuracy.value;
+        const hzAcc     = this.padSet.dhc.settings.global.hz_accuracy.value;
+        // Widths per field (character counts):
+        //  note  : 3 chars (max "C#4") + 1 space = 4
+        //  sign  : 1 ('+' or '-', always present)
+        //  cents : 2 + optional ".N..." for centAcc decimal places
+        //  unit  : 1 ('c', ASCII substitute for ¢)
+        //  sep   : 2 spaces
+        //  hz    : 4 integer digits + 1 dot + hzAcc decimal digits ("1500.00" = 7 with hzAcc=2)
+        //  hz unit: 3 (' Hz')
+        const centWidth  = 2 + (centAcc > 0 ? 1 + centAcc : 0);
+        const hzWidth    = 4 + 1 + hzAcc;
+        const totalChars = 4 + 1 + centWidth + 1 + 2 + hzWidth + 3;
+
+        // Measure using 'X' — a standard single-width monospace reference character.
+        // This avoids metric variation from special glyphs ('+', 'c', '.', etc.).
+        const totalW = ctx.measureText('X'.repeat(totalChars)).width + 4;
+        const clearX = textAlign === 'left' ? x : x - totalW;
+        ctx.clearRect(clearX, pitchY - pitchFontSize - 2, totalW, pitchFontSize + 4);
+
+        if (!this.detectedPitch) {
+            ctx.restore();
+            return;
+        }
+
+        const mc   = this.padSet.dhc.constructor.freqToMc(this.detectedPitch);
+        const note = this.padSet.dhc.mcToName(mc);
+
+        // Replace U+2212 (unicode minus) with ASCII '-' to guarantee monospace width.
+        const sign      = (note[1] === '' ? '+' : note[1]).replace('\u2212', '-');
+        const notePart  = note[0].padEnd(3) + ' ';
+        const centPart  = sign + String(note[2]).padStart(centWidth, '0') + 'c  ';
+        const hzPart    = this.detectedPitch.toFixed(hzAcc).padStart(hzWidth) + ' Hz';
+        const noteTxt   = notePart + centPart + hzPart;
+
+        ctx.textBaseline = 'bottom';
+        ctx.textAlign    = textAlign;
+        ctx.strokeStyle  = 'rgba(0, 0, 0, 0.7)';
+        ctx.lineWidth    = 2.5;
+        ctx.strokeText(noteTxt, x, pitchY);
+        ctx.fillStyle    = 'rgba(255, 255, 255, 0.9)';
+        ctx.fillText(noteTxt, x, pitchY);
+        ctx.restore();
     }
 
     /**
