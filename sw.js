@@ -102,8 +102,8 @@ const staticAssets = [
 
     // './assets/css/',
     './assets/css/styles.css',
-    './assets/css/lib/bootstrap.min.css',
-    './assets/css/lib/bootstrap.min.css.map',
+    './assets/css/lib/bootstrap.min_new.css',
+    './assets/css/lib/bootstrap.min_new.css.map',
 
     // './assets/js/',
     './assets/js/backend-utils-parameters.js',
@@ -153,8 +153,9 @@ const staticAssets = [
     './assets/js/user.js',
 
     // './assets/js/lib/',
-    './assets/js/lib/bootstrap.bundle.min.js',
     './assets/js/lib/bootstrap.bundle.min.js.map',
+    './assets/js/lib/bootstrap.bundle.min.js',
+    './assets/js/lib/bootstrap.bundle.min_new.js.map',
     './assets/js/lib/bootstrap.bundle.min_new.js',
     './assets/js/lib/qwerty-hancock-dist.js',
     './assets/js/lib/synthlist.js',
