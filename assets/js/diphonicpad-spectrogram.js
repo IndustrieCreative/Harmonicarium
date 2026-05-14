@@ -95,6 +95,12 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this._pendingPitch    = null;  // hysteresis: candidate pitch
         this._pendingCount    = 0;     // hysteresis: consecutive frame count for candidate
         this._emaPitch        = null;  // exponential moving average state
+
+        // Formant detection state (reset on disable)
+        this.detectedF1  = null;       // F1 frequency in Hz (or null on silence)
+        this.detectedF2  = null;       // F2 frequency in Hz (or null on silence)
+        this._f1Buffer   = [];         // sliding median window for F1
+        this._f2Buffer   = [];         // sliding median window for F2
     }
 
     /**
@@ -173,6 +179,12 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this._pendingPitch    = null;
         this._pendingCount    = 0;
         this._emaPitch        = null;
+
+        // Reset formant detection state
+        this.detectedF1 = null;
+        this.detectedF2 = null;
+        this._f1Buffer  = [];
+        this._f2Buffer  = [];
 
         this._clearCanvases();
         this.enabled = false;
@@ -259,6 +271,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
     _drawFrame() {
         this.analyser.getByteFrequencyData(this.dataArray);
         this._detectPitch();
+        this._detectFormants();
         this._renderPad(this.canvases.ft, 'ft');
         this._renderPad(this.canvases.ht, 'ht');
     }
@@ -350,6 +363,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
             ctx.putImageData(imgData, writeX, 0);
             ctx.clearRect(keyBandX, 0, keyBandW, h);
             this._drawPitchOverlay(canvas, type);
+            this._drawFormantOverlay(canvas, type);
 
         } else {
             // Horizontal orientation.  Cross-axis = Y.
@@ -379,6 +393,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
             ctx.putImageData(imgData, 0, writeY);
             ctx.clearRect(0, keyBandY, w, keyBandH);
             this._drawPitchOverlay(canvas, type);
+            this._drawFormantOverlay(canvas, type);
         }
     }
 
@@ -655,19 +670,20 @@ HUM.DpPad.PadSet.Spectrogram = class {
 
     /**
      * Returns the exact anchor coordinates used by `FrequencyPad.drawFreqMonitor()`
-     * for the FT pad, plus the hz-monitor font size.
+     * for the given pad type, plus the hz-monitor font size.
      *
-     * @param {HTMLCanvasElement} canvas - The spectrogram canvas (same pixel dimensions
+     * @param {HTMLCanvasElement} canvas      - The spectrogram canvas (same pixel dimensions
      *   as the FrequencyPad canvas's `cssDimensions`).
+     * @param {tonetype}          [type='ft'] - `'ft'` or `'ht'`.
      * @returns {{ x:number, y:number, textAlign:string, textBaseline:string, fontSize:number }}
      * @private
      */
-    _getMonitorAnchor(canvas) {
+    _getMonitorAnchor(canvas, type = 'ft') {
         const w           = canvas.width;
         const h           = canvas.height;
-        const scaleOrient = this.padSet.parameters.scaleOrientation.ft.value;
-        const ratios      = this.padSet.parameters.canvasObjectsRatios.ft;
-        const fontSize    = this.padSet.parameters.fonts.ft.hzMonitor.value.size;
+        const scaleOrient = this.padSet.parameters.scaleOrientation[type].value;
+        const ratios      = this.padSet.parameters.canvasObjectsRatios[type];
+        const fontSize    = this.padSet.parameters.fonts[type].hzMonitor.value.size;
 
         let x, y, textAlign, textBaseline;
 
@@ -726,7 +742,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
         const pitchFontSize = 13;
         const gap           = 4;
 
-        const { x, y, textAlign, textBaseline, fontSize } = this._getMonitorAnchor(canvas);
+        const { x, y, textAlign, textBaseline, fontSize } = this._getMonitorAnchor(canvas, 'ft');
 
         // Place pitch label just above the hz-monitor bounding box.
         const pitchY = textBaseline === 'top'
@@ -780,6 +796,267 @@ HUM.DpPad.PadSet.Spectrogram = class {
         ctx.strokeText(noteTxt, x, pitchY);
         ctx.fillStyle    = 'rgba(255, 255, 255, 0.9)';
         ctx.fillText(noteTxt, x, pitchY);
+        ctx.restore();
+    }
+
+    /**
+     * Estimates the first (F1) and second (F2) formant frequencies using
+     * linear predictive coding (LPC).
+     *
+     * @returns {void}
+     *
+     * @description
+     * Reuses `this.timeDomainArray` which was filled by `_detectPitch()` in the
+     * same frame — no extra `getFloatTimeDomainData` call needed.
+     * Pipeline: RMS gate → pre-emphasis → Hamming window → LPC coefficients
+     * (Levinson-Durbin, order `LPC_ORDER`) → LPC spectral peak picking →
+     * 5-frame median smoothing per formant.
+     * Results stored in `this.detectedF1` and `this.detectedF2` (Hz, or null
+     * on silence / detection failure).
+     * @private
+     */
+    _detectFormants() {
+        // ── Tunable constant ──────────────────────────────────────────────────
+        // LPC order: higher = sharper spectral envelope, higher CPU cost.
+        // 16 gives 3–4 well-resolved formants at typical sample rates.
+        const LPC_ORDER = 16;
+        // ─────────────────────────────────────────────────────────────────────
+
+        // timeDomainArray was already filled by _detectPitch() this frame.
+        const buf = this.timeDomainArray;
+        const n   = buf.length;
+        const sr  = this.audioCtx.sampleRate;
+
+        // RMS gate — same threshold as pitch detection.
+        let rms = 0;
+        for (let i = 0; i < n; i++) rms += buf[i] * buf[i];
+        if (Math.sqrt(rms / n) < 0.015) {
+            this.detectedF1 = null;
+            this.detectedF2 = null;
+            return;
+        }
+
+        // Use a 1024-sample analysis frame (~23 ms at 44 100 Hz).
+        const frameLen = Math.min(n, 1024);
+
+        // Pre-emphasis: boosts high frequencies, flattens spectral tilt.
+        const frame = new Float32Array(frameLen);
+        frame[0] = buf[0];
+        for (let i = 1; i < frameLen; i++) frame[i] = buf[i] - 0.97 * buf[i - 1];
+
+        // Hamming window — reduces spectral leakage at frame edges.
+        for (let i = 0; i < frameLen; i++) {
+            frame[i] *= 0.54 - 0.46 * Math.cos(2 * Math.PI * i / (frameLen - 1));
+        }
+
+        // LPC coefficients via autocorrelation + Levinson-Durbin.
+        const a = this._lpcCoeffs(frame, frameLen, LPC_ORDER);
+        if (!a) { this.detectedF1 = null; this.detectedF2 = null; return; }
+
+        // Identify spectral peak frequencies and label them F1, F2.
+        const raw      = this._formantFromLPC(a, LPC_ORDER, sr);
+        const MEDIAN_N = 5;   // 5-frame sliding median ≈ 167 ms at 30 fps
+        this.detectedF1 = raw.length >= 1 ? this._formantMedian(raw[0], this._f1Buffer, MEDIAN_N) : null;
+        this.detectedF2 = raw.length >= 2 ? this._formantMedian(raw[1], this._f2Buffer, MEDIAN_N) : null;
+    }
+
+    /**
+     * Computes LPC coefficients using the autocorrelation method and
+     * Levinson-Durbin recursion.
+     *
+     * @param {Float32Array} buf - Windowed, pre-emphasised signal frame.
+     * @param {number}       n   - Number of samples to use from `buf`.
+     * @param {number}       p   - LPC order.
+     * @returns {Float32Array|null} Coefficient array a[0..p] (a[0]=1), or
+     *   null if the matrix is singular or numerically unstable.
+     * @private
+     */
+    _lpcCoeffs(buf, n, p) {
+        // Step 1: autocorrelation lags 0..p
+        const R = new Float32Array(p + 1);
+        for (let lag = 0; lag <= p; lag++) {
+            let s = 0;
+            for (let i = 0; i < n - lag; i++) s += buf[i] * buf[i + lag];
+            R[lag] = s;
+        }
+        if (R[0] <= 0) return null;
+
+        // Step 2: Levinson-Durbin recursion
+        const a    = new Float32Array(p + 1);  // a[0] = 1 implicitly
+        const aTmp = new Float32Array(p + 1);
+        a[0] = 1;
+        let E = R[0];
+
+        for (let i = 1; i <= p; i++) {
+            // Reflection coefficient k_i
+            let lambda = R[i];
+            for (let j = 1; j < i; j++) lambda += a[j] * R[i - j];
+            const k = -lambda / E;
+
+            // Update: a_new[j] = a_old[j] + k * a_old[i-j], for j=1..i-1
+            for (let j = 1; j < i; j++) aTmp[j] = a[j] + k * a[i - j];
+            aTmp[i] = k;
+            for (let j = 1; j <= i; j++) a[j] = aTmp[j];
+
+            E *= (1 - k * k);
+            if (E <= 0) return null;   // numerical instability guard
+        }
+
+        return a;
+    }
+
+    /**
+     * Finds formant frequencies by evaluating the LPC power spectral density
+     * and locating prominent local maxima.
+     *
+     * @param {Float32Array} a  - LPC coefficients a[0..p] (a[0]=1).
+     * @param {number}       p  - LPC order.
+     * @param {number}       sr - Sample rate in Hz.
+     * @returns {number[]} Up to two formant frequencies [F1, F2] in Hz,
+     *   sorted ascending.  Array may have 0, 1, or 2 elements.
+     * @private
+     */
+    _formantFromLPC(a, p, sr) {
+        // Evaluate |1 / A(e^{jω})|² at nBins frequency points (0 … Nyquist).
+        const nBins    = 512;
+        const spectrum = new Float32Array(nBins);
+        for (let bin = 0; bin < nBins; bin++) {
+            const omega = Math.PI * bin / nBins;
+            let re = 0, im = 0;
+            for (let k = 0; k <= p; k++) {
+                re += a[k] * Math.cos(k * omega);
+                im -= a[k] * Math.sin(k * omega);
+            }
+            const mag2    = re * re + im * im;
+            spectrum[bin] = mag2 > 0 ? 1 / mag2 : 0;
+        }
+
+        // Restrict peak search to the voiced formant range (200–4000 Hz).
+        const freqPerBin = sr / (2 * nBins);
+        const minBin     = Math.max(1, Math.floor(200  / freqPerBin));
+        const maxBin     = Math.min(nBins - 2, Math.ceil(4000 / freqPerBin));
+
+        // Threshold: only peaks above 5 % of the in-range maximum.
+        let maxSpec = 0;
+        for (let bin = minBin; bin <= maxBin; bin++) {
+            if (spectrum[bin] > maxSpec) maxSpec = spectrum[bin];
+        }
+        const threshold = maxSpec * 0.05;
+
+        // Collect local maxima (strict) above threshold, sorted by frequency.
+        const peaks = [];
+        for (let bin = minBin + 1; bin < maxBin; bin++) {
+            if (spectrum[bin] > spectrum[bin - 1] &&
+                spectrum[bin] > spectrum[bin + 1] &&
+                spectrum[bin] > threshold) {
+                peaks.push(bin * freqPerBin);
+            }
+        }
+        peaks.sort((fa, fb) => fa - fb);
+
+        // Apply 150 Hz minimum separation and keep the first two.
+        const formants = [];
+        let lastFreq   = -Infinity;
+        for (const freq of peaks) {
+            if (freq - lastFreq >= 150) {
+                formants.push(freq);
+                lastFreq = freq;
+                if (formants.length >= 2) break;
+            }
+        }
+
+        return formants;  // [F1] or [F1, F2] or []
+    }
+
+    /**
+     * Applies an N-frame sliding median filter to an incoming formant value,
+     * using a caller-supplied buffer so that F1 and F2 are tracked
+     * independently.
+     *
+     * @param {number}   raw    - The raw formant frequency (Hz) for this frame.
+     * @param {number[]} buffer - The caller-owned sliding-window array
+     *   (shared state; mutated in place).
+     * @param {number}   N      - Maximum window size.
+     * @returns {number} The median of the last ≤N valid values.
+     * @private
+     */
+    _formantMedian(raw, buffer, N) {
+        buffer.push(raw);
+        if (buffer.length > N) buffer.shift();
+        const sorted = buffer.slice().sort((fa, fb) => fa - fb);
+        const mid    = Math.floor(sorted.length / 2);
+        return sorted.length % 2 === 0
+            ? (sorted[mid - 1] + sorted[mid]) / 2
+            : sorted[mid];
+    }
+
+    /**
+     * Draws the detected F1 and F2 formant frequencies as a two-line text
+     * overlay on the HT spectrogram canvas, positioned just above the HT
+     * hz-monitor corner.  Mirrors `_drawPitchOverlay` for the FT canvas.
+     *
+     * @param {HTMLCanvasElement} canvas - The spectrogram canvas to annotate.
+     * @param {tonetype}          type   - Only acts when `'ht'`.
+     * @private
+     *
+     * @description
+     * Calls `_getMonitorAnchor(canvas, 'ht')` to obtain the exact anchor
+     * used by `FrequencyPad.drawFreqMonitor()`, then positions two lines:
+     * - **F2** (lower): bottom at `y − fontSize − gap` (above monitor body).
+     * - **F1** (upper): bottom at F2 bottom − `pitchFontSize` − `lineGap`.
+     * A single `clearRect` spanning both lines is applied every frame.
+     */
+    _drawFormantOverlay(canvas, type) {
+        if (type !== 'ht') return;
+
+        const ctx           = canvas.getContext('2d');
+        const pitchFontSize = 13;
+        const gap           = 4;
+        const lineGap       = 2;
+
+        const { x, y, textAlign, textBaseline, fontSize } = this._getMonitorAnchor(canvas, 'ht');
+
+        // Position two lines stacked above the HT hz-monitor bounding box.
+        // y2 = bottom anchor of the lower line (F2), y1 = bottom anchor of F1.
+        const y2 = textBaseline === 'top'
+            ? y - gap                   // monitor grows ↓; place above its top edge
+            : y - fontSize - gap;       // monitor grows ↑; place above its top edge
+        const y1 = y2 - pitchFontSize - lineGap;
+
+        ctx.save();
+        ctx.font = pitchFontSize + 'px monospace';
+
+        const hzAcc      = this.padSet.dhc.settings.global.hz_accuracy.value;
+        const hzWidth    = 4 + 1 + hzAcc;    // e.g. "1234.56" = 7 chars with hzAcc=2
+        const totalChars = 3 + hzWidth + 3;   // "F1 " + hz + " Hz"
+        const totalW     = ctx.measureText('X'.repeat(totalChars)).width + 4;
+        const clearX     = textAlign === 'left' ? x : x - totalW;
+
+        // Clear both line slots on every frame to erase the previous label.
+        ctx.clearRect(clearX, y1 - pitchFontSize - 2, totalW, 2 * pitchFontSize + lineGap + 4);
+
+        if (!this.detectedF1 && !this.detectedF2) {
+            ctx.restore();
+            return;
+        }
+
+        ctx.textBaseline = 'bottom';
+        ctx.textAlign    = textAlign;
+        ctx.strokeStyle  = 'rgba(0, 0, 0, 0.7)';
+        ctx.lineWidth    = 2.5;
+        ctx.fillStyle    = 'rgba(255, 255, 255, 0.9)';
+
+        if (this.detectedF1) {
+            const f1Txt = 'F1 ' + this.detectedF1.toFixed(hzAcc).padStart(hzWidth) + ' Hz';
+            ctx.strokeText(f1Txt, x, y1);
+            ctx.fillText(f1Txt, x, y1);
+        }
+        if (this.detectedF2) {
+            const f2Txt = 'F2 ' + this.detectedF2.toFixed(hzAcc).padStart(hzWidth) + ' Hz';
+            ctx.strokeText(f2Txt, x, y2);
+            ctx.fillText(f2Txt, x, y2);
+        }
+
         ctx.restore();
     }
 
