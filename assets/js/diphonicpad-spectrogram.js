@@ -88,6 +88,13 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this._lastTimestamp = 0;
         this.detectedPitch = null;
         this.timeDomainArray = null;
+
+        // Pitch stabilization state (reset on disable; persists across silence gaps)
+        this._pitchBuffer     = [];    // sliding window for median filter
+        this._lastStablePitch = null;  // hysteresis: last accepted pitch
+        this._pendingPitch    = null;  // hysteresis: candidate pitch
+        this._pendingCount    = 0;     // hysteresis: consecutive frame count for candidate
+        this._emaPitch        = null;  // exponential moving average state
     }
 
     /**
@@ -159,6 +166,14 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this.dataArray = null;
         this.timeDomainArray = null;
         this.detectedPitch = null;
+
+        // Reset pitch stabilization state
+        this._pitchBuffer     = [];
+        this._lastStablePitch = null;
+        this._pendingPitch    = null;
+        this._pendingCount    = 0;
+        this._emaPitch        = null;
+
         this._clearCanvases();
         this.enabled = false;
     }
@@ -368,64 +383,274 @@ HUM.DpPad.PadSet.Spectrogram = class {
     }
 
     /**
-     * Estimates the fundamental frequency of the microphone input using
-     * time-domain autocorrelation (ACF).
+     * Estimates the fundamental pitch using the selected stabilization mode.
      *
      * @returns {void}
      *
      * @description
-     * Fills `timeDomainArray` with the latest 2048 samples via
-     * `getFloatTimeDomainData()`. Skips detection when RMS < 0.015 (silence).
-     * Searches for the autocorrelation peak in the lag range corresponding
-     * to 50–1500 Hz, requiring a normalised correlation ≥ 0.5. Applies
-     * parabolic interpolation around the peak for sub-sample accuracy.
-     * The result is stored in `this.detectedPitch` (Hz) or `null` when
-     * no confident pitch is found.
+     * Change `PITCH_MODE` to switch algorithms:
+     * - **0** Raw ACF (baseline — prone to octave jumps)
+     * - **1** ACF + median filter (N = 7 frames, ≈ 230 ms)
+     * - **2** ACF + hysteresis / octave continuity guard (K = 4 frames, ≈ 130 ms)
+     * - **3** ACF + exponential moving average in midicent space (α = 0.7)
+     * - **4** YIN algorithm (CMNDF; far fewer octave errors at source)
+     * - **5** ACF + sub-harmonic preference (octave-above guard)
+     * - **6** YIN + median filter (recommended combination)
      * @private
      */
     _detectPitch() {
+        // ── Change this constant to switch pitch-stabilization modes ──────────
+        // 0 = raw ACF         1 = ACF + median     2 = ACF + hysteresis
+        // 3 = ACF + EMA       4 = YIN              5 = ACF + subharmonic guard
+        // 6 = YIN + median
+        const PITCH_MODE = 6;
+        // ──────────────────────────────────────────────────────────────────────
+
         const buf = this.timeDomainArray;
         this.analyser.getFloatTimeDomainData(buf);
         const n  = buf.length;
         const sr = this.audioCtx.sampleRate;
 
-        // RMS check — skip silence or near-silence
+        // RMS gate — suppress output on silence without clearing stabilization buffers
+        // so that the first post-silence frame picks up smoothly.
         let rms = 0;
         for (let i = 0; i < n; i++) rms += buf[i] * buf[i];
-        rms = Math.sqrt(rms / n);
-        if (rms < 0.015) { this.detectedPitch = null; return; }
+        if (Math.sqrt(rms / n) < 0.015) { this.detectedPitch = null; return; }
 
-        // Lag search range: 80 Hz – 1000 Hz
+        // Vocal range: 80 Hz (bass) – 1000 Hz (soprano high)
         const minLag = Math.floor(sr / 1000);
         const maxLag = Math.min(Math.ceil(sr / 80), n - 1);
-        // Fixed inner-loop length (only the overlap valid for every lag in range)
-        const len = n - maxLag;
 
-        // Zero-lag energy (denominator for normalised correlation)
+        // Step 1: compute raw candidate pitch via the selected core algorithm
+        let raw;
+        if      (PITCH_MODE === 4 || PITCH_MODE === 6) raw = this._pitchYIN(buf, n, sr, minLag, maxLag);
+        else if (PITCH_MODE === 5)                     raw = this._pitchACFSubHarmGuard(buf, n, sr, minLag, maxLag);
+        else                                           raw = this._pitchACF(buf, n, sr, minLag, maxLag);
+
+        if (raw === null) { this.detectedPitch = null; return; }
+
+        // Step 2: apply post-processing filter
+        switch (PITCH_MODE) {
+            case 0: case 4: case 5:
+                this.detectedPitch = raw;
+                break;
+            case 1: case 6:
+                this.detectedPitch = this._pitchMedian(raw, 7);
+                break;
+            case 2:
+                this.detectedPitch = this._pitchHysteresis(raw, 4);
+                break;
+            case 3:
+                this.detectedPitch = this._pitchEMA(raw, 0.7);
+                break;
+        }
+    }
+
+    // ── Pitch core algorithms ─────────────────────────────────────────────────
+
+    /**
+     * Raw autocorrelation (ACF) pitch estimator.
+     * Baseline: reliable but prone to octave jumps when harmonics are strong.
+     * @private
+     */
+    _pitchACF(buf, n, sr, minLag, maxLag) {
+        const len = n - maxLag;
         let r0 = 0;
         for (let i = 0; i < len; i++) r0 += buf[i] * buf[i];
-        if (r0 === 0) { this.detectedPitch = null; return; }
+        if (r0 === 0) return null;
 
-        // Find the lag with the highest normalised autocorrelation
         let bestLag = -1, bestCorr = -Infinity;
         for (let lag = minLag; lag <= maxLag; lag++) {
-            let corr = 0;
-            for (let i = 0; i < len; i++) corr += buf[i] * buf[i + lag];
-            if (corr > bestCorr) { bestCorr = corr; bestLag = lag; }
+            let c = 0;
+            for (let i = 0; i < len; i++) c += buf[i] * buf[i + lag];
+            if (c > bestCorr) { bestCorr = c; bestLag = lag; }
         }
+        if (bestLag < 0 || bestCorr / r0 < 0.5) return null;
 
-        if (bestLag < 0 || bestCorr / r0 < 0.5) { this.detectedPitch = null; return; }
-
-        // Parabolic interpolation around the peak for sub-sample accuracy
+        // Parabolic interpolation for sub-sample accuracy (maximum finding)
+        let lagF = bestLag;
         if (bestLag > minLag && bestLag < maxLag) {
             let prev = 0, next = 0;
             for (let i = 0; i < len; i++) prev += buf[i] * buf[i + bestLag - 1];
             for (let i = 0; i < len; i++) next += buf[i] * buf[i + bestLag + 1];
-            const denom = 2 * bestCorr - prev - next;
-            if (denom > 0) bestLag += (prev - next) / (2 * denom);
+            const denom = 2 * bestCorr - prev - next;    // > 0 at a maximum
+            if (denom > 0) lagF += (next - prev) / (2 * denom);
+        }
+        return sr / lagF;
+    }
+
+    /**
+     * ACF with sub-harmonic preference — octave-above guard (mode 5).
+     * After finding the best ACF peak at lag L, checks lag 2L (one octave
+     * lower). If its correlation is ≥ 90 % of L's, 2L is preferred as the
+     * true fundamental. This prevents the common error of locking onto the
+     * second harmonic instead of the fundamental.
+     * @private
+     */
+    _pitchACFSubHarmGuard(buf, n, sr, minLag, maxLag) {
+        const len = n - maxLag;
+        let r0 = 0;
+        for (let i = 0; i < len; i++) r0 += buf[i] * buf[i];
+        if (r0 === 0) return null;
+
+        // Compute and store all correlations to allow non-adjacent comparisons.
+        const corrs = new Float32Array(maxLag + 1);
+        for (let lag = minLag; lag <= maxLag; lag++) {
+            let c = 0;
+            for (let i = 0; i < len; i++) c += buf[i] * buf[i + lag];
+            corrs[lag] = c;
         }
 
-        this.detectedPitch = sr / bestLag;
+        let bestLag = minLag;
+        for (let lag = minLag + 1; lag <= maxLag; lag++) {
+            if (corrs[lag] > corrs[bestLag]) bestLag = lag;
+        }
+        if (corrs[bestLag] / r0 < 0.5) return null;
+
+        // Prefer the octave-below lag if nearly as strong.
+        const doubleLag = bestLag * 2;
+        if (doubleLag <= maxLag && corrs[doubleLag] / corrs[bestLag] >= 0.9) {
+            bestLag = doubleLag;
+        }
+
+        // Parabolic interpolation using stored values (maximum finding)
+        let lagF = bestLag;
+        if (bestLag > minLag && bestLag < maxLag) {
+            const alpha = corrs[bestLag - 1];
+            const beta  = corrs[bestLag];
+            const gamma = corrs[bestLag + 1];
+            const denom = 2 * beta - alpha - gamma;    // > 0 at a maximum
+            if (denom > 0) lagF += (gamma - alpha) / (2 * denom);
+        }
+        return sr / lagF;
+    }
+
+    /**
+     * YIN pitch detector — de Cheveigné & Kawahara (2002) (mode 4, 6).
+     * Uses the Cumulative Mean Normalized Difference Function (CMNDF):
+     * a deep zero at the true period is far easier to locate unambiguously
+     * than the broad ACF peak, which reduces octave errors significantly.
+     * @private
+     */
+    _pitchYIN(buf, n, sr, minLag, maxLag) {
+        const W = n - maxLag;    // fixed window so every tau is fully valid
+
+        // Build the CMNDF in-place: d[tau] = diff(tau) * tau / runningSum(diff)
+        const d = new Float32Array(maxLag + 1);
+        let runningSum = 0;
+        for (let tau = 1; tau <= maxLag; tau++) {
+            let diff = 0;
+            for (let j = 0; j < W; j++) {
+                const delta = buf[j] - buf[j + tau];
+                diff += delta * delta;
+            }
+            runningSum += diff;
+            d[tau] = runningSum === 0 ? 0 : (diff * tau) / runningSum;
+        }
+        d[0] = 1;    // by definition
+
+        // Find the first dip below the threshold (follow the local minimum).
+        const threshold = 0.15;
+        let bestTau = -1;
+        for (let tau = minLag; tau <= maxLag; tau++) {
+            if (d[tau] < threshold) {
+                while (tau + 1 <= maxLag && d[tau + 1] < d[tau]) tau++;
+                bestTau = tau;
+                break;
+            }
+        }
+
+        // Fallback: global minimum with confidence check.
+        if (bestTau < 0) {
+            let minVal = Infinity;
+            for (let tau = minLag; tau <= maxLag; tau++) {
+                if (d[tau] < minVal) { minVal = d[tau]; bestTau = tau; }
+            }
+            if (minVal > 0.35) return null;
+        }
+
+        // Parabolic interpolation (minimum finding)
+        let tauF = bestTau;
+        if (bestTau > minLag && bestTau < maxLag) {
+            const alpha = d[bestTau - 1];
+            const beta  = d[bestTau];
+            const gamma = d[bestTau + 1];
+            const denom = alpha - 2 * beta + gamma;    // > 0 at a minimum
+            if (denom > 0) tauF += 0.5 * (alpha - gamma) / denom;
+        }
+        return sr / tauF;
+    }
+
+    // ── Pitch post-processing filters ─────────────────────────────────────────
+
+    /**
+     * Median filter over the last N detected Hz values (mode 1, 6).
+     * Immune to single-frame outlier jumps: a value must persist for > N/2
+     * consecutive frames before it affects the median.
+     * @private
+     */
+    _pitchMedian(raw, N) {
+        this._pitchBuffer.push(raw);
+        if (this._pitchBuffer.length > N) this._pitchBuffer.shift();
+        const sorted = this._pitchBuffer.slice().sort((a, b) => a - b);
+        const mid    = Math.floor(sorted.length / 2);
+        return sorted.length % 2 === 0
+            ? (sorted[mid - 1] + sorted[mid]) / 2
+            : sorted[mid];
+    }
+
+    /**
+     * Hysteresis / octave continuity guard (mode 2).
+     * A new pitch that differs by more than 2 semitones from the current
+     * stable value must persist for K consecutive frames before it is
+     * accepted. Prevents brief single-frame flips to wrong octaves.
+     * @private
+     */
+    _pitchHysteresis(raw, K) {
+        if (this._lastStablePitch === null) {
+            this._lastStablePitch = raw;
+            return raw;
+        }
+        const semitones = Math.abs(12 * Math.log2(raw / this._lastStablePitch));
+        if (semitones < 2.0) {
+            // Small change — accept immediately and reset any pending candidate.
+            this._pendingPitch = null;
+            this._pendingCount = 0;
+            this._lastStablePitch = raw;
+            return raw;
+        }
+        // Large change — accumulate in the pending slot.
+        if (this._pendingPitch !== null &&
+                Math.abs(12 * Math.log2(raw / this._pendingPitch)) < 2.0) {
+            this._pendingCount++;
+        } else {
+            this._pendingPitch = raw;
+            this._pendingCount = 1;
+        }
+        if (this._pendingCount >= K) {
+            this._lastStablePitch = this._pendingPitch;
+            this._pendingPitch    = null;
+            this._pendingCount    = 0;
+            return this._lastStablePitch;
+        }
+        return this._lastStablePitch;
+    }
+
+    /**
+     * Exponential moving average in midicent space (mode 3).
+     * α controls memory: 0 = instant tracking, 1 = frozen.
+     * Blending in midicent (log) space is perceptually uniform — a 1-semitone
+     * glide sounds the same at any pitch level.
+     * @private
+     */
+    _pitchEMA(raw, alpha) {
+        if (this._emaPitch === null) { this._emaPitch = raw; return raw; }
+        // mc = 69 + 12 × log₂(hz / 440)
+        const mc       = 69 + 12 * Math.log2(raw             / 440);
+        const prevMc   = 69 + 12 * Math.log2(this._emaPitch  / 440);
+        const smoothMc = alpha * prevMc + (1 - alpha) * mc;
+        this._emaPitch = 440 * Math.pow(2, (smoothMc - 69) / 12);
+        return this._emaPitch;
     }
 
     /**
