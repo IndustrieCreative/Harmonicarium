@@ -1409,6 +1409,22 @@ HUM.tmpl = {
                     <div class="list-group-item">
                         <div class="row align-items-center">
                             <div class="col col-12 col-lg">
+                                <strong class="mb-2">FFT size</strong>
+                                <div><small class="text-muted">Higher values give finer frequency resolution at the cost of time resolution.</small></div>
+                            </div>
+                            <div class="col-auto">
+                                <select id="HTMLi_dppad_spectrogram_fftsize${dhcID}" class="form-select">
+                                    <option value="4096">4096 &nbsp;(≈10.8 Hz/bin)</option>
+                                    <option value="8192">8192 &nbsp;(≈5.4 Hz/bin)</option>
+                                    <option value="16384">16384 (≈2.7 Hz/bin)</option>
+                                    <option value="32768" selected>32768 (≈1.3 Hz/bin)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-lg">
                                 <strong class="mb-2">Brightness</strong>
                                 <div><small class="text-muted">Shift the amplitude level up or down.</small></div>
                             </div>

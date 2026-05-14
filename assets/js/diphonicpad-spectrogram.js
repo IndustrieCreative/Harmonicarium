@@ -95,7 +95,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
      *
      * @description
      * Calls `navigator.mediaDevices.getUserMedia({ audio: true })`. On success,
-     * creates a fresh `AudioContext` and `AnalyserNode` (fftSize 4096,
+     * creates a fresh `AudioContext` and `AnalyserNode` (fftSize 32768,
      * smoothingTimeConstant 0.8), connects the `MediaStreamSourceNode` to the
      * analyser only — **not** to `destination` — and starts the rAF loop.
      * On failure, logs the error and reverts the `spectrogramEnabled` parameter
@@ -110,7 +110,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
 
             this.audioCtx = new AudioContext();
             this.analyser = this.audioCtx.createAnalyser();
-            this.analyser.fftSize = 4096;
+            this.analyser.fftSize = this.padSet.parameters.spectrogramFftSize.value;
             this.analyser.smoothingTimeConstant = 0.8;
             this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 

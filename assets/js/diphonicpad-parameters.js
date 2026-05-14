@@ -988,6 +988,28 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
             initValue: false,
             restoreStage: 'post',
         });
+        this.spectrogramFftSize = new HUM.Param({
+            app: padSet,
+            idbKey: 'padsetSpectrogramFftSize',
+            uiElements: {
+                'dppad_spectrogram_fftsize': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    eventType: 'change',
+                    htmlTargetProp: 'value',
+                    widget: 'selection',
+                })
+            },
+            dataType: 'integer',
+            initValue: 32768,
+            restoreStage: 'post',
+            postSet: (value, thisParam, init, fromUI, oldValue, fromRestore) => {
+                if ((!init || fromRestore) && padSet.spectrogram.enabled) {
+                    padSet.spectrogram.analyser.fftSize = value;
+                    padSet.spectrogram.dataArray = new Uint8Array(padSet.spectrogram.analyser.frequencyBinCount);
+                }
+            },
+        });
         this.spectrogramBrightness = new HUM.Param({
             app: padSet,
             idbKey: 'padsetSpectrogramBrightness',
