@@ -155,16 +155,14 @@ HUM.midi.MidiOut = class MidiOut {
         } else if (msg.cmd === 'tone-on') {
             if (msg.type === 'ft') {
 
-                this.midiOut(msg.ctrlNum, msg.xtNum, msg.velocity, 1, "ft", msg.tsnap);
-                
-                // if (this.dhc.settings.ht.curr_ft !== msg.xtNum) {
-                //     this.updateMIDInoteON("ht");
-                // }
+                let prebuiltXtObj = msg.continuum ? new this.dhc.Xtone(msg.hz, msg.mc) : null;
+                this.midiOut(msg.ctrlNum, msg.xtNum, msg.velocity, 1, "ft", msg.tsnap, prebuiltXtObj);
 
             } else if (msg.type === 'ht') {
             
                 if (msg.xtNum !== 0) {
-                    this.midiOut(msg.ctrlNum, msg.xtNum, msg.velocity, 1, "ht", msg.tsnap);
+                    let prebuiltXtObj = msg.continuum ? new this.dhc.Xtone(msg.hz, msg.mc) : null;
+                    this.midiOut(msg.ctrlNum, msg.xtNum, msg.velocity, 1, "ht", msg.tsnap, prebuiltXtObj);
                 }
             
             }
@@ -172,12 +170,14 @@ HUM.midi.MidiOut = class MidiOut {
         } else if (msg.cmd === 'tone-off') {
             if (msg.type === 'ft') {
 
-                this.midiOut(msg.ctrlNum, msg.xtNum, msg.velocity, 0, "ft");
+                let prebuiltXtObj = msg.continuum ? new this.dhc.Xtone(msg.hz, msg.mc) : null;
+                this.midiOut(msg.ctrlNum, msg.xtNum, msg.velocity, 0, "ft", false, prebuiltXtObj);
 
             } else if (msg.type === 'ht') {
 
                 if (msg.xtNum !== 0) {
-                    this.midiOut(msg.ctrlNum, msg.xtNum, msg.velocity, 0, "ht");
+                    let prebuiltXtObj = msg.continuum ? new this.dhc.Xtone(msg.hz, msg.mc) : null;
+                    this.midiOut(msg.ctrlNum, msg.xtNum, msg.velocity, 0, "ht", false, prebuiltXtObj);
                 }
             }
 
@@ -702,6 +702,9 @@ HUM.midi.MidiOut = class MidiOut {
                 if (type === "ft") {
                     if (heldChsKeysFT.length > 0) {
                         for (let key of heldChsKeysFT) {
+                            // Skip continuum tones — they are at absolute Hz and must not
+                            // be retuned when FM or transpose parameters change.
+                            if (heldChsFT[key].xt < 0) { continue; }
                             // Update only if the original note is not Tsnapped
                             if (!heldChsFT[key].tsnap) {
                                 console.log('updateMIDIout ft>ft');
@@ -715,6 +718,8 @@ HUM.midi.MidiOut = class MidiOut {
                     }
                     if (heldChsKeysHT.length > 0) {
                         for (let key of heldChsKeysHT) {
+                            // Skip continuum HT tones
+                            if (heldChsHT[key].xt < 0) { continue; }
                             // Update only if the original note is not Tsnapped
                             if (!heldChsHT[key].tsnap) {
                                 console.log('updateMIDIout ft>ht');
@@ -729,6 +734,8 @@ HUM.midi.MidiOut = class MidiOut {
                 } else if (type === "ht") {
                     if (heldChsKeysHT.length > 0) {
                         for (let key of heldChsKeysHT) {
+                            // Skip continuum HT tones
+                            if (heldChsHT[key].xt < 0) { continue; }
                             // Update only if the original note is not Tsnapped
                             if (!heldChsHT[key].tsnap) {
                                 console.log('updateMIDIout ht>ht');
@@ -771,8 +778,10 @@ HUM.midi.MidiOut = class MidiOut {
      * Note-ON), a Note-OFF is sent first to avoid stuck notes before the new
      * Note-ON.
      */
-    midiOut(ctrlNum, xtNum, velocity, state, type, tsnap=false) {
-        let xtObj = this.dhc.tables[type][xtNum];
+    midiOut(ctrlNum, xtNum, velocity, state, type, tsnap=false, prebuiltXtObj=null) {
+        // For continuum tones the Xtone is pre-built by the caller (no table entry exists);
+        // for discrete tones look up the DHC table as usual.
+        let xtObj = prebuiltXtObj !== null ? prebuiltXtObj : this.dhc.tables[type][xtNum];
         // For each selected MIDI-OUT ports
         this.midi.port.selectedOutputs.forEach((value, portID) => {
             // PitchBend method

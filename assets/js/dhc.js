@@ -745,15 +745,19 @@ HUM.DHC = class {
                 // If the next tone is NOT the active one
                 if (nextTone.xtNum !== this.settings.ht.curr_ft) {
                     
+                    // Continuum tones carry Hz directly; discrete tones look up the table
+                    let nextHz = nextTone.continuum ? nextTone.hz : this.tables.ft[nextTone.xtNum].hz;
                     // Recalculate the ht table passing the frequency (Hz)
-                    this.createHTtable(this.tables.ft[nextTone.xtNum].hz);
+                    this.createHTtable(nextHz);
                     // Store the current FT into the global slot for future HT table re-computations and UI monitor updates
                     this.settings.ht.curr_ft = nextTone.xtNum;
                     
                     this.sendMessageToApps(nextTone);
 
-                    // Update the UI
-                    this.settings.global.monitor.value = ["ft", nextTone.xtNum];
+                    // Update the UI (not applicable for continuum tones — no discrete xtNum to display)
+                    if (!nextTone.continuum) {
+                        this.settings.global.monitor.value = ["ft", nextTone.xtNum];
+                    }
 
                 }
             }
@@ -764,6 +768,103 @@ HUM.DHC = class {
         //     //     console.log("STRANGE: there is NOT a FT pressed key #:", dhcMsg.xtNum);
         //     // }
         // }
+    }
+
+    /**
+     * Plays a Fundamental Tone in continuum (fretless) mode.
+     *
+     * Unlike {@link HUM.DHC#playFT}, this method does not look up a pre-computed
+     * FT table entry. Instead it uses the absolute frequency (`dhcMsg.hz`) carried
+     * by the message directly, allowing the FT to be placed at any arbitrary Hz
+     * within the pad range — analogous to pressing a fretless string at any position.
+     *
+     * @param {HUM.DHCmsg} dhcMsg - A continuum `'tone-on'` FT message created with
+     *   {@link HUM.DHCmsg.ftONcontinuum}. Must have `continuum === true`,
+     *   `xtNum === HUM.DHCmsg.CONTINUUM_XTNUM`, and valid `hz`/`mc` fields.
+     *
+     * @returns {void}
+     *
+     * @description
+     * 1. Recomputes the HT table using `dhcMsg.hz` directly.
+     * 2. If another continuum FT is already sounding (identified by the
+     *    `CONTINUUM_XTNUM` sentinel), silences it and removes it from the queue.
+     * 3. Pushes `dhcMsg` onto `playQueue.ft` and stores `CONTINUUM_XTNUM` in
+     *    `settings.ht.curr_ft`.
+     * 4. Broadcasts `dhcMsg` to all registered apps.
+     */
+    playFTcontinuum(dhcMsg) {
+        // Recalculate the HT table using the continuum Hz directly
+        this.createHTtable(dhcMsg.hz);
+
+        // - - - - - - - - - - - - - -
+        // ANTI NOTES STUCKING
+        // A continuum tone is always identified by CONTINUUM_XTNUM (-1);
+        // only one continuum FT slot exists at a time.
+        let remPos = false;
+        this.playQueue.ft.forEach( (queueTone, position) => {
+            if (queueTone.xtNum === HUM.DHCmsg.CONTINUUM_XTNUM) {
+                this.sendMessageToApps(HUM.DHCmsg.ftOFFcontinuum(queueTone.source, queueTone.hz, queueTone.mc, queueTone.velocity));
+                remPos = position;
+            }
+        });
+        if (remPos !== false) {
+            this.playQueue.ft.splice(remPos, 1);
+        }
+        // - - - - - - - - - - - - - -
+
+        this.playQueue.ft.push(dhcMsg);
+
+        // Store the sentinel as the current FT
+        this.settings.ht.curr_ft = HUM.DHCmsg.CONTINUUM_XTNUM;
+
+        this.sendMessageToApps(dhcMsg);
+    }
+
+    /**
+     * Stops the currently playing continuum Fundamental Tone.
+     *
+     * @param {HUM.DHCmsg} dhcMsg - A continuum `'tone-off'` FT message created with
+     *   {@link HUM.DHCmsg.ftOFFcontinuum}.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Finds the continuum slot (identified by `CONTINUUM_XTNUM`) in `playQueue.ft`,
+     * removes it, and broadcasts `dhcMsg`. If other (discrete or continuum) FTs
+     * remain in the queue the most recently added one is promoted: the HT table
+     * is recomputed for its frequency (`nextTone.hz` for continuum, or the table
+     * lookup for discrete), `curr_ft` is updated, and the promoting `'tone-on'`
+     * message is re-sent.
+     */
+    muteFTcontinuum(dhcMsg) {
+        // Search the continuum slot in the playQueue array
+        let position = this.playQueue.ft.findIndex(qt => qt.xtNum === HUM.DHCmsg.CONTINUUM_XTNUM);
+        // If a continuum FT exists in the playQueue
+        if (position !== -1) {
+            // Remove it from the playQueue array
+            this.playQueue.ft.splice(position, 1);
+
+            this.sendMessageToApps(dhcMsg);
+
+            // If there are other notes, promote the most recent one
+            if (this.playQueue.ft.length > 0) {
+                let nextIndex = this.playQueue.ft.length - 1;
+                let nextTone = this.playQueue.ft[nextIndex];
+
+                if (nextTone.xtNum !== this.settings.ht.curr_ft) {
+                    // Continuum tones carry Hz directly; discrete tones look up the table
+                    let nextHz = nextTone.continuum ? nextTone.hz : this.tables.ft[nextTone.xtNum].hz;
+                    this.createHTtable(nextHz);
+                    this.settings.ht.curr_ft = nextTone.xtNum;
+
+                    this.sendMessageToApps(nextTone);
+
+                    if (!nextTone.continuum) {
+                        this.settings.global.monitor.value = ["ft", nextTone.xtNum];
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -890,6 +991,81 @@ HUM.DHC = class {
         } else if (dhcMsg.xtNum === 0 && dhcMsg.panic === false) {
             // Note OFF the active piped HT
             this.piping(0);
+            this.sendMessageToApps(dhcMsg);
+        }
+    }
+
+    /**
+     * Plays a Harmonic/Subharmonic Tone in continuum (fretless) mode.
+     *
+     * Unlike {@link HUM.DHC#playHT}, this method does not look up a pre-computed
+     * HT table entry. Instead it uses the absolute frequency (`dhcMsg.hz`) carried
+     * by the message directly, allowing an HT to be placed at any arbitrary Hz.
+     *
+     * @param {HUM.DHCmsg} dhcMsg - A continuum `'tone-on'` HT message created with
+     *   {@link HUM.DHCmsg.htONcontinuum}. Must have `continuum === true`,
+     *   `xtNum === HUM.DHCmsg.CONTINUUM_XTNUM`, and valid `hz`/`mc` fields.
+     *
+     * @returns {void}
+     *
+     * @description
+     * 1. If another continuum HT is already sounding (identified by the
+     *    `CONTINUUM_XTNUM` sentinel), silences it and removes it from the queue.
+     * 2. Pushes `dhcMsg` onto `playQueue.ht` and stores `CONTINUUM_XTNUM` in
+     *    `settings.ht.curr_ht`.
+     * 3. Broadcasts `dhcMsg` to all registered apps.
+     *
+     * Note: the HT table is NOT recomputed — the continuum HT voice plays at an
+     * absolute Hz independent of the current FT. It will not retune on FT changes.
+     */
+    playHTcontinuum(dhcMsg) {
+        // - - - - - - - - - - - - - -
+        // ANTI NOTES STUCKING
+        let remPos = false;
+        this.playQueue.ht.forEach( (queueTone, position) => {
+            if (queueTone.xtNum === HUM.DHCmsg.CONTINUUM_XTNUM) {
+                this.sendMessageToApps(HUM.DHCmsg.htOFFcontinuum(queueTone.source, queueTone.hz, queueTone.mc, queueTone.velocity));
+                remPos = position;
+            }
+        });
+        if (remPos !== false) {
+            this.playQueue.ht.splice(remPos, 1);
+        }
+        // - - - - - - - - - - - - - -
+
+        this.playQueue.ht.push(dhcMsg);
+
+        // Store the sentinel as the current HT
+        this.settings.ht.curr_ht = HUM.DHCmsg.CONTINUUM_XTNUM;
+
+        this.sendMessageToApps(dhcMsg);
+    }
+
+    /**
+     * Stops the currently playing continuum Harmonic/Subharmonic Tone.
+     *
+     * @param {HUM.DHCmsg} dhcMsg - A continuum `'tone-off'` HT message created with
+     *   {@link HUM.DHCmsg.htOFFcontinuum}.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Finds the continuum slot (identified by `CONTINUUM_XTNUM`) in `playQueue.ht`,
+     * removes it, updates `curr_ht` to the most recently queued HT (if any), and
+     * broadcasts `dhcMsg`.
+     */
+    muteHTcontinuum(dhcMsg) {
+        // Search the continuum slot in the playQueue array
+        let position = this.playQueue.ht.findIndex(qt => qt.xtNum === HUM.DHCmsg.CONTINUUM_XTNUM);
+        // If a continuum HT exists in the playQueue
+        if (position !== -1) {
+            // Remove it from the playQueue array
+            this.playQueue.ht.splice(position, 1);
+            // Update the curr_ht
+            if (this.playQueue.ht.length > 0) {
+                this.settings.ht.curr_ht = this.playQueue.ht[this.playQueue.ht.length - 1].xtNum;
+            }
+
             this.sendMessageToApps(dhcMsg);
         }
     }

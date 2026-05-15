@@ -224,12 +224,12 @@ HUM.Synth = class {
         } else if (msg.cmd === 'tone-on') {
             if (msg.type === 'ft') {
 
-                this.voiceON("ft", msg.xtNum, msg.velocity);
+                this.voiceON("ft", msg.xtNum, msg.velocity, msg.continuum ? msg.hz : null);
 
             } else if (msg.type === 'ht') {
 
                 if (msg.xtNum !== 0) {
-                    this.voiceON("ht", msg.xtNum, msg.velocity);
+                    this.voiceON("ht", msg.xtNum, msg.velocity, msg.continuum ? msg.hz : null);
                 }
 
             }
@@ -252,9 +252,11 @@ HUM.Synth = class {
     /**
      * Creates and starts a new synthesizer voice.
      *
-     * @param {tonetype} type     - Whether the new voice is a Fundamental Tone (`"ft"`) or Harmonic Tone (`"ht"`).
-     * @param {xtnum}    toneID   - The FT or HT tone number identifying the voice.
-     * @param {velocity} velocity - MIDI velocity (0–127) received from the controller.
+     * @param {tonetype} type          - Whether the new voice is a Fundamental Tone (`"ft"`) or Harmonic Tone (`"ht"`).
+     * @param {xtnum}    toneID        - The FT or HT tone number identifying the voice.
+     * @param {velocity} velocity      - MIDI velocity (0–127) received from the controller.
+     * @param {hertz}    [directHz=null] - Absolute frequency in Hz, used by continuum messages
+     *                                    instead of a DHC table lookup. Pass `null` for discrete tones.
      *
      * @returns {void}
      *
@@ -266,8 +268,9 @@ HUM.Synth = class {
      *   then calls `updateHTfrequency()` to keep all HT oscillators in tune.
      * Does nothing if the synth power is off.
      */
-    voiceON(type, toneID, velocity) {
-        let freq = this.dhc.tables[type][toneID].hz;
+    voiceON(type, toneID, velocity, directHz = null) {
+        // For continuum tones the Hz is carried in the message; for discrete tones look up the table.
+        let freq = directHz !== null ? directHz : this.dhc.tables[type][toneID].hz;
         // If the synth is turned-on
         if (this.parameters.status.value === true) {
             
@@ -376,6 +379,12 @@ HUM.Synth = class {
                 delete this.voices.ht[i];
             }
         }
+        // Prevent continuum HT stuck note (sentinel -1, outside the 0–127 loop above)
+        if (this.voices.ht[HUM.DHCmsg.CONTINUUM_XTNUM]) {
+            this.voices.ht[HUM.DHCmsg.CONTINUUM_XTNUM].voiceMute();
+            this.voices.ht[HUM.DHCmsg.CONTINUUM_XTNUM] = null;
+            delete this.voices.ht[HUM.DHCmsg.CONTINUUM_XTNUM];
+        }
         // Prevent FT stuck notes
         if (this.voices.ft) {
             this.voices.ft.voiceMute();
@@ -393,6 +402,9 @@ HUM.Synth = class {
      * is currently playing.
      */
     updateFTfrequency() {
+        // A continuum FT has no table entry; the voice frequency was already set
+        // when the tone-on was received, so no retune is needed here.
+        if (this.dhc.settings.ht.curr_ft < 0) { return; }
         if (this.voices.ft !== null) {
             var ftObj = this.dhc.tables.ft[this.dhc.settings.ht.curr_ft];
             this.voices.ft.initFrequency = ftObj.hz;
@@ -411,6 +423,9 @@ HUM.Synth = class {
      */
     updateHTfrequency() {
         for (const [toneID, voice] of Object.entries(this.voices.ht)) {
+            // Skip the continuum HT voice: it is at an absolute Hz and must not
+            // be retuned when the FT changes.
+            if (Number(toneID) < 0) { continue; }
             // Get the data about the HT from the ht table
             var htObj = this.dhc.tables.ht[toneID];
             // Set a new osc frequency and apply the change

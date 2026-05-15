@@ -98,6 +98,11 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             ft: false,
             ht: false
         };
+        // Tracks whether a continuum (fretless, between-keys) tone is currently active.
+        this.activeContinuum = {
+            ft: false,
+            ht: false
+        };
         this.currentFreq = 0;
         this.touch = {
             // Variables to keep track of the touch position
@@ -265,6 +270,16 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         const mouse = this.padSet.dpPadComponent.mouse;
         const inSpectrogramZone = this._isInSpectrogramZone(mouse);
 
+        // Mute any active continuum tone on pointer-up.
+        if (this.activeContinuum.ft) {
+            this.padSet.dhc.muteFTcontinuum(HUM.DHCmsg.ftOFFcontinuum('dppad', 0, 0));
+            this.activeContinuum.ft = false;
+        }
+        if (this.activeContinuum.ht) {
+            this.padSet.dhc.muteHTcontinuum(HUM.DHCmsg.htOFFcontinuum('dppad', 0, 0));
+            this.activeContinuum.ht = false;
+        }
+
         if (this.activeKeys.ft !== false) {
             if (inSpectrogramZone) {
                 // Hold gesture: transfer the active key to hold; note keeps ringing.
@@ -391,6 +406,16 @@ HUM.DpPad.PadSet.FrequencyPad = class {
      */
     touchEnd(e) {
         this.touch.down = false;
+
+        // Mute any active continuum tone on touch-end.
+        if (this.activeContinuum.ft) {
+            this.padSet.dhc.muteFTcontinuum(HUM.DHCmsg.ftOFFcontinuum('dppad', 0, 0));
+            this.activeContinuum.ft = false;
+        }
+        if (this.activeContinuum.ht) {
+            this.padSet.dhc.muteHTcontinuum(HUM.DHCmsg.htOFFcontinuum('dppad', 0, 0));
+            this.activeContinuum.ht = false;
+        }
 
         // Determine final touch position from changedTouches (the lifted finger).
         // e.targetTouches would already omit it, so we must use changedTouches.
@@ -563,6 +588,17 @@ HUM.DpPad.PadSet.FrequencyPad = class {
 
             if (keyFound.ft || keyFound.ht) {
 
+                // If a continuum tone is playing and the pointer just hit a discrete key,
+                // mute the continuum voice first so they don't overlap.
+                if (this.activeContinuum.ft) {
+                    this.padSet.dhc.muteFTcontinuum(HUM.DHCmsg.ftOFFcontinuum('dppad', 0, 0));
+                    this.activeContinuum.ft = false;
+                }
+                if (this.activeContinuum.ht) {
+                    this.padSet.dhc.muteHTcontinuum(HUM.DHCmsg.htOFFcontinuum('dppad', 0, 0));
+                    this.activeContinuum.ht = false;
+                }
+
                 // ====== FT ======
                 if (noteOFF.ft !== false) {
                     // console.log('PLAY FT NOTE OFF: ' + noteOFF.ft.toneNumber);
@@ -636,6 +672,18 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                             this.activeKeys.ft = false;
                         }
                     }
+                    // ====== FT CONTINUUM ======
+                    if (this.type === 'ft') {
+                        if (pointer.down !== false) {
+                            // Pointer is pressed in free (between-keys) area: glide continuously.
+                            this.padSet.dhc.playFTcontinuum(HUM.DHCmsg.ftONcontinuum('dppad', frequency, HUM.DHC.freqToMc(frequency), 120));
+                            this.activeContinuum.ft = true;
+                        } else if (this.activeContinuum.ft) {
+                            // Pointer was released in free area: stop the continuum tone.
+                            this.padSet.dhc.muteFTcontinuum(HUM.DHCmsg.ftOFFcontinuum('dppad', frequency, HUM.DHC.freqToMc(frequency)));
+                            this.activeContinuum.ft = false;
+                        }
+                    }
                 }
                 if (!keyFound.ht) {
                     if (this.activeKeys.ht !== false) {
@@ -645,6 +693,18 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                             // console.log('PLAY HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
                             this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber));
                             this.activeKeys.ht = false;
+                        }
+                    }
+                    // ====== HT CONTINUUM ======
+                    if (this.type === 'ht') {
+                        if (pointer.down !== false) {
+                            // Pointer is pressed in free (between-keys) area: glide continuously.
+                            this.padSet.dhc.playHTcontinuum(HUM.DHCmsg.htONcontinuum('dppad', frequency, HUM.DHC.freqToMc(frequency), 120));
+                            this.activeContinuum.ht = true;
+                        } else if (this.activeContinuum.ht) {
+                            // Pointer was released in free area: stop the continuum tone.
+                            this.padSet.dhc.muteHTcontinuum(HUM.DHCmsg.htOFFcontinuum('dppad', frequency, HUM.DHC.freqToMc(frequency)));
+                            this.activeContinuum.ht = false;
                         }
                     }
                 }
@@ -679,6 +739,15 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         if (this.holdKeys.ht !== false) {
             this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.holdKeys.ht.toneNumber));
             this.holdKeys.ht = false;
+        }
+        // Silence any active continuum tone.
+        if (this.activeContinuum.ft) {
+            this.padSet.dhc.muteFTcontinuum(HUM.DHCmsg.ftOFFcontinuum('dppad', 0, 0));
+            this.activeContinuum.ft = false;
+        }
+        if (this.activeContinuum.ht) {
+            this.padSet.dhc.muteHTcontinuum(HUM.DHCmsg.htOFFcontinuum('dppad', 0, 0));
+            this.activeContinuum.ht = false;
         }
         this.activeKeys.ft = false;
         this.activeKeys.ht = false;

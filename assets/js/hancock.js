@@ -212,6 +212,8 @@ HUM.Hancock = class {
             }
         // Play keys only if the accordion Piano tab is open
         } else if ( (['tone-on', 'tone-off']).includes(msg.cmd) && this.parameters.active.value) {
+            // Continuum tones have no corresponding physical key; skip highlighting.
+            if (msg.continuum === true) { return; }
             let ctrlNum = msg.ctrlNum,
                 mcXT;
             if (ctrlNum === false) {

@@ -157,8 +157,13 @@ HUM.Hstack = class {
         } else if (msg.cmd === 'tone-on' && this.parameters.active.value) {
             if (msg.type === 'ft') {
                 
-                // this.fillin();
-                this.playFx('ft', 1, msg.xtNum);
+                if (msg.continuum === true) {
+                    // Continuum FT: display Hz/mc directly; no row to flash in the HT table.
+                    this.ftMonitorHz(msg.hz, msg.mc);
+                } else {
+                    // this.fillin();
+                    this.playFx('ft', 1, msg.xtNum);
+                }
             
             } else if (msg.type === 'ht') {
                 
@@ -171,7 +176,13 @@ HUM.Hstack = class {
         } else if (msg.cmd === 'tone-off' && this.parameters.active.value) {
             if (msg.type === 'ft') {
                 
-                this.playFx("ft", 0, msg.xtNum);
+                if (msg.continuum === true) {
+                    // Continuum FT tone-off: just clear the FT row highlight.
+                    this.parameters.frow.uiElements.out.hstackFTrow.classList.add("hum-hstack-ft-off");
+                    this.parameters.frow.uiElements.out.hstackFTrow.classList.remove("hum-hstack-ft-on");
+                } else {
+                    this.playFx("ft", 0, msg.xtNum);
+                }
             
             } else if (msg.type === 'ht') {
 
@@ -290,6 +301,39 @@ HUM.Hstack = class {
         document.getElementById("HTMLo_hstackFT_note"+dhcID).innerText = name;
         document.getElementById("HTMLo_hstackFT_cents"+dhcID).innerText = sign + cent;
         document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = ftObj.hz.toFixed(hzAccuracy);
+    }
+    /**
+     * Updates the Fundamental Tone row using absolute Hz/mc values from a
+     * continuum message (no DHC table lookup is performed).
+     *
+     * @param {hertz}    hz - Absolute frequency in Hz.
+     * @param {midicent} mc - Frequency in midicents.
+     *
+     * @returns {void}
+     */
+    ftMonitorHz(hz, mc) {
+        let dhcID = this.dhc.id;
+        let hzAccuracy = this.dhc.settings.global.hz_accuracy;
+        // Apply the controller pitchbend (if present)
+        let xtObj = this.dhc.bendXtone(new this.dhc.Xtone(hz, mc));
+        let notename = this.dhc.mcToName(xtObj.mc),
+            name = notename[0],
+            sign = notename[1],
+            cent = notename[2];
+        // Recreate the element to force the css animation
+        let old = this.parameters.frow.uiElements.out.hstackFTrow;
+        let parent = old.parentNode;
+        let clone = old.cloneNode(true);
+        parent.insertBefore(clone, old);
+        old.remove();
+        this.parameters.frow.uiElements.out.hstackFTrow = clone;
+        this.parameters.frow.uiElements.out.hstackFTrow.classList.add("hum-hstack-ft-on");
+        this.parameters.frow.uiElements.out.hstackFTrow.classList.remove("hum-hstack-ft-off");
+        // Display "~" in the tone-number field to indicate a continuum (non-discrete) FT
+        document.getElementById("HTMLo_hstackFT_tone"+dhcID).innerText = "~";
+        document.getElementById("HTMLo_hstackFT_note"+dhcID).innerText = name;
+        document.getElementById("HTMLo_hstackFT_cents"+dhcID).innerText = sign + cent;
+        document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = xtObj.hz.toFixed(hzAccuracy);
     }
     /**
      * Turns ON or OFF a row in the H-Stack table.
