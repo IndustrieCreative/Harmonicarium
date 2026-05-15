@@ -662,6 +662,9 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             } else {
 
                 if (!keyFound.ft) {
+                    // Capture before any key-off so we know if the pointer was already
+                    // in free space (not sliding off a key into the free area).
+                    const ftWasAlreadyFree = (this.activeKeys.ft === false);
                     if (this.activeKeys.ft !== false) {
                         if (this._isInSpectrogramZone(pointer)) {
                             // Pointer is sliding in the spectrogram zone: keep the note
@@ -673,8 +676,10 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                         }
                     }
                     // ====== FT CONTINUUM ======
+                    // Only activate continuum if the press originated in free space —
+                    // not when the pointer is sliding off a key (which should trigger hold).
                     if (this.type === 'ft') {
-                        if (pointer.down !== false) {
+                        if (pointer.down !== false && ftWasAlreadyFree) {
                             // Pointer is pressed in free (between-keys) area: glide continuously.
                             this.padSet.dhc.playFTcontinuum(HUM.DHCmsg.ftONcontinuum('dppad', frequency, HUM.DHC.freqToMc(frequency), 120));
                             this.activeContinuum.ft = true;
@@ -695,18 +700,8 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                             this.activeKeys.ht = false;
                         }
                     }
-                    // ====== HT CONTINUUM ======
-                    if (this.type === 'ht') {
-                        if (pointer.down !== false) {
-                            // Pointer is pressed in free (between-keys) area: glide continuously.
-                            this.padSet.dhc.playHTcontinuum(HUM.DHCmsg.htONcontinuum('dppad', frequency, HUM.DHC.freqToMc(frequency), 120));
-                            this.activeContinuum.ht = true;
-                        } else if (this.activeContinuum.ht) {
-                            // Pointer was released in free area: stop the continuum tone.
-                            this.padSet.dhc.muteHTcontinuum(HUM.DHCmsg.htOFFcontinuum('dppad', frequency, HUM.DHC.freqToMc(frequency)));
-                            this.activeContinuum.ht = false;
-                        }
-                    }
+                    // HT continuum is intentionally disabled:
+                    // on the HT pad only discrete keys produce sound.
                 }
 
                 this.currentFreq = frequency;
