@@ -52,9 +52,75 @@ var webAudioPeakMeter = (function() {
 
     var createMeterNode = function(sourceNode, audioCtx) {
         var c = sourceNode.channelCount;
-        var meterNode = audioCtx.createScriptProcessor(2048, c, c);
-        sourceNode.connect(meterNode);
-        meterNode.connect(audioCtx.destination);
+        var _onaudioprocess = null;
+        var _initStarted = false;
+        var meterNode = { channelCount: c };
+
+        var processorCode = [
+            'class PeakSampleProcessor extends AudioWorkletProcessor {',
+            '    process(inputs) {',
+            '        var ch = inputs[0];',
+            '        if (ch.length > 0) {',
+            '            var peaks = [];',
+            '            for (var c = 0; c < ch.length; c++) {',
+            '                var max = 0;',
+            '                for (var s = 0; s < ch[c].length; s++) {',
+            '                    var v = Math.abs(ch[c][s]);',
+            '                    if (v > max) max = v;',
+            '                }',
+            '                peaks.push(max);',
+            '            }',
+            '            this.port.postMessage({ type: "peaks", peaks: peaks });',
+            '        }',
+            '        return true;',
+            '    }',
+            '}',
+            'try {',
+            '    registerProcessor("peak-sample-processor-hum", PeakSampleProcessor);',
+            '} catch(e) {}',
+        ].join('\n');
+
+        var initWorklet = async function() {
+            var workletNode;
+            try {
+                workletNode = new AudioWorkletNode(audioCtx, 'peak-sample-processor-hum');
+            } catch(e) {
+                var blob = new Blob([processorCode], { type: 'application/javascript' });
+                var blobUrl = URL.createObjectURL(blob);
+                await audioCtx.audioWorklet.addModule(blobUrl);
+                workletNode = new AudioWorkletNode(audioCtx, 'peak-sample-processor-hum');
+            }
+            workletNode.port.onmessage = function(e) {
+                if (e.data.type === 'peaks' && _onaudioprocess) {
+                    var peaks = e.data.peaks;
+                    for (var i = 0; i < channelCount; i++) {
+                        var val = i < peaks.length ? peaks[i] : 0;
+                        maskSizes[i] = maskSize(val);
+                        if (val > channelPeaks[i]) {
+                            channelPeaks[i] = val;
+                            textLabels[i] = dbFromFloat(channelPeaks[i]).toFixed(1);
+                        }
+                    }
+                }
+            };
+            sourceNode.connect(workletNode).connect(audioCtx.destination);
+        };
+
+        Object.defineProperty(meterNode, 'onaudioprocess', {
+            get: function() { return _onaudioprocess; },
+            set: function(fn) {
+                _onaudioprocess = fn;
+                if (fn && !_initStarted) {
+                    _initStarted = true;
+                    initWorklet().catch(function(e) {
+                        console.error('webAudioPeakMeter: AudioWorkletNode init failed.', e);
+                    });
+                }
+            },
+            configurable: true,
+            enumerable: true,
+        });
+
         return meterNode;
     };
 
