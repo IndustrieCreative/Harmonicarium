@@ -81,7 +81,8 @@ HUM.prototype.Parameters = class {
             postInit: (thisParam) => {
                 thisParam.bsModal = new bootstrap.Modal(thisParam.uiElements.out.splashModal, {
                     keyboard: false,
-                    backdrop: 'static'
+                    backdrop: 'static',
+                    focus: false
                 });
             }
         });
