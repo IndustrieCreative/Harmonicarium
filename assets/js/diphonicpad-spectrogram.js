@@ -106,10 +106,15 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this.timeDomainArray = null;
 
         // Timestamp (performance.now()) of the last animation frame in which at least
-        // one user note (FT or HT) was playing.  Used to enforce a 500 ms quiet-period
+        // one user note (FT or HT) was playing.  Used to enforce a quiet-period
         // before spectrogram pitch tracking is allowed to recompute the HT scale.
         // Initialized to 0 so tracking is enabled immediately on first start.
         this._lastNoteActiveTime = 0;
+
+        // The last Hz value successfully passed to trackFTcontinuum.
+        // Persists after silence so the FT trace overlay stays visible at the last
+        // computed position. Cleared only when the spectrogram is disabled.
+        this._lastTrackedHz = null;
 
         // Pitch stabilization state (reset on disable; persists across silence gaps)
         this._pitchBuffer     = [];    // sliding window for median filter
@@ -203,6 +208,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this.timeDomainArray = null;
         this.detectedPitch = null;
         this._lastNoteActiveTime = 0;
+        this._lastTrackedHz = null;
 
         // Reset pitch stabilization state
         this._pitchBuffer     = [];
@@ -353,11 +359,16 @@ HUM.DpPad.PadSet.Spectrogram = class {
                              this.padSet.dhc.playQueue.ht.length > 0;
         if (_notesActive) {
             this._lastNoteActiveTime = performance.now();
+            // While the user is playing FTs (pad, MIDI, or continuum), clear the
+            // last tracked Hz so the trace line stays hidden after they stop,
+            // until pitch recognition fires again and re-sets it.
+            this._lastTrackedHz = null;
         }
         if (this.detectedPitch !== null &&
                 this.padSet.parameters.spectrogramPitchTrack.value &&
                 !_notesActive &&
                 performance.now() - this._lastNoteActiveTime >= 1000) {
+            this._lastTrackedHz = this.detectedPitch;
             this.padSet.dhc.trackFTcontinuum(this.detectedPitch);
         }
         this._detectFormants();
@@ -1169,9 +1180,9 @@ HUM.DpPad.PadSet.Spectrogram = class {
      *
      * @description
      * Lines are drawn as filled rectangles spanning the key-free area of the pad:
-     * - **Vertical orientation**: horizontal lines (3 px tall) at the detected
+     * - **Vertical orientation**: horizontal lines (4 px tall) at the detected
      *   frequency's row position.
-     * - **Horizontal orientation**: vertical lines (3 px wide) at the detected
+     * - **Horizontal orientation**: vertical lines (4 px wide) at the detected
      *   frequency's column position.
      * Frequencies outside the visible pad range are silently skipped.
      */
@@ -1179,11 +1190,15 @@ HUM.DpPad.PadSet.Spectrogram = class {
         const w   = overlayCanvas.width;
         const h   = overlayCanvas.height;
         const ctx = overlayCanvas.getContext('2d');
-        // Clear every frame — this is what makes lines vanish instantly on silence.
+        // Always clear first so stale pixels don't accumulate across frames.
+        // FT trace: show _lastTrackedHz (the last pitch that drove an HT recomputation).
+        // _lastTrackedHz is cleared in _drawFrame while the user plays notes, so the
+        // trace automatically stays hidden after notes stop — no per-frame check needed.
+        // HT formant traces: driven by live detection — vanish instantly on silence.
         ctx.clearRect(0, 0, w, h);
 
         const freqs = type === 'ft'
-            ? [this.detectedPitch]
+            ? [this._lastTrackedHz]
             : [this.detectedF1, this.detectedF2];
         if (freqs.every(f => f === null || f === undefined)) return;
 
@@ -1216,13 +1231,13 @@ HUM.DpPad.PadSet.Spectrogram = class {
                 const rawPx = dpPad.freqToPix(freq, freqRange, h);
                 const px    = Math.round(h - rawPx);
                 if (px < 0 || px >= h) continue;   // outside pad range — skip silently
-                // Horizontal line spanning the key-free x-range, 3 pixels tall.
+                // Horizontal line spanning the key-free x-range, 4 pixels tall.
                 ctx.fillRect(freeStart, px - 1, freeEnd - freeStart, 4);
             } else {
                 // Frequency axis = X (left = low freq, right = high freq).
                 const px = Math.round(dpPad.freqToPix(freq, freqRange, w));
                 if (px < 0 || px >= w) continue;   // outside pad range — skip silently
-                // Vertical line spanning the key-free y-range, 3 pixels wide.
+                // Vertical line spanning the key-free y-range, 4 pixels wide.
                 ctx.fillRect(px - 1, freeStart, 4, freeEnd - freeStart);
             }
         }
