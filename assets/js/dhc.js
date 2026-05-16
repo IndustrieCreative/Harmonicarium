@@ -821,6 +821,30 @@ HUM.DHC = class {
     }
 
     /**
+     * Silently tracks a continuum Fundamental Tone frequency without producing
+     * any sound on the FT voice. Rebuilds the HT lookup table so that all
+     * harmonic tones follow the new pitch, then broadcasts an `'update/ft'`
+     * message so subscribers can refresh their displays. No `'tone-on'` is
+     * emitted, so the Synth does not create an oscillator for the FT.
+     *
+     * @param {hertz} hz - The fundamental frequency in Hz to track.
+     *
+     * @returns {void}
+     */
+    trackFTcontinuum(hz) {
+        this.createHTtable(hz);
+        this.settings.ht.curr_ft = HUM.DHCmsg.CONTINUUM_XTNUM;
+        const mc = HUM.DHC.freqToMc(hz);
+        const msg = new HUM.DHCmsg(
+            'spectrogram', 'update/ft', 'ft',
+            HUM.DHCmsg.CONTINUUM_XTNUM,
+            false, false, false, false, false,
+            hz, mc, true
+        );
+        this.sendMessageToApps(msg);
+    }
+
+    /**
      * Stops the currently playing continuum Fundamental Tone.
      *
      * @param {HUM.DHCmsg} dhcMsg - A continuum `'tone-off'` FT message created with

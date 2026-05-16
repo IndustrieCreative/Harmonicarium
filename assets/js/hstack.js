@@ -145,6 +145,11 @@ HUM.Hstack = class {
         if (msg.cmd === 'update') {
             if (msg.type === 'ft') {
 
+                if (msg.continuum === true) {
+                    // Spectrogram pitch-tracking: update the FT row display silently.
+                    this.ftMonitorHz(msg.hz, msg.mc);
+                }
+
             } else if (msg.type === 'ht' && this.parameters.active.value) {
                 
                 this.fillin();
