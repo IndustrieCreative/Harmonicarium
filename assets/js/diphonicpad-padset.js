@@ -353,6 +353,7 @@ HUM.DpPad.PadSet = class {
         }
 
         if (msg.cmd === 'panic') {
+            this.ft.spectrogramHz = null;
             this.ft.allNotesOff();
             this.ht.allNotesOff();
         }
@@ -365,6 +366,9 @@ HUM.DpPad.PadSet = class {
                 // shown, no key highlighted (curr_ft is already -1 at this point).
                 if (msg.continuum === true) {
                     this.ft.currentFreq = 0;
+                    this.ft.spectrogramHz = msg.hz;
+                } else {
+                    this.ft.spectrogramHz = null;
                 }
 
                 // For each target pad of the FT scale
@@ -402,6 +406,7 @@ HUM.DpPad.PadSet = class {
         } else if (msg.cmd === 'tone-on') {
             if (msg.type === 'ft') {
 
+                this.ft.spectrogramHz = null;
                 this.ft.currentFreq = this.dhc.tables.ft[msg.xtNum].hz;
                 // this.ht.currentFreq = this.dhc.tables.ht[this.dhc.settings.ht.curr_ht].hz;
                 // this.ht.drawFreqMonitor();
@@ -434,6 +439,7 @@ HUM.DpPad.PadSet = class {
         } else if (msg.cmd === 'tone-off') {
             if (msg.type === 'ft') {
 
+                this.ft.spectrogramHz = null;
                 for (let targetPad of this.parameters.scaleDisplay.ft.value) {
                     // Do stuff for HT changes
                     // this[targetPad].canvasObjects.key.current.ht = false;

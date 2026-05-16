@@ -104,6 +104,9 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             ht: false
         };
         this.currentFreq = 0;
+        // Hz of the spectrogram-detected pitch currently being tracked.
+        // Non-null only while the spectrogram is silently driving the HT table.
+        this.spectrogramHz = null;
         this.touch = {
             // Variables to keep track of the touch position
             x: null,
@@ -1333,6 +1336,19 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         //        FT
         // =================
 
+        // Pre-compute the FT key (if any) whose frequency falls within ±50 cents of
+        // the spectrogram-detected pitch. Used in FT LINES and FT KEYS rendering below.
+        const spectroHz = this.spectrogramHz;
+        let spectroMatchFt = false;
+        if (spectroHz !== null) {
+            for (const ft of this.freqArrays.ft) {
+                if (ft[1].hz > 0 && Math.abs(1200 * Math.log2(ft[1].hz / spectroHz)) <= 50) {
+                    spectroMatchFt = ft[0];
+                    break;
+                }
+            }
+        }
+
         // - - - - - - - - -
         // FT LINES
         ctx.save();
@@ -1348,6 +1364,14 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 ctx.shadowBlur = 15;
                 this.drawLinKey(pxPosition, false, false, 1);
                 // this.drawFreqLine(pxPosition, false);
+                ctx.restore();
+            } else if (spectroMatchFt !== false && spectroMatchFt === ft[0]) {
+                ctx.save();
+                ctx.fillStyle = '#4cff50';
+                ctx.strokeStyle = '#4cff50';
+                ctx.shadowColor = '#4cff50';
+                ctx.shadowBlur = 15;
+                this.drawLinKey(pxPosition, false, false, 1);
                 ctx.restore();
             } else {
                 ctx.fillStyle = 'gray';                    
@@ -1391,6 +1415,16 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 // this.drawLinKey(pxPosition, 'ft', ft[0], false, ['#DarkSalmon', 'DarkSalmon', '#110e23']);
                 this.drawLinKey(pxPosition, 'ft', ft[0], false, ['darksalmon', 'darksalmon', '#db9c57'], zindex);
                 // this.drawLinKey(pxPosition, 'ft', ft[0]);
+            } else if (spectroMatchFt !== false && spectroMatchFt === ft[0]) {
+                // Spectrogram pitch-tracking: highlight the nearest FT key in green.
+                ctx.shadowColor = '#4cff50';
+                if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
+                    ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
+                } else if (this.padSet.parameters.scaleOrientation.ft.value === 'horizontal') {
+                    ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
+                }
+                ctx.shadowBlur = 20;
+                this.drawLinKey(pxPosition, 'ft', ft[0], false, ['#4cff50', '#a8ffa9', '#2d9e30'], zindex);
             } else {
                 if (note[3]) {
                     this.drawLinKey(pxPosition, 'ft', ft[0], false, ['#28272d', '#514e5f', '#110e23'], zindex);
