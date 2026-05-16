@@ -836,7 +836,7 @@ HUM.DHC = class {
         this.settings.ht.curr_ft = HUM.DHCmsg.CONTINUUM_XTNUM;
         const mc = HUM.DHC.freqToMc(hz);
         const msg = new HUM.DHCmsg(
-            'spectrogram', 'update/ft', 'ft',
+            'spectrogram', 'update', 'ft',
             HUM.DHCmsg.CONTINUUM_XTNUM,
             false, false, false, false, false,
             hz, mc, true

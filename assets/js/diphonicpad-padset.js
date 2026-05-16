@@ -360,6 +360,13 @@ HUM.DpPad.PadSet = class {
         if (msg.cmd === 'update') {
             if (msg.type === 'ft') {
 
+                // When the spectrogram is silently driving the FT (continuum tracking),
+                // clear the FT monitor so the pad looks fully "off" — no active frequency
+                // shown, no key highlighted (curr_ft is already -1 at this point).
+                if (msg.continuum === true) {
+                    this.ft.currentFreq = 0;
+                }
+
                 // For each target pad of the FT scale
                 for (let targetPad of this.parameters.scaleDisplay.ft.value) {
                     // Do stuff for FT changes
