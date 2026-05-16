@@ -105,6 +105,12 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this.detectedPitch = null;
         this.timeDomainArray = null;
 
+        // Timestamp (performance.now()) of the last animation frame in which at least
+        // one user note (FT or HT) was playing.  Used to enforce a 500 ms quiet-period
+        // before spectrogram pitch tracking is allowed to recompute the HT scale.
+        // Initialized to 0 so tracking is enabled immediately on first start.
+        this._lastNoteActiveTime = 0;
+
         // Pitch stabilization state (reset on disable; persists across silence gaps)
         this._pitchBuffer     = [];    // sliding window for median filter
         this._lastStablePitch = null;  // hysteresis: last accepted pitch
@@ -196,6 +202,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this.dataArray = null;
         this.timeDomainArray = null;
         this.detectedPitch = null;
+        this._lastNoteActiveTime = 0;
 
         // Reset pitch stabilization state
         this._pitchBuffer     = [];
@@ -339,7 +346,18 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this._detectPitch();
         // Drive the FT continuum silently so the HT scale follows the detected pitch.
         // No FT sound is produced; the Synth is not triggered.
-        if (this.detectedPitch !== null && this.padSet.parameters.spectrogramPitchTrack.value) {
+        // Suppressed while any user note (FT or HT, from pad/MIDI) is active, and for
+        // 500 ms after the last note stops — playQueue entries are only written by played
+        // notes, not by trackFTcontinuum, so this accurately reflects user activity.
+        const _notesActive = this.padSet.dhc.playQueue.ft.length > 0 ||
+                             this.padSet.dhc.playQueue.ht.length > 0;
+        if (_notesActive) {
+            this._lastNoteActiveTime = performance.now();
+        }
+        if (this.detectedPitch !== null &&
+                this.padSet.parameters.spectrogramPitchTrack.value &&
+                !_notesActive &&
+                performance.now() - this._lastNoteActiveTime >= 1000) {
             this.padSet.dhc.trackFTcontinuum(this.detectedPitch);
         }
         this._detectFormants();
