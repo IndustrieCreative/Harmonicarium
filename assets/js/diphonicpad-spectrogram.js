@@ -355,13 +355,15 @@ HUM.DpPad.PadSet.Spectrogram = class {
         // Suppressed while any user note (FT or HT, from pad/MIDI) is active, and for
         // 500 ms after the last note stops — playQueue entries are only written by played
         // notes, not by trackFTcontinuum, so this accurately reflects user activity.
-        const _notesActive = this.padSet.dhc.playQueue.ft.length > 0 ||
-                             this.padSet.dhc.playQueue.ht.length > 0;
+        const _ftNotesActive = this.padSet.dhc.playQueue.ft.length > 0;
+        const _notesActive = _ftNotesActive || this.padSet.dhc.playQueue.ht.length > 0;
         if (_notesActive) {
             this._lastNoteActiveTime = performance.now();
-            // While the user is playing FTs (pad, MIDI, or continuum), clear the
-            // last tracked Hz so the trace line stays hidden after they stop,
-            // until pitch recognition fires again and re-sets it.
+        }
+        if (_ftNotesActive) {
+            // User is playing FTs — clear the last tracked Hz so the FT trace overlay
+            // hides immediately and stays hidden until pitch recognition fires again.
+            // HT-only activity does not clear it: the FT is still set by pitch recognition.
             this._lastTrackedHz = null;
         }
         if (this.detectedPitch !== null &&
@@ -1191,9 +1193,10 @@ HUM.DpPad.PadSet.Spectrogram = class {
         const h   = overlayCanvas.height;
         const ctx = overlayCanvas.getContext('2d');
         // Always clear first so stale pixels don't accumulate across frames.
-        // FT trace: show _lastTrackedHz (the last pitch that drove an HT recomputation).
-        // _lastTrackedHz is cleared in _drawFrame while the user plays notes, so the
-        // trace automatically stays hidden after notes stop — no per-frame check needed.
+        // FT trace: uses _lastTrackedHz, which is set only when spectrogram pitch
+        // recognition calls trackFTcontinuum, and cleared whenever user plays any FT.
+        // This means the trace persists after silence but disappears on user FT play
+        // and stays hidden until pitch recognition reactivates it.
         // HT formant traces: driven by live detection — vanish instantly on silence.
         ctx.clearRect(0, 0, w, h);
 
