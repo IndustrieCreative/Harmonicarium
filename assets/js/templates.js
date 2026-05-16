@@ -1452,6 +1452,23 @@ HUM.tmpl = {
                             </div>
                         </div>
                     </div>
+
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-lg">
+                                <strong class="mb-2">Pitch tracking</strong>
+                                <div><small class="text-muted">When enabled, the detected fundamental pitch automatically updates the harmonic series.</small></div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           id="HTMLi_dppad_spectrogram_pitchtrack${dhcID}"
+                                           role="switch">
+                                    <label class="form-check-label" for="HTMLi_dppad_spectrogram_pitchtrack${dhcID}">Enable</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="list-group mb-3">

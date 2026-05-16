@@ -339,7 +339,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this._detectPitch();
         // Drive the FT continuum silently so the HT scale follows the detected pitch.
         // No FT sound is produced; the Synth is not triggered.
-        if (this.detectedPitch !== null) {
+        if (this.detectedPitch !== null && this.padSet.parameters.spectrogramPitchTrack.value) {
             this.padSet.dhc.trackFTcontinuum(this.detectedPitch);
         }
         this._detectFormants();
