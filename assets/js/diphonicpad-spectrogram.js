@@ -910,29 +910,30 @@ HUM.DpPad.PadSet.Spectrogram = class {
     }
 
     /**
-     * Estimates the first (F1) and second (F2) formant frequencies using
-     * linear predictive coding (LPC).
+     * Detects the two most prominent spectral peaks within the visible HT pad
+     * frequency range by reading directly from the live FFT `dataArray` — the
+     * same buffer rendered by the spectrum line.  This is a purely geometric /
+     * amplitude-based approach: the reported frequency is whichever FFT bin has
+     * the highest amplitude on screen, not a model-derived envelope peak.
      *
      * @returns {void}
      *
      * @description
-     * Reuses `this.timeDomainArray` which was filled by `_detectPitch()` in the
-     * same frame — no extra `getFloatTimeDomainData` call needed.
-     * Pipeline: RMS gate → pre-emphasis → Hamming window → LPC coefficients
-     * (Levinson-Durbin, order `LPC_ORDER`) → LPC spectral peak picking →
-     * 5-frame median smoothing per formant.
-     * Results stored in `this.detectedF1` and `this.detectedF2` (Hz, or null
-     * on silence / detection failure).
+     * Pipeline:
+     * 1. RMS gate — suppress on silence (threshold 0.015).
+     * 2. Constrain the bin search to the visible HT frequency range
+     *    (`freqRange['ht'].min.value` … `max.value`) so only peaks that are
+     *    actually displayed on the spectrum line are considered.
+     * 3. Collect all strict local maxima in `dataArray` within that range.
+     * 4. Parabolic interpolation per peak for sub-bin frequency accuracy.
+     * 5. Sort by amplitude (loudest first); keep the top two peaks that are
+     *    ≥ 50 Hz apart to avoid selecting sidelobe pairs of the same harmonic.
+     * 6. Sort the two keepers by frequency ascending (F1 = lower, F2 = higher).
+     * 7. Apply a 5-frame sliding median per peak for temporal smoothing.
+     * Results stored in `this.detectedF1` / `this.detectedF2` (Hz or null).
      * @private
      */
     _detectFormants() {
-        // ── Tunable constant ──────────────────────────────────────────────────
-        // LPC order: higher = sharper spectral envelope, higher CPU cost.
-        // 16 gives 3–4 well-resolved formants at typical sample rates.
-        const LPC_ORDER = 16;
-        // ─────────────────────────────────────────────────────────────────────
-
-        // timeDomainArray was already filled by _detectPitch() this frame.
         const buf = this.timeDomainArray;
         const n   = buf.length;
         const sr  = this.audioCtx.sampleRate;
@@ -946,28 +947,48 @@ HUM.DpPad.PadSet.Spectrogram = class {
             return;
         }
 
-        // Use a 1024-sample analysis frame (~23 ms at 44 100 Hz).
-        const frameLen = Math.min(n, 1024);
+        const binWidth  = sr / this.analyser.fftSize;
+        const dataArray = this.dataArray;
+        const dataLen   = dataArray.length;
 
-        // Pre-emphasis: boosts high frequencies, flattens spectral tilt.
-        const frame = new Float32Array(frameLen);
-        frame[0] = buf[0];
-        for (let i = 1; i < frameLen; i++) frame[i] = buf[i] - 0.97 * buf[i - 1];
+        // Constrain the search to the visible HT pad frequency range so the
+        // reported peak always corresponds to a visible spike on the red line.
+        const freqRange = this.padSet.parameters.freqRange['ht'];
+        const minBin    = Math.max(1,           Math.round(freqRange.min.value / binWidth));
+        const maxBin    = Math.min(dataLen - 2, Math.round(freqRange.max.value / binWidth));
 
-        // Hamming window — reduces spectral leakage at frame edges.
-        for (let i = 0; i < frameLen; i++) {
-            frame[i] *= 0.54 - 0.46 * Math.cos(2 * Math.PI * i / (frameLen - 1));
+        // Collect all strict local maxima within the visible bin range.
+        const peaks = [];
+        for (let bin = minBin + 1; bin < maxBin; bin++) {
+            if (dataArray[bin] > dataArray[bin - 1] && dataArray[bin] > dataArray[bin + 1]) {
+                // Parabolic interpolation for sub-bin frequency accuracy.
+                const alpha = dataArray[bin - 1];
+                const beta  = dataArray[bin];
+                const gamma = dataArray[bin + 1];
+                const denom = alpha - 2 * beta + gamma;   // ≤ 0 at a maximum
+                const binF  = denom < 0 ? bin + 0.5 * (alpha - gamma) / denom : bin;
+                peaks.push({ freq: binF * binWidth, amp: beta });
+            }
         }
 
-        // LPC coefficients via autocorrelation + Levinson-Durbin.
-        const a = this._lpcCoeffs(frame, frameLen, LPC_ORDER);
-        if (!a) { this.detectedF1 = null; this.detectedF2 = null; return; }
+        // Sort by amplitude (loudest first) and keep the top two peaks that are
+        // at least 50 Hz apart, to avoid treating sidelobes as separate peaks.
+        peaks.sort((a, b) => b.amp - a.amp);
+        const MIN_SEP  = 50;   // Hz
+        const formants = [];
+        for (const peak of peaks) {
+            if (formants.every(f => Math.abs(f.freq - peak.freq) >= MIN_SEP)) {
+                formants.push(peak);
+                if (formants.length >= 2) break;
+            }
+        }
+        formants.sort((a, b) => a.freq - b.freq);   // F1 = lower, F2 = higher
 
-        // Identify spectral peak frequencies and label them F1, F2.
-        const raw      = this._formantFromLPC(a, LPC_ORDER, sr);
         const MEDIAN_N = 5;   // 5-frame sliding median ≈ 167 ms at 30 fps
-        this.detectedF1 = raw.length >= 1 ? this._formantMedian(raw[0], this._f1Buffer, MEDIAN_N) : null;
-        this.detectedF2 = raw.length >= 2 ? this._formantMedian(raw[1], this._f2Buffer, MEDIAN_N) : null;
+        this.detectedF1 = formants.length >= 1
+            ? this._formantMedian(formants[0].freq, this._f1Buffer, MEDIAN_N) : null;
+        this.detectedF2 = formants.length >= 2
+            ? this._formantMedian(formants[1].freq, this._f2Buffer, MEDIAN_N) : null;
     }
 
     /**
@@ -1171,6 +1192,93 @@ HUM.DpPad.PadSet.Spectrogram = class {
     }
 
     /**
+     * Renders a real-time FFT spectrum line on the HT pad overlay canvas.
+     *
+     * For each pixel row (vertical orientation) or column (horizontal
+     * orientation) the corresponding frequency is looked up in the live FFT
+     * data and the amplitude is mapped to an offset from the key-band boundary
+     * into the key-free area.  The baseline of the line is the edge of the
+     * free area that borders the key band; high amplitude extends away from it.
+     * The line uses the same frequency-to-pixel mapping as `_renderPad` so it
+     * is perfectly aligned with the waterfall and the HT key labels.
+     *
+     * @param {CanvasRenderingContext2D} ctx          - The overlay 2D context.
+     * @param {HTMLCanvasElement}        overlayCanvas - The overlay canvas.
+     * @param {tonetype}                 type          - Only acts when `'ht'`.
+     * @private
+     */
+    _drawSpectrumLine(ctx, overlayCanvas, type) {
+        if (type !== 'ht') return;
+        if (!this.dataArray) return;
+
+        const w = overlayCanvas.width;
+        const h = overlayCanvas.height;
+        if (w <= 0 || h <= 0) return;
+
+        const scaleOrient  = this.padSet.parameters.scaleOrientation[type].value;
+        const freqRange    = this.padSet.parameters.freqRange[type];
+        const dpPad        = this.padSet.dpPadComponent;
+        const sampleRate   = this.audioCtx.sampleRate;
+        const binWidth     = sampleRate / this.analyser.fftSize;
+        const dataArray    = this.dataArray;
+        const dataLen      = dataArray.length;
+        const keyRatios    = this.padSet.parameters.canvasObjectsRatios[type].key;
+        const keysAtFarEnd = keyRatios.position >= 0.5;
+
+        // Number of pixels to skip between sampled points.
+        // 1 = maximum resolution (one point per pixel);
+        // higher values produce a coarser, more angular line.
+        const STEP = 8;
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(220, 50, 50, 0.9)';
+        ctx.lineWidth   = 2;
+        ctx.lineJoin    = 'round';
+        ctx.beginPath();
+
+        if (scaleOrient === 'vertical') {
+            const keyBandX  = w * (1 - keyRatios.length) * keyRatios.position;
+            const keyBandW  = w * keyRatios.length;
+            const freeStart = keysAtFarEnd ? 0                    : Math.ceil(keyBandX + keyBandW);
+            const freeEnd   = keysAtFarEnd ? Math.floor(keyBandX) : w;
+            const freeWidth = freeEnd - freeStart;
+            // Baseline is the key-band edge; amplitude extends into the free area.
+            const baselineX = keysAtFarEnd ? freeEnd  : freeStart;
+            const direction = keysAtFarEnd ? -1        : 1;
+
+            let first = true;
+            for (let y = 0; y < h; y += STEP) {
+                const freq     = dpPad.pixToFreq(h - y, freqRange, h);
+                const binIndex = Math.round(freq / binWidth);
+                const amp      = (binIndex >= 0 && binIndex < dataLen) ? dataArray[binIndex] : 0;
+                const lineX    = baselineX + direction * (amp / 255) * freeWidth;
+                if (first) { ctx.moveTo(lineX, y); first = false; } else { ctx.lineTo(lineX, y); }
+            }
+        } else {
+            // Horizontal orientation: frequency axis runs along X.
+            const keyBandY   = h * (1 - keyRatios.length) * keyRatios.position;
+            const keyBandH   = h * keyRatios.length;
+            const freeStart  = keysAtFarEnd ? 0                    : Math.ceil(keyBandY + keyBandH);
+            const freeEnd    = keysAtFarEnd ? Math.floor(keyBandY) : h;
+            const freeHeight = freeEnd - freeStart;
+            const baselineY  = keysAtFarEnd ? freeEnd  : freeStart;
+            const direction  = keysAtFarEnd ? -1        : 1;
+
+            let first = true;
+            for (let x = 0; x < w; x += STEP) {
+                const freq     = dpPad.pixToFreq(x, freqRange, w);
+                const binIndex = Math.round(freq / binWidth);
+                const amp      = (binIndex >= 0 && binIndex < dataLen) ? dataArray[binIndex] : 0;
+                const lineY    = baselineY + direction * (amp / 255) * freeHeight;
+                if (first) { ctx.moveTo(x, lineY); first = false; } else { ctx.lineTo(x, lineY); }
+            }
+        }
+
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    /**
      * Draws pitch / formant trace lines on the dedicated overlay canvas for the
      * given pad type. The overlay is cleared entirely every frame so lines
      * disappear immediately when detection returns `null` — no scrolling
@@ -1199,6 +1307,9 @@ HUM.DpPad.PadSet.Spectrogram = class {
         // and stays hidden until pitch recognition reactivates it.
         // HT formant traces: driven by live detection — vanish instantly on silence.
         ctx.clearRect(0, 0, w, h);
+
+        // Draw the real-time spectrum line in the HT pad key-free area.
+        this._drawSpectrumLine(ctx, overlayCanvas, type);
 
         const freqs = type === 'ft'
             ? [this._lastTrackedHz]
