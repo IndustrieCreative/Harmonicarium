@@ -1365,14 +1365,6 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 this.drawLinKey(pxPosition, false, false, 1);
                 // this.drawFreqLine(pxPosition, false);
                 ctx.restore();
-            } else if (spectroMatchFt !== false && spectroMatchFt === ft[0]) {
-                ctx.save();
-                ctx.fillStyle = '#4cff50';
-                ctx.strokeStyle = '#4cff50';
-                ctx.shadowColor = '#4cff50';
-                ctx.shadowBlur = 15;
-                this.drawLinKey(pxPosition, false, false, 1);
-                ctx.restore();
             } else {
                 ctx.fillStyle = 'gray';                    
                 ctx.strokeStyle = 'gray';                    
