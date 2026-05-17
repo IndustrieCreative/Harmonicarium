@@ -982,13 +982,13 @@ HUM.DpPad.PadSet.Spectrogram = class {
                 if (formants.length >= 2) break;
             }
         }
-        formants.sort((a, b) => a.freq - b.freq);   // F1 = lower, F2 = higher
+        // Use the highest-frequency peak among the candidates.
+        formants.sort((a, b) => b.freq - a.freq);   // highest freq first
 
         const MEDIAN_N = 5;   // 5-frame sliding median ≈ 167 ms at 30 fps
         this.detectedF1 = formants.length >= 1
             ? this._formantMedian(formants[0].freq, this._f1Buffer, MEDIAN_N) : null;
-        this.detectedF2 = formants.length >= 2
-            ? this._formantMedian(formants[1].freq, this._f2Buffer, MEDIAN_N) : null;
+        this.detectedF2 = null;
     }
 
     /**
