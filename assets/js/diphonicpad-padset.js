@@ -354,6 +354,7 @@ HUM.DpPad.PadSet = class {
 
         if (msg.cmd === 'panic') {
             this.ft.spectrogramHz = null;
+            this.ht.spectrogramHzFormant = null;
             this.ft.allNotesOff();
             this.ht.allNotesOff();
         }

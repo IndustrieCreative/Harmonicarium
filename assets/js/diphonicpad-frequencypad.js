@@ -107,6 +107,9 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         // Hz of the spectrogram-detected pitch currently being tracked.
         // Non-null only while the spectrogram is silently driving the HT table.
         this.spectrogramHz = null;
+        // Hz of the spectrogram-detected formant (HT pad only).
+        // Kept separate from spectrogramHz so FT pitch-tracking is never contaminated.
+        this.spectrogramHzFormant = null;
         this.touch = {
             // Variables to keep track of the touch position
             x: null,
@@ -1524,6 +1527,17 @@ HUM.DpPad.PadSet.FrequencyPad = class {
 
         // - - - - - - - - -
         // HT KEYS
+        // Pre-compute the HT key (if any) nearest to the spectrogram-detected formant.
+        let spectroMatchHt = false;
+        if (this.spectrogramHzFormant !== null) {
+            let minCents = 50;   // tolerance: ±50 cents
+            for (const ht of this.freqArrays.ht) {
+                if (ht[1].hz > 0) {
+                    const cents = Math.abs(1200 * Math.log2(ht[1].hz / this.spectrogramHzFormant));
+                    if (cents < minCents) { minCents = cents; spectroMatchHt = ht[0]; }
+                }
+            }
+        }
         ctx.save();
         ctx.beginPath();
         ctx.strokeStyle = 'grey';
@@ -1570,6 +1584,16 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 ctx.shadowBlur = 20;
                 // The 2nd color of the passed array is supposed to be the best to contrast with the key label
                 this.drawFreqKeyHT(ht[1].hz, ht[0], arrIdx, [color[2], color[0], color[2]], zindex);
+            } else if (spectroMatchHt !== false && spectroMatchHt === ht[0]) {
+                // Spectrogram formant-tracking: green glow toward the spectrogram side.
+                ctx.shadowColor = '#4cff50';
+                if (this.padSet.parameters.scaleOrientation.ht.value === 'vertical') {
+                    ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
+                } else if (this.padSet.parameters.scaleOrientation.ht.value === 'horizontal') {
+                    ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
+                }
+                ctx.shadowBlur = 20;
+                this.drawFreqKeyHT(ht[1].hz, ht[0], arrIdx, ['#4cff50', '#a8ffa9', '#2d9e30'], zindex);
             } else {
                 ctx.fillStyle = this.getHTcolor(ht[0]);
                 this.drawFreqKeyHT(ht[1].hz, ht[0], arrIdx, [color[0], color[0], color[0]], zindex);

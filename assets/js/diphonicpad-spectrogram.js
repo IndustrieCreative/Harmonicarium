@@ -223,6 +223,11 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this._f1Buffer  = [];
         this._f2Buffer  = [];
 
+        // Clear the HT formant key highlight.
+        for (let targetPad of this.padSet.parameters.scaleDisplay.ht.value) {
+            this.padSet[targetPad].spectrogramHzFormant = null;
+            this.padSet[targetPad].drawFreqUI();
+        }
         this._clearCanvases();
         this._updatePadBackgrounds(false);
         this.enabled = false;
@@ -374,6 +379,11 @@ HUM.DpPad.PadSet.Spectrogram = class {
             this.padSet.dhc.trackFTcontinuum(this.detectedPitch);
         }
         this._detectFormants();
+        // Update the HT formant key highlight on the frequency-pad canvas.
+        for (let targetPad of this.padSet.parameters.scaleDisplay.ht.value) {
+            this.padSet[targetPad].spectrogramHzFormant = this.detectedF1;
+            this.padSet[targetPad].drawFreqUI();
+        }
         this._renderPad(this.canvases.ft, 'ft');
         this._renderPad(this.canvases.ht, 'ht');
     }
