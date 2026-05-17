@@ -1355,7 +1355,8 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         ctx.beginPath();
         for (let ft of this.freqArrays.ft) {
             let pxPosition = this.freqToPadPix(ft[1].hz);
-            if (this.padSet.dhc.settings.ht.curr_ft === ft[0]) {
+            if (this.padSet.dhc.settings.ht.curr_ft !== HUM.DHCmsg.CONTINUUM_XTNUM &&
+                    this.padSet.dhc.settings.ht.curr_ft === ft[0]) {
                 ctx.save();
                 ctx.fillStyle = '#db5757';                    
                 ctx.strokeStyle = '#db5757';
@@ -1388,7 +1389,8 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             ctx.save();
             let pxPosition = this.freqToPadPix(ft[1].hz);
             let note = this.padSet.dhc.mcToName(ft[1].mc);
-            if (this.padSet.dhc.settings.ht.curr_ft === ft[0]) {
+            if (this.padSet.dhc.settings.ht.curr_ft !== HUM.DHCmsg.CONTINUUM_XTNUM &&
+                    this.padSet.dhc.settings.ht.curr_ft === ft[0]) {
                 // Draw the curr_ft as the last key
                 curr_ft = [pxPosition, ft[0]];
                 continue;
