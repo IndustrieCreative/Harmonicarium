@@ -1211,7 +1211,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
         const STEP = 8;
 
         ctx.save();
-        ctx.strokeStyle = 'rgba(220, 50, 50, 0.9)';
+        ctx.strokeStyle = 'rgba(34, 41, 217, 0.9)';
         ctx.lineWidth   = 2;
         ctx.lineJoin    = 'round';
         ctx.beginPath();

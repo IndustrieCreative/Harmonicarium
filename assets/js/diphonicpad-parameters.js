@@ -1088,6 +1088,13 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
      * listeners that must run after the DOM has been fully built.
      */
     _init() {
+        if (window.matchMedia('(max-width: 767px)').matches) {
+            this.fonts.ft.hzMonitor.initValue.size = 13;
+            this.fonts.ft.keyLabel.initValue.size   = 66;
+            this.fonts.ht.hzMonitor.initValue.size  = 13;
+            this.fonts.ht.keyLabel.initValue.size   = 66;
+            this.fonts.ht.lineLabel.initValue.size  = 59;
+        }
         this.fonts.ft.hzMonitor._init();
         this.fonts.ft.keyLabel._init();
         this.fonts.ht.hzMonitor._init();
