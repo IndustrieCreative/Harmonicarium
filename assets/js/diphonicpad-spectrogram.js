@@ -371,7 +371,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
         // Run pitch + formant detection once every DETECTION_STRIDE rendered
         // frames (≈30 fps × stride) to reduce CPU load.  The EMA display values
         // update every frame regardless, giving smooth on-screen movement.
-        const DETECTION_STRIDE = 3;     // run detection every 3 frames ≈ 100 ms
+        const DETECTION_STRIDE = 1;     // run detection every 3 frames ≈ 100 ms
         // EMA coefficient for display smoothing.  Range (0, 1]:
         // 1 = instant (no inertia), 0.15 ≈ 200 ms time-constant at 30 fps.
         const INERTIA_ALPHA    = 0.75;
