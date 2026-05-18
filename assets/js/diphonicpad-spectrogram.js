@@ -618,15 +618,27 @@ HUM.DpPad.PadSet.Spectrogram = class {
         for (let i = 0; i < n; i++) rms += buf[i] * buf[i];
         if (Math.sqrt(rms / n) < 0.015) { this.detectedPitch = null; return; }
 
-        // Vocal range: 80 Hz (bass) – 1000 Hz (soprano high)
-        const minLag = Math.floor(sr / 1000);
+        // Low-pass filter: attenuate frequencies above 500 Hz before pitch detection
+        // to suppress harmonics that can bias ACF/YIN toward the wrong octave.
+        // First-order causal IIR: y[n] = α·x[n] + (1−α)·y[n−1]
+        const LP_CUTOFF = 500;   // Hz
+        const lpAlpha   = 1 - Math.exp(-2 * Math.PI * LP_CUTOFF / sr);
+        const lpBuf     = new Float32Array(n);
+        let   lpState   = 0;
+        for (let i = 0; i < n; i++) {
+            lpState  = lpAlpha * buf[i] + (1 - lpAlpha) * lpState;
+            lpBuf[i] = lpState;
+        }
+
+        // Vocal range: 80 Hz (bass) – 500 Hz (aligned with LP filter cutoff)
+        const minLag = Math.floor(sr / 500);
         const maxLag = Math.min(Math.ceil(sr / 80), n - 1);
 
         // Step 1: compute raw candidate pitch via the selected core algorithm
         let raw;
-        if      (PITCH_MODE === 4 || PITCH_MODE === 6) raw = this._pitchYIN(buf, n, sr, minLag, maxLag);
-        else if (PITCH_MODE === 5)                     raw = this._pitchACFSubHarmGuard(buf, n, sr, minLag, maxLag);
-        else                                           raw = this._pitchACF(buf, n, sr, minLag, maxLag);
+        if      (PITCH_MODE === 4 || PITCH_MODE === 6) raw = this._pitchYIN(lpBuf, n, sr, minLag, maxLag);
+        else if (PITCH_MODE === 5)                     raw = this._pitchACFSubHarmGuard(lpBuf, n, sr, minLag, maxLag);
+        else                                           raw = this._pitchACF(lpBuf, n, sr, minLag, maxLag);
 
         if (raw === null) { this.detectedPitch = null; return; }
 
