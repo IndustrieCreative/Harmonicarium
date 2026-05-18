@@ -135,6 +135,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this._detectionFrameCount = 0;    // frame counter for detection-rate throttle
         this._displayPitchHz      = null; // inertia-smoothed FT pitch
         this._displayFormantHz    = null; // inertia-smoothed HT formant
+        this._fftAccumulator      = null; // Float32Array sum of FFT frames in the current stride window
     }
 
     /**
@@ -234,6 +235,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this._detectionFrameCount = 0;
         this._displayPitchHz      = null;
         this._displayFormantHz    = null;
+        this._fftAccumulator      = null;
 
         // Clear the HT formant key highlight.
         for (let targetPad of this.padSet.parameters.scaleDisplay.ht.value) {
@@ -369,18 +371,39 @@ HUM.DpPad.PadSet.Spectrogram = class {
         // Run pitch + formant detection once every DETECTION_STRIDE rendered
         // frames (≈30 fps × stride) to reduce CPU load.  The EMA display values
         // update every frame regardless, giving smooth on-screen movement.
-        const DETECTION_STRIDE = 0.5;   // ≈3 frames ≈ 100 ms between detections
+        const DETECTION_STRIDE = 3;     // run detection every 3 frames ≈ 100 ms
         // EMA coefficient for display smoothing.  Range (0, 1]:
         // 1 = instant (no inertia), 0.15 ≈ 200 ms time-constant at 30 fps.
-        const INERTIA_ALPHA    = 0.15;
+        const INERTIA_ALPHA    = 0.75;
         // ──────────────────────────────────────────────────────────────────────
 
         this.analyser.getByteFrequencyData(this.dataArray);
 
+        // Accumulate FFT magnitudes every frame so that when detection fires it
+        // operates on the mean of all DETECTION_STRIDE frames in the window,
+        // rather than a single-frame snapshot.  Averaging reduces bin-level noise
+        // and produces more stable peak positions for the formant detector.
+        // The raw this.dataArray is still used by the waterfall and spectrum line
+        // (both stay live at full frame rate).
+        if (this._fftAccumulator === null) {
+            this._fftAccumulator = new Float32Array(this.dataArray.length);
+        }
+        for (let i = 0; i < this.dataArray.length; i++) {
+            this._fftAccumulator[i] += this.dataArray[i];
+        }
+
         // Run detection only every DETECTION_STRIDE frames.
         if (this._detectionFrameCount % DETECTION_STRIDE === 0) {
             this._detectPitch();
-            this._detectFormants();
+
+            // Average the accumulated FFT window and pass it to the formant
+            // detector, then reset the accumulator for the next window.
+            const avgData = new Float32Array(this._fftAccumulator.length);
+            for (let i = 0; i < avgData.length; i++) {
+                avgData[i] = this._fftAccumulator[i] / DETECTION_STRIDE;
+            }
+            this._fftAccumulator.fill(0);
+            this._detectFormants(avgData);
         }
         this._detectionFrameCount++;
 
@@ -927,7 +950,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
      * Results stored in `this.detectedF1` / `this.detectedF2` (Hz or null).
      * @private
      */
-    _detectFormants() {
+    _detectFormants(fftData = this.dataArray) {
         const buf = this.timeDomainArray;
         const n   = buf.length;
         const sr  = this.audioCtx.sampleRate;
@@ -942,7 +965,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
         }
 
         const binWidth  = sr / this.analyser.fftSize;
-        const dataArray = this.dataArray;
+        const dataArray = fftData;
         const dataLen   = dataArray.length;
 
         // Constrain the search to the visible HT pad frequency range so the
