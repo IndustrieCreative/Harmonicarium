@@ -74,6 +74,23 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         this.canvas = canvas;
         this.type = type;
         this.padSet = padSet;
+        /**
+         * The canvas's logical size in CSS pixels, used as the coordinate system for
+         * all drawing and hit-testing operations.
+         *
+         * This is distinct from `canvas.width` / `canvas.height`, which hold the
+         * physical pixel-buffer dimensions. In `'hidpi'` render mode the buffer is
+         * scaled up by the device pixel ratio and `ctx.scale(pixScale, pixScale)` is
+         * applied, so the physical buffer is larger than the layout size. All geometry
+         * (key rectangles, bounding boxes, line endpoints, text positions) is computed
+         * in terms of `cssDimensions`, keeping the coordinate system stable and
+         * resolution-independent across both `'classic'` and `'hidpi'` render modes.
+         *
+         * Initialised to `{ width: 0, height: 0 }` and updated by
+         * {@link HUM.DpPad#windowResize} on every viewport resize.
+         *
+         * @type {{ width: number, height: number }}
+         */
         this.cssDimensions = {
             width: 0,
             height: 0
@@ -1627,62 +1644,131 @@ HUM.DpPad.PadSet.FrequencyPad = class {
     //     ctx.stroke();
     // },
     /**
-     * Draws the current-frequency text overlay on the canvas corner.
+     * Draws a unified OSD box in the canvas corner containing all active
+     * frequency monitors: detected pitch / formants (top lines) and played
+     * frequency (bottom line).
      *
      * @returns {void}
      *
      * @description
-     * Renders `currentFreq` (in Hz, formatted to the DHC `hz_accuracy` decimal
-     * places) as a filled-and-stroked text string. The corner position is
-     * controlled by `canvasObjectsRatios[type].hzMonitor` and mirrors to the
-     * correct corner based on `key.position` and scale orientation. The stroke
-     * is white so the label remains readable against any background. Does
-     * nothing when `currentFreq` is falsy.
+     * All lines share the same monospace font whose size is taken from the
+     * `fonts[type].hzMonitor` parameter. A semi-transparent dark background
+     * rectangle is drawn first so the text remains legible over any pad
+     * content or spectrogram waterfall.
+     *
+     * Lines displayed:
+     * - **FT pad**: detected fundamental (note + cents + Hz, from
+     *   `spectrogramHz`) followed by played frequency (Hz, from `currentFreq`).
+     * - **HT pad**: detected formants F1 and/or F2 (Hz, from
+     *   `spectrogramHzFormant` / `spectrogram.detectedF2`) followed by
+     *   played frequency.
+     *
+     * The box is suppressed entirely when there is nothing to show.
+     * Detected lines are only shown while the spectrogram is enabled.
      */
     drawFreqMonitor() {
-        if (this.currentFreq) {
-            let ctx = this.ctx,
-                font = this.padSet.parameters.fonts[this.type].hzMonitor.value.getCss,
-                scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
-                ratios = this.padSet.parameters.canvasObjectsRatios[this.type],
-                text = this.currentFreq.toFixed(this.padSet.dhc.settings.global.hz_accuracy.value) + ' Hz',
-                x, y;
+        const dhc          = this.padSet.dhc;
+        const hzAcc        = dhc.settings.global.hz_accuracy.value;
+        const centAcc      = dhc.settings.global.cent_accuracy.value;
+        const spectrogram  = this.padSet.spectrogram;
+        const spectroOn    = spectrogram && spectrogram.enabled;
 
-            ctx.save();
-            ctx.font = font;
-            if (scaleOrientation === 'vertical') {
-                x = this.cssDimensions.width * ratios.hzMonitor.width;
-                y = this.cssDimensions.height * ratios.hzMonitor.height;
-                if (ratios.key.position > 0.5) {
-                    ctx.textBaseline = "bottom";
-                    ctx.textAlign = "left";
-                    x = this.cssDimensions.width * (1 - ratios.hzMonitor.width);
-                } else {
-                    ctx.textBaseline = "bottom";
-                    ctx.textAlign = "right";
-                }
-                ctx.textBaseline = "bottom";
-            } else if (scaleOrientation === 'horizontal') {
-                x = this.cssDimensions.width * ratios.hzMonitor.height;            
-                y = this.cssDimensions.height * ratios.hzMonitor.width;
-                if (ratios.key.position > 0.5) {
-                    ctx.textBaseline = "top";
-                    ctx.textAlign = "right";
-                    y = this.cssDimensions.height * (1 - ratios.hzMonitor.width);
-                } else {
-                    ctx.textBaseline = "bottom";
-                    ctx.textAlign = "right";
-                }
+        // -- Collect text lines (order: detected top, played bottom) --
+        const lines = [];
+
+        const centWidth = 2 + (centAcc > 0 ? 1 + centAcc : 0);
+        const hzWidth   = 4 + 1 + hzAcc;
+        const fmtNote   = (hz) => {
+            const n    = dhc.mcToName(dhc.constructor.freqToMc(hz));
+            const sign = (n[1] === '' ? '+' : n[1]).replace('\u2212', '-');
+            return n[0].padEnd(3) + ' ' + sign + String(n[2]).padStart(centWidth, '0') + 'c ';
+        };
+
+        if (spectroOn) {
+            if (this.type === 'ft' && this.spectrogramHz !== null) {
+                lines.push(
+                    'DET ' + fmtNote(this.spectrogramHz) +
+                    this.spectrogramHz.toFixed(hzAcc).padStart(hzWidth) + ' Hz'
+                );
+            } else if (this.type === 'ht') {
+                const f1 = this.spectrogramHzFormant;
+                // const f2 = spectrogram.detectedF2 || null;
+                if (f1 !== null) lines.push('DET ' + fmtNote(f1) + f1.toFixed(hzAcc).padStart(hzWidth) + ' Hz');
+                // if (f2 !== null) lines.push('F2 ' + fmtNote(f2) + f2.toFixed(hzAcc).padStart(hzWidth) + ' Hz');
             }
-            ctx.fillStyle = 'black';
-            ctx.fillText(text, x, y);
-            
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 1;
-            // ctx.miterLimit = 3;
-            ctx.strokeText(text, x, y);
-            ctx.restore();
         }
+
+        if (this.currentFreq) {
+            lines.push('PLY ' + fmtNote(this.currentFreq) + this.currentFreq.toFixed(hzAcc).padStart(hzWidth) + ' Hz');
+        }
+
+        if (lines.length === 0) return;
+
+        // -- Anchor position (same corner logic as before) --
+        const scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value;
+        const ratios           = this.padSet.parameters.canvasObjectsRatios[this.type];
+        let x, y, textAlign, boxGrowsDown;
+
+        if (scaleOrientation === 'vertical') {
+            x            = this.cssDimensions.width * ratios.hzMonitor.width;
+            y            = this.cssDimensions.height * ratios.hzMonitor.height;
+            boxGrowsDown = false;
+            if (ratios.key.position > 0.5) {
+                x         = this.cssDimensions.width * (1 - ratios.hzMonitor.width);
+                textAlign = 'left';
+            } else {
+                textAlign = 'right';
+            }
+        } else {
+            x            = this.cssDimensions.width * ratios.hzMonitor.height;
+            y            = this.cssDimensions.height * ratios.hzMonitor.width;
+            textAlign    = 'right';
+            boxGrowsDown = false;
+            if (ratios.key.position > 0.5) {
+                y            = this.cssDimensions.height * (1 - ratios.hzMonitor.width);
+                boxGrowsDown = true;
+            }
+        }
+
+        const ctx      = this.ctx;
+        const fontSize = this.padSet.parameters.fonts[this.type].hzMonitor.value.size;
+        const font     = fontSize + 'px monospace';
+
+        ctx.save();
+        ctx.font = font;
+
+        // -- Measure box --
+        const lineH = Math.ceil(fontSize * 1);
+        const pad   = 4;
+        const maxW  = Math.max(...lines.map(l => ctx.measureText(l).width));
+        const boxW  = maxW + 2 * pad;
+        const boxH  = lines.length * lineH + 2 * pad;
+
+        // Box top-left corner
+        const boxX = textAlign === 'right' ? x - boxW : x;
+        const boxY = boxGrowsDown ? y : y - boxH;
+
+        // -- Background --
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.beginPath();
+        ctx.roundRect(boxX, boxY, boxW, boxH, 3);
+        ctx.fill();
+
+        // -- Text lines (top to bottom, textBaseline='bottom') --
+        const xText = textAlign === 'right' ? x - pad : x + pad;
+        ctx.textBaseline = 'middle';
+        ctx.textAlign    = textAlign;
+        ctx.strokeStyle  = 'rgba(0, 0, 0, 0.8)';
+        ctx.lineWidth    = 2;
+        ctx.fillStyle    = 'rgba(255, 255, 255, 0.95)';
+
+        for (let i = 0; i < lines.length; i++) {
+            const lineMidY = boxY + pad + i * lineH + lineH / 2;
+            ctx.strokeText(lines[i], xText, lineMidY);
+            ctx.fillText(lines[i], xText, lineMidY);
+        }
+
+        ctx.restore();
     }
 
     /**

@@ -360,7 +360,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                         })
                     },
                     dataType:'object',
-                    initValue: new HUM.DpPad.CssFont('italic', 'bold', 30, 'px', false, false),
+                    initValue: new HUM.DpPad.CssFont('italic', 'bold', 20, 'px', false, false),
                     init:false,
                     postInit: (thisParam) => {
                         thisParam.size = thisParam.value.size;
@@ -454,7 +454,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                         })
                     },
                     dataType:'object',
-                    initValue: new HUM.DpPad.CssFont('italic', 'bold', 30, 'px', false, false),
+                    initValue: new HUM.DpPad.CssFont('italic', 'bold', 20, 'px', false, false),
                     init:false,
                     postInit: (thisParam) => {
                         thisParam.size = thisParam.value.size;
@@ -985,7 +985,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                 })
             },
             dataType: 'boolean',
-            initValue: true,
+            initValue: false,
             restoreStage: 'post',
         });
         this.spectrogramFftSize = new HUM.Param({
