@@ -128,6 +128,13 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this.detectedF2  = null;       // F2 frequency in Hz (or null on silence)
         this._f1Buffer   = [];         // sliding median window for F1
         this._f2Buffer   = [];         // sliding median window for F2
+
+        // Display/inertia state — EMA-smoothed frequencies used for all visual
+        // output (green trace lines and HT key highlight).  Detection runs at a
+        // lower rate (every DETECTION_STRIDE frames); display updates every frame.
+        this._detectionFrameCount = 0;    // frame counter for detection-rate throttle
+        this._displayPitchHz      = null; // inertia-smoothed FT pitch
+        this._displayFormantHz    = null; // inertia-smoothed HT formant
     }
 
     /**
@@ -222,6 +229,11 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this.detectedF2 = null;
         this._f1Buffer  = [];
         this._f2Buffer  = [];
+
+        // Reset display/inertia state
+        this._detectionFrameCount = 0;
+        this._displayPitchHz      = null;
+        this._displayFormantHz    = null;
 
         // Clear the HT formant key highlight.
         for (let targetPad of this.padSet.parameters.scaleDisplay.ht.value) {
@@ -353,37 +365,68 @@ HUM.DpPad.PadSet.Spectrogram = class {
      * @private
      */
     _drawFrame() {
+        // ── Tunable constants ──────────────────────────────────────────────────
+        // Run pitch + formant detection once every DETECTION_STRIDE rendered
+        // frames (≈30 fps × stride) to reduce CPU load.  The EMA display values
+        // update every frame regardless, giving smooth on-screen movement.
+        const DETECTION_STRIDE = 0.5;   // ≈3 frames ≈ 100 ms between detections
+        // EMA coefficient for display smoothing.  Range (0, 1]:
+        // 1 = instant (no inertia), 0.15 ≈ 200 ms time-constant at 30 fps.
+        const INERTIA_ALPHA    = 0.15;
+        // ──────────────────────────────────────────────────────────────────────
+
         this.analyser.getByteFrequencyData(this.dataArray);
-        this._detectPitch();
-        // Drive the FT continuum silently so the HT scale follows the detected pitch.
-        // No FT sound is produced; the Synth is not triggered.
-        // Suppressed while any user note (FT or HT, from pad/MIDI) is active, and for
-        // 500 ms after the last note stops — playQueue entries are only written by played
-        // notes, not by trackFTcontinuum, so this accurately reflects user activity.
+
+        // Run detection only every DETECTION_STRIDE frames.
+        if (this._detectionFrameCount % DETECTION_STRIDE === 0) {
+            this._detectPitch();
+            this._detectFormants();
+        }
+        this._detectionFrameCount++;
+
+        // ── Notes-active guard (for FT continuum tracking) ────────────────────
+        // Suppressed while any user note (FT or HT, from pad/MIDI) is active,
+        // and for 1000 ms after the last note stops.
         const _ftNotesActive = this.padSet.dhc.playQueue.ft.length > 0;
-        const _notesActive = _ftNotesActive || this.padSet.dhc.playQueue.ht.length > 0;
+        const _notesActive   = _ftNotesActive || this.padSet.dhc.playQueue.ht.length > 0;
         if (_notesActive) {
             this._lastNoteActiveTime = performance.now();
         }
         if (_ftNotesActive) {
-            // User is playing FTs — clear the last tracked Hz so the FT trace overlay
-            // hides immediately and stays hidden until pitch recognition fires again.
-            // HT-only activity does not clear it: the FT is still set by pitch recognition.
+            // User is playing FTs — clear the last tracked Hz so the FT trace
+            // hides immediately.  HT-only activity does not clear it.
             this._lastTrackedHz = null;
         }
-        if (this.detectedPitch !== null &&
+
+        // ── EMA inertia: smooth raw detected values for visual display ─────────
+        // Interpolation in midicent (log-frequency) space: equal cents per frame
+        // → linear-looking glide on the log-scale pad.
+        // Silence (null) snaps instantly; new detections also snap in immediately.
+        const _hzEMA = (target, current) => {
+            if (target === null)  return null;
+            if (current === null) return target;   // snap on first detection
+            const mc_t = 69 + 12 * Math.log2(target  / 440);
+            const mc_c = 69 + 12 * Math.log2(current / 440);
+            return 440 * Math.pow(2, (mc_c + INERTIA_ALPHA * (mc_t - mc_c) - 69) / 12);
+        };
+        this._displayPitchHz   = _hzEMA(this.detectedPitch, this._displayPitchHz);
+        this._displayFormantHz = _hzEMA(this.detectedF1,    this._displayFormantHz);
+
+        // ── FT continuum tracking ──────────────────────────────────────────────
+        if (this._displayPitchHz !== null &&
                 this.padSet.parameters.spectrogramPitchTrack.value &&
                 !_notesActive &&
                 performance.now() - this._lastNoteActiveTime >= 1000) {
-            this._lastTrackedHz = this.detectedPitch;
-            this.padSet.dhc.trackFTcontinuum(this.detectedPitch);
+            this._lastTrackedHz = this._displayPitchHz;
+            this.padSet.dhc.trackFTcontinuum(this._displayPitchHz);
         }
-        this._detectFormants();
-        // Update the HT formant key highlight on the frequency-pad canvas.
+
+        // ── HT formant key highlight ───────────────────────────────────────────
         for (let targetPad of this.padSet.parameters.scaleDisplay.ht.value) {
-            this.padSet[targetPad].spectrogramHzFormant = this.detectedF1;
+            this.padSet[targetPad].spectrogramHzFormant = this._displayFormantHz;
             this.padSet[targetPad].drawFreqUI();
         }
+
         this._renderPad(this.canvases.ft, 'ft');
         this._renderPad(this.canvases.ht, 'ht');
     }
@@ -1215,7 +1258,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
 
         const freqs = type === 'ft'
             ? [this._lastTrackedHz]
-            : [this.detectedF1, this.detectedF2];
+            : [this._displayFormantHz, this.detectedF2];
         if (freqs.every(f => f === null || f === undefined)) return;
 
         const scaleOrient = this.padSet.parameters.scaleOrientation[type].value;
