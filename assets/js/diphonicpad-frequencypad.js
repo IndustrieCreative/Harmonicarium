@@ -111,9 +111,11 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         // Keys currently held (ringing without physical pointer press).
         // Set when a key is released in the spectrogram zone; cleared on
         // normal in-key-area release or panic.
+        // holdKeys.ft  — false | keyObject  (FT hold is monophonic)
+        // holdKeys.ht  — Map<toneNumber, keyObject>  (HT hold is polyphonic)
         this.holdKeys = {
             ft: false,
-            ht: false
+            ht: new Map()
         };
         // Tracks whether a continuum (fretless, between-keys) tone is currently active.
         this.activeContinuum = {
@@ -321,16 +323,15 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         }
         if (this.activeKeys.ht !== false) {
             if (inSpectrogramZone) {
-                this.holdKeys.ht = this.activeKeys.ht;
+                // Hold gesture: add the active key to the polyphonic hold map.
+                this.holdKeys.ht.set(this.activeKeys.ht.toneNumber, this.activeKeys.ht);
                 this.activeKeys.ht = false;
             } else {
+                // Normal release: mute the active key only.
+                // Existing HT holds are intentionally preserved.
                 // console.log('MOUSEUP HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
                 this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber));
                 this.activeKeys.ht = false;
-                if (this.holdKeys.ht !== false) {
-                    this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.holdKeys.ht.toneNumber));
-                    this.holdKeys.ht = false;
-                }
             }
         }
         // Redraw to reflect the updated hold state (no DHC message fires when
@@ -473,16 +474,15 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         }
         if (this.activeKeys.ht !== false) {
             if (inSpectrogramZone) {
-                this.holdKeys.ht = this.activeKeys.ht;
+                // Hold gesture: add the active key to the polyphonic hold map.
+                this.holdKeys.ht.set(this.activeKeys.ht.toneNumber, this.activeKeys.ht);
                 this.activeKeys.ht = false;
             } else {
+                // Normal release: mute the active key only.
+                // Existing HT holds are intentionally preserved.
                 // console.log('TOUCHEND HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
                 this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber));
                 this.activeKeys.ht = false;
-                if (this.holdKeys.ht !== false) {
-                    this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.holdKeys.ht.toneNumber));
-                    this.holdKeys.ht = false;
-                }
             }
         }
         // Redraw to reflect the updated hold state.
@@ -549,26 +549,54 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 for (let type of ['ft', 'ht']) {
                     if (objectFound.type === type) {
                         keyFound[type] = objectFound;
-                        // Determine the currently sounding key: actively pressed, or held.
-                        const currentSounding = this.activeKeys[type] !== false
-                            ? this.activeKeys[type]
-                            : this.holdKeys[type];
-                        if (currentSounding === false) {
-                            // Nothing is sounding: just play the pressed key
-                            noteON[type] = objectFound;
-                        } else if (currentSounding.toneNumber !== objectFound.toneNumber) {
-                            // A different key is sounding: switch to the pressed key
-                            noteOFF[type] = currentSounding;
-                            noteON[type] = objectFound;
-                        } else {
-                            // Same key already sounding.
-                            // If it's a held note (no pointer actively pressing it),
-                            // tapping it cancels the hold and silences the voice.
-                            if (this.activeKeys[type] === false && this.holdKeys[type] !== false) {
-                                noteOFF[type] = currentSounding;
+
+                        if (type === 'ft') {
+                            // ---- FT: monophonic hold (unchanged) ----
+                            // Determine the currently sounding key: actively pressed, or held.
+                            const currentSounding = this.activeKeys.ft !== false
+                                ? this.activeKeys.ft
+                                : this.holdKeys.ft;
+                            if (currentSounding === false) {
+                                // Nothing is sounding: just play the pressed key
+                                noteON.ft = objectFound;
+                            } else if (currentSounding.toneNumber !== objectFound.toneNumber) {
+                                // A different key is sounding: switch to the pressed key
+                                noteOFF.ft = currentSounding;
+                                noteON.ft = objectFound;
+                            } else {
+                                // Same key already sounding.
+                                // If it's a held note (no pointer actively pressing it),
+                                // tapping it cancels the hold and silences the voice.
+                                if (this.activeKeys.ft === false && this.holdKeys.ft !== false) {
+                                    noteOFF.ft = currentSounding;
+                                }
+                                // If activeKeys.ft is set, pointer is still down on the
+                                // same key — do nothing (natural re-press while sliding).
                             }
-                            // If activeKeys[type] is set, pointer is still down on the
-                            // same key — do nothing (natural re-press while sliding).
+
+                        } else {
+                            // ---- HT: polyphonic hold ----
+                            const pressedTone = objectFound.toneNumber;
+
+                            if (this.holdKeys.ht.has(pressedTone)) {
+                                // Pressed key is currently held: tap cancels the hold
+                                // and silences that voice. No noteON.
+                                noteOFF.ht = objectFound;
+
+                            } else if (this.activeKeys.ht !== false) {
+                                if (this.activeKeys.ht.toneNumber !== pressedTone) {
+                                    // A different key is actively pressed: release it and
+                                    // start the new one. Held keys keep ringing.
+                                    noteOFF.ht = this.activeKeys.ht;
+                                    noteON.ht = objectFound;
+                                }
+                                // else: same actively-pressed key — do nothing.
+
+                            } else {
+                                // Nothing actively pressed: play the new key.
+                                // All held keys continue ringing.
+                                noteON.ht = objectFound;
+                            }
                         }
                     }
                 }
@@ -644,10 +672,8 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                     // console.log('PLAY HT NOTE OFF: ' + noteOFF.ht.toneNumber);
                     this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', noteOFF.ht.toneNumber));
                     this.activeKeys.ht = false;
-                    // Also clear the hold if it was the held key that got displaced
-                    if (this.holdKeys.ht !== false && this.holdKeys.ht.toneNumber === noteOFF.ht.toneNumber) {
-                        this.holdKeys.ht = false;
-                    }
+                    // Remove from the hold map if it was a held key (no-op when absent)
+                    this.holdKeys.ht.delete(noteOFF.ht.toneNumber);
                 }
                 if (noteON.ht !== false && pointer.down !== false) {
                     // console.log('PLAY HT NOTE ON: ' + noteON.ht.toneNumber);
@@ -754,10 +780,11 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.holdKeys.ft.toneNumber));
             this.holdKeys.ft = false;
         }
-        if (this.holdKeys.ht !== false) {
-            this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.holdKeys.ht.toneNumber));
-            this.holdKeys.ht = false;
+        // Silence all polyphonically held HT keys.
+        for (const toneNum of this.holdKeys.ht.keys()) {
+            this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', toneNum));
         }
+        this.holdKeys.ht.clear();
         // Silence any active continuum tone.
         if (this.activeContinuum.ft) {
             this.padSet.dhc.muteFTcontinuum(HUM.DHCmsg.ftOFFcontinuum('dppad', 0, 0));
@@ -1591,7 +1618,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 }
                 ctx.shadowBlur = 20;
             }
-            if (this.holdKeys.ht !== false && this.holdKeys.ht.toneNumber === ht[0]) {
+            if (this.holdKeys.ht.has(ht[0])) {
                 // Held key: draw with cyan glow toward the spectrogram side
                 ctx.shadowColor = '#00e5ff';
                 if (this.padSet.parameters.scaleOrientation.ht.value === 'vertical') {
