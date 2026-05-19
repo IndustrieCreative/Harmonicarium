@@ -2123,6 +2123,43 @@ HUM.tmpl = {
                         
                         </div>
 
+
+                        <div class="col-lg-8" id="HTMLf_synth_beatSamples${dhcID}" style="display:none;">
+
+                            <div class="col-lg-12">
+
+                                <div class="card mb-2">
+                                <div class="card-header">
+                                    Beat Samples (Polyrhythm Mode)
+                                </div>
+                                <div class="card-body">
+
+                                    <div class="row g-2">
+                                        <div class="col-lg-6">
+                                            <div class="form-label d-flex align-items-center">FT beat sample:&nbsp;
+                                                <span id="HTMLo_synth_beatSampleFTName${dhcID}" class="fw-bold fst-italic">none</span>
+                                            </div>
+                                            <input type="file" id="HTMLi_synth_beatSampleFT${dhcID}" accept="audio/*" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-lg-6">
+                                            <div class="form-label d-flex align-items-center">HT beat sample:&nbsp;
+                                                <span id="HTMLo_synth_beatSampleHTName${dhcID}" class="fw-bold fst-italic">none</span>
+                                            </div>
+                                            <input type="file" id="HTMLi_synth_beatSampleHT${dhcID}" accept="audio/*" class="form-control">
+                                        </div>
+                                    </div>
+
+                                </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+
                         <div class="col-lg-8" id="HTMLf_synth_toneShaping${dhcID}">
 
                             <div class="row g-2">
@@ -2232,38 +2269,6 @@ HUM.tmpl = {
                             </div>
 
                         </div>
-                    </div>
-
-                    <div class="row g-2" id="HTMLf_synth_beatSamples${dhcID}" style="display:none;">
-
-                        <div class="col-lg-12">
-
-                            <div class="card mt-2">
-                              <div class="card-header">
-                                Beat Samples (Polyrhythm Mode)
-                              </div>
-                              <div class="card-body">
-
-                                <div class="row g-2">
-                                    <div class="col-lg-6">
-                                      <div class="form-label d-flex align-items-center">FT beat sample:&nbsp;
-                                        <span id="HTMLo_synth_beatSampleFTName${dhcID}" class="fw-bold fst-italic">none</span>
-                                      </div>
-                                      <input type="file" id="HTMLi_synth_beatSampleFT${dhcID}" accept="audio/*" class="form-control">
-                                    </div>
-                                    <div class="col-lg-6">
-                                      <div class="form-label d-flex align-items-center">HT beat sample:&nbsp;
-                                        <span id="HTMLo_synth_beatSampleHTName${dhcID}" class="fw-bold fst-italic">none</span>
-                                      </div>
-                                      <input type="file" id="HTMLi_synth_beatSampleHT${dhcID}" accept="audio/*" class="form-control">
-                                    </div>
-                                </div>
-
-                              </div>
-                            </div>
-
-                        </div>
-
                     </div>
 
                     <div class="row g-2">
