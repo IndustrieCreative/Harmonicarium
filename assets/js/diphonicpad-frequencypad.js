@@ -330,7 +330,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 // Normal release: mute the active key only.
                 // Existing HT holds are intentionally preserved.
                 // console.log('MOUSEUP HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
-                this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber));
+                this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber, false, this.activeKeys.ht.toneNumber));
                 this.activeKeys.ht = false;
             }
         }
@@ -481,7 +481,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 // Normal release: mute the active key only.
                 // Existing HT holds are intentionally preserved.
                 // console.log('TOUCHEND HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
-                this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber));
+                this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber, false, this.activeKeys.ht.toneNumber));
                 this.activeKeys.ht = false;
             }
         }
@@ -670,7 +670,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 // ====== HT ======
                 if (noteOFF.ht !== false) {
                     // console.log('PLAY HT NOTE OFF: ' + noteOFF.ht.toneNumber);
-                    this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', noteOFF.ht.toneNumber));
+                    this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', noteOFF.ht.toneNumber, false, noteOFF.ht.toneNumber));
                     this.activeKeys.ht = false;
                     // Remove from the hold map if it was a held key (no-op when absent)
                     this.holdKeys.ht.delete(noteOFF.ht.toneNumber);
@@ -678,7 +678,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 if (noteON.ht !== false && pointer.down !== false) {
                     // console.log('PLAY HT NOTE ON: ' + noteON.ht.toneNumber);
                     this.activeKeys.ht = noteON.ht;
-                    this.padSet.dhc.playHT(HUM.DHCmsg.htON('dppad', noteON.ht.toneNumber, 120));
+                    this.padSet.dhc.playHT(HUM.DHCmsg.htON('dppad', noteON.ht.toneNumber, 120, noteON.ht.toneNumber));
                 }
 
                 // ====== REFRESHES ======
@@ -745,7 +745,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                             // Same pre-hold logic for HT
                         } else {
                             // console.log('PLAY HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
-                            this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber));
+                            this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber, false, this.activeKeys.ht.toneNumber));
                             this.activeKeys.ht = false;
                         }
                     }
@@ -782,7 +782,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         }
         // Silence all polyphonically held HT keys.
         for (const toneNum of this.holdKeys.ht.keys()) {
-            this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', toneNum));
+            this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', toneNum, false, toneNum));
         }
         this.holdKeys.ht.clear();
         // Silence any active continuum tone.
