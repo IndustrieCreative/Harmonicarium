@@ -402,6 +402,17 @@ HUM.DpPad.PadSet = class {
             
             } else if (msg.type === 'ctrlmap') {
                 // Do nothing at the moment
+            } else if (msg.type === 'mode') {
+                // Polyrhythm Mode toggled: re-render both pads so monitor labels switch Hz↔BPM.
+                // When entering Polyrhythm Mode, also auto-apply the dedicated range presets.
+                if (this.dhc.polyrhythmMode) {
+                    this.updatePadRangeUI('ft', 'polyrhythm');
+                    this.updatePadRangeUI('ht', 'polyrhythm');
+                } else {
+                    // Returning to Overtones mode: load the canonical voice presets.
+                    this.updatePadRangeUI('ft', 'tenore');
+                    this.updatePadRangeUI('ht', 'normal');
+                }
             }
         
         } else if (msg.cmd === 'tone-on') {

@@ -668,7 +668,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                     restoreStage:'post',
                     initValue: 'tenore', // 4 octaves + 3 tones
                     init:false,
-                    allowedValues: ['soprano', 'mezzosoprano', 'contralto', 'controtenore', 'tenore', 'baritono', 'basso', 'bassoprofondo', 'custom'],
+                    allowedValues: ['soprano', 'mezzosoprano', 'contralto', 'controtenore', 'tenore', 'baritono', 'basso', 'bassoprofondo', 'polyrhythm', 'custom'],
                     preInit: (thisParam) => {
                         this._freqRangeInit('ft', thisParam.uiElements.in.dppad_freq_range_ft);
                     },
@@ -680,13 +680,15 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                     customPropertiesStore: () => {
                         let customProperties = {presets:{}};
                         for( const [vName, vAmb] of Object.entries(this.freqRange.ft.ambitus.presets)) {
-                            customProperties.presets[vName] = [vAmb.type, vAmb.name, 'scientific', vAmb.note.min, vAmb.note.max];
+                            customProperties.presets[vName] = [vAmb.type, vAmb.name, 'hz', vAmb.hz.min, vAmb.hz.max];
                         }
                         return customProperties;
 
                     },
                     customPropertiesRestore: (storedCustomProps) => {
                         let customProperties = {presets:{}};
+                        // Seed with current built-in presets so newly-added ones (e.g. 'polyrhythm') survive old DB sessions
+                        Object.assign(customProperties.presets, this.freqRange.ft.ambitus.presets);
                         for( const [vName, vAmb] of Object.entries(storedCustomProps.presets)) {
                             customProperties.presets[vName] = new HUM.DpPad.VoiceAmbitus(...vAmb, this.padSet.dhc);
                         }
@@ -702,6 +704,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                             baritono: new HUM.DpPad.VoiceAmbitus('ft', 'Baritone', 'scientific', 'A2', 'A4', padSet.dhc),
                             basso: new HUM.DpPad.VoiceAmbitus('ft', 'Bass', 'scientific', 'E2', 'E4', padSet.dhc),
                             bassoprofondo: new HUM.DpPad.VoiceAmbitus('ft', 'Basso profondo', 'scientific', 'C2', 'C4', padSet.dhc),
+                            polyrhythm: new HUM.DpPad.VoiceAmbitus('ft', 'Polyrhythm', 'mc', -52, -8, padSet.dhc),
                         }
                     }
                 }),
@@ -812,7 +815,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                     initValue: 'normal', // 3 octaves + 1 tone
                     init:false,
                     restoreStage:'post',
-                    allowedValues: ['beginner', 'normal', 'extreme', 'custom'],
+                    allowedValues: ['beginner', 'normal', 'extreme', 'polyrhythm', 'custom'],
                     preInit: (thisParam) => {
                         this._freqRangeInit('ht', thisParam.uiElements.in.dppad_freq_range_ht);
                     },
@@ -830,6 +833,8 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                     },
                     customPropertiesRestore: (storedCustomProps) => {
                         let customProperties = {presets:{}};
+                        // Seed with current built-in presets so newly-added ones (e.g. 'polyrhythm') survive old DB sessions
+                        Object.assign(customProperties.presets, this.freqRange.ht.ambitus.presets);
                         for( const [vName, vAmb] of Object.entries(storedCustomProps.presets)) {
                             customProperties.presets[vName] = new HUM.DpPad.VoiceAmbitus(...vAmb, this.padSet.dhc);
                         }
@@ -840,6 +845,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                             beginner: new HUM.DpPad.VoiceAmbitus('ht', 'Beginner', 'hz', 400, 2500, padSet.dhc),
                             normal: new HUM.DpPad.VoiceAmbitus('ht', 'Normal', 'hz', 350, 2700, padSet.dhc),
                             extreme: new HUM.DpPad.VoiceAmbitus('ht', 'Extreme', 'hz', 300, 3000, padSet.dhc),
+                            polyrhythm: new HUM.DpPad.VoiceAmbitus('ht', 'Polyrhythm', 'hz', 0.15, 10, padSet.dhc),
                         }
                     }
                 }),

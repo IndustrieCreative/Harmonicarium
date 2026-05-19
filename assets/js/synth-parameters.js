@@ -745,8 +745,90 @@ HUM.Synth.prototype.Parameters = class {
             })
         };
         // =======================
+
+        /**
+         * Beat-sample selectors used in Polyrhythm Mode. The chosen audio files
+         * are decoded into `synth.beatBuffer.ft` / `synth.beatBuffer.ht` and
+         * played by {@link HUM.Synth#BeatVoice}. These Params are intentionally
+         * session-only (`_presetRestore: false`) and not persisted in IndexedDB.
+         *
+         * @member {{ft:HUM.Param, ht:HUM.Param}}
+         */
+        this.beatSample = {
+            ft: HUM.Synth.prototype.Parameters._makeBeatSampleParam(synth, 'ft'),
+            ht: HUM.Synth.prototype.Parameters._makeBeatSampleParam(synth, 'ht'),
+        };
+        // =======================
     } // end class Constructor
     // ===========================
+    /**
+     * Builds a `HUM.Param` for a beat-sample file input (Polyrhythm Mode).
+     *
+     * @param {HUM.Synth} synth - Owning Synth instance.
+     * @param {('ft'|'ht')} type - Tone type the sample belongs to.
+     * @returns {HUM.Param}
+     * @private
+     */
+    static _makeBeatSampleParam(synth, type) {
+        const Type = type.toUpperCase();
+        const inputId  = 'synth_beatSample' + Type;
+        const nameOutId = 'synth_beatSample' + Type + 'Name';
+        const uiElements = {};
+        uiElements[inputId] = new HUM.Param.UIelem({
+            role: 'in',
+            opType: 'set',
+            eventType: 'change',
+            htmlTargetProp: 'files',
+            widget: 'file',
+            eventListener: evt => {
+                if (window.File && window.FileReader && window.FileList && window.Blob) {
+                    synth.parameters.beatSample[type].value = evt.target.files[0];
+                } else {
+                    alert('The File APIs are not fully supported in this browser.');
+                }
+            }
+        });
+        uiElements[nameOutId] = new HUM.Param.UIelem({ role: 'out' });
+        return new HUM.Param({
+            app: synth,
+            idbKey: 'synthBeatSample' + Type, // not persisted (presetStore: false)
+            uiElements: uiElements,
+            dataType: 'file',
+            initValue: null,
+            presetStore: false,
+            presetAutosave: false,
+            presetRestore: false,
+            preSet: (value, thisParam, init, fromUI, oldValue) => {
+                const nameOut = thisParam.uiElements.out[nameOutId];
+                if (value && value.name) {
+                    synth.readBeatSampleFile(type, value);
+                    if (nameOut) { nameOut.innerText = value.name; }
+                } else if (nameOut) {
+                    nameOut.innerText = 'none';
+                }
+                return value;
+            },
+        });
+    }
+    /**
+     * Toggles UI visibility between the standard synth panels and the
+     * Polyrhythm Mode beat-sample loaders.
+     *
+     * @param {boolean} active - `true` to enter Polyrhythm Mode, `false` to leave it.
+     * @returns {void}
+     */
+    _applyPolyrhythmMode(active) {
+        const id = this.synthMeter && this.synthMeter.uiElements && this.synthMeter.uiElements.out
+            ? Object.keys(this.synthMeter.uiElements.out)[0] : null;
+        // Resolve DHC id from any known element (fallback to scanning all roots).
+        const dhcId = this.beatSample.ft && this.beatSample.ft.app && this.beatSample.ft.app.dhc
+            ? this.beatSample.ft.app.dhc.id : null;
+        if (!dhcId) { return; }
+        const shaping = document.getElementById('HTMLf_synth_toneShaping' + dhcId);
+        const beat    = document.getElementById('HTMLf_synth_beatSamples' + dhcId);
+        if (shaping) { shaping.style.display = active ? 'none' : ''; }
+        if (beat)    { beat.style.display    = active ? '' : 'none'; }
+    }
     /**
      * Initializes the `synthTab` parameter.
      *

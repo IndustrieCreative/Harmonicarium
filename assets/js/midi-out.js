@@ -109,6 +109,16 @@ HUM.midi.MidiOut = class MidiOut {
          */
         this.htmlMotModalContent = document.getElementById("HTMLf_motPanelContent"+dhc.id);
 
+        /**
+         * Active beat-pulse trackers for Polyrhythm Mode. Key format is
+         * `"<portID>|<type>|<ctrlNum>"`. Each entry holds the `setInterval`
+         * timer id, the MIDI channel/note in use, and the last-scheduled
+         * Note-Off timeout so it can be flushed on tone-off / panic.
+         *
+         * @member {Map.<string, {intervalId:number, channel:number, note:number, offTimeoutId:?number, portID:string}>}
+         */
+        this.beatPulses = new Map();
+
         // Tell to the DHC that a new app is using it
         this.dhc.registerApp(this, 'updatesFromDHC', 1);
 
@@ -489,6 +499,7 @@ HUM.midi.MidiOut = class MidiOut {
      * to {@link HUM.midi.MidiOut#allNotesOffPort} for each one.
      */
     allNotesOff(mode) {
+        this.stopAllBeatPulses();
         this.midi.port.selectedOutputs.forEach((port, portID) => {
             this.allNotesOffPort(portID, mode);
         });
@@ -782,6 +793,13 @@ HUM.midi.MidiOut = class MidiOut {
         // For continuum tones the Xtone is pre-built by the caller (no table entry exists);
         // for discrete tones look up the DHC table as usual.
         let xtObj = prebuiltXtObj !== null ? prebuiltXtObj : this.dhc.tables[type][xtNum];
+        // ── Polyrhythm Mode: bypass the pitch-bend pipeline and emit recurring
+        //    beat pulses instead. The MIDI note number is hardcoded to 48 (C3)
+        //    and the period is derived from the Xtone Hz (`bpm = hz × 60`).
+        if (this.dhc.polyrhythmMode) {
+            this.midiOutBeat(ctrlNum, velocity, state, type, xtObj);
+            return;
+        }
         // For each selected MIDI-OUT ports
         this.midi.port.selectedOutputs.forEach((value, portID) => {
             // PitchBend method
@@ -803,6 +821,103 @@ HUM.midi.MidiOut = class MidiOut {
 
             }
         });
+    }
+
+    /**
+     * Polyrhythm Mode dispatcher: handles Note-ON / Note-OFF events for the
+     * pulsing-beat MIDI output. Each held tone produces a recurring Note-ON /
+     * Note-OFF pair (gate = 50% of the beat period) on every selected output
+     * port. The played MIDI note is hardcoded to 48 (C3) for this first stage.
+     *
+     * @param {midinnum}      ctrlNum  - MIDI controller note number identifying the held tone.
+     * @param {velocity}      velocity - Note-On velocity (0\u2013127).
+     * @param {(0|1)}         state    - `1` to start the pulse train, `0` to stop it.
+     * @param {tonetype}      type     - `'ft'` or `'ht'`.
+     * @param {HUM.DHC#Xtone} xtObj    - Xtone whose `hz` defines the pulse rate (`bpm = hz × 60`).
+     *
+     * @returns {void}
+     */
+    midiOutBeat(ctrlNum, velocity, state, type, xtObj) {
+        const NOTE = 48;             // hardcoded MIDI note (C3) for stage 1
+        const CHANNEL = 0;           // hardcoded MIDI channel for stage 1
+        if (state === 1) {
+            const hz = xtObj && xtObj.hz > 0 ? xtObj.hz : 0;
+            if (!hz) { return; }
+            const periodMs = 1000 / hz;          // period in ms (bpm = hz × 60 → period = 60000/bpm = 1000/hz)
+            const gateMs = Math.max(5, periodMs / 2);
+            // Start one pulse train per selected output port.
+            this.midi.port.selectedOutputs.forEach((midiOutput, portID) => {
+                if (!midiOutput) { return; }
+                const key = portID + '|' + type + '|' + ctrlNum;
+                // Replace any existing pulse for the same logical voice.
+                this.stopBeatPulse(key);
+                const fire = () => {
+                    try { midiOutput.send(this.makeMIDIoutNoteMsg(CHANNEL, 1, NOTE, velocity)); } catch (e) { /* port closed */ }
+                    const tracker = this.beatPulses.get(key);
+                    if (!tracker) { return; }
+                    tracker.offTimeoutId = setTimeout(() => {
+                        try { midiOutput.send(this.makeMIDIoutNoteMsg(CHANNEL, 0, NOTE, 64)); } catch (e) { /* port closed */ }
+                        if (tracker.offTimeoutId !== null) { tracker.offTimeoutId = null; }
+                    }, gateMs);
+                };
+                const tracker = {
+                    intervalId: null,
+                    channel: CHANNEL,
+                    note: NOTE,
+                    offTimeoutId: null,
+                    portID: portID,
+                };
+                this.beatPulses.set(key, tracker);
+                // Fire the first pulse immediately, then keep the cadence.
+                fire();
+                tracker.intervalId = setInterval(fire, periodMs);
+            });
+        } else if (state === 0) {
+            // Stop every pulse train matching this (type, ctrlNum) across all ports.
+            const suffix = '|' + type + '|' + ctrlNum;
+            for (const key of Array.from(this.beatPulses.keys())) {
+                if (key.endsWith(suffix)) {
+                    this.stopBeatPulse(key);
+                }
+            }
+        }
+    }
+
+    /**
+     * Stops a single beat pulse train identified by its tracker key, emitting
+     * any pending Note-Off so the receiving instrument is not left with a
+     * hanging note.
+     *
+     * @param {string} key - Tracker key in the form `"<portID>|<type>|<ctrlNum>"`.
+     * @returns {void}
+     */
+    stopBeatPulse(key) {
+        const tracker = this.beatPulses.get(key);
+        if (!tracker) { return; }
+        if (tracker.intervalId !== null) {
+            clearInterval(tracker.intervalId);
+            tracker.intervalId = null;
+        }
+        if (tracker.offTimeoutId !== null) {
+            clearTimeout(tracker.offTimeoutId);
+            tracker.offTimeoutId = null;
+        }
+        const midiOutput = this.midi.port.selectedOutputs.get(tracker.portID);
+        if (midiOutput) {
+            try { midiOutput.send(this.makeMIDIoutNoteMsg(tracker.channel, 0, tracker.note, 64)); } catch (e) { /* port closed */ }
+        }
+        this.beatPulses.delete(key);
+    }
+
+    /**
+     * Stops every active beat pulse train. Called from {@link HUM.midi.MidiOut#allNotesOff}.
+     *
+     * @returns {void}
+     */
+    stopAllBeatPulses() {
+        for (const key of Array.from(this.beatPulses.keys())) {
+            this.stopBeatPulse(key);
+        }
     }
 
     /**

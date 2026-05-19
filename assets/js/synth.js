@@ -124,6 +124,22 @@ HUM.Synth = class {
         };
 
         /**
+         * Decoded `AudioBuffer`s for the FT and HT beat samples used by
+         * Polyrhythm Mode. Both slots are `null` until the user uploads a
+         * sample via {@link HUM.Synth#loadBeatSample}. Samples are session-only
+         * and are not persisted in IndexedDB.
+         *
+         * @member {Object}
+         *
+         * @property {?AudioBuffer} ft - FT beat sample.
+         * @property {?AudioBuffer} ht - HT beat sample.
+         */
+        this.beatBuffer = {
+            ft: null,
+            ht: null,
+        };
+
+        /**
          * Namespace for Gain nodes.
          *
          * @member {Object}
@@ -180,6 +196,8 @@ HUM.Synth = class {
         */
         this.parameters = new this.Parameters(this);
         this.parameters._init();
+        // Sync the Synth panel visibility with the current Polyrhythm Mode state.
+        this.parameters._applyPolyrhythmMode(this.dhc.polyrhythmMode);
 
         // Tell to the DHC that a new app is using it            
         this.dhc.registerApp(this, 'updatesFromDHC', 2);
@@ -219,6 +237,9 @@ HUM.Synth = class {
 
             } else if (msg.type === 'ctrlmap') {
 
+            } else if (msg.type === 'mode') {
+                // Polyrhythm Mode toggled: re-apply panel visibility.
+                this.parameters._applyPolyrhythmMode(this.dhc.polyrhythmMode);
             }
 
         } else if (msg.cmd === 'tone-on') {
@@ -273,6 +294,8 @@ HUM.Synth = class {
         let freq = directHz !== null ? directHz : this.dhc.tables[type][toneID].hz;
         // If the synth is turned-on
         if (this.parameters.status.value === true) {
+            // In Polyrhythm Mode each tone becomes a recurring pulse instead of a sustained oscillator.
+            const VoiceClass = this.dhc.polyrhythmMode ? this.BeatVoice : this.SynthVoice;
             
             // **HT**
             if (type === "ht") {
@@ -281,7 +304,7 @@ HUM.Synth = class {
                 // (prevent duplication in case of stuck note - not turned off)
                 if (!this.voices.ht[toneID]) {   // && Object.keys(this.voices.ht).length < 2
                     // Create a new HT voice (POLYPHONIC)
-                    this.voices.ht[toneID] = new this.SynthVoice(this, freq, velocity, type);
+                    this.voices.ht[toneID] = new VoiceClass(this, freq, velocity, type);
                 } //  else {
                 //     this.voiceOFF('ht', toneID);
                 //     this.voices.ht[toneID] = new Synth.SynthVoice(this, freq, velocity, type);
@@ -296,7 +319,7 @@ HUM.Synth = class {
                     this.voices.ft.voiceMute();
                 }
                 // Create a new FT voice (MONOPHONIC)
-                this.voices.ft = new this.SynthVoice(this, freq, velocity, type);
+                this.voices.ft = new VoiceClass(this, freq, velocity, type);
                 // Update the frequency of all the HT oscillators because the FT is changed
                 this.updateHTfrequency();
             }
@@ -544,6 +567,46 @@ HUM.Synth = class {
                 console.log("There is no Convolver!");
             }
         }).bind(this));
+    }
+    /**
+     * Reads a beat-sample audio file (WAV or MP3) from disk and decodes it into
+     * the `beatBuffer` slot for the given tone type. Used by Polyrhythm Mode.
+     *
+     * @param {tonetype} type - `"ft"` or `"ht"`: which beat slot to load into.
+     * @param {File}     file - The `File` object representing the audio file.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Reads the file as `ArrayBuffer`, decodes it with
+     * `AudioContext.decodeAudioData()`, and stores the resulting `AudioBuffer`
+     * in `this.beatBuffer[type]`. Buffers are session-only (not persisted in
+     * IndexedDB). Decode/read errors are logged via the backend event log.
+     */
+    readBeatSampleFile(type, file) {
+        if (!file) { return; }
+        if (type !== 'ft' && type !== 'ht') { return; }
+        const reader = new FileReader();
+        reader.onerror = this.dhc.harmonicarium.components.backendUtils.fileErrorHandler;
+        reader.onload = (e) => {
+            this.audioContext.decodeAudioData(e.target.result,
+                (buffer) => {
+                    this.beatBuffer[type] = buffer;
+                    this.dhc.harmonicarium.components.backendUtils.eventLog(
+                        "Beat sample loaded (" + type.toUpperCase() + ").\n| filename: " + file.name +
+                        "\n| duration: " + Math.round(buffer.duration * 1000) / 1000 + " sec" +
+                        "\n| channels: " + buffer.numberOfChannels +
+                        "\n| sample rate: " + buffer.sampleRate + " Hz" +
+                        "\n| ---------------------");
+                },
+                (err) => {
+                    this.dhc.harmonicarium.components.backendUtils.eventLog(
+                        "Beat sample decode failed (" + type.toUpperCase() + "): " + file.name);
+                    console.error("Beat sample decode failed:", err);
+                }
+            );
+        };
+        reader.readAsArrayBuffer(file);
     }
     /**
      * Converts a Base64-encoded data URI into a `File` object.

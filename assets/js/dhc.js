@@ -463,7 +463,15 @@ HUM.DHC = class {
             sign = notename[1],
             cent = notename[2];
         this.settings.fm.mc.uiElements.out.fm_mc_monitor.innerText = bent_xtObj.mc.toFixed(this.settings.global.cent_accuracy.value + 2) + " = " + name + " " + sign + cent + "\u00A2";
-        this.settings.fm.hz.uiElements.out.fm_hz_monitor.innerText = bent_xtObj.hz.toFixed(this.settings.global.hz_accuracy.value);
+        this.settings.fm.hz.uiElements.out.fm_hz_monitor.innerText = this.polyrhythmMode
+            ? bent_xtObj.hz.toFixed(this.settings.global.hz_accuracy.value) + " Hz = " + HUM.DHC.hzToBpm(bent_xtObj.hz) + " BPM"
+            : bent_xtObj.hz.toFixed(this.settings.global.hz_accuracy.value);
+        // Sync BPM input field and monitor for all FM change paths.
+        if (this.settings.fm.bpm) {
+            this.settings.fm.bpm._setValue(hz * 60, { preSet: false, postSet: false });
+            this.settings.fm.bpm.uiElements.out.fm_bpm_monitor.innerText =
+                HUM.DHC.hzToBpm(bent_xtObj.hz) + ' BPM';
+        }
     }
 
     /*==============================================================================*
@@ -1566,6 +1574,21 @@ HUM.DHC = class {
     }
 
     /**
+     * Converts a frequency in hertz to a tempo expressed in beats-per-minute.
+     *
+     * @param {hertz} hz - Frequency in hertz (Hz).
+     *
+     * @returns {number} Integer BPM, rounded to the nearest whole beat.
+     *
+     * @description
+     * Used by Polyrhythm Mode (active when FM < {@link HUM.DHC.POLYRHYTHM_THRESHOLD_HZ})
+     * to translate any FT/HT frequency into a tempo for display and pulse scheduling.
+     */
+    static hzToBpm(hz) {
+        return Math.round(hz * 60);
+    }
+
+    /**
      * Computes the frequency of a relative tone step in an n-EDx equal-temperament scale.
      *
      * @param  {number} relativeTone - The step number relative to the reference tone
@@ -1602,4 +1625,33 @@ HUM.DHC = class {
           return arrArg.filter((elem, pos, arr) => arr.indexOf(elem) === pos );
     }
 
+    /**
+     * Whether this DHC is currently in Polyrhythm Mode.
+     *
+     * @type {boolean}
+     * @readonly
+     *
+     * @description
+     * Polyrhythm Mode is automatically active when the Fundamental Mother (FM)
+     * frequency drops below {@link HUM.DHC.POLYRHYTHM_THRESHOLD_HZ} (5 Hz / 300 BPM).
+     * In this mode, FT/HT frequencies are reinterpreted as beats-per-minute and
+     * outputs produce pulsing beats instead of sustained tones. The internal
+     * lookup tables (`tables.ft` / `tables.ht`) remain in hertz/midicent — the
+     * BPM translation happens at the consumer edge (Synth, MidiOut, UI monitors).
+     */
+    get polyrhythmMode() {
+        return this.settings && this.settings.fm && this.settings.fm.hz
+            && this.settings.fm.hz.value < HUM.DHC.POLYRHYTHM_THRESHOLD_HZ;
+    }
+
 }; // end Class
+
+/**
+ * The Fundamental Mother (FM) frequency threshold, in hertz, below which the
+ * DHC switches into Polyrhythm Mode.
+ *
+ * @type {hertz}
+ * @constant
+ * @default 5
+ */
+HUM.DHC.POLYRHYTHM_THRESHOLD_HZ = 5;

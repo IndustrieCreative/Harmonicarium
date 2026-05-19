@@ -1158,16 +1158,21 @@ HUM.DpPad.PadSet.FrequencyPad = class {
      * horizontal orientation a canvas rotation transform is applied when the
      * ratio's `rotation` property is set.
      */
-    drawKeyLabelFT(pxPosition, note) {
+    drawKeyLabelFT(pxPosition, note, hz) {
         let ctx = this.ctx,
             scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
             ratios = this.padSet.parameters.canvasObjectsRatios.ft,
             font = this.padSet.parameters.fonts.ft.keyLabel.value;
-        //        note name
-        let text = note[0];
-        if (note[2] !== 0.0) {
-            //             +/-       cents   cent symbol
-            text += " " + note[1] + note[2] + "\u00A2";
+        //        note name (or BPM in Polyrhythm Mode)
+        let text;
+        if (this.padSet.dhc.polyrhythmMode) {
+            text = HUM.DHC.hzToBpm(hz) + ' BPM';
+        } else {
+            text = note[0];
+            if (note[2] !== 0.0) {
+                //             +/-       cents   cent symbol
+                text += " " + note[1] + note[2] + "\u00A2";
+            }
         }
         if (scaleOrientation === 'vertical') {
             let keyWidth = this.cssDimensions.width * ratios.key.length,
@@ -1228,18 +1233,23 @@ HUM.DpPad.PadSet.FrequencyPad = class {
      * Mirroring and canvas rotation transforms are applied according to key
      * position and orientation.
      */
-    drawKeyLabelHT(pxPosition, note, htNumber) {
+    drawKeyLabelHT(pxPosition, note, htNumber, hz) {
         let ctx = this.ctx,
             scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
             ratios = this.padSet.parameters.canvasObjectsRatios.ht,
             fontKey = this.padSet.parameters.fonts.ht.keyLabel.value,
             fontLine = this.padSet.parameters.fonts.ht.lineLabel.value,
             x, y;
-        //            note name
-        let textNote = note[0];
-        if (note[2] !== 0.0) {
-            //                 +/-       cents   cent symbol
-            textNote += " " + note[1] + note[2] + "\u00A2";
+        //            note name (or BPM in Polyrhythm Mode)
+        let textNote;
+        if (this.padSet.dhc.polyrhythmMode) {
+            textNote = HUM.DHC.hzToBpm(hz) + ' BPM';
+        } else {
+            textNote = note[0];
+            if (note[2] !== 0.0) {
+                //                 +/-       cents   cent symbol
+                textNote += " " + note[1] + note[2] + "\u00A2";
+            }
         }
         let textHT = "H " + htNumber;
 
@@ -1489,10 +1499,10 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             let note = this.padSet.dhc.mcToName(ft[1].mc);
             if (note[3]) {
                 ctx.fillStyle = 'white';
-                this.drawKeyLabelFT(pxPosition2, note);
+                this.drawKeyLabelFT(pxPosition2, note, ft[1].hz);
             } else {
                 ctx.fillStyle = 'black';
-                this.drawKeyLabelFT(pxPosition2, note);
+                this.drawKeyLabelFT(pxPosition2, note, ft[1].hz);
             }
         }
         ctx.restore();
@@ -1628,7 +1638,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             let pxPosition = this.freqToPadPix(ht[1].hz);
             let note = this.padSet.dhc.mcToName(ht[1].mc);
             ctx.fillStyle = 'black';
-            this.drawKeyLabelHT(pxPosition, note, ht[0]);
+            this.drawKeyLabelHT(pxPosition, note, ht[0], ht[1].hz);
         }
         ctx.restore();
 
@@ -1672,6 +1682,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         const centAcc      = dhc.settings.global.cent_accuracy.value;
         const spectrogram  = this.padSet.spectrogram;
         const spectroOn    = spectrogram && spectrogram.enabled;
+        const polyMode     = dhc.polyrhythmMode;
 
         // -- Collect text lines (order: detected top, played bottom) --
         const lines = [];
@@ -1683,23 +1694,22 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             const sign = (n[1] === '' ? '+' : n[1]).replace('\u2212', '-');
             return n[0].padEnd(3) + ' ' + sign + String(n[2]).padStart(centWidth, '0') + 'c ';
         };
+        // In Polyrhythm Mode render "<bpm> BPM (<hz> Hz)" instead of note+Hz.
+        const fmtLine = (label, hz) => polyMode
+            ? label + ' ' + String(HUM.DHC.hzToBpm(hz)).padStart(4) + ' BPM (' + hz.toFixed(hzAcc) + ' Hz)'
+            : label + ' ' + fmtNote(hz) + hz.toFixed(hzAcc).padStart(hzWidth) + ' Hz';
 
         if (spectroOn) {
             if (this.type === 'ft' && this.spectrogramHz !== null) {
-                lines.push(
-                    'DET ' + fmtNote(this.spectrogramHz) +
-                    this.spectrogramHz.toFixed(hzAcc).padStart(hzWidth) + ' Hz'
-                );
+                lines.push(fmtLine('DET', this.spectrogramHz));
             } else if (this.type === 'ht') {
                 const f1 = this.spectrogramHzFormant;
-                // const f2 = spectrogram.detectedF2 || null;
-                if (f1 !== null) lines.push('DET ' + fmtNote(f1) + f1.toFixed(hzAcc).padStart(hzWidth) + ' Hz');
-                // if (f2 !== null) lines.push('F2 ' + fmtNote(f2) + f2.toFixed(hzAcc).padStart(hzWidth) + ' Hz');
+                if (f1 !== null) lines.push(fmtLine('DET', f1));
             }
         }
 
         if (this.currentFreq) {
-            lines.push('PLY ' + fmtNote(this.currentFreq) + this.currentFreq.toFixed(hzAcc).padStart(hzWidth) + ' Hz');
+            lines.push(fmtLine('PLY', this.currentFreq));
         }
 
         if (lines.length === 0) return;

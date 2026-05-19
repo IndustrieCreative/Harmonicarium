@@ -140,6 +140,17 @@ HUM.DHCmsg = class {
         return new HUM.DHCmsg(source, 'update', 'ctrlmap');
     }
     /**
+     * Creates an `'update/mode'` DHCmsg signalling that the playback mode
+     * (tone vs. polyrhythm) has changed.
+     *
+     * @param {string} source - Identifier of the component generating the message.
+     *
+     * @returns {HUM.DHCmsg} A new `'update'` DHCmsg with type `'mode'`.
+     */
+    static modeUpd(source) {
+        return new HUM.DHCmsg(source, 'update', 'mode');
+    }
+    /**
      * Creates a `'tone-on'` DHCmsg for a Fundamental Tone.
      *
      * @param {string}   source   - Identifier of the component generating the message.

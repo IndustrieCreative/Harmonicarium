@@ -2123,7 +2123,7 @@ HUM.tmpl = {
                         
                         </div>
 
-                        <div class="col-lg-8">
+                        <div class="col-lg-8" id="HTMLf_synth_toneShaping${dhcID}">
 
                             <div class="row g-2">
                                 <div class="col-lg-12">
@@ -2232,6 +2232,38 @@ HUM.tmpl = {
                             </div>
 
                         </div>
+                    </div>
+
+                    <div class="row g-2" id="HTMLf_synth_beatSamples${dhcID}" style="display:none;">
+
+                        <div class="col-lg-12">
+
+                            <div class="card mt-2">
+                              <div class="card-header">
+                                Beat Samples (Polyrhythm Mode)
+                              </div>
+                              <div class="card-body">
+
+                                <div class="row g-2">
+                                    <div class="col-lg-6">
+                                      <div class="form-label d-flex align-items-center">FT beat sample:&nbsp;
+                                        <span id="HTMLo_synth_beatSampleFTName${dhcID}" class="fw-bold fst-italic">none</span>
+                                      </div>
+                                      <input type="file" id="HTMLi_synth_beatSampleFT${dhcID}" accept="audio/*" class="form-control">
+                                    </div>
+                                    <div class="col-lg-6">
+                                      <div class="form-label d-flex align-items-center">HT beat sample:&nbsp;
+                                        <span id="HTMLo_synth_beatSampleHTName${dhcID}" class="fw-bold fst-italic">none</span>
+                                      </div>
+                                      <input type="file" id="HTMLi_synth_beatSampleHT${dhcID}" accept="audio/*" class="form-control">
+                                    </div>
+                                </div>
+
+                              </div>
+                            </div>
+
+                        </div>
+
                     </div>
 
                     <div class="row g-2">
@@ -2856,6 +2888,21 @@ HUM.tmpl = {
                     <div class="list-group-item">
                         <div class="row align-items-center">
                             <div class="col-12 col-md">
+                                <strong class="mb-2">Mode</strong>
+                            </div>
+                            <div class="col-12 col-md-auto">
+                                <select id="HTMLi_fm_mode${dhcID}" class="form-select">
+                                    <option value="overtones">Overtones</option>
+                                    <option value="polyrhythms">Polyrhythms</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="HTMLf_fm_mc_row${dhcID}">
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md">
                                 <strong class="mb-2">MIDI Note 0-127</strong>
                             </div>
                             <div class="col-12 col-md-auto">
@@ -2876,6 +2923,7 @@ HUM.tmpl = {
                             </div>
                         </div>
                     </div>
+                    </div>
 
                     <div class="list-group-item">
                         <div class="row align-items-center">
@@ -2889,7 +2937,7 @@ HUM.tmpl = {
                                     </div>
                                     <div class="col-12 col-lg-auto">
                                         <div class="input-group">
-                                            <input type="number" min="1" max="99999" step="1"
+                                            <input type="number" min="0.05" max="99999" step="0.01"
                                                    id="HTMLi_fm_hz${dhcID}"
                                                    class="form-control"
                                                    aria-label="Note in hertz">
@@ -2900,6 +2948,33 @@ HUM.tmpl = {
                             </div>
                         </div>
                     </div>
+
+                    <div id="HTMLf_fm_bpm_row${dhcID}" style="display:none;">
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md">
+                                <strong class="mb-2">BPM</strong>
+                            </div>
+                            <div class="col-12 col-md-auto">
+                                <div class="row align-items-center">
+                                    <div class="col-12 col-lg hmFMout">
+                                        <span id="HTMLo_fm_bpm_monitor${dhcID}"></span>
+                                    </div>
+                                    <div class="col-12 col-lg-auto">
+                                        <div class="input-group">
+                                            <input type="number" min="0.01" max="5999940" step="0.1"
+                                                   id="HTMLi_fm_bpm${dhcID}"
+                                                   class="form-control"
+                                                   aria-label="Tempo in beats per minute">
+                                            <span class="input-group-text">BPM</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+
                 </div>
             </div>`;
         return template.firstElementChild;

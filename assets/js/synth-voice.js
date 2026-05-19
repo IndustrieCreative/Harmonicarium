@@ -237,3 +237,169 @@ HUM.Synth.prototype.SynthVoice = class {
         this.osc.stop(envReleaseEnd + 0.2);
     }
 };
+
+/*==============================================================================*
+ * BEAT VOICE — Polyrhythm Mode
+ *==============================================================================*/
+/**
+ * A single beat voice for the {@link HUM.Synth} engine in Polyrhythm Mode.
+ *
+ * @class
+ * @memberof HUM.Synth
+ *
+ * @description
+ * Schedules a recurring playback of an `AudioBuffer` (FT or HT beat sample)
+ * at a period derived from `initFrequency` (`period = 1 / hz` seconds, so
+ * that 1 Hz → 60 BPM, 2 Hz → 120 BPM, etc.). Pulses are scheduled with
+ * Web Audio absolute timing via a ~25 ms lookahead loop, so the cadence is
+ * sample-accurate even when the main thread is busy.
+ *
+ * The instance exposes the same minimal API as {@link HUM.Synth.prototype.SynthVoice}
+ * (`initFrequency`, `setFrequency`, `voiceMute`) so that the rest of the synth
+ * code paths can treat both interchangeably.
+ */
+HUM.Synth.prototype.BeatVoice = class {
+    /**
+     * Creates and immediately starts a new beat voice.
+     *
+     * @param {HUM.Synth} synth    - The parent `Synth` instance.
+     * @param {hertz}     freq     - Pulse rate in hertz (`bpm = freq × 60`).
+     * @param {velocity}  velocity - MIDI velocity (0–127), maps to voice gain.
+     * @param {tonetype}  type     - `"ft"` or `"ht"` — selects the beat sample and gain bus.
+     */
+    constructor(synth, freq, velocity, type) {
+        this.synth = synth;
+        this.type = type;
+        this.initFrequency = freq;
+        this._stopped = false;
+        this._pendingSources = [];
+
+        // Per-voice gain (velocity scaling), routed to the standard FT/HT bus.
+        this.volume = this.synth.audioContext.createGain();
+        this.volume.gain.setValueAtTime(velocity / 127, 0);
+        this.volume.connect(this.synth.gains[type]);
+
+        // Scheduler state
+        this._lookaheadSec = 0.1;       // schedule up to 100 ms in advance
+        this._intervalMs = 25;          // wake every 25 ms
+        this._nextPulseTime = this.synth.audioContext.currentTime + 0.02;
+
+        // Kick off the lookahead loop
+        this._timerId = setInterval(() => this._scheduleAhead(), this._intervalMs);
+        // Also schedule immediately so the very first pulse fires without timer delay
+        this._scheduleAhead();
+    }
+
+    /**
+     * Returns the current pulse period in seconds, derived from `initFrequency`.
+     *
+     * @returns {number} Period in seconds (clamped to a sane minimum).
+     * @private
+     */
+    _period() {
+        const f = this.initFrequency > 0 ? this.initFrequency : 0.05;
+        return 1 / f;
+    }
+
+    /**
+     * Lookahead scheduler: queues `AudioBufferSourceNode`s for every pulse
+     * whose start time falls inside the lookahead window.
+     *
+     * @returns {void}
+     * @private
+     */
+    _scheduleAhead() {
+        if (this._stopped) { return; }
+        const ctx = this.synth.audioContext;
+        const horizon = ctx.currentTime + this._lookaheadSec;
+        // Recover gracefully if the page was suspended/blurred and we fell far behind.
+        if (this._nextPulseTime < ctx.currentTime) {
+            this._nextPulseTime = ctx.currentTime + 0.005;
+        }
+        while (this._nextPulseTime < horizon) {
+            this._firePulseAt(this._nextPulseTime);
+            this._nextPulseTime += this._period();
+        }
+    }
+
+    /**
+     * Schedules a single one-shot playback of the current beat sample at the
+     * given AudioContext time.
+     *
+     * @param {number} when - Absolute AudioContext time at which to start the pulse.
+     * @returns {void}
+     * @private
+     */
+    _firePulseAt(when) {
+        const buffer = this.synth.beatBuffer && this.synth.beatBuffer[this.type];
+        if (!buffer) { return; }
+        const src = this.synth.audioContext.createBufferSource();
+        src.buffer = buffer;
+        src.connect(this.volume);
+        try {
+            src.start(when);
+        } catch (e) {
+            // start() throws if `when` is in the past on some browsers; fall back to "now".
+            src.start();
+        }
+        this._pendingSources.push(src);
+        src.onended = () => {
+            const i = this._pendingSources.indexOf(src);
+            if (i !== -1) { this._pendingSources.splice(i, 1); }
+            try { src.disconnect(); } catch (e) { /* already disconnected */ }
+        };
+    }
+
+    /**
+     * No-op for `BeatVoice` (kept for API parity with {@link HUM.Synth.prototype.SynthVoice}).
+     *
+     * @param {('sine'|'square'|'sawtooth'|'triangle')} _waveform - Unused.
+     * @returns {void}
+     */
+    setWaveform(_waveform) { /* no-op in polyrhythm mode */ }
+
+    /**
+     * Updates the pulse rate. The next scheduled pulse uses the new period;
+     * pulses already queued inside the lookahead window play out as scheduled.
+     *
+     * @param {boolean} _update - Unused (kept for API parity).
+     * @returns {void}
+     */
+    setFrequency(_update) {
+        // The period is read fresh on every iteration of the scheduler loop,
+        // so simply updating `initFrequency` is sufficient.
+    }
+
+    /**
+     * Stops the scheduler and silences the voice with a short fade-out.
+     * Any pulses already scheduled in the lookahead window are stopped
+     * immediately to avoid late triggers.
+     *
+     * @returns {void}
+     */
+    voiceMute() {
+        if (this._stopped) { return; }
+        this._stopped = true;
+        if (this._timerId) {
+            clearInterval(this._timerId);
+            this._timerId = null;
+        }
+        const ctx = this.synth.audioContext;
+        // Short fade-out to avoid clicks if a pulse is currently sounding.
+        const fadeEnd = ctx.currentTime + 0.02;
+        try {
+            this.volume.gain.cancelScheduledValues(0);
+            this.volume.gain.setValueAtTime(this.volume.gain.value, ctx.currentTime);
+            this.volume.gain.linearRampToValueAtTime(0, fadeEnd);
+        } catch (e) { /* ignore */ }
+        // Stop any sources scheduled but not yet started, plus any currently sounding.
+        for (const src of this._pendingSources) {
+            try { src.stop(fadeEnd); } catch (e) { /* already stopped */ }
+        }
+        // Clean up after fade.
+        setTimeout(() => {
+            try { this.volume.disconnect(); } catch (e) { /* ignore */ }
+        }, 100);
+    }
+};
+

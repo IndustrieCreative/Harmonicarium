@@ -292,6 +292,21 @@ HUM.DHC.prototype.Parameters = class {
         };
 
         /**
+         * Toggles the visibility of the FM mc row and BPM row in the UI to
+         * match the current mode ('overtones' shows mc, 'polyrhythms' shows BPM).
+         * Null-guarded so it is safe to call before the DOM is ready.
+         *
+         * @param {('overtones'|'polyrhythms')} mode - The target mode.
+         */
+        const _applyModeVisibility = (mode) => {
+            const mcRow  = document.getElementById('HTMLf_fm_mc_row'  + dhc.id);
+            const bpmRow = document.getElementById('HTMLf_fm_bpm_row' + dhc.id);
+            if (!mcRow || !bpmRow) return;
+            mcRow.style.display  = mode === 'polyrhythms' ? 'none' : '';
+            bpmRow.style.display = mode === 'polyrhythms' ? ''     : 'none';
+        };
+
+        /**
          * Fundamental Mother (FM) settings
          * 
          * @member {Object}
@@ -331,16 +346,41 @@ HUM.DHC.prototype.Parameters = class {
                 dataType: 'float',
                 initValue: false, // 130.8127826502993,
                 preSet: (value, thisParam) => {
-                    if (value <= 0) {
-                        value = 1;
-                        thisParam.uiElements.in.fm_hz.value = 1;
+                    // Polyrhythm Mode allows FM down to 0.05 Hz (≈ 3 BPM).
+                    const minHz = 0.05;
+                    if (!Number.isFinite(value) || value < minHz) {
+                        value = minHz;
+                        thisParam.uiElements.in.fm_hz.value = minHz;
                     }
                     return value;
                 },
                 postSet: (value, thisParam, init) => {
-                    // Change the 'init' for eventual icDHCinit
+                    // Detect a transition across the Polyrhythm Mode threshold
+                    // (5 Hz). When crossing in either direction, silence all
+                    // active voices and notify subscribers so they can re-render
+                    // UI / swap output engines.
                     if (!init) {
+                        const threshold = HUM.DHC.POLYRHYTHM_THRESHOLD_HZ;
+                        const wasPoly = typeof thisParam._prevPolyrhythm === 'boolean'
+                            ? thisParam._prevPolyrhythm
+                            : false;
+                        const isPoly = value < threshold;
+                        if (wasPoly !== isPoly) {
+                            dhc.panic();
+                            dhc.sendMessageToApps(HUM.DHCmsg.modeUpd('dhc'));
+                            // Sync the mode switch when the user crosses the
+                            // threshold by typing Hz directly (not via the switch).
+                            if (this.fm.mode) {
+                                const newMode = isPoly ? 'polyrhythms' : 'overtones';
+                                this.fm.mode._setValue(newMode, { postSet: false });
+                                _applyModeVisibility(newMode);
+                            }
+                        }
+                        thisParam._prevPolyrhythm = isPoly;
+                        // Change the 'init' for eventual icDHCinit
                         this.fm.init.value = 'hz';
+                    } else {
+                        thisParam._prevPolyrhythm = value < HUM.DHC.POLYRHYTHM_THRESHOLD_HZ;
                     }
                 },
             }),
@@ -385,6 +425,96 @@ HUM.DHC.prototype.Parameters = class {
                 },
             })
         };
+
+        /**
+         * Selects the DHC operating mode: 'overtones' for harmonic/melodic use,
+         * 'polyrhythms' for low-frequency rhythmic use (FM < 5 Hz).
+         * Switching applies canonical FM defaults and loads matching DiphonicPad
+         * range presets.
+         *
+         * @instance
+         * @name mode
+         * @memberof HUM.DHC#Parameters#fm
+         * @type {HUM.Param}
+         */
+        this.fm.mode = new HUM.Param({
+            app: dhc,
+            idbKey: 'dhcFMmode',
+            uiElements: {
+                'fm_mode': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    eventType: 'change',
+                    htmlTargetProp: 'value',
+                    widget: 'selection',
+                }),
+            },
+            dataType: 'string',
+            initValue: 'overtones',
+            allowedValues: ['overtones', 'polyrhythms'],
+            postSet: (value, thisParam, init) => {
+                // Always apply row visibility (also handles DB-restore case).
+                _applyModeVisibility(value);
+                if (!init) {
+                    if (value === 'overtones') {
+                        // Silence any active polyrhythm voices before switching.
+                        if (dhc.polyrhythmMode) {
+                            dhc.panic();
+                        }
+                        // Set FM to C3 (48 mc).
+                        this.fm.mc._setValue(48);
+                        // hz.postSet runs with init:true through the mc→hz chain
+                        // and will NOT detect the threshold crossing, so we must
+                        // explicitly notify subscribers.
+                        dhc.sendMessageToApps(HUM.DHCmsg.modeUpd('dhc'));
+                    } else { // polyrhythms
+                        // Set FM to 2.5 Hz — threshold detection in hz.postSet
+                        // handles panic + modeUpd when crossing from overtones.
+                        this.fm.hz._setValue(2.5);
+                        // Explicitly send modeUpd to guarantee DiphonicPad loads
+                        // polyrhythm presets even when already in polyrhythm mode
+                        // (no threshold crossing → hz.postSet won't send it).
+                        dhc.sendMessageToApps(HUM.DHCmsg.modeUpd('dhc'));
+                    }
+                }
+            },
+        });
+
+        /**
+         * Allows the FM to be set by a value expressed in beats per minute (BPM).
+         * Non-persistent: the BPM is always derived from fm.hz on load.
+         *
+         * @instance
+         * @name bpm
+         * @memberof HUM.DHC#Parameters#fm
+         * @type {HUM.Param}
+         */
+        this.fm.bpm = new HUM.Param({
+            app: dhc,
+            idbKey: 'dhcFMbpm',
+            uiElements: {
+                'fm_bpm': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    eventType: 'change',
+                    htmlTargetProp: 'value',
+                    widget: 'number',
+                }),
+                'fm_bpm_monitor': new HUM.Param.UIelem({
+                    role: 'out',
+                }),
+            },
+            dataType: 'float',
+            initValue: false,
+            presetStore: false,
+            presetAutosave: false,
+            presetRestore: false,
+            postSet: (value, thisParam, init) => {
+                if (!init && value > 0) {
+                    this.fm.hz._setValue(value / 60);
+                }
+            },
+        });
 
         /**  
          * This property indicates what unit to use for initializing the FM when the app is loaded: 'hz' or 'mc'.

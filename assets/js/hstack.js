@@ -157,6 +157,11 @@ HUM.Hstack = class {
             } else if (msg.type === 'ctrlmap') {
                 
                 this.parameters.hstack._init();
+
+            } else if (msg.type === 'mode') {
+                // Polyrhythm Mode toggled: re-render the Hstack so Hz columns become BPM (and vice-versa).
+                if (this.parameters.active.value) { this.fillin(); }
+                this.ftMonitor(this.dhc.settings.ht.curr_ft);
             }
 
         } else if (msg.cmd === 'tone-on' && this.parameters.active.value) {
@@ -274,7 +279,9 @@ HUM.Hstack = class {
                 this.parameters.hstack.uiElements.out.rowsHT[htNum].elemHtNum.innerText = htNum;
                 this.parameters.hstack.uiElements.out.rowsHT[htNum].elemNote.innerText = name;
                 this.parameters.hstack.uiElements.out.rowsHT[htNum].elemCents.innerText = sign + cent;
-                this.parameters.hstack.uiElements.out.rowsHT[htNum].elemHz.innerText = htObj.hz.toFixed(this.dhc.settings.global.hz_accuracy);
+                this.parameters.hstack.uiElements.out.rowsHT[htNum].elemHz.innerText = this.dhc.polyrhythmMode
+                    ? HUM.DHC.hzToBpm(htObj.hz) + ' BPM'
+                    : htObj.hz.toFixed(this.dhc.settings.global.hz_accuracy);
             }
         }
     }
@@ -305,7 +312,9 @@ HUM.Hstack = class {
         document.getElementById("HTMLo_hstackFT_tone"+dhcID).innerText = ftNum;
         document.getElementById("HTMLo_hstackFT_note"+dhcID).innerText = name;
         document.getElementById("HTMLo_hstackFT_cents"+dhcID).innerText = sign + cent;
-        document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = ftObj.hz.toFixed(hzAccuracy);
+        document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = this.dhc.polyrhythmMode
+            ? HUM.DHC.hzToBpm(ftObj.hz) + ' BPM'
+            : ftObj.hz.toFixed(hzAccuracy);
     }
     /**
      * Updates the Fundamental Tone row using absolute Hz/mc values from a
@@ -338,7 +347,9 @@ HUM.Hstack = class {
         document.getElementById("HTMLo_hstackFT_tone"+dhcID).innerText = "~";
         document.getElementById("HTMLo_hstackFT_note"+dhcID).innerText = name;
         document.getElementById("HTMLo_hstackFT_cents"+dhcID).innerText = sign + cent;
-        document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = xtObj.hz.toFixed(hzAccuracy);
+        document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = this.dhc.polyrhythmMode
+            ? HUM.DHC.hzToBpm(xtObj.hz) + ' BPM'
+            : xtObj.hz.toFixed(hzAccuracy);
     }
     /**
      * Turns ON or OFF a row in the H-Stack table.
