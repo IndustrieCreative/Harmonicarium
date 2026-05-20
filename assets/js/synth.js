@@ -420,19 +420,13 @@ HUM.Synth = class {
      * Used as a panic handler to clear stuck notes.
      */
     allNotesOff() {
-        // Prevent HT stuck notes
-        for (var i = 0; i < 128; i++) {
-            if (this.voices.ht[i]) {
-                this.voices.ht[i].voiceMute();
-                this.voices.ht[i] = null;
-                delete this.voices.ht[i];
+        // Silence every active HT voice (harmonics 1–128, subharmonics −2 to −128,
+        // and the continuum sentinel −1) by iterating the live keys of voices.ht.
+        for (const key of Object.keys(this.voices.ht)) {
+            if (this.voices.ht[key]) {
+                this.voices.ht[key].voiceMute();
+                delete this.voices.ht[key];
             }
-        }
-        // Prevent continuum HT stuck note (sentinel -1, outside the 0–127 loop above)
-        if (this.voices.ht[HUM.DHCmsg.CONTINUUM_XTNUM]) {
-            this.voices.ht[HUM.DHCmsg.CONTINUUM_XTNUM].voiceMute();
-            this.voices.ht[HUM.DHCmsg.CONTINUUM_XTNUM] = null;
-            delete this.voices.ht[HUM.DHCmsg.CONTINUUM_XTNUM];
         }
         // Prevent FT stuck notes
         if (this.voices.ft) {
