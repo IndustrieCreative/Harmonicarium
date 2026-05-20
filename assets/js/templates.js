@@ -2575,7 +2575,12 @@ HUM.tmpl = {
                     <div class="modal-content">
 
                         <div class="modal-header">
-                            <h5 class="modal-title">MIDI Input/Output Settings</h5>
+                            <h5 class="modal-title me-3">MIDI Input/Output Settings</h5>
+                            <div class="form-check form-control-lg form-switch me-auto">
+                                <input type="checkbox" id="HTMLi_midiPorts_status${dhcID}"
+                                       class="form-check-input" role="switch">
+                                <label class="form-check-label" for="HTMLi_midiPorts_status${dhcID}">Enable MIDI</label>
+                            </div>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
 

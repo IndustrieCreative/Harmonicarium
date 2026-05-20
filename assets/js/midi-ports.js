@@ -65,8 +65,10 @@ HUM.midi.MidiPorts = class {
      * Initializes the MIDI port management system by:
      * 1. Setting up identification and references to the parent DHC and MidiHub instances
      * 2. Creating the parameter management system for port UI elements
-     * 3. Requesting Web MIDI API access and registering the success and error callbacks
-     * 4. Initializing WebMidiLink virtual output ports after the MIDI request completes
+     * 3. Initializing WebMidiLink virtual output ports unconditionally at startup
+     *
+     * Native Web MIDI API access is NOT requested here. It is deferred until the user
+     * explicitly enables MIDI via the toggle switch in the MIDI settings modal.
      */
     constructor(dhc, midi) {
         /**
@@ -151,19 +153,113 @@ HUM.midi.MidiPorts = class {
 
         this.parameters = new this.Parameters(this);
 
-        // Request MIDI Access
-        if (navigator.requestMIDIAccess) {
-            navigator.requestMIDIAccess().then(this._onMidiInit.bind(this), this._onMidiReject.bind(this));
-        } else {
-            // If MIDIAccess does not exist
-            // @see - https://webaudiodemos.appspot.com/namm/#/11
-            this.dhc.harmonicarium.components.backendUtils.eventLog("Unfortunately, your browser does not seem to support Web MIDI API.");
-            this._postRequestMIDI();
-        }
+        // Always initialize WebMidiLink virtual ports at startup.
+        // Native MIDI access is deferred; the user must enable it via the UI switch.
+        this._postRequestMIDI();
 
         // =======================
     } // end class Constructor
     // ===========================
+
+    /**
+     * Requests Web MIDI API access and registers the success and error callbacks.
+     *
+     * @private
+     *
+     * @returns {void}
+     *
+     * @description
+     * Contains the actual `navigator.requestMIDIAccess()` call, extracted from the
+     * constructor so it can be triggered on demand (when the user enables MIDI via UI).
+     * If the browser does not support the Web MIDI API, logs a message and returns.
+     */
+    _requestMidiAccess() {
+        if (navigator.requestMIDIAccess) {
+            navigator.requestMIDIAccess().then(this._onMidiInit.bind(this), this._onMidiReject.bind(this));
+        } else {
+            // @see - https://webaudiodemos.appspot.com/namm/#/11
+            this.dhc.harmonicarium.components.backendUtils.eventLog("Unfortunately, your browser does not seem to support Web MIDI API.");
+        }
+    }
+
+    /**
+     * Enables native Web MIDI API access by requesting it from the browser.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Called when the user toggles the MIDI enable switch ON in the MIDI settings modal.
+     * Guards against double initialization: if `midiAccess` is already set, returns immediately.
+     */
+    enableMidi() {
+        if (this.midiAccess) { return; }
+        this._requestMidiAccess();
+    }
+
+    /**
+     * Disables native Web MIDI API access, closes all open hardware ports, and removes
+     * their checkboxes from the UI.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Called when the user toggles the MIDI enable switch OFF in the MIDI settings modal.
+     * WebMidiLink virtual ports are left untouched. After this call, `enableMidi()` can
+     * be called again to re-request access.
+     */
+    disableMidi() {
+        if (!this.midiAccess) { return; }
+        let dhcID = this.dhc.id;
+
+        // Panic: silence all active notes
+        this.dhc.panic();
+
+        // Close all open hardware input ports and detach message handlers
+        this.midiAccess.inputs.forEach((port) => {
+            let checkbox = document.getElementById(port.id + '_' + dhcID);
+            if (checkbox && checkbox.checked) {
+                this.atLeastOneMidi.openPort.input--;
+            }
+            port.onmidimessage = null;
+            port.close();
+        });
+
+        // Silence and deselect all open hardware output ports
+        this.midiAccess.outputs.forEach((port) => {
+            let portID = port.id;
+            if (this.selectedOutputs.has(portID)) {
+                this.midi.out.allNotesOffPort(portID, 'soft');
+                this.selectedOutputs.delete(portID);
+                this.atLeastOneMidi.openPort.output--;
+            }
+        });
+
+        // Remove hardware port checkboxes from the input ports container
+        let inputContainer = this.parameters.inputPorts.uiElements.out.inputPorts;
+        Array.from(inputContainer.children).forEach((div) => {
+            let checkbox = div.querySelector('input');
+            if (checkbox && checkbox.value.indexOf('webmidilink') === -1) {
+                inputContainer.removeChild(div);
+            }
+        });
+
+        // Remove hardware port checkboxes from the output ports container
+        let outputContainer = this.parameters.outputPorts.uiElements.out.outputPorts;
+        Array.from(outputContainer.children).forEach((div) => {
+            let checkbox = div.querySelector('input');
+            if (checkbox && checkbox.value.indexOf('webmidilink') === -1) {
+                outputContainer.removeChild(div);
+            }
+        });
+
+        // Reset available port counters
+        this.atLeastOneMidi.availablePort.input = 0;
+        this.atLeastOneMidi.availablePort.output = 0;
+
+        // Release the MIDIAccess object
+        this.midiAccess.onstatechange = null;
+        this.midiAccess = null;
+    }
 
     /**
      * Initializes the WebMidiLink output ports and makes the UI MIDI panel accessible.
@@ -225,7 +321,6 @@ HUM.midi.MidiPorts = class {
      */
     _onMidiReject(error) {
         this.dhc.harmonicarium.components.backendUtils.eventLog("Failed to get MIDI access because: " + error);
-        this._postRequestMIDI();
     }
 
     /**
@@ -266,8 +361,6 @@ HUM.midi.MidiPorts = class {
         this.midiAccess.onstatechange = (e) => this.midiStateRefresh(e);
         // Check the MIDI-IN ports available
         this.checkAtLeastOneMidi("io", false);
-
-        this._postRequestMIDI();
     }
 
     /**

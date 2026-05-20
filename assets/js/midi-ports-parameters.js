@@ -102,5 +102,36 @@ HUM.midi.MidiPorts.prototype.Parameters = class {
             presetStore:false,
             presetRestore:false,
         });
+        /**
+         * Controls whether native Web MIDI API access is enabled.
+         * Not stored on the DB; always starts as `false` (disabled) to avoid
+         * requesting MIDI permission at startup.
+         *
+         * @member {HUM.Param}
+         *
+         * @property {boolean}     value                          - `true` = MIDI enabled, `false` = disabled.
+         * @property {Object}      uiElements                     - Namespace for the "in", "out" and "fn" objects.
+         * @property {Object}      uiElements.in                  - Namespace for the "in" HTML elements.
+         * @property {HTMLElement} uiElements.in.midiPorts_status - The HTML element of the MIDI enable toggle checkbox.
+         */
+        this.status = new HUM.Param({
+            app: midiports,
+            idbKey: 'midiPortsStatus',
+            uiElements: {
+                'midiPorts_status': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'toggle',
+                    eventType: 'click',
+                    htmlTargetProp: 'checked',
+                    widget: 'checkbox',
+                }),
+            },
+            dataType: 'boolean',
+            initValue: false,
+            init: false,
+            presetStore: true,
+            presetRestore: true,
+            postSet: function(val) { val ? midiports.enableMidi() : midiports.disableMidi(); },
+        });
     }
 };
