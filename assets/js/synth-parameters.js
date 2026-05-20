@@ -748,15 +748,22 @@ HUM.Synth.prototype.Parameters = class {
 
         /**
          * Beat-sample selectors used in Polyrhythm Mode. The chosen audio files
-         * are decoded into `synth.beatBuffer.ft` / `synth.beatBuffer.ht` and
-         * played by {@link HUM.Synth#BeatVoice}. These Params are intentionally
-         * session-only (`_presetRestore: false`) and not persisted in IndexedDB.
+         * are decoded into `synth.beatBuffer.ft` / `synth.beatBuffer.ht[slot]`
+         * and played by {@link HUM.Synth#BeatVoice}. These Params are
+         * intentionally session-only (`_presetRestore: false`) and not persisted
+         * in IndexedDB.
          *
-         * @member {{ft:HUM.Param, ht:HUM.Param}}
+         * `ht`, `ht1`, and `ht2` correspond to HT sample slots 1–3 respectively.
+         * Each new HT key press cycles through the loaded slots in round-robin
+         * order (slot 0 → 1 → 2 → 0 → …).
+         *
+         * @member {{ft:HUM.Param, ht:HUM.Param, ht1:HUM.Param, ht2:HUM.Param}}
          */
         this.beatSample = {
-            ft: HUM.Synth.prototype.Parameters._makeBeatSampleParam(synth, 'ft'),
-            ht: HUM.Synth.prototype.Parameters._makeBeatSampleParam(synth, 'ht'),
+            ft:  HUM.Synth.prototype.Parameters._makeBeatSampleParam(synth, 'ft'),
+            ht:  HUM.Synth.prototype.Parameters._makeBeatSampleParam(synth, 'ht', 0),
+            ht1: HUM.Synth.prototype.Parameters._makeBeatSampleParam(synth, 'ht', 1),
+            ht2: HUM.Synth.prototype.Parameters._makeBeatSampleParam(synth, 'ht', 2),
         };
         // =======================
     } // end class Constructor
@@ -764,14 +771,20 @@ HUM.Synth.prototype.Parameters = class {
     /**
      * Builds a `HUM.Param` for a beat-sample file input (Polyrhythm Mode).
      *
-     * @param {HUM.Synth} synth - Owning Synth instance.
-     * @param {('ft'|'ht')} type - Tone type the sample belongs to.
+     * @param {HUM.Synth}    synth - Owning Synth instance.
+     * @param {('ft'|'ht')}  type  - Tone type the sample belongs to.
+     * @param {number}       [slot=0] - For HT: which of the 3 sample slots (0–2)
+     *   this param controls. Ignored for FT (always slot 0).
      * @returns {HUM.Param}
      * @private
      */
-    static _makeBeatSampleParam(synth, type) {
-        const Type = type.toUpperCase();
-        const inputId  = 'synth_beatSample' + Type;
+    static _makeBeatSampleParam(synth, type, slot = 0) {
+        // Slot suffix: slot 0 uses the legacy ID (no suffix) for backward compat.
+        const suffix  = type === 'ht' && slot > 0 ? String(slot) : '';
+        const Type    = type.toUpperCase() + suffix;
+        // Key used to look up this param on `synth.parameters.beatSample` (e.g. 'ht', 'ht1', 'ht2').
+        const paramKey = type === 'ht' && slot > 0 ? type + String(slot) : type;
+        const inputId   = 'synth_beatSample' + Type;
         const nameOutId = 'synth_beatSample' + Type + 'Name';
         const uiElements = {};
         uiElements[inputId] = new HUM.Param.UIelem({
@@ -782,7 +795,7 @@ HUM.Synth.prototype.Parameters = class {
             widget: 'file',
             eventListener: evt => {
                 if (window.File && window.FileReader && window.FileList && window.Blob) {
-                    synth.parameters.beatSample[type].value = evt.target.files[0];
+                    synth.parameters.beatSample[paramKey].value = evt.target.files[0];
                 } else {
                     alert('The File APIs are not fully supported in this browser.');
                 }
@@ -801,7 +814,7 @@ HUM.Synth.prototype.Parameters = class {
             preSet: (value, thisParam, init, fromUI, oldValue) => {
                 const nameOut = thisParam.uiElements.out[nameOutId];
                 if (value && value.name) {
-                    synth.readBeatSampleFile(type, value);
+                    synth.readBeatSampleFile(type, value, slot);
                     if (nameOut) { nameOut.innerText = value.name; }
                 } else if (nameOut) {
                     nameOut.innerText = 'none';

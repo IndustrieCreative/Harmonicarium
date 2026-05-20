@@ -125,19 +125,30 @@ HUM.Synth = class {
 
         /**
          * Decoded `AudioBuffer`s for the FT and HT beat samples used by
-         * Polyrhythm Mode. Both slots are `null` until the user uploads a
-         * sample via {@link HUM.Synth#loadBeatSample}. Samples are session-only
-         * and are not persisted in IndexedDB.
+         * Polyrhythm Mode. The FT slot is `null` until the user uploads a
+         * sample. The HT slot is an array of up to 3 buffers (`null` when
+         * empty) that are cycled in round-robin order across successive HT
+         * key presses. Samples are session-only and are not persisted in
+         * IndexedDB.
          *
          * @member {Object}
          *
-         * @property {?AudioBuffer} ft - FT beat sample.
-         * @property {?AudioBuffer} ht - HT beat sample.
+         * @property {?AudioBuffer}    ft - FT beat sample.
+         * @property {Array<?AudioBuffer>} ht - Up to 3 HT beat samples (slots 0–2).
          */
         this.beatBuffer = {
             ft: null,
-            ht: null,
+            ht: [null, null, null],
         };
+
+        /**
+         * Monotonically-increasing counter of HT voices created in the current
+         * session. Used to assign each new HT key press a beat-sample slot in
+         * round-robin order. Resets to 0 on `allNotesOff()`.
+         *
+         * @member {number}
+         */
+        this.htPressCount = 0;
 
         /**
          * Namespace for Gain nodes.
@@ -303,8 +314,18 @@ HUM.Synth = class {
                 // If there isn't a voice turned on with the same toneID
                 // (prevent duplication in case of stuck note - not turned off)
                 if (!this.voices.ht[toneID]) {   // && Object.keys(this.voices.ht).length < 2
+                    // Assign a beat-sample slot in round-robin order (Polyrhythm Mode only).
+                    // In Overtones Mode slotIndex is ignored by SynthVoice.
+                    let slotIndex = 0;
+                    if (this.dhc.polyrhythmMode) {
+                        const loadedSlots = this.beatBuffer.ht.filter(b => b !== null).length;
+                        if (loadedSlots > 1) {
+                            slotIndex = this.htPressCount % loadedSlots;
+                        }
+                        this.htPressCount++;
+                    }
                     // Create a new HT voice (POLYPHONIC)
-                    this.voices.ht[toneID] = new VoiceClass(this, freq, velocity, type);
+                    this.voices.ht[toneID] = new VoiceClass(this, freq, velocity, type, slotIndex);
                 } //  else {
                 //     this.voiceOFF('ht', toneID);
                 //     this.voices.ht[toneID] = new Synth.SynthVoice(this, freq, velocity, type);
@@ -412,6 +433,9 @@ HUM.Synth = class {
         if (this.voices.ft) {
             this.voices.ft.voiceMute();
         }
+        // Reset the HT sample-slot round-robin counter so the next session
+        // starts from sample 1 again.
+        this.htPressCount = 0;
     }
     /**
      * Retunes the currently playing FT oscillator to its updated frequency.
@@ -446,9 +470,9 @@ HUM.Synth = class {
      */
     updateHTfrequency() {
         for (const [toneID, voice] of Object.entries(this.voices.ht)) {
-            // Skip the continuum HT voice: it is at an absolute Hz and must not
-            // be retuned when the FT changes.
-            if (Number(toneID) < 0) { continue; }
+            // Skip only the continuum HT voice (xtNum === CONTINUUM_XTNUM = -1);
+            // subharmonics use negative indices too (-2…-128) but must retune.
+            if (Number(toneID) === HUM.DHCmsg.CONTINUUM_XTNUM) { continue; }
             // Get the data about the HT from the ht table
             var htObj = this.dhc.tables.ht[toneID];
             // Set a new osc frequency and apply the change
@@ -583,7 +607,7 @@ HUM.Synth = class {
      * in `this.beatBuffer[type]`. Buffers are session-only (not persisted in
      * IndexedDB). Decode/read errors are logged via the backend event log.
      */
-    readBeatSampleFile(type, file) {
+    readBeatSampleFile(type, file, slot = 0) {
         if (!file) { return; }
         if (type !== 'ft' && type !== 'ht') { return; }
         const reader = new FileReader();
@@ -591,9 +615,14 @@ HUM.Synth = class {
         reader.onload = (e) => {
             this.audioContext.decodeAudioData(e.target.result,
                 (buffer) => {
-                    this.beatBuffer[type] = buffer;
+                    if (type === 'ht') {
+                        this.beatBuffer.ht[slot] = buffer;
+                    } else {
+                        this.beatBuffer.ft = buffer;
+                    }
+                    const slotLabel = type === 'ht' ? ' (slot ' + (slot + 1) + ')' : '';
                     this.dhc.harmonicarium.components.backendUtils.eventLog(
-                        "Beat sample loaded (" + type.toUpperCase() + ").\n| filename: " + file.name +
+                        "Beat sample loaded (" + type.toUpperCase() + slotLabel + ").\n| filename: " + file.name +
                         "\n| duration: " + Math.round(buffer.duration * 1000) / 1000 + " sec" +
                         "\n| channels: " + buffer.numberOfChannels +
                         "\n| sample rate: " + buffer.sampleRate + " Hz" +

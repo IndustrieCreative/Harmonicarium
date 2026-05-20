@@ -266,13 +266,17 @@ HUM.Synth.prototype.BeatVoice = class {
      * @param {hertz}     freq     - Pulse rate in hertz (`bpm = freq × 60`).
      * @param {velocity}  velocity - MIDI velocity (0–127), maps to voice gain.
      * @param {tonetype}  type     - `"ft"` or `"ht"` — selects the beat sample and gain bus.
+     * @param {number}    [slotIndex=0] - For HT voices: index (0–2) into `synth.beatBuffer.ht`
+     *   that determines which of the up to 3 samples this voice plays. Ignored for FT voices.
      */
-    constructor(synth, freq, velocity, type) {
+    constructor(synth, freq, velocity, type, slotIndex = 0) {
         this.synth = synth;
         this.type = type;
         this.initFrequency = freq;
         this._stopped = false;
         this._pendingSources = [];
+        /** Beat-sample slot index (HT only, 0–2). @type {number} */
+        this.slotIndex = slotIndex;
 
         // Per-voice gain (velocity scaling), routed to the standard FT/HT bus.
         this.volume = this.synth.audioContext.createGain();
@@ -331,7 +335,9 @@ HUM.Synth.prototype.BeatVoice = class {
      * @private
      */
     _firePulseAt(when) {
-        const buffer = this.synth.beatBuffer && this.synth.beatBuffer[this.type];
+        const buffer = this.type === 'ht'
+            ? (this.synth.beatBuffer.ht && this.synth.beatBuffer.ht[this.slotIndex])
+            : (this.synth.beatBuffer && this.synth.beatBuffer.ft);
         if (!buffer) { return; }
         const src = this.synth.audioContext.createBufferSource();
         src.buffer = buffer;

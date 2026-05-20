@@ -713,9 +713,9 @@ HUM.midi.MidiOut = class MidiOut {
                 if (type === "ft") {
                     if (heldChsKeysFT.length > 0) {
                         for (let key of heldChsKeysFT) {
-                            // Skip continuum tones — they are at absolute Hz and must not
-                            // be retuned when FM or transpose parameters change.
-                            if (heldChsFT[key].xt < 0) { continue; }
+                            // Skip only the continuum tone (xtNum === CONTINUUM_XTNUM = -1);
+                            // subharmonics are also negative but must retune.
+                            if (heldChsFT[key].xt === HUM.DHCmsg.CONTINUUM_XTNUM) { continue; }
                             // Update only if the original note is not Tsnapped
                             if (!heldChsFT[key].tsnap) {
                                 console.log('updateMIDIout ft>ft');
@@ -729,8 +729,9 @@ HUM.midi.MidiOut = class MidiOut {
                     }
                     if (heldChsKeysHT.length > 0) {
                         for (let key of heldChsKeysHT) {
-                            // Skip continuum HT tones
-                            if (heldChsHT[key].xt < 0) { continue; }
+                            // Skip only the continuum HT tone (xtNum === CONTINUUM_XTNUM = -1);
+                            // subharmonics are also negative but must retune.
+                            if (heldChsHT[key].xt === HUM.DHCmsg.CONTINUUM_XTNUM) { continue; }
                             // Update only if the original note is not Tsnapped
                             if (!heldChsHT[key].tsnap) {
                                 console.log('updateMIDIout ft>ht');
@@ -745,8 +746,9 @@ HUM.midi.MidiOut = class MidiOut {
                 } else if (type === "ht") {
                     if (heldChsKeysHT.length > 0) {
                         for (let key of heldChsKeysHT) {
-                            // Skip continuum HT tones
-                            if (heldChsHT[key].xt < 0) { continue; }
+                            // Skip only the continuum HT tone (xtNum === CONTINUUM_XTNUM = -1);
+                            // subharmonics are also negative but must retune.
+                            if (heldChsHT[key].xt === HUM.DHCmsg.CONTINUUM_XTNUM) { continue; }
                             // Update only if the original note is not Tsnapped
                             if (!heldChsHT[key].tsnap) {
                                 console.log('updateMIDIout ht>ht');

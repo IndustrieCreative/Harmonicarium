@@ -845,7 +845,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                             beginner: new HUM.DpPad.VoiceAmbitus('ht', 'Beginner', 'hz', 400, 2500, padSet.dhc),
                             normal: new HUM.DpPad.VoiceAmbitus('ht', 'Normal', 'hz', 350, 2700, padSet.dhc),
                             extreme: new HUM.DpPad.VoiceAmbitus('ht', 'Extreme', 'hz', 300, 3000, padSet.dhc),
-                            polyrhythm: new HUM.DpPad.VoiceAmbitus('ht', 'Polyrhythm', 'hz', 0.15, 10, padSet.dhc),
+                            polyrhythm: new HUM.DpPad.VoiceAmbitus('ht', 'Polyrhythm', 'hz', 0.4, 8, padSet.dhc),
                         }
                     }
                 }),

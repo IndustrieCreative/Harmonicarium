@@ -2143,11 +2143,23 @@ HUM.tmpl = {
                                         </div>
                                     </div>
                                     <div class="row g-2">
-                                        <div class="col-lg-6">
-                                            <div class="form-label d-flex align-items-center">HT beat sample:&nbsp;
+                                        <div class="col-lg-4">
+                                            <div class="form-label d-flex align-items-center">HT sample 1:&nbsp;
                                                 <span id="HTMLo_synth_beatSampleHTName${dhcID}" class="fw-bold fst-italic">none</span>
                                             </div>
                                             <input type="file" id="HTMLi_synth_beatSampleHT${dhcID}" accept="audio/*" class="form-control">
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <div class="form-label d-flex align-items-center">HT sample 2:&nbsp;
+                                                <span id="HTMLo_synth_beatSampleHT1Name${dhcID}" class="fw-bold fst-italic">none</span>
+                                            </div>
+                                            <input type="file" id="HTMLi_synth_beatSampleHT1${dhcID}" accept="audio/*" class="form-control">
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <div class="form-label d-flex align-items-center">HT sample 3:&nbsp;
+                                                <span id="HTMLo_synth_beatSampleHT2Name${dhcID}" class="fw-bold fst-italic">none</span>
+                                            </div>
+                                            <input type="file" id="HTMLi_synth_beatSampleHT2${dhcID}" accept="audio/*" class="form-control">
                                         </div>
                                     </div>
 
