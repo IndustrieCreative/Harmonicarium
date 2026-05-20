@@ -288,6 +288,11 @@ HUM.Synth.prototype.BeatVoice = class {
         this._intervalMs = 25;          // wake every 25 ms
         this._nextPulseTime = this.synth.audioContext.currentTime + 0.02;
 
+        // Optional visual-sync callback: called (via setTimeout) in real-time
+        // whenever a pulse fires, so UI components can blink in sync.
+        this.onPulse = null;
+        this._pulseTimers = [];
+
         // Kick off the lookahead loop
         this._timerId = setInterval(() => this._scheduleAhead(), this._intervalMs);
         // Also schedule immediately so the very first pulse fires without timer delay
@@ -349,6 +354,14 @@ HUM.Synth.prototype.BeatVoice = class {
             src.start();
         }
         this._pendingSources.push(src);
+        // Schedule the visual callback to fire at the same wall-clock moment
+        // as the audio pulse.
+        if (this.onPulse) {
+            const ctx = this.synth.audioContext;
+            const delayMs = Math.max(0, (when - ctx.currentTime) * 1000);
+            const t = setTimeout(() => { if (!this._stopped) this.onPulse(); }, delayMs);
+            this._pulseTimers.push(t);
+        }
         src.onended = () => {
             const i = this._pendingSources.indexOf(src);
             if (i !== -1) { this._pendingSources.splice(i, 1); }
@@ -390,6 +403,9 @@ HUM.Synth.prototype.BeatVoice = class {
             clearInterval(this._timerId);
             this._timerId = null;
         }
+        // Cancel all pending visual callbacks to prevent ghost blinks after stop.
+        for (const t of this._pulseTimers) { clearTimeout(t); }
+        this._pulseTimers = [];
         const ctx = this.synth.audioContext;
         // Short fade-out to avoid clicks if a pulse is currently sounding.
         const fadeEnd = ctx.currentTime + 0.02;

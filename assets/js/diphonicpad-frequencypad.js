@@ -117,6 +117,11 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             ft: false,
             ht: new Map()
         };
+        // Polyrhythm pulse animation state.
+        // _pulseUntil: {xtNum -> wall-clock deadline ms} while a blink is active.
+        // _pulseAnimFrame: rAF handle while the brief animation loop is running, else null.
+        this._pulseUntil = {};
+        this._pulseAnimFrame = null;
         // Tracks whether a continuum (fretless, between-keys) tone is currently active.
         this.activeContinuum = {
             ft: false,
@@ -1377,6 +1382,53 @@ HUM.DpPad.PadSet.FrequencyPad = class {
      * `canvasObjPos.keys` is reset to an empty array at the start so that
      * hit-testing always reflects the current render.
      */
+    /**
+     * Triggers a brief visual pulse flash on a held key in polyrhythm mode.
+     *
+     * @param {xtnum}  xtNum       - The FT or HT tone number to flash.
+     * @param {number} [ms=80]     - Flash duration in milliseconds.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Only flashes if the key is currently held (`holdKeys`). Sets a deadline
+     * in `_pulseUntil` and kicks off a one-shot `requestAnimationFrame` animation
+     * loop that calls `drawFreqUI()` for the flash duration, then once more to
+     * restore the normal held-key color.
+     */
+    triggerPulseFlash(xtNum, ms = 80) {
+        // Guard: only flash if the key is actually held on this pad.
+        const held = this.type === 'ft'
+            ? (this.holdKeys.ft !== false && this.holdKeys.ft.toneNumber === xtNum)
+            : this.holdKeys.ht.has(xtNum);
+        if (!held) { return; }
+
+        this._pulseUntil[xtNum] = Date.now() + ms;
+        if (this._pulseAnimFrame === null) {
+            this._pulseAnimLoop();
+        }
+    }
+
+    /**
+     * Short `requestAnimationFrame` loop that drives the pulse-flash animation.
+     * Runs only while at least one key has an active flash deadline.
+     *
+     * @returns {void}
+     * @private
+     */
+    _pulseAnimLoop() {
+        this.drawFreqUI();
+        const now = Date.now();
+        const anyActive = Object.values(this._pulseUntil).some(deadline => deadline > now);
+        if (anyActive) {
+            this._pulseAnimFrame = requestAnimationFrame(() => this._pulseAnimLoop());
+        } else {
+            this._pulseAnimFrame = null;
+            this._pulseUntil = {};
+            this.drawFreqUI(); // Final redraw to restore normal held-key color.
+        }
+    }
+
     drawFreqUI() {
         let ctx = this.ctx,
             zindex = 0;
@@ -1453,15 +1505,17 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 continue;
             }
             if (this.holdKeys.ft !== false && this.holdKeys.ft.toneNumber === ft[0]) {
-                // Held key: draw with cyan glow toward the spectrogram side
-                ctx.shadowColor = '#00e5ff';
+                // Held key: draw with cyan glow; flash white on polyrhythm pulse.
+                const pulsing = this._pulseUntil[ft[0]] && this._pulseUntil[ft[0]] > Date.now();
+                const heldColor = pulsing ? ['#ffffff', '#ffffff', '#ccf0ff'] : ['#00e5ff', '#80f0ff', '#00e5ff'];
+                ctx.shadowColor = pulsing ? '#ffffff' : '#00e5ff';
                 if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
                     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
                 } else if (this.padSet.parameters.scaleOrientation.ft.value === 'horizontal') {
                     ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
                 }
-                ctx.shadowBlur = 20;
-                this.drawLinKey(pxPosition, 'ft', ft[0], false, ['#00e5ff', '#80f0ff', '#00e5ff'], zindex);
+                ctx.shadowBlur = pulsing ? 30 : 20;
+                this.drawLinKey(pxPosition, 'ft', ft[0], false, heldColor, zindex);
             } else if (this.padSet.dhc.playQueue.ft.findIndex(findIdxFn, ft[0]) > -1) {
                 // this.drawLinKey(pxPosition, 'ft', ft[0], false, ['#DarkSalmon', 'DarkSalmon', '#110e23']);
                 this.drawLinKey(pxPosition, 'ft', ft[0], false, ['darksalmon', 'darksalmon', '#db9c57'], zindex);
@@ -1495,15 +1549,17 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         if (curr_ft) {
             ctx.save();
             if (this.holdKeys.ft !== false && this.holdKeys.ft.toneNumber === curr_ft[1]) {
-                // curr_ft is held: override with cyan hold visual
-                ctx.shadowColor = '#00e5ff';
+                // curr_ft is held: cyan, or white flash on pulse.
+                const pulsing = this._pulseUntil[curr_ft[1]] && this._pulseUntil[curr_ft[1]] > Date.now();
+                const heldColor = pulsing ? ['#ffffff', '#ffffff', '#ccf0ff'] : ['#00e5ff', '#80f0ff', '#00e5ff'];
+                ctx.shadowColor = pulsing ? '#ffffff' : '#00e5ff';
                 if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
                     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
                 } else if (this.padSet.parameters.scaleOrientation.ft.value === 'horizontal') {
                     ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
                 }
-                ctx.shadowBlur = 20;
-                this.drawLinKey(curr_ft[0], 'ft', curr_ft[1], false, ['#00e5ff', '#80f0ff', '#00e5ff'], this.freqArrays.ft.length);
+                ctx.shadowBlur = pulsing ? 30 : 20;
+                this.drawLinKey(curr_ft[0], 'ft', curr_ft[1], false, heldColor, this.freqArrays.ft.length);
             } else {
                 ctx.shadowColor = 'red';
                 if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
@@ -1619,15 +1675,17 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 ctx.shadowBlur = 20;
             }
             if (this.holdKeys.ht.has(ht[0])) {
-                // Held key: draw with cyan glow toward the spectrogram side
-                ctx.shadowColor = '#00e5ff';
+                // Held key: cyan glow; flash white on polyrhythm pulse.
+                const pulsing = this._pulseUntil[ht[0]] && this._pulseUntil[ht[0]] > Date.now();
+                const heldColor = pulsing ? ['#ffffff', '#ffffff', '#ccf0ff'] : ['#00e5ff', '#80f0ff', '#00e5ff'];
+                ctx.shadowColor = pulsing ? '#ffffff' : '#00e5ff';
                 if (this.padSet.parameters.scaleOrientation.ht.value === 'vertical') {
                     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
                 } else if (this.padSet.parameters.scaleOrientation.ht.value === 'horizontal') {
                     ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
                 }
-                ctx.shadowBlur = 20;
-                this.drawFreqKeyHT(ht[1].hz, ht[0], arrIdx, ['#00e5ff', '#80f0ff', '#00e5ff'], zindex);
+                ctx.shadowBlur = pulsing ? 30 : 20;
+                this.drawFreqKeyHT(ht[1].hz, ht[0], arrIdx, heldColor, zindex);
             } else if (this.padSet.dhc.playQueue.ht.findIndex(findIdxFn, ht[0]) > -1) {
                 ctx.shadowColor = color[2];
                 if (this.padSet.parameters.scaleOrientation.ht.value === 'vertical') {

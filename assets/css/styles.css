@@ -600,6 +600,23 @@ hr {
 .bKey.pressedKey {
     background-color: gold!important;
 }
+/*POLYRHYTHM PULSE — brief flash overlay on held keys*/
+.FTwKey.pulsedKey,
+.FTbKey.pulsedKey {
+    background-color: #FFA07A!important;
+}
+.HTwKey.pulsedKey,
+.HTbKey.pulsedKey {
+    background-color: #87CEEB!important;
+}
+.HT0wKey.pulsedKey,
+.HT0bKey.pulsedKey {
+    background-color: #ADFF2F!important;
+}
+.wKey.pulsedKey,
+.bKey.pulsedKey {
+    background-color: #FFD700!important;
+}
 
 /*Key-numbers (from the keymap)*/
 .FTbKeyFn,

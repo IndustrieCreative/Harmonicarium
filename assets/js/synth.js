@@ -210,6 +210,15 @@ HUM.Synth = class {
         // Sync the Synth panel visibility with the current Polyrhythm Mode state.
         this.parameters._applyPolyrhythmMode(this.dhc.polyrhythmMode);
 
+        /**
+         * Registered listeners that receive pulse-fire notifications in polyrhythm
+         * mode. Each entry is a function `(type, xtNum)` called synchronously
+         * (via a wall-clock `setTimeout`) when a BeatVoice pulse fires.
+         *
+         * @member {Function[]}
+         */
+        this._pulseListeners = [];
+
         // Tell to the DHC that a new app is using it            
         this.dhc.registerApp(this, 'updatesFromDHC', 2);
 
@@ -231,6 +240,39 @@ HUM.Synth = class {
      * - `tone-off`: Destroys the matching FT or HT voice via `voiceOFF()`.
      * HT 0 (Piper) tone-on/off events are silently ignored.
      */
+    /**
+     * Registers a callback to be notified when a BeatVoice pulse fires.
+     *
+     * @param {Function} fn - `(type: tonetype, xtNum: xtnum) => void`
+     * @returns {void}
+     */
+    addPulseListener(fn) {
+        this._pulseListeners.push(fn);
+    }
+
+    /**
+     * Removes a previously-registered pulse callback.
+     *
+     * @param {Function} fn - The same function reference passed to `addPulseListener`.
+     * @returns {void}
+     */
+    removePulseListener(fn) {
+        const idx = this._pulseListeners.indexOf(fn);
+        if (idx !== -1) { this._pulseListeners.splice(idx, 1); }
+    }
+
+    /**
+     * Calls all registered pulse listeners with the given tone type and number.
+     *
+     * @param {tonetype} type   - `'ft'` or `'ht'`
+     * @param {xtnum}    xtNum  - The FT or HT tone number whose pulse just fired.
+     * @returns {void}
+     * @private
+     */
+    _dispatchPulse(type, xtNum) {
+        for (const fn of this._pulseListeners) { fn(type, xtNum); }
+    }
+
     updatesFromDHC(msg) {
 
         if (msg.cmd === 'panic') {
@@ -330,7 +372,12 @@ HUM.Synth = class {
                         this.htPressCount++;
                     }
                     // Create a new HT voice (POLYPHONIC)
-                    this.voices.ht[toneID] = new VoiceClass(this, freq, velocity, type, slotIndex);
+                    const htVoice = new VoiceClass(this, freq, velocity, type, slotIndex);
+                    // Wire pulse callback for visual sync (BeatVoice only; SynthVoice ignores it).
+                    if (this.dhc.polyrhythmMode) {
+                        htVoice.onPulse = () => this._dispatchPulse(type, toneID);
+                    }
+                    this.voices.ht[toneID] = htVoice;
                 } //  else {
                 //     this.voiceOFF('ht', toneID);
                 //     this.voices.ht[toneID] = new Synth.SynthVoice(this, freq, velocity, type);
@@ -345,7 +392,12 @@ HUM.Synth = class {
                     this.voices.ft.voiceMute();
                 }
                 // Create a new FT voice (MONOPHONIC)
-                this.voices.ft = new VoiceClass(this, freq, velocity, type);
+                const ftVoice = new VoiceClass(this, freq, velocity, type);
+                // Wire pulse callback for visual sync (BeatVoice only; SynthVoice ignores it).
+                if (this.dhc.polyrhythmMode) {
+                    ftVoice.onPulse = () => this._dispatchPulse(type, toneID);
+                }
+                this.voices.ft = ftVoice;
                 // Update the frequency of all the HT oscillators because the FT is changed
                 this.updateHTfrequency();
             }

@@ -135,6 +135,20 @@ HUM.Hancock = class {
          */
         this.keyboard.keyUp = (note) => this.sendMidiNote(note, 0);            
 
+        /**
+         * Pending flash-timeout handles keyed by Hancock key name (e.g. `"A4"`).
+         * Used to clear the `pulsedKey` CSS class after the blink duration.
+         *
+         * @member {Object.<string, number>}
+         * @private
+         */
+        this._pulseTimers = {};
+
+        // Bound pulse listener; registered lazily in updatesFromDHC on first call
+        // because this.dhc.synth is not yet instantiated at construction time.
+        this._boundPulseListener = (type, xtNum) => this._onBeatPulse(type, xtNum);
+        this._pulseListenerRegistered = false;
+
         // Tell to the DHC that a new app is using it
         this.dhc.registerApp(this, 'updatesFromDHC', 100);
 
@@ -197,6 +211,12 @@ HUM.Hancock = class {
      *   but only when the Piano accordion tab is currently open (`active` is `true`).
      */
     updatesFromDHC(msg) {
+        // Lazily register the pulse listener on the first DHC message, by which
+        // time all components (including Synth) are guaranteed to be instantiated.
+        if (!this._pulseListenerRegistered) {
+            this.dhc.synth.addPulseListener(this._boundPulseListener);
+            this._pulseListenerRegistered = true;
+        }
 
         if (msg.cmd === 'panic') {
             this.allNotesOff();
@@ -431,6 +451,49 @@ HUM.Hancock = class {
         }
     }
     /**
+     * Briefly flashes a piano key in sync with a BeatVoice pulse (polyrhythm mode).
+     *
+     * @param {tonetype} type   - `'ft'` or `'ht'`
+     * @param {xtnum}    xtNum  - The FT or HT tone number whose pulse fired.
+     *
+     * @returns {void}
+     * @private
+     *
+     * @description
+     * Resolves the MIDI note number for the given tone, finds the corresponding
+     * DOM key element, and adds the `pulsedKey` CSS class for 80 ms before
+     * removing it. Debounced per key: if a new pulse arrives before the previous
+     * flash timer expires, the old timer is cancelled and a fresh flash starts.
+     */
+    _onBeatPulse(type, xtNum) {
+        // Only blink when the piano accordion tab is visible.
+        if (!this.parameters.active.value) { return; }
+        // Continuum tones and Piper (HT0) have no physical key.
+        if (xtNum === HUM.DHCmsg.CONTINUUM_XTNUM) { return; }
+        if (type === 'ht' && xtNum === 0) { return; }
+
+        // Resolve ctrlNum (same logic as updatesFromDHC).
+        let ctrlNum = false;
+        const mcXT = Math.round(this.dhc.tables[type][xtNum].mc);
+        ctrlNum = this.dhc.midi.in.tsnapFindCtrlNoteNumber(mcXT, type);
+        if (ctrlNum === false) { return; }
+
+        const name = this.dhc.midiNumberToNames(ctrlNum)[0];
+        const el = document.getElementById(name);
+        if (!el) { return; }
+
+        // Debounce: cancel any still-running flash for this key.
+        if (this._pulseTimers[name]) {
+            clearTimeout(this._pulseTimers[name]);
+            el.classList.remove('pulsedKey');
+        }
+        el.classList.add('pulsedKey');
+        this._pulseTimers[name] = setTimeout(() => {
+            el.classList.remove('pulsedKey');
+            delete this._pulseTimers[name];
+        }, 80);
+    }
+    /**
      * Restores all 128 piano keys to their released visual state.
      *
      * @returns {void}
@@ -440,6 +503,16 @@ HUM.Hancock = class {
      * ensuring no key remains visually stuck in a pressed state.
      */
     allNotesOff() {
+        // Cancel pending pulse-flash timers and clear the pulsedKey class from any
+        // keys that are mid-blink, so no ghost highlights linger after panic.
+        if (this._pulseTimers) {
+            for (const name of Object.keys(this._pulseTimers)) {
+                clearTimeout(this._pulseTimers[name]);
+                const el = document.getElementById(name);
+                if (el) { el.classList.remove('pulsedKey'); }
+            }
+            this._pulseTimers = {};
+        }
         for (let ctrlNum = 0; ctrlNum < 128; ctrlNum++) {
             this.keyOFF(ctrlNum);
         }
