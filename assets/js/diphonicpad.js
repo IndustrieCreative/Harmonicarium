@@ -370,13 +370,14 @@ HUM.DpPad = function() {
 
             for (let padSet of this.padSets) { 
                 let numberOfSets = this.settings.numberOfSets,
-                    padsRatio = padSet.parameters.padsRatio;
+                    padsRatio = padSet.parameters.padsRatio,
+                    iconQty = padSet.parameters.toolbarIconOrder.value.length;
                 // First calculate CSS dimensions
                 if (this.settings.orientation === 'vertical') {
 
                     if (padSet.parameters.toolbarOrientation.value === 'longitudinal') {
-                        tbWidth = (this.viewportDim.x * padsRatio.tbLong) / numberOfSets;
                         tbHeight = this.viewportDim.y;
+                        tbWidth = Math.min(Math.ceil(tbHeight / iconQty), Math.floor(this.viewportDim.x * 0.1));
 
                         ftCnvWidth =  Math.floor( ((this.viewportDim.x - tbWidth) * padsRatio.ft) / numberOfSets )-1;
                         ftCnvHeight = Math.floor( this.viewportDim.y )-1;
@@ -386,7 +387,7 @@ HUM.DpPad = function() {
                     
                     } else if (padSet.parameters.toolbarOrientation.value === 'transversal') {
                         tbWidth = this.viewportDim.x / numberOfSets;
-                        tbHeight = this.viewportDim.y * padsRatio.tbLong;
+                        tbHeight = Math.min(Math.ceil(tbWidth / iconQty), Math.floor(this.viewportDim.y * 0.1));
 
                         ftCnvWidth = Math.floor( (this.viewportDim.x * padsRatio.ft) / numberOfSets )-1;
                         ftCnvHeight = Math.floor( this.viewportDim.y - tbHeight )-1;
@@ -398,7 +399,7 @@ HUM.DpPad = function() {
 
                     if (padSet.parameters.toolbarOrientation.value === 'longitudinal') {
                         tbWidth = this.viewportDim.x / numberOfSets;
-                        tbHeight = this.viewportDim.y * padsRatio.tbLong;
+                        tbHeight = Math.min(Math.ceil(tbWidth / iconQty), Math.floor(this.viewportDim.y * 0.1));
 
                         ftCnvWidth = Math.floor( this.viewportDim.x )-1;
                         ftCnvHeight = Math.floor( ((this.viewportDim.y - tbHeight) * padsRatio.ft) / numberOfSets )-1;
@@ -406,8 +407,8 @@ HUM.DpPad = function() {
                         htCnvHeight = Math.floor( ((this.viewportDim.y - tbHeight)* padsRatio.ht) / numberOfSets )-1;
                     
                     } else if (padSet.parameters.toolbarOrientation.value === 'transversal') {
-                        tbWidth = (this.viewportDim.x * padsRatio.tbLong) / numberOfSets;
                         tbHeight = this.viewportDim.y;
+                        tbWidth = Math.min(Math.ceil(tbHeight / iconQty), Math.floor(this.viewportDim.x * 0.1));
 
                         ftCnvWidth = Math.floor( this.viewportDim.x - tbWidth )-1;
                         ftCnvHeight = Math.floor( (this.viewportDim.y * padsRatio.ft) / numberOfSets )-1;

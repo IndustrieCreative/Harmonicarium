@@ -117,15 +117,14 @@ HUM.DpPad.PadSet.Toolbar = class {
             if (this.padSet.parameters.toolbarOrientation.value === 'longitudinal') {
                 tbLengthX = 0;
                 tbLengthY = this.cssDimensions.height;
-                // Manual fix for the allignment  (started from 100% and 10%)
                 useWidth = '90%';
-                useHeight = '8%';
+                useHeight = (90 / iconQty) + '%';
                 preserveAspectRatio = 'xMidYMin meet';
                 iconRotated = 0;
             } else if (this.padSet.parameters.toolbarOrientation.value === 'transversal') {
                 tbLengthX = this.cssDimensions.width;
                 tbLengthY = 0;
-                useWidth = '8%';
+                useWidth = (90 / iconQty) + '%';
                 useHeight = '90%';
                 preserveAspectRatio = 'xMinYMid meet';
                 iconRotated = 0;
@@ -134,7 +133,7 @@ HUM.DpPad.PadSet.Toolbar = class {
             if (this.padSet.parameters.toolbarOrientation.value === 'longitudinal') {
                 tbLengthX = this.cssDimensions.width;
                 tbLengthY = 0;
-                useWidth = '8%';
+                useWidth = (90 / iconQty) + '%';
                 useHeight = '90%';
                 preserveAspectRatio = 'xMinYMid meet';
                 iconRotated = 90;
@@ -142,7 +141,7 @@ HUM.DpPad.PadSet.Toolbar = class {
                 tbLengthX = 0;
                 tbLengthY = this.cssDimensions.height;
                 useWidth = '90%';
-                useHeight = '8%';
+                useHeight = (90 / iconQty) + '%';
                 preserveAspectRatio = 'xMidYMin meet';
                 iconRotated = 90;
             }
