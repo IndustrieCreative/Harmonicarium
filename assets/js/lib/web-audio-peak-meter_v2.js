@@ -85,8 +85,7 @@ var webAudioPeakMeter = (function() {
             try {
                 workletNode = new AudioWorkletNode(audioCtx, 'peak-sample-processor-hum');
             } catch(e) {
-                var blob = new Blob([processorCode], { type: 'application/javascript' });
-                var blobUrl = URL.createObjectURL(blob);
+                var blobUrl = 'data:application/javascript;charset=utf-8,' + encodeURIComponent(processorCode);
                 await audioCtx.audioWorklet.addModule(blobUrl);
                 workletNode = new AudioWorkletNode(audioCtx, 'peak-sample-processor-hum');
             }
