@@ -563,8 +563,17 @@ HUM.midi.MidiOut = class MidiOut {
             msg;
 
         if (mode === 'soft') {
-            msg = [0xB0 + channel, 0x7B, 0];
-            midiOutput.send(msg);
+            // CC 123 (All Notes Off) — honoured by spec-compliant instruments.
+            midiOutput.send([0xB0 + channel, 0x7B, 0]);
+            // Belt-and-suspenders: also send an explicit Note-OFF for every held
+            // note on this channel, for instruments that ignore CC 123.
+            for (let type of ['ft', 'ht']) {
+                for (const held of Object.values(this.settings[portID].pb.channels[type].held)) {
+                    if (held.ch === channel) {
+                        midiOutput.send(this.makeMIDIoutNoteMsg(channel, 0, held.note, 64));
+                    }
+                }
+            }
 
         } else if (mode === 'hard') {
             for (let mnn = 0; mnn <= 127; mnn++) {
@@ -573,11 +582,20 @@ HUM.midi.MidiOut = class MidiOut {
             }
         }
 
+        // Clean up internal state: move held channels back to the available pool
+        // and remove them from heldOrder so voice-stealing is not corrupted.
         for (let type of ['ft', 'ht']) {
             for (const [ctrlNum, held] of Object.entries(this.settings[portID].pb.channels[type].held)) {
                 if (held.ch === channel) {
                     delete this.settings[portID].pb.channels[type].held[ctrlNum];
                     this.settings[portID].pb.channels[type].used.push(held.ch);
+                    const heldOrder = this.settings[portID].pb.channels[type].heldOrder;
+                    if (heldOrder) {
+                        const idx = heldOrder.indexOf(held.ch);
+                        if (idx !== -1) {
+                            heldOrder.splice(idx, 1);
+                        }
+                    }
                 }
             }
         }
