@@ -122,6 +122,9 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         // _pulseAnimFrame: rAF handle while the brief animation loop is running, else null.
         this._pulseUntil = {};
         this._pulseAnimFrame = null;
+        // Independent beat-pulse intervals keyed by xtNum.  Used in Polyrhythm Mode to
+        // flash held keys at the tone's own frequency without depending on Synth or MIDI out.
+        this._beatIntervals = {};
         // Tracks whether a continuum (fretless, between-keys) tone is currently active.
         this.activeContinuum = {
             ft: false,
@@ -313,15 +316,19 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         if (this.activeKeys.ft !== false) {
             if (inSpectrogramZone) {
                 // Hold gesture: transfer the active key to hold; note keeps ringing.
+                // The beat pulse interval was already started when the key was pressed;
+                // just move the key reference to holdKeys — no need to restart.
                 this.holdKeys.ft = this.activeKeys.ft;
                 this.activeKeys.ft = false;
             } else {
                 // Normal release: mute the active key and cancel any existing hold.
                 // console.log('MOUSEUP FT NOTE OFF: ' + this.activeKeys.ft.toneNumber);
                 this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.activeKeys.ft.toneNumber));
+                this._stopBeatPulse(this.activeKeys.ft.toneNumber);
                 this.activeKeys.ft = false;
                 if (this.holdKeys.ft !== false) {
                     this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.holdKeys.ft.toneNumber));
+                    this._stopBeatPulse(this.holdKeys.ft.toneNumber);
                     this.holdKeys.ft = false;
                 }
             }
@@ -329,6 +336,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         if (this.activeKeys.ht !== false) {
             if (inSpectrogramZone) {
                 // Hold gesture: add the active key to the polyphonic hold map.
+                // Interval already running from noteON; just move key reference.
                 this.holdKeys.ht.set(this.activeKeys.ht.toneNumber, this.activeKeys.ht);
                 this.activeKeys.ht = false;
             } else {
@@ -336,6 +344,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 // Existing HT holds are intentionally preserved.
                 // console.log('MOUSEUP HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
                 this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber, false, this.activeKeys.ht.toneNumber));
+                this._stopBeatPulse(this.activeKeys.ht.toneNumber);
                 this.activeKeys.ht = false;
             }
         }
@@ -464,15 +473,18 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         if (this.activeKeys.ft !== false) {
             if (inSpectrogramZone) {
                 // Hold gesture: transfer the active key to hold; note keeps ringing.
+                // Interval already running from noteON; just move key reference.
                 this.holdKeys.ft = this.activeKeys.ft;
                 this.activeKeys.ft = false;
             } else {
                 // Normal release: mute the active key and cancel any existing hold.
                 // console.log('TOUCHEND FT NOTE OFF: ' + this.activeKeys.ft.toneNumber);
                 this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.activeKeys.ft.toneNumber));
+                this._stopBeatPulse(this.activeKeys.ft.toneNumber);
                 this.activeKeys.ft = false;
                 if (this.holdKeys.ft !== false) {
                     this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', this.holdKeys.ft.toneNumber));
+                    this._stopBeatPulse(this.holdKeys.ft.toneNumber);
                     this.holdKeys.ft = false;
                 }
             }
@@ -480,6 +492,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         if (this.activeKeys.ht !== false) {
             if (inSpectrogramZone) {
                 // Hold gesture: add the active key to the polyphonic hold map.
+                // Interval already running from noteON; just move key reference.
                 this.holdKeys.ht.set(this.activeKeys.ht.toneNumber, this.activeKeys.ht);
                 this.activeKeys.ht = false;
             } else {
@@ -487,6 +500,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 // Existing HT holds are intentionally preserved.
                 // console.log('TOUCHEND HT NOTE OFF: ' + this.activeKeys.ht.toneNumber);
                 this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', this.activeKeys.ht.toneNumber, false, this.activeKeys.ht.toneNumber));
+                this._stopBeatPulse(this.activeKeys.ht.toneNumber);
                 this.activeKeys.ht = false;
             }
         }
@@ -660,7 +674,8 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                     // console.log('PLAY FT NOTE OFF: ' + noteOFF.ft.toneNumber);
                     this.padSet.dhc.muteFT(HUM.DHCmsg.ftOFF('dppad', noteOFF.ft.toneNumber));
                     this.activeKeys.ft = false;
-                    // Also clear the hold if it was the held key that got displaced
+                    // Stop the beat pulse for the displaced tone (covers both active-only and held cases).
+                    this._stopBeatPulse(noteOFF.ft.toneNumber);
                     if (this.holdKeys.ft !== false && this.holdKeys.ft.toneNumber === noteOFF.ft.toneNumber) {
                         this.holdKeys.ft = false;
                     }
@@ -669,6 +684,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 // if (noteON.ft !== false) {
                     // console.log('PLAY FT NOTE ON: ' + noteON.ft.toneNumber);
                     this.activeKeys.ft = noteON.ft;
+                    this._startBeatPulse('ft', noteON.ft.toneNumber);
                     this.padSet.dhc.playFT(HUM.DHCmsg.ftON('dppad', noteON.ft.toneNumber, 120));
                 }
 
@@ -678,11 +694,13 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                     this.padSet.dhc.muteHT(HUM.DHCmsg.htOFF('dppad', noteOFF.ht.toneNumber, false, noteOFF.ht.toneNumber));
                     this.activeKeys.ht = false;
                     // Remove from the hold map if it was a held key (no-op when absent)
+                    this._stopBeatPulse(noteOFF.ht.toneNumber);
                     this.holdKeys.ht.delete(noteOFF.ht.toneNumber);
                 }
                 if (noteON.ht !== false && pointer.down !== false) {
                     // console.log('PLAY HT NOTE ON: ' + noteON.ht.toneNumber);
                     this.activeKeys.ht = noteON.ht;
+                    this._startBeatPulse('ht', noteON.ht.toneNumber);
                     this.padSet.dhc.playHT(HUM.DHCmsg.htON('dppad', noteON.ht.toneNumber, 120, noteON.ht.toneNumber));
                 }
 
@@ -779,6 +797,8 @@ HUM.DpPad.PadSet.FrequencyPad = class {
      * a `panic` message arrives from the DHC.
      */
     allNotesOff() {
+        // Cancel all independent beat pulse timers first.
+        this._stopAllBeatPulses();
         // Silence any held notes (they are still sending audio even though
         // no pointer is down).
         if (this.holdKeys.ft !== false) {
@@ -1397,10 +1417,12 @@ HUM.DpPad.PadSet.FrequencyPad = class {
      * restore the normal held-key color.
      */
     triggerPulseFlash(xtNum, ms = 80) {
-        // Guard: only flash if the key is actually held on this pad.
+        // Flash if the key is held OR actively pressed on this pad.
         const held = this.type === 'ft'
-            ? (this.holdKeys.ft !== false && this.holdKeys.ft.toneNumber === xtNum)
-            : this.holdKeys.ht.has(xtNum);
+            ? ((this.holdKeys.ft !== false && this.holdKeys.ft.toneNumber === xtNum) ||
+               (this.activeKeys.ft !== false && this.activeKeys.ft.toneNumber === xtNum))
+            : (this.holdKeys.ht.has(xtNum) ||
+               (this.activeKeys.ht !== false && this.activeKeys.ht.toneNumber === xtNum));
         if (!held) { return; }
 
         this._pulseUntil[xtNum] = Date.now() + ms;
@@ -1427,6 +1449,53 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             this._pulseUntil = {};
             this.drawFreqUI(); // Final redraw to restore normal held-key color.
         }
+    }
+
+    /**
+     * Starts an independent `setInterval` beat pulse for the held key at `xtNum`.
+     * Fires {@link triggerPulseFlash} at the tone's Hz frequency, completely
+     * independent of Synth, audio buffer availability, or MIDI output state.
+     * No-ops when not in Polyrhythm Mode or when `holdType` doesn't match this pad.
+     *
+     * @param {('ft'|'ht')} holdType - Type of the held tone.
+     * @param {xtnum}        xtNum   - FT/HT tone number.
+     * @returns {void}
+     * @private
+     */
+    _startBeatPulse(holdType, xtNum) {
+        if (!this.padSet.dhc.polyrhythmMode) { return; }
+        if (holdType !== this.type) { return; }
+        this._stopBeatPulse(xtNum);
+        const hz = this.padSet.dhc.tables[this.type][xtNum].hz;
+        if (!hz || hz <= 0) { return; }
+        this.triggerPulseFlash(xtNum);
+        this._beatIntervals[xtNum] = setInterval(() => this.triggerPulseFlash(xtNum), 1000 / hz);
+    }
+
+    /**
+     * Clears the beat-pulse interval for a single tone.
+     *
+     * @param {xtnum} xtNum - FT/HT tone number.
+     * @returns {void}
+     * @private
+     */
+    _stopBeatPulse(xtNum) {
+        if (this._beatIntervals[xtNum] !== undefined) {
+            clearInterval(this._beatIntervals[xtNum]);
+            delete this._beatIntervals[xtNum];
+        }
+    }
+
+    /**
+     * Clears all active beat-pulse intervals. Called on panic / `allNotesOff`.
+     *
+     * @returns {void}
+     * @private
+     */
+    _stopAllBeatPulses() {
+        if (!this._beatIntervals) { return; }
+        for (const id of Object.values(this._beatIntervals)) { clearInterval(id); }
+        this._beatIntervals = {};
     }
 
     drawFreqUI() {
@@ -1561,14 +1630,17 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 ctx.shadowBlur = pulsing ? 30 : 20;
                 this.drawLinKey(curr_ft[0], 'ft', curr_ft[1], false, heldColor, this.freqArrays.ft.length);
             } else {
-                ctx.shadowColor = 'red';
+                // Active key (pressed but not yet held): flash white on polyrhythm pulse.
+                const pulsing = this._pulseUntil[curr_ft[1]] && this._pulseUntil[curr_ft[1]] > Date.now();
+                const activeColor = pulsing ? ['#ffffff', '#ffffff', '#ccf0ff'] : ['darksalmon', 'darksalmon', '#db9c57'];
+                ctx.shadowColor = pulsing ? '#ffffff' : 'red';
                 if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
                     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
                 } else if (this.padSet.parameters.scaleOrientation.ft.value === 'horizontal') {
                     ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
                 }
-                ctx.shadowBlur = 20;
-                this.drawLinKey(curr_ft[0], 'ft', curr_ft[1], false, ['darksalmon', 'darksalmon', '#db9c57'], this.freqArrays.ft.length);
+                ctx.shadowBlur = pulsing ? 30 : 20;
+                this.drawLinKey(curr_ft[0], 'ft', curr_ft[1], false, activeColor, this.freqArrays.ft.length);
             }
             ctx.restore();
         }
@@ -1687,15 +1759,18 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 ctx.shadowBlur = pulsing ? 30 : 20;
                 this.drawFreqKeyHT(ht[1].hz, ht[0], arrIdx, heldColor, zindex);
             } else if (this.padSet.dhc.playQueue.ht.findIndex(findIdxFn, ht[0]) > -1) {
-                ctx.shadowColor = color[2];
+                // Active key (pressed but not yet held): flash white on polyrhythm pulse.
+                const pulsing = this._pulseUntil[ht[0]] && this._pulseUntil[ht[0]] > Date.now();
+                ctx.shadowColor = pulsing ? '#ffffff' : color[2];
                 if (this.padSet.parameters.scaleOrientation.ht.value === 'vertical') {
                     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
                 } else if (this.padSet.parameters.scaleOrientation.ht.value === 'horizontal') {
                     ctx.shadowOffsetY = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
                 }
-                ctx.shadowBlur = 20;
+                ctx.shadowBlur = pulsing ? 30 : 20;
                 // The 2nd color of the passed array is supposed to be the best to contrast with the key label
-                this.drawFreqKeyHT(ht[1].hz, ht[0], arrIdx, [color[2], color[0], color[2]], zindex);
+                this.drawFreqKeyHT(ht[1].hz, ht[0], arrIdx,
+                    pulsing ? ['#ffffff', '#ffffff', '#ccf0ff'] : [color[2], color[0], color[2]], zindex);
             } else if (spectroMatchHt !== false && spectroMatchHt === ht[0]) {
                 // Spectrogram formant-tracking: green glow toward the spectrogram side.
                 ctx.shadowColor = '#4cff50';

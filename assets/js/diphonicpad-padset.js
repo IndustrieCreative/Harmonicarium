@@ -175,9 +175,6 @@ HUM.DpPad.PadSet = class {
         this.arrangePads();
         // Tell to the DHC that a new app is using it
         this.dhc.registerApp(this, 'updatesFromDHC', 101);
-        // Subscribe to BeatVoice pulse events so held pad keys flash in sync.
-        this._boundPulseListener = (type, xtNum) => this[type].triggerPulseFlash(xtNum);
-        this.dhc.synth.addPulseListener(this._boundPulseListener);
     }
 
     /**

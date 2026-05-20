@@ -340,6 +340,15 @@ HUM.Synth.prototype.BeatVoice = class {
      * @private
      */
     _firePulseAt(when) {
+        // Schedule the visual callback first — independent of whether an audio
+        // buffer is loaded.  This ensures DiphonicPad / Hancock keys pulse even
+        // in MIDI-out-only mode where no beat sample is present.
+        if (this.onPulse) {
+            const ctx = this.synth.audioContext;
+            const delayMs = Math.max(0, (when - ctx.currentTime) * 1000);
+            const t = setTimeout(() => { if (!this._stopped) this.onPulse(); }, delayMs);
+            this._pulseTimers.push(t);
+        }
         const buffer = this.type === 'ht'
             ? (this.synth.beatBuffer.ht && this.synth.beatBuffer.ht[this.slotIndex])
             : (this.synth.beatBuffer && this.synth.beatBuffer.ft);
@@ -354,14 +363,6 @@ HUM.Synth.prototype.BeatVoice = class {
             src.start();
         }
         this._pendingSources.push(src);
-        // Schedule the visual callback to fire at the same wall-clock moment
-        // as the audio pulse.
-        if (this.onPulse) {
-            const ctx = this.synth.audioContext;
-            const delayMs = Math.max(0, (when - ctx.currentTime) * 1000);
-            const t = setTimeout(() => { if (!this._stopped) this.onPulse(); }, delayMs);
-            this._pulseTimers.push(t);
-        }
         src.onended = () => {
             const i = this._pendingSources.indexOf(src);
             if (i !== -1) { this._pendingSources.splice(i, 1); }
