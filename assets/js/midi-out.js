@@ -528,7 +528,7 @@ HUM.midi.MidiOut = class MidiOut {
             ftHeld.push(held.ch);
         }
         for (let held of Object.values(this.settings[portID].pb.channels.ht.held)) {
-            htHeld.push(held);
+            htHeld.push(held.ch);
         }
         let channels = [...ftUsed, ...ftHeld, ...htUsed, ...htHeld];
         
