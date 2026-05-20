@@ -297,8 +297,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
             'textIncrease',
             'textDecrease',
             'piper',
-            'panic',
-            'openLog'
+            'panic'
         ];
         this.toolbarIconOrder = new HUM.Param({
             app:padSet,

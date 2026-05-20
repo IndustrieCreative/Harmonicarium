@@ -411,6 +411,9 @@ HUM.tmpl = {
                                     <li class="nav-item">
                                       <a class="dropdown-item py-2" data-bs-toggle="tab" href="#HTMLo_creditsObj${humID}">Credits</a>
                                     </li>
+                                    <li class="nav-item">
+                                      <button type="button" class="dropdown-item py-2" id="HTMLf_logOpenBtn${humID}">Log</button>
+                                    </li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li class="nav-item">
                                       <a class="dropdown-item py-2" data-bs-toggle="tab" href="#HTMLo_appObj${humID}">App</a>
@@ -1847,15 +1850,6 @@ HUM.tmpl = {
                                                 <div class="ms-1 me-auto">Panic (all notes off)</div>
                                                 <div class="form-check form-switch ms-3">
                                                     <input id="HTMLi_toolbar_icon_panic_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
-                                                </div>
-                                            </li>
-                                            <li id="HTMLf_toolbar_icon_openLog${dhcID}" class="list-group-item d-flex justify-content-between">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
-                                                    <use fill-rule="evenodd" href="#dpIcon-openLog${humID}"/>
-                                                </svg>
-                                                <div class="ms-1 me-auto">Open/close the log</div>
-                                                <div class="form-check form-switch ms-3">
-                                                    <input id="HTMLi_toolbar_icon_openLog_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
                                         </ul>

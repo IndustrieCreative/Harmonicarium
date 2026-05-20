@@ -48,7 +48,7 @@
  * the appropriate DHC or UI action via
  * {@link HUM.DpPad.PadSet.Toolbar#playIcon|playIcon()}.
  *
- * Supported icons: `piper`, `menu`, `rotateView`, `openLog`, `toolbarPos`,
+ * Supported icons: `piper`, `menu`, `rotateView`, `toolbarPos`,
  * `rotateFT`, `rotateHT`, `invertPads`, `panic`, `textIncrease`, `textDecrease`.
  */
 HUM.DpPad.PadSet.Toolbar = class {
@@ -313,7 +313,7 @@ HUM.DpPad.PadSet.Toolbar = class {
      * - `piper`: Plays HT 0 (the Piper note) on press; mutes it on release.
      * - `menu`: Toggles the sidebar on release.
      * - `rotateView`: Rotates the pad layout on release.
-     * - `openLog`: Toggles the event log panel on release.
+    
      * - `toolbarPos`: Cycles the toolbar position on release.
      * - `rotateFT`: Switches the FT scale orientation on release.
      * - `rotateHT`: Switches the HT scale orientation on release.
@@ -340,11 +340,6 @@ HUM.DpPad.PadSet.Toolbar = class {
             case 'rotateView':
                 if (state === 0) {
                     this.padSet.dpPadComponent.rotateView();
-                }
-                break;
-            case 'openLog':
-                if (state === 0) {
-                    this.padSet.dhc.harmonicarium.components.backendUtils.toggleLogPanel();
                 }
                 break;
             case 'toolbarPos':

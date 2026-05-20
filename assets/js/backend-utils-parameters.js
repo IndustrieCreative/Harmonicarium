@@ -192,6 +192,16 @@ HUM.BackendUtils.prototype.Parameters = class {
                         backendUtils.tester();
                     }
                 }),
+                'logOpenBtn': new HUM.Param.UIelem({
+                    role: 'fn',
+                    opType: 'toggle',
+                    widget: 'button',
+                    htmlTargetProp: 'checked',
+                    eventType: 'click',
+                    eventListener: evt => {
+                        backendUtils.toggleLogPanel();
+                    }
+                }),
             },
             init: false,
             dataType: 'string',
