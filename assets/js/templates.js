@@ -2136,30 +2136,34 @@ HUM.tmpl = {
 
                                     <div class="row g-2">
                                         <div class="col-lg-6">
-                                            <div class="form-label d-flex align-items-center">FT beat sample:&nbsp;
-                                                <span id="HTMLo_synth_beatSampleFTName${dhcID}" class="fw-bold fst-italic">none</span>
-                                            </div>
+                                            <div class="form-label">FT beat sample</div>
                                             <input type="file" id="HTMLi_synth_beatSampleFT${dhcID}" accept="audio/*" class="form-control">
+                                            <div class="text-muted fst-italic fw-bold" style="font-size:0.75em; word-break:break-all; margin-top:2px;">
+                                                <span id="HTMLo_synth_beatSampleFTName${dhcID}">none</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="row g-2">
+                                    <div class="row g-2 mt-1">
                                         <div class="col-lg-4">
-                                            <div class="form-label d-flex align-items-center">HT sample 1:&nbsp;
-                                                <span id="HTMLo_synth_beatSampleHTName${dhcID}" class="fw-bold fst-italic">none</span>
-                                            </div>
+                                            <div class="form-label">HT sample 1</div>
                                             <input type="file" id="HTMLi_synth_beatSampleHT${dhcID}" accept="audio/*" class="form-control">
+                                            <div class="text-muted fst-italic fw-bold" style="font-size:0.75em; word-break:break-all; margin-top:2px;">
+                                                <span id="HTMLo_synth_beatSampleHTName${dhcID}">none</span>
+                                            </div>
                                         </div>
                                         <div class="col-lg-4">
-                                            <div class="form-label d-flex align-items-center">HT sample 2:&nbsp;
-                                                <span id="HTMLo_synth_beatSampleHT1Name${dhcID}" class="fw-bold fst-italic">none</span>
-                                            </div>
+                                            <div class="form-label">HT sample 2</div>
                                             <input type="file" id="HTMLi_synth_beatSampleHT1${dhcID}" accept="audio/*" class="form-control">
+                                            <div class="text-muted fst-italic fw-bold" style="font-size:0.75em; word-break:break-all; margin-top:2px;">
+                                                <span id="HTMLo_synth_beatSampleHT1Name${dhcID}">none</span>
+                                            </div>
                                         </div>
                                         <div class="col-lg-4">
-                                            <div class="form-label d-flex align-items-center">HT sample 3:&nbsp;
-                                                <span id="HTMLo_synth_beatSampleHT2Name${dhcID}" class="fw-bold fst-italic">none</span>
-                                            </div>
+                                            <div class="form-label">HT sample 3</div>
                                             <input type="file" id="HTMLi_synth_beatSampleHT2${dhcID}" accept="audio/*" class="form-control">
+                                            <div class="text-muted fst-italic fw-bold" style="font-size:0.75em; word-break:break-all; margin-top:2px;">
+                                                <span id="HTMLo_synth_beatSampleHT2Name${dhcID}">none</span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -2299,16 +2303,18 @@ HUM.tmpl = {
                                         <input type="range" min="0" max="1" step="0.01" id="HTMLi_synth_reverb${dhcID}" class="form-range">
                                     </div>
                                     <div class="col-lg-8">
-                                      <div class="form-label d-flex align-items-center">IR wave file:&nbsp;
-                                        <span id="HTMLo_synth_irFileName${dhcID}" class="fw-bold fst-italic"></span>
+                                      <div class="form-label d-flex align-items-center">IR wave file
                                         <button type="button" id="HTMLi_synth_irFileClearBtn${dhcID}" class="btn btn-sm btn-outline-secondary ms-auto" title="Clear (restore the default reverb)" aria-label="Clear and restore the default reverb.">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 16 16">
                                                 <use fill-rule="evenodd" href="#dpIcon-clear${humID}"/>
                                             </svg>
                                             <!-- <span class="align-middle">&nbsp;Settings...</span> -->
                                         </button>
-                                    </div>
+                                      </div>
                                       <input type="file" id="HTMLi_synth_irFile${dhcID}" accept=".wav" class="form-control">
+                                      <div class="text-muted fst-italic fw-bold" style="font-size:0.75em; word-break:break-all; margin-top:2px;">
+                                          <span id="HTMLo_synth_irFileName${dhcID}"></span>
+                                      </div>
                                     </div>
                                 </div>
 
