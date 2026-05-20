@@ -253,6 +253,11 @@ HUM.Synth = class {
                 this.parameters._applyPolyrhythmMode(this.dhc.polyrhythmMode);
             }
 
+        } else if (msg.cmd === 'init') {
+            // DHC has finished a full re-init (e.g. after IDB preset restore).
+            // Re-sync the synth panel visibility with the now-correct mode.
+            this.parameters._applyPolyrhythmMode(this.dhc.polyrhythmMode);
+
         } else if (msg.cmd === 'tone-on') {
             if (msg.type === 'ft') {
 

@@ -1640,8 +1640,12 @@ HUM.DHC = class {
      * BPM translation happens at the consumer edge (Synth, MidiOut, UI monitors).
      */
     get polyrhythmMode() {
-        return this.settings && this.settings.fm && this.settings.fm.hz
-            && this.settings.fm.hz.value < HUM.DHC.POLYRHYTHM_THRESHOLD_HZ;
+        // `fm.hz.value` starts as `false` (uninitialized sentinel) until IDB
+        // restores a real frequency.  `false < 5` is `true` in JS, which would
+        // incorrectly activate Polyrhythm Mode before the preset is loaded.
+        const hz = this.settings && this.settings.fm && this.settings.fm.hz
+            ? this.settings.fm.hz.value : false;
+        return typeof hz === 'number' && hz < HUM.DHC.POLYRHYTHM_THRESHOLD_HZ;
     }
 
 }; // end Class
