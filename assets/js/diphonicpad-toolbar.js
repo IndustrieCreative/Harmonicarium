@@ -376,6 +376,16 @@ HUM.DpPad.PadSet.Toolbar = class {
                     this.textDecrease();
                 }
                 break;
+            case 'htOctaveUp':
+                if (state === 0) {
+                    this.htOctaveUp();
+                }
+                break;
+            case 'htOctaveDown':
+                if (state === 0) {
+                    this.htOctaveDown();
+                }
+                break;
         }
     }
     /**
@@ -403,5 +413,15 @@ HUM.DpPad.PadSet.Toolbar = class {
     textDecrease() {
         this.padSet.ft.decreaseFontsize();
         this.padSet.ht.decreaseFontsize();
+    }
+    htOctaveUp() {
+        let dhc = this.padSet.dhc;
+        dhc.settings.ht.transpose.h.value *= 2;
+        dhc.settings.ht.transpose.s.value *= 2;
+    }
+    htOctaveDown() {
+        let dhc = this.padSet.dhc;
+        dhc.settings.ht.transpose.h.value *= 0.5;
+        dhc.settings.ht.transpose.s.value *= 0.5;
     }
 };

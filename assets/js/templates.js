@@ -107,6 +107,14 @@ HUM.tmpl = {
                 d: "M 11.797 14.423 L 10.883 14.423 L 10.883 12.363 L 8.963 12.363 L 8.963 14.423 L 8.039 14.423 L 8.039 9.603 L 8.963 9.603 L 8.963 11.523 L 10.883 11.523 L 10.883 9.603 L 11.797 9.603 L 11.797 14.423 Z M 16.071 10.383 L 14.645 10.383 L 14.645 14.423 L 13.722 14.423 L 13.722 10.383 L 12.304 10.383 L 12.304 9.603 L 16.071 9.603 L 16.071 10.383 Z M 16.48 2.52 C 19.75 4.07 22.09 7.24 22.45 11 L 23.95 11 C 23.44 4.84 18.29 0 12 0 L 11.34 0.03 L 15.15 3.84 L 16.48 2.52 Z M 10.23 1.75 C 9.647 1.16 8.693 1.16 8.11 1.75 L 1.75 8.11 C 1.16 8.693 1.16 9.647 1.75 10.23 L 13.77 22.25 C 14.36 22.84 15.31 22.84 15.89 22.25 L 22.25 15.89 C 22.84 15.3 22.84 14.35 22.25 13.77 L 10.23 1.75 Z M 14.83 21.19 L 2.81 9.17 L 9.17 2.81 L 21.19 14.83 L 14.83 21.19 Z M 7.52 21.48 C 4.174 19.904 1.905 16.682 1.55 13 L 0.05 13 C 0.56 19.16 5.71 24 12 24 L 12.66 23.97 L 8.85 20.16 L 7.52 21.48 Z",
                 viewBox: "0 0 24 24"
             },
+            htOctaveUp: {
+                d: "M 7.797 14.423 L 6.883 14.423 L 6.883 12.363 L 4.963 12.363 L 4.963 14.423 L 4.039 14.423 L 4.039 9.603 L 4.963 9.603 L 4.963 11.523 L 6.883 11.523 L 6.883 9.603 L 7.797 9.603 L 7.797 14.423 Z M 12.071 10.383 L 10.645 10.383 L 10.645 14.423 L 9.722 14.423 L 9.722 10.383 L 8.304 10.383 L 8.304 9.603 L 12.071 9.603 L 12.071 10.383 Z M 14.5 11.5 L 21.5 11.5 L 21.5 12.5 L 14.5 12.5 Z M 17.5 8.5 L 18.5 8.5 L 18.5 15.5 L 17.5 15.5 Z",
+                viewBox: "0 0 24 24"
+            },
+            htOctaveDown: {
+                d: "M 7.797 14.423 L 6.883 14.423 L 6.883 12.363 L 4.963 12.363 L 4.963 14.423 L 4.039 14.423 L 4.039 9.603 L 4.963 9.603 L 4.963 11.523 L 6.883 11.523 L 6.883 9.603 L 7.797 9.603 L 7.797 14.423 Z M 12.071 10.383 L 10.645 10.383 L 10.645 14.423 L 9.722 14.423 L 9.722 10.383 L 8.304 10.383 L 8.304 9.603 L 12.071 9.603 L 12.071 10.383 Z M 14.5 11.5 L 21.5 11.5 L 21.5 12.5 L 14.5 12.5 Z",
+                viewBox: "0 0 24 24"
+            },
             invertPads: {
                 d: "M 21.71 9.29 L 17.71 5.29 C 17.163 4.743 16.23 4.994 16.03 5.74 C 15.937 6.087 16.036 6.456 16.29 6.71 L 18.59 9 L 7 9 C 6.23 9 5.749 9.833 6.134 10.5 C 6.313 10.809 6.643 11 7 11 L 21 11 C 21.404 10.998 21.767 10.753 21.92 10.38 C 22.077 10.008 21.994 9.578 21.71 9.29 Z M 17 13 L 3 13 C 2.596 13.002 2.233 13.247 2.08 13.62 C 1.923 13.992 2.006 14.422 2.29 14.71 L 6.29 18.71 C 6.681 19.104 7.319 19.104 7.71 18.71 C 8.104 18.319 8.104 17.681 7.71 17.29 L 5.41 15 L 17 15 C 17.77 15 18.251 14.167 17.866 13.5 C 17.687 13.191 17.357 13 17 13 Z M 10.545 4.44 L 8.005 4.44 L 8.005 5.93 L 10.465 5.93 L 10.465 6.71 L 8.005 6.71 L 8.005 8.48 L 6.995 8.48 L 6.995 3.66 L 10.545 3.66 L 10.545 4.44 Z M 15.001 4.44 L 13.441 4.44 L 13.441 8.48 L 12.431000000000001 8.48 L 12.431000000000001 4.44 L 10.881 4.44 L 10.881 3.66 L 15.001 3.66 L 15.001 4.44 Z M 13.268 20.467 L 12.268 20.467 L 12.268 18.407 L 10.168 18.407 L 10.168 20.467 L 9.158 20.467 L 9.158 15.647 L 10.168 15.647 L 10.168 17.567 L 12.268 17.567 L 12.268 15.647 L 13.268 15.647 L 13.268 20.467 Z M 17.943 16.427 L 16.383 16.427 L 16.383 20.467 L 15.373 20.467 L 15.373 16.427 L 13.823 16.427 L 13.823 15.647 L 17.943 15.647 L 17.943 16.427 Z",
                 viewBox: "0 0 24 24"
@@ -1814,6 +1822,24 @@ HUM.tmpl = {
                                                 <div class="ms-1 me-auto">Rotate HT pad</div>
                                                 <div class="form-check form-switch ms-3">
                                                     <input id="HTMLi_toolbar_icon_rotateHT_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                            <li id="HTMLf_toolbar_icon_htOctaveUp${dhcID}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 24 24">
+                                                    <use fill-rule="evenodd" href="#dpIcon-htOctaveUp${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">HT octave up</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input id="HTMLi_toolbar_icon_htOctaveUp_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                            <li id="HTMLf_toolbar_icon_htOctaveDown${dhcID}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 24 24">
+                                                    <use fill-rule="evenodd" href="#dpIcon-htOctaveDown${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">HT octave down</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input id="HTMLi_toolbar_icon_htOctaveDown_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
                                             <li id="HTMLf_toolbar_icon_textIncrease${dhcID}" class="list-group-item d-flex justify-content-between">

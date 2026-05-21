@@ -294,6 +294,8 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
             'invertPads',
             'rotateFT',
             'rotateHT',
+            'htOctaveUp',
+            'htOctaveDown',
             'textIncrease',
             'textDecrease',
             'piper',
@@ -330,8 +332,8 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
             })(),
             dataType:'array',
             initValue: JSON.parse(JSON.stringify(this.toolbarDefaultIcons)),
-            postSet: (value, thisParam, init) => {
-                if (!init) {
+            postSet: (value, thisParam, init, fromUI, oldValue, fromRestore) => {
+                if (!init || fromRestore) {
                     padSet.toolbar.drawIcons(true);
                 }
             },
