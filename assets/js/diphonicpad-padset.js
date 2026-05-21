@@ -334,6 +334,35 @@ HUM.DpPad.PadSet = class {
      * - `tone-off/ht`: Restores `ht.currentFreq` from the remaining play queue
      *   and redraws the targeted HT pads.
      */
+    /**
+     * Shows or hides the Spectrogram settings panel section depending on
+     * whether Polyrhythm Mode is currently active.
+     *
+     * When entering Polyrhythm Mode the spectrogram and pitch tracking are
+     * incompatible (the spectrogram visualises audio-frequency content while
+     * polyrhythm mode operates below 5 Hz), so both are force-disabled and the
+     * settings section is hidden. When leaving Polyrhythm Mode the section is
+     * restored; the spectrogram and pitch tracking remain off until the user
+     * explicitly re-enables them.
+     *
+     * @returns {void}
+     * @private
+     */
+    _syncSpectrogramSectionVisibility() {
+        const section = document.getElementById('HTMLf_dppad_spectrogram_section' + this.id);
+        if (this.dhc.polyrhythmMode) {
+            // Disable pitch tracking before disabling the spectrogram to avoid ordering issues.
+            if (this.parameters.spectrogramPitchTrack.value) {
+                this.parameters.spectrogramPitchTrack.value = false;
+            }
+            if (this.parameters.spectrogramEnabled.value) {
+                this.parameters.spectrogramEnabled.value = false;
+            }
+            if (section) { section.style.display = 'none'; }
+        } else {
+            if (section) { section.style.display = ''; }
+        }
+    }
     updatesFromDHC(msg) {
         if (msg.cmd === 'init') {
             for (let type of ['ft', 'ht']) {
@@ -350,6 +379,9 @@ HUM.DpPad.PadSet = class {
                 this[type].refillFreqArrays();
                 this[type].drawFreqUI();
             }
+            // Apply spectrogram section visibility for the current polyrhythm state
+            // (covers presets restored with FM already below the threshold).
+            this._syncSpectrogramSectionVisibility();
         }
 
         if (msg.cmd === 'panic') {
@@ -413,6 +445,8 @@ HUM.DpPad.PadSet = class {
                     this.updatePadRangeUI('ft', 'tenore');
                     this.updatePadRangeUI('ht', 'normal');
                 }
+                // Disable and hide/show spectrogram settings to match the new mode.
+                this._syncSpectrogramSectionVisibility();
             }
         
         } else if (msg.cmd === 'tone-on') {

@@ -1373,7 +1373,7 @@ HUM.tmpl = {
         template.innerHTML = `
             <div class="dpPadBackend" id="HTMLf_dpPadSettings${dhcID}">
 
-                <div class="list-group mb-3">
+                <div class="list-group mb-3" id="HTMLf_dppad_spectrogram_section${dhcID}">
                     <div class="list-group-item hum-section-title p-2 ps-3">
                         Spectrogram
                     </div>
