@@ -125,11 +125,7 @@ HUM.Hstack.prototype.Parameters = class {
                     hstack.fillin();
                     hstack.ftMonitor(hstack.dhc.settings.ht.curr_ft);
                 } else {
-                    // Turn off all the tones currently active, if there are
-                    for (let htNum of hstack.usedHT) {
-                        hstack.playFx("ht", 0, htNum);
-                    }
-                    hstack.playFx("ft", 0, hstack.dhc.settings.ht.curr_ft);
+                    hstack.allNotesOff();
                 }
 
             }
@@ -168,6 +164,51 @@ HUM.Hstack.prototype.Parameters = class {
             postSet: (value, thisParam) => {
                 thisParam.uiElements.out.hstack_fontsize.style.fontSize = value + "px";
                 thisParam.uiElements.fn.hstack_zoom.setAttribute("data-tooltip", value + "px");
+            }
+        });
+
+        this.rowCount = new HUM.Param({
+            app: hstack,
+            idbKey: 'hstackRows',
+            uiElements: {
+                'hstack_rows': new HUM.Param.UIelem({
+                    role: 'fn',
+                    opType: 'set',
+                    eventType: 'input',
+                    htmlTargetProp: 'value',
+                    widget: 'range',
+                }),
+            },
+            dataType: 'float',
+            initValue: 8,
+            postSet: (value, thisParam) => {
+                const n = Math.round(value);
+                thisParam.uiElements.fn.hstack_rows.setAttribute('data-tooltip', n);
+                hstack._rebuildRows(n);
+            }
+        });
+
+        this.scrollOffset = new HUM.Param({
+            app: hstack,
+            idbKey: 'hstackScrollOffset',
+            uiElements: {
+                'hstack_scroll': new HUM.Param.UIelem({
+                    role: 'fn',
+                    opType: 'set',
+                    eventType: 'input',
+                    htmlTargetProp: 'value',
+                    widget: 'range',
+                }),
+            },
+            dataType: 'float',
+            initValue: 0,
+            postSet: (value, thisParam) => {
+                hstack._scrollOffset = value;
+                thisParam.uiElements.fn.hstack_scroll.setAttribute('data-tooltip', value);
+                if (hstack.parameters && hstack.parameters.active.value) {
+                    hstack.allNotesOff();
+                    hstack.fillin();
+                }
             }
         });
 
@@ -234,37 +275,32 @@ HUM.Hstack.prototype.Parameters = class {
                 hstackTable.innerHTML = `
                     <thead class="table-light">
                         <tr>
-                            <th colspan="4">Harmonics</th>
+                            <th colspan="5">Harmonics</th>
                         </tr>
                         <tr>
                             <th width="12%">HT</th>
                             <th width="20%">note</th>
-                            <th width="25%">cents</th>
-                            <th width="43%">Hz</th>
+                            <th width="20%">cents</th>
+                            <th width="23%">BPM</th>
+                            <th width="25%">Hz</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- Here the HT rows -->
+                    <tbody id="HTMLo_hstackHTbody${dhcID}">
                     </tbody>`;
                 // Store references to the column header cells for polyrhythm mode toggling.
                 const htHeaderRow = hstackTable.querySelector('thead').rows[1];
                 hstack._htNoteHead  = htHeaderRow.cells[1];
                 hstack._htCentsHead = htHeaderRow.cells[2];
-                hstack._htHzHead    = htHeaderRow.cells[3];
-                hstack.updateUsedHT();
-                
+                hstack._htBpmHead   = htHeaderRow.cells[3];
+                hstack._htHzHead    = htHeaderRow.cells[4];
+
                 thisParam.uiElements.out.rowsHT = {};
-                for (let htNum of hstack.usedHT) {
-                    let newRow = new hstack.HstackRow(htNum, dhcID);
-                    thisParam.uiElements.out.rowsHT[htNum] = newRow;
-                    hstackTable.children[1].appendChild(newRow.elemRow);
-                }
                 if (hstackContainer.firstChild) {
                     hstackContainer.removeChild(hstackContainer.firstChild);
                 }
                 hstackContainer.appendChild(hstackTable);
-                
-                hstack.fillin();
+
+                hstack._rebuildRows(hstack.parameters.rowCount ? hstack.parameters.rowCount.value : 8);
                 hstack._syncPolyrhythmColumns();
 
             },

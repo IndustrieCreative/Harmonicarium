@@ -1079,6 +1079,34 @@ HUM.tmpl = {
                         </div>
                     </div>
 
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-sm">
+                                <strong class="mb-2">Rows</strong>
+                                <div><small class="text-muted">The number of rows displayed in the table.</small></div>
+                            </div>
+                            <div class="col-auto">
+                                <input type="range" min="1" max="32" step="1"
+                                       id="HTMLf_hstack_rows${dhcID}"
+                                       class="form-range">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-sm">
+                                <strong class="mb-2">Scroll</strong>
+                                <div><small class="text-muted">Shifts the displayed HT range along the harmonic series.</small></div>
+                            </div>
+                            <div class="col-auto">
+                                <input type="range" min="-128" max="127" step="1"
+                                       id="HTMLf_hstack_scroll${dhcID}"
+                                       class="form-range">
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <button class="TODO" id="HTMLi_hstackDuplicate${dhcID}">Add another H Stack</button>
@@ -1094,8 +1122,9 @@ HUM.tmpl = {
                                 <tr id="HTMLo_hstackFTrow${dhcID}" class="hum-hstack-ft-off">
                                     <td width="12%"><span id="HTMLo_hstackFT_tone${dhcID}"></span></td>
                                     <td id="HTMLo_hstackFT_noteTd${dhcID}" width="20%"><span id="HTMLo_hstackFT_note${dhcID}"></span></td>
-                                    <td id="HTMLo_hstackFT_centsTd${dhcID}" width="25%"><span id="HTMLo_hstackFT_cents${dhcID}"></span></td>
-                                    <td width="43%"><span id="HTMLo_hstackFT_hz${dhcID}"></span></td>
+                                    <td id="HTMLo_hstackFT_centsTd${dhcID}" width="20%"><span id="HTMLo_hstackFT_cents${dhcID}"></span></td>
+                                    <td id="HTMLo_hstackFT_bpmTd${dhcID}" width="23%"><span id="HTMLo_hstackFT_bpm${dhcID}"></span></td>
+                                    <td width="25%"><span id="HTMLo_hstackFT_hz${dhcID}"></span></td>
                                 </tr>
                             </tbody>
                             <tfoot class="table-light">
@@ -1103,10 +1132,11 @@ HUM.tmpl = {
                                     <th>FT</th>
                                     <th id="HTMLo_hstackFT_noteHead${dhcID}">note</th>
                                     <th id="HTMLo_hstackFT_centsHead${dhcID}">cents</th>
+                                    <th id="HTMLo_hstackFT_bpmHead${dhcID}">BPM</th>
                                     <th id="HTMLo_hstackFT_hzHead${dhcID}">Hz</th>
                                 </tr>
                                 <tr>
-                                    <th colspan="4">Fundamental</th>
+                                    <th colspan="5">Fundamental</th>
                                 </tr>
                             </tfoot>
                         </table>

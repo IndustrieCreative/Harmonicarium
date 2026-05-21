@@ -94,11 +94,17 @@ HUM.Hstack = class {
          */
         this.dhc = dhc;
         /**
-         * An array containing all the used Harmonic/Subharmonic in the controller Keymap.
+         * The current scroll offset. Bottom row shows HT `_scrollOffset + 1`.
          *
-         * @type {Array.<xtnum>}
+         * @type {number}
          */
-        this.usedHT = [];
+        this._scrollOffset = 0;
+        /**
+         * The current number of rows in the HT table.
+         *
+         * @type {number}
+         */
+        this._rowCount = 0;
 
         /**
          * Instance of `HUM.Hstack#Parameters`.
@@ -125,35 +131,65 @@ HUM.Hstack = class {
     _syncPolyrhythmColumns() {
         const dhcID = this.dhc.id;
         const poly = this.dhc.polyrhythmMode;
-        const display = poly ? 'none' : '';
+        const hideNoteCents = poly ? 'none' : '';
+        const hideBpm       = poly ? '' : 'none';
 
         // HT table column headers
-        if (this._htNoteHead)  { this._htNoteHead.style.display  = display; }
-        if (this._htCentsHead) { this._htCentsHead.style.display = display; }
-        if (this._htHzHead)    { this._htHzHead.textContent      = poly ? 'BPM' : 'Hz'; }
+        if (this._htNoteHead)  { this._htNoteHead.style.display  = hideNoteCents; }
+        if (this._htCentsHead) { this._htCentsHead.style.display = hideNoteCents; }
+        if (this._htBpmHead)   { this._htBpmHead.style.display   = hideBpm; }
 
         // FT table column headers
         const ftNoteHead  = document.getElementById('HTMLo_hstackFT_noteHead'  + dhcID);
         const ftCentsHead = document.getElementById('HTMLo_hstackFT_centsHead' + dhcID);
-        const ftHzHead    = document.getElementById('HTMLo_hstackFT_hzHead'    + dhcID);
-        if (ftNoteHead)  { ftNoteHead.style.display  = display; }
-        if (ftCentsHead) { ftCentsHead.style.display = display; }
-        if (ftHzHead)    { ftHzHead.textContent      = poly ? 'BPM' : 'Hz'; }
+        const ftBpmHead   = document.getElementById('HTMLo_hstackFT_bpmHead'   + dhcID);
+        if (ftNoteHead)  { ftNoteHead.style.display  = hideNoteCents; }
+        if (ftCentsHead) { ftCentsHead.style.display = hideNoteCents; }
+        if (ftBpmHead)   { ftBpmHead.style.display   = hideBpm; }
 
         // FT row data cells
         const ftNoteTd  = document.getElementById('HTMLo_hstackFT_noteTd'  + dhcID);
         const ftCentsTd = document.getElementById('HTMLo_hstackFT_centsTd' + dhcID);
-        if (ftNoteTd)  { ftNoteTd.style.display  = display; }
-        if (ftCentsTd) { ftCentsTd.style.display = display; }
+        const ftBpmTd   = document.getElementById('HTMLo_hstackFT_bpmTd'   + dhcID);
+        if (ftNoteTd)  { ftNoteTd.style.display  = hideNoteCents; }
+        if (ftCentsTd) { ftCentsTd.style.display = hideNoteCents; }
+        if (ftBpmTd)   { ftBpmTd.style.display   = hideBpm; }
 
         // HT row data cells
         const rows = this.parameters.hstack.uiElements.out.rowsHT;
         if (rows) {
             for (const row of Object.values(rows)) {
-                row.elemNote.style.display  = display;
-                row.elemCents.style.display = display;
+                row.elemNote.style.display  = hideNoteCents;
+                row.elemCents.style.display = hideNoteCents;
+                row.elemBpm.style.display   = hideBpm;
             }
         }
+    }
+
+    /**
+     * Rebuilds the HT table rows for the given row count, then calls {@link HUM.Hstack#fillin}.
+     *
+     * @param {number} n - The number of rows to create.
+     * @returns {void}
+     */
+    _rebuildRows(n) {
+        this._rowCount = n;
+        const dhcID = this.dhc.id;
+        const tbody = document.getElementById('HTMLo_hstackHTbody' + dhcID);
+        if (!tbody) { return; }
+        // Clear existing rows
+        while (tbody.firstChild) { tbody.removeChild(tbody.firstChild); }
+        // Reset the rowsHT namespace
+        this.parameters.hstack.uiElements.out.rowsHT = {};
+        const rowsHT = this.parameters.hstack.uiElements.out.rowsHT;
+        // Build rows: pos (n-1) appended first = top of table; pos 0 = bottom
+        for (let pos = n - 1; pos >= 0; pos--) {
+            const newRow = new this.HstackRow(pos, dhcID);
+            rowsHT[pos] = newRow;
+            tbody.appendChild(newRow.elemRow);
+        }
+        this.fillin();
+        this._syncPolyrhythmColumns();
     }
 
     /**
@@ -196,8 +232,7 @@ HUM.Hstack = class {
                 this.fillin();
 
             } else if (msg.type === 'ctrlmap') {
-                
-                this.parameters.hstack._init();
+                if (this.parameters.active.value) { this.fillin(); }
 
             } else if (msg.type === 'mode') {
                 // Polyrhythm Mode toggled: re-render the Hstack so Hz columns become BPM (and vice-versa).
@@ -249,30 +284,6 @@ HUM.Hstack = class {
      * UI HSTACK
      *==============================================================================*/
     /**
-     * Updates the {@link HUM.Hstack#usedHT} property from the current controller keymap.
-     *
-     * @returns {void}
-     *
-     * @description
-     * Iterates over all entries in the DHC controller table, collects the HT
-     * numbers that are actually mapped (excluding HT 0 and 129), sorts them
-     * in descending order, and stores the de-duplicated result in
-     * {@link HUM.Hstack#usedHT}.
-     */
-    updateUsedHT() {
-        let usedHT = [];
-        for (let key of Object.keys(this.dhc.tables.ctrl)) {
-            let ht = this.dhc.tables.ctrl[key].ht;
-            if (ht !== 129 && ht !== 0) {
-                usedHT.push(ht);
-            }
-        }
-        // Sort the array from max to min
-        usedHT.sort( (a, b) => { return b - a; } );
-        // Store in the global var the uniquified version of the array useful to this.fillin
-        this.usedHT = this.dhc.constructor.uniqArray(usedHT);
-    }
-    /**
      * Turns off all active rows in the H-Stack table.
      *
      * @returns {void}
@@ -283,8 +294,12 @@ HUM.Hstack = class {
      * the currently active fundamental tone.
      */
     allNotesOff() {
-        for (let htNum of this.usedHT) {
-            this.playFx("ht", 0, htNum);
+        const rows = this.parameters.hstack.uiElements.out.rowsHT;
+        if (rows) {
+            for (const row of Object.values(rows)) {
+                row.elemRow.classList.add("hum-hstack-ht-off");
+                row.elemRow.classList.remove("hum-hstack-ht-on", "bg-warning");
+            }
         }
         this.playFx("ft", 0, this.dhc.settings.ht.curr_ft);
     }
@@ -294,37 +309,40 @@ HUM.Hstack = class {
      * @returns {void}
      *
      * @description
-     * For each HT number in {@link HUM.Hstack#usedHT}:
-     * 1. Reads the tone data (MIDI cents and Hz) from the DHC HT table.
-     * 2. Applies any active controller pitchbend offset.
-     * 3. Converts MIDI cents to a human-readable note name with cent deviation.
-     * 4. Writes the HT number, note name, cent deviation, and Hz value into
+     * For each row position in the visible window (0 = bottom, _rowCount-1 = top):
+     * 1. Computes the displayed HT number as `_scrollOffset + 1 + pos`.
+     * 2. Reads the tone data (MIDI cents and Hz) from the DHC HT table.
+     * 3. Applies any active controller pitchbend offset.
+     * 4. Converts MIDI cents to a human-readable note name with cent deviation.
+     * 5. Writes the HT number, note name, cent deviation, and Hz value into
      *    the corresponding table row UI elements.
      */
     fillin() {
-        // Empty object to store the HTn data
-        let htObj = {};
-        // For every HT used in the Controller Keymap (this.dhc.tables.ctrl)
-        for (let htNum of this.usedHT) {
-            // If it's not 0 (piper)
-            if (htNum !== 0) {
-                // Read 'mc' and 'hz' data of the HTn from 'ht table'
-                htObj = this.dhc.tables.ht[htNum];
-                // Apply the controller pitchbend (if present) to the array 
-                htObj = this.dhc.bendXtone(htObj);
-                // Get the array containing the standard note name info and +/- cents
-                let notename = this.dhc.mcToName(htObj.mc),
-                    name = notename[0],
-                    sign = notename[1],
-                    cent = notename[2];
-                // Print the infos to the UI HStack
-                this.parameters.hstack.uiElements.out.rowsHT[htNum].elemHtNum.innerText = htNum;
-                this.parameters.hstack.uiElements.out.rowsHT[htNum].elemNote.innerText = name;
-                this.parameters.hstack.uiElements.out.rowsHT[htNum].elemCents.innerText = sign + cent;
-                this.parameters.hstack.uiElements.out.rowsHT[htNum].elemHz.innerText = this.dhc.polyrhythmMode
-                    ? HUM.DHC.hzToBpm(htObj.hz)
-                    : htObj.hz.toFixed(this.dhc.settings.global.hz_accuracy);
+        const rowsHT = this.parameters.hstack.uiElements.out.rowsHT;
+        if (!rowsHT) { return; }
+        for (let pos = 0; pos < this._rowCount; pos++) {
+            const displayHtNum = this._scrollOffset + 1 + pos;
+            const row = rowsHT[pos];
+            if (!row) { continue; }
+            if (displayHtNum === 0 || displayHtNum < -128 || displayHtNum > 128) {
+                row.elemHtNum.innerText = displayHtNum;
+                row.elemNote.innerText  = '\u2014';
+                row.elemCents.innerText = '\u2014';
+                row.elemHz.innerText    = '\u2014';
+                row.elemBpm.innerText   = '\u2014';
+                continue;
             }
+            let htObj = this.dhc.tables.ht[displayHtNum];
+            htObj = this.dhc.bendXtone(htObj);
+            let notename = this.dhc.mcToName(htObj.mc),
+                name = notename[0],
+                sign = notename[1],
+                cent = notename[2];
+            row.elemHtNum.innerText = displayHtNum;
+            row.elemNote.innerText  = name;
+            row.elemCents.innerText = sign + cent;
+            row.elemHz.innerText    = htObj.hz.toFixed(this.dhc.settings.global.hz_accuracy.value);
+            row.elemBpm.innerText   = HUM.DHC.hzToBpm(htObj.hz);
         }
     }
     /**
@@ -349,14 +367,12 @@ HUM.Hstack = class {
             name = notename[0],
             sign = notename[1],
             cent = notename[2],
-            hzAccuracy = this.dhc.settings.global.hz_accuracy;
-        // Update the log on HSTACK FT info on the UI
+            hzAccuracy = this.dhc.settings.global.hz_accuracy.value;
         document.getElementById("HTMLo_hstackFT_tone"+dhcID).innerText = ftNum;
         document.getElementById("HTMLo_hstackFT_note"+dhcID).innerText = name;
         document.getElementById("HTMLo_hstackFT_cents"+dhcID).innerText = sign + cent;
-        document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = this.dhc.polyrhythmMode
-            ? HUM.DHC.hzToBpm(ftObj.hz)
-            : ftObj.hz.toFixed(hzAccuracy);
+        document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = ftObj.hz.toFixed(hzAccuracy);
+        document.getElementById("HTMLo_hstackFT_bpm"+dhcID).innerText = HUM.DHC.hzToBpm(ftObj.hz);
     }
     /**
      * Updates the Fundamental Tone row using absolute Hz/mc values from a
@@ -369,7 +385,7 @@ HUM.Hstack = class {
      */
     ftMonitorHz(hz, mc) {
         let dhcID = this.dhc.id;
-        let hzAccuracy = this.dhc.settings.global.hz_accuracy;
+        let hzAccuracy = this.dhc.settings.global.hz_accuracy.value;
         // Apply the controller pitchbend (if present)
         let xtObj = this.dhc.bendXtone(new this.dhc.Xtone(hz, mc));
         let notename = this.dhc.mcToName(xtObj.mc),
@@ -389,9 +405,8 @@ HUM.Hstack = class {
         document.getElementById("HTMLo_hstackFT_tone"+dhcID).innerText = "~";
         document.getElementById("HTMLo_hstackFT_note"+dhcID).innerText = name;
         document.getElementById("HTMLo_hstackFT_cents"+dhcID).innerText = sign + cent;
-        document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = this.dhc.polyrhythmMode
-            ? HUM.DHC.hzToBpm(xtObj.hz)
-            : xtObj.hz.toFixed(hzAccuracy);
+        document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = xtObj.hz.toFixed(hzAccuracy);
+        document.getElementById("HTMLo_hstackFT_bpm"+dhcID).innerText = HUM.DHC.hzToBpm(xtObj.hz);
     }
     /**
      * Turns ON or OFF a row in the H-Stack table.
@@ -407,8 +422,8 @@ HUM.Hstack = class {
      * animation, applies the active CSS class, and calls {@link HUM.Hstack#ftMonitor}.
      * On note-off, removes the active CSS class if the row belongs to the
      * current fundamental tone.
-     * For HT rows: toggles the active/inactive CSS classes on the matching
-     * table row, provided the HT is present in {@link HUM.Hstack#usedHT}.
+     * For HT rows: toggles the active/inactive CSS classes on the row at the
+     * position derived from `xtNum` and the current scroll offset.
      */
     playFx(type, state, xtNum) {
         let dhcID = this.dhc.id;
@@ -439,10 +454,10 @@ HUM.Hstack = class {
         } else if (type === "ht") {
             // If is a normal HT (it's not HT0)
             if (xtNum !== 0) {
-                // Only if the HT is mapped in the keymap
-                if (this.usedHT.includes(xtNum)) {
-                    let htmlElem = this.parameters.hstack.uiElements.out.rowsHT[xtNum].elemRow;
-                    // let htmlElem = document.getElementById("HTMLf_hstackHTrow_h"+xtNum+"_"+dhcID);
+                const pos = xtNum - this._scrollOffset - 1;
+                const row = this.parameters.hstack.uiElements.out.rowsHT[pos];
+                if (row) {
+                    const htmlElem = row.elemRow;
                     // Note ON
                     if (state === 1) {
                         htmlElem.classList.add("hum-hstack-ht-on", "bg-warning");
@@ -460,7 +475,7 @@ HUM.Hstack = class {
 
 
 /**
- * A single HTML table row representing one Harmonic Tone in the H-Stack.
+ * A single HTML table row in the H-Stack, keyed by position in the visible window.
  *
  * @class
  * @memberof HUM.Hstack
@@ -473,9 +488,9 @@ HUM.Hstack = class {
  */
 HUM.Hstack.prototype.HstackRow = class {
     /**
-     * Creates an HstackRow instance for the given harmonic tone number.
+     * Creates an HstackRow instance for the given row position.
      *
-     * @param {xtnum}  htNum - The harmonic tone number this row represents.
+     * @param {number} pos   - The row position index (0 = bottom, rowCount-1 = top).
      * @param {string} dhcID - The ID of the parent DHC instance.
      *
      * @description
@@ -483,8 +498,8 @@ HUM.Hstack.prototype.HstackRow = class {
      * the appropriate CSS classes and element IDs, and appends all cells
      * to the row.
      */
-    constructor(htNum, dhcID) {
-        this.htNum = htNum;
+    constructor(pos, dhcID) {
+        this.pos = pos;
         this.dhcID = dhcID;
         /**
          * The HTML row element.
@@ -516,16 +531,23 @@ HUM.Hstack.prototype.HstackRow = class {
          * @type {HTMLElement}
          */
         this.elemHz = document.createElement("td");
+        /**
+         * The HTML cell for the BPM amount.
+         *
+         * @type {HTMLElement}
+         */
+        this.elemBpm = document.createElement("td");
 
         this.elemRow.className = "hum-hstack-ht-off";
         
-        this.elemRow.id = `HTMLf_hstackHTrow_h${htNum}_${dhcID}`;
-        this.elemHtNum.id = `HTMLo_hstackHT_h${htNum}_${dhcID}`;
-        this.elemNote.id = `HTMLo_hstackHT_note${htNum}_${dhcID}`;
-        this.elemCents.id = `HTMLo_hstackHT_cents${htNum}_${dhcID}`;
-        this.elemHz.id = `HTMLo_hstackHT_hz${htNum}_${dhcID}`;
-        this.elemHtNum.innerText = "htNum";
+        this.elemRow.id = `HTMLf_hstackHTrow_p${pos}_${dhcID}`;
+        this.elemHtNum.id = `HTMLo_hstackHT_p${pos}_${dhcID}`;
+        this.elemNote.id = `HTMLo_hstackHT_note_p${pos}_${dhcID}`;
+        this.elemCents.id = `HTMLo_hstackHT_cents_p${pos}_${dhcID}`;
+        this.elemHz.id = `HTMLo_hstackHT_hz_p${pos}_${dhcID}`;
+        this.elemBpm.id = `HTMLo_hstackHT_bpm_p${pos}_${dhcID}`;
+        this.elemHtNum.innerText = pos;
 
-        this.elemRow.append(this.elemHtNum, this.elemNote, this.elemCents, this.elemHz);
+        this.elemRow.append(this.elemHtNum, this.elemNote, this.elemCents, this.elemBpm, this.elemHz);
     }
 };
