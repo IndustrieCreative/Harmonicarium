@@ -1093,17 +1093,17 @@ HUM.tmpl = {
                             <tbody>
                                 <tr id="HTMLo_hstackFTrow${dhcID}" class="hum-hstack-ft-off">
                                     <td width="12%"><span id="HTMLo_hstackFT_tone${dhcID}"></span></td>
-                                    <td width="20%"><span id="HTMLo_hstackFT_note${dhcID}"></span></td>
-                                    <td width="25%"><span id="HTMLo_hstackFT_cents${dhcID}"></span></td>
+                                    <td id="HTMLo_hstackFT_noteTd${dhcID}" width="20%"><span id="HTMLo_hstackFT_note${dhcID}"></span></td>
+                                    <td id="HTMLo_hstackFT_centsTd${dhcID}" width="25%"><span id="HTMLo_hstackFT_cents${dhcID}"></span></td>
                                     <td width="43%"><span id="HTMLo_hstackFT_hz${dhcID}"></span></td>
                                 </tr>
                             </tbody>
                             <tfoot class="table-light">
                                 <tr>
                                     <th>FT</th>
-                                    <th>note</th>
-                                    <th>cents</th>
-                                    <th>Hz</th>
+                                    <th id="HTMLo_hstackFT_noteHead${dhcID}">note</th>
+                                    <th id="HTMLo_hstackFT_centsHead${dhcID}">cents</th>
+                                    <th id="HTMLo_hstackFT_hzHead${dhcID}">Hz</th>
                                 </tr>
                                 <tr>
                                     <th colspan="4">Fundamental</th>

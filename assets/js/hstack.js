@@ -117,6 +117,46 @@ HUM.Hstack = class {
     // ===========================
 
     /**
+     * Shows or hides the note/cents columns and updates the Hz/BPM heading
+     * based on the current polyrhythm mode state.
+     *
+     * @returns {void}
+     */
+    _syncPolyrhythmColumns() {
+        const dhcID = this.dhc.id;
+        const poly = this.dhc.polyrhythmMode;
+        const display = poly ? 'none' : '';
+
+        // HT table column headers
+        if (this._htNoteHead)  { this._htNoteHead.style.display  = display; }
+        if (this._htCentsHead) { this._htCentsHead.style.display = display; }
+        if (this._htHzHead)    { this._htHzHead.textContent      = poly ? 'BPM' : 'Hz'; }
+
+        // FT table column headers
+        const ftNoteHead  = document.getElementById('HTMLo_hstackFT_noteHead'  + dhcID);
+        const ftCentsHead = document.getElementById('HTMLo_hstackFT_centsHead' + dhcID);
+        const ftHzHead    = document.getElementById('HTMLo_hstackFT_hzHead'    + dhcID);
+        if (ftNoteHead)  { ftNoteHead.style.display  = display; }
+        if (ftCentsHead) { ftCentsHead.style.display = display; }
+        if (ftHzHead)    { ftHzHead.textContent      = poly ? 'BPM' : 'Hz'; }
+
+        // FT row data cells
+        const ftNoteTd  = document.getElementById('HTMLo_hstackFT_noteTd'  + dhcID);
+        const ftCentsTd = document.getElementById('HTMLo_hstackFT_centsTd' + dhcID);
+        if (ftNoteTd)  { ftNoteTd.style.display  = display; }
+        if (ftCentsTd) { ftCentsTd.style.display = display; }
+
+        // HT row data cells
+        const rows = this.parameters.hstack.uiElements.out.rowsHT;
+        if (rows) {
+            for (const row of Object.values(rows)) {
+                row.elemNote.style.display  = display;
+                row.elemCents.style.display = display;
+            }
+        }
+    }
+
+    /**
      * Manages and routes an incoming message from the DHC.
      *
      * @param {HUM.DHCmsg} msg - The incoming DHC message to process.
@@ -136,6 +176,7 @@ HUM.Hstack = class {
         if (msg.cmd === 'init') {
             this.fillin();
             this.ftMonitor(this.dhc.settings.ht.curr_ft);
+            this._syncPolyrhythmColumns();
         }
 
         if (msg.cmd === 'panic') {
@@ -160,6 +201,7 @@ HUM.Hstack = class {
 
             } else if (msg.type === 'mode') {
                 // Polyrhythm Mode toggled: re-render the Hstack so Hz columns become BPM (and vice-versa).
+                this._syncPolyrhythmColumns();
                 if (this.parameters.active.value) { this.fillin(); }
                 this.ftMonitor(this.dhc.settings.ht.curr_ft);
             }
@@ -280,7 +322,7 @@ HUM.Hstack = class {
                 this.parameters.hstack.uiElements.out.rowsHT[htNum].elemNote.innerText = name;
                 this.parameters.hstack.uiElements.out.rowsHT[htNum].elemCents.innerText = sign + cent;
                 this.parameters.hstack.uiElements.out.rowsHT[htNum].elemHz.innerText = this.dhc.polyrhythmMode
-                    ? HUM.DHC.hzToBpm(htObj.hz) + ' BPM'
+                    ? HUM.DHC.hzToBpm(htObj.hz)
                     : htObj.hz.toFixed(this.dhc.settings.global.hz_accuracy);
             }
         }
@@ -313,7 +355,7 @@ HUM.Hstack = class {
         document.getElementById("HTMLo_hstackFT_note"+dhcID).innerText = name;
         document.getElementById("HTMLo_hstackFT_cents"+dhcID).innerText = sign + cent;
         document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = this.dhc.polyrhythmMode
-            ? HUM.DHC.hzToBpm(ftObj.hz) + ' BPM'
+            ? HUM.DHC.hzToBpm(ftObj.hz)
             : ftObj.hz.toFixed(hzAccuracy);
     }
     /**
@@ -348,7 +390,7 @@ HUM.Hstack = class {
         document.getElementById("HTMLo_hstackFT_note"+dhcID).innerText = name;
         document.getElementById("HTMLo_hstackFT_cents"+dhcID).innerText = sign + cent;
         document.getElementById("HTMLo_hstackFT_hz"+dhcID).innerText = this.dhc.polyrhythmMode
-            ? HUM.DHC.hzToBpm(xtObj.hz) + ' BPM'
+            ? HUM.DHC.hzToBpm(xtObj.hz)
             : xtObj.hz.toFixed(hzAccuracy);
     }
     /**

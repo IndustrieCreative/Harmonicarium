@@ -246,6 +246,11 @@ HUM.Hstack.prototype.Parameters = class {
                     <tbody>
                         <!-- Here the HT rows -->
                     </tbody>`;
+                // Store references to the column header cells for polyrhythm mode toggling.
+                const htHeaderRow = hstackTable.querySelector('thead').rows[1];
+                hstack._htNoteHead  = htHeaderRow.cells[1];
+                hstack._htCentsHead = htHeaderRow.cells[2];
+                hstack._htHzHead    = htHeaderRow.cells[3];
                 hstack.updateUsedHT();
                 
                 thisParam.uiElements.out.rowsHT = {};
@@ -260,6 +265,7 @@ HUM.Hstack.prototype.Parameters = class {
                 hstackContainer.appendChild(hstackTable);
                 
                 hstack.fillin();
+                hstack._syncPolyrhythmColumns();
 
             },
         });
