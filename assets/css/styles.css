@@ -103,7 +103,7 @@ table.monospaced {
 }
 
 input:focus:not([type="range"]):not([type="radio"]), select:focus, button:focus {
-    border-color: #503535cc!important;!important;
+    border-color: #503535cc!important;
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 9px #503535cc!important;
     outline: 0 none!important;
 }
