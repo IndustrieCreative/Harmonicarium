@@ -212,6 +212,29 @@ HUM.Hstack.prototype.Parameters = class {
             }
         });
 
+        this.resetView = new HUM.Param({
+            app: hstack,
+            idbKey: 'hstackResetView',
+            uiElements: {
+                'hstack_reset': new HUM.Param.UIelem({
+                    role: 'fn',
+                    opType: 'set',
+                    eventType: 'click',
+                    htmlTargetProp: 'checked',
+                    widget: 'button',
+                    eventListener: () => {
+                        hstack.parameters.rowCount.value = 15;
+                        hstack.parameters.scrollOffset.value = 1;
+                    }
+                }),
+            },
+            dataType: 'boolean',
+            init: false,
+            presetStore: false,
+            presetAutosave: false,
+            presetRestore: false,
+        });
+
         /**
          * This property is just a proxy for the HTML container of the FT row of the H-Stack.
          * It's not stored on the DB.
@@ -275,7 +298,7 @@ HUM.Hstack.prototype.Parameters = class {
                 hstackTable.innerHTML = `
                     <thead class="table-light">
                         <tr>
-                            <th colspan="5">Harmonics</th>
+                            <th colspan="5" class="text-center">Harmonics</th>
                         </tr>
                         <tr>
                             <th width="12%">HT</th>

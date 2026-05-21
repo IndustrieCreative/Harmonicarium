@@ -1107,6 +1107,19 @@ HUM.tmpl = {
                         </div>
                     </div>
 
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-sm">
+                                <strong class="mb-2">Reset view</strong>
+                                <div><small class="text-muted">Reset to 15 rows showing harmonics 2&ndash;16.</small></div>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        id="HTMLf_hstack_reset${dhcID}">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <button class="TODO" id="HTMLi_hstackDuplicate${dhcID}">Add another H Stack</button>
@@ -1136,7 +1149,7 @@ HUM.tmpl = {
                                     <th id="HTMLo_hstackFT_hzHead${dhcID}">Hz</th>
                                 </tr>
                                 <tr>
-                                    <th colspan="5">Fundamental</th>
+                                    <th colspan="5" class="text-center">Fundamental</th>
                                 </tr>
                             </tfoot>
                         </table>
