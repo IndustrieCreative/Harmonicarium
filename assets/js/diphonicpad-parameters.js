@@ -294,6 +294,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
             'invertPads',
             'rotateFT',
             'rotateHT',
+            'scaleMode',
             'htOctaveUp',
             'htOctaveDown',
             'textIncrease',
@@ -575,6 +576,56 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                     }
                 }),
             },
+        };
+        this.scaleMode = {
+            ft: new HUM.Param({
+                app:padSet,
+                idbKey:'padsetScaleModeFT',
+                uiElements:{
+                    'dppad_scale_mode_ft': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'selection',
+                    })
+                },
+                dataType:'string',
+                initValue: 'log',
+                allowedValues: ['log', 'linear'],
+                postSet: (value, thisParam, init) => {
+                    if (!init) {
+                        if (padSet.spectrogram && typeof padSet.spectrogram._clearCanvases === 'function') {
+                            padSet.spectrogram._clearCanvases();
+                        }
+                        padSet.ft.drawFreqUI();
+                    }
+                }
+            }),
+            ht: new HUM.Param({
+                app:padSet,
+                idbKey:'padsetScaleModeHT',
+                uiElements:{
+                    'dppad_scale_mode_ht': new HUM.Param.UIelem({
+                        role: 'in',
+                        opType:'set',
+                        eventType: 'change',
+                        htmlTargetProp:'value',
+                        widget:'selection',
+                    })
+                },
+                dataType:'string',
+                initValue: 'log',
+                allowedValues: ['log', 'linear'],
+                postSet: (value, thisParam, init) => {
+                    if (!init) {
+                        if (padSet.spectrogram && typeof padSet.spectrogram._clearCanvases === 'function') {
+                            padSet.spectrogram._clearCanvases();
+                        }
+                        padSet.ht.drawFreqUI();
+                    }
+                }
+            }),
         };
         this.scaleOrientation = {
             ft: new HUM.Param({

@@ -1004,15 +1004,57 @@ HUM.DpPad.PadSet.FrequencyPad = class {
     drawLinKey(pxPosition, type=false, xtNum=false, thickness=false, grdColors=false, zindex=false) {
         let ctx = this.ctx,
             scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
+            scaleMode = this.padSet.parameters.scaleMode[this.type].value,
             keyRatios = this.padSet.parameters.canvasObjectsRatios.ft.key;
         let keyWidth, keyHeight, middleOffset, xBegin, yBegin, xEnd, yEnd = 0;
 
+        // In linear scale mode the FT distribution along the pixel axis is no
+        // longer uniform, so derive per-key extents from the neighbouring FT
+        // frequencies (mirrors `drawFreqKeyHT`). Only applied when this is a
+        // real key (not a thin line) and we have a tone number to look up.
+        let linDims = null;
+        if (scaleMode === 'linear' && !thickness && xtNum !== false && type === 'ft') {
+            const arr = this.freqArrays.ft;
+            const arrIdx = arr.findIndex(e => e[0] === xtNum);
+            if (arrIdx > -1) {
+                const freqRange = this.padSet.parameters.freqRange[this.type];
+                const thisFreq = arr[arrIdx][1].hz;
+                let follFreq, prevFreq;
+                if (arr.length === 1) {
+                    follFreq = freqRange.max.value;
+                    prevFreq = freqRange.min.value;
+                } else if (arrIdx === 0) {
+                    follFreq = arr[arrIdx+1][1].hz;
+                    prevFreq = freqRange.min.value;
+                } else if (arrIdx === arr.length-1) {
+                    follFreq = freqRange.max.value;
+                    prevFreq = arr[arrIdx-1][1].hz;
+                } else {
+                    follFreq = arr[arrIdx+1][1].hz;
+                    prevFreq = arr[arrIdx-1][1].hz;
+                }
+                const follHalfFreq = (follFreq - thisFreq) / 3;
+                const prevHalfFreq = (thisFreq - prevFreq) / 3;
+                const beginFreq = thisFreq - prevHalfFreq;
+                const endFreq = thisFreq + follHalfFreq;
+                if (scaleOrientation === 'vertical') {
+                    const yA = this.freqToPadPix(endFreq);
+                    const yB = this.freqToPadPix(beginFreq);
+                    linDims = { begin: Math.min(yA, yB), size: Math.abs(yB - yA) };
+                } else if (scaleOrientation === 'horizontal') {
+                    const xA = this.freqToPadPix(beginFreq);
+                    const xB = this.freqToPadPix(endFreq);
+                    linDims = { begin: Math.min(xA, xB), size: Math.abs(xB - xA) };
+                }
+            }
+        }
+
         if (scaleOrientation === 'vertical') {
             keyWidth = thickness ? this.cssDimensions.width : this.cssDimensions.width * keyRatios.length;
-            keyHeight = thickness || this.cssDimensions.height / this.freqArrays.ft.length;
+            keyHeight = thickness || (linDims ? linDims.size : this.cssDimensions.height / this.freqArrays.ft.length);
             middleOffset = keyHeight / 2;
             xBegin = (this.cssDimensions.width - keyWidth) * keyRatios.position;
-            yBegin = pxPosition-middleOffset;
+            yBegin = linDims ? linDims.begin : pxPosition-middleOffset;
             xEnd = keyWidth+xBegin;
             yEnd = keyHeight+yBegin;
             if (grdColors) {
@@ -1032,10 +1074,10 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             ctx.strokeRect(xBegin, yBegin, keyWidth, keyHeight);
             ctx.fillRect(xBegin, yBegin, keyWidth, keyHeight);
         } else if (scaleOrientation === 'horizontal') {
-            keyWidth = thickness || this.cssDimensions.width / this.freqArrays.ft.length;
+            keyWidth = thickness || (linDims ? linDims.size : this.cssDimensions.width / this.freqArrays.ft.length);
             keyHeight = thickness ? this.cssDimensions.height : this.cssDimensions.height * keyRatios.length;
             middleOffset = keyWidth / 2;
-            xBegin = pxPosition-middleOffset;
+            xBegin = linDims ? linDims.begin : pxPosition-middleOffset;
             yBegin = (this.cssDimensions.height - keyHeight) * keyRatios.position;
             xEnd = keyWidth+xBegin;
             yEnd = keyHeight+yBegin;
@@ -2042,13 +2084,14 @@ HUM.DpPad.PadSet.FrequencyPad = class {
      */
     freqToPadPix(frequency) {
         let freqRange = this.padSet.parameters.freqRange[this.type],
-            scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value;
+            scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
+            scaleMode = this.padSet.parameters.scaleMode[this.type].value;
         if (scaleOrientation === 'vertical') {
             // Reverse the y coordinate (we need from bottom to top)
-            return (this.cssDimensions.height - this.padSet.dpPadComponent.freqToPix(frequency, freqRange, this.cssDimensions.height));
+            return (this.cssDimensions.height - this.padSet.dpPadComponent.freqToPix(frequency, freqRange, this.cssDimensions.height, scaleMode));
         } else if (scaleOrientation === 'horizontal') {
             // x coordinate is ok (from left to right)
-            return this.padSet.dpPadComponent.freqToPix(frequency, freqRange, this.cssDimensions.width);
+            return this.padSet.dpPadComponent.freqToPix(frequency, freqRange, this.cssDimensions.width, scaleMode);
         } else {
             alert('A "scaleOrientation" parameter is invalid: ' + scaleOrientation);
         }
@@ -2069,14 +2112,15 @@ HUM.DpPad.PadSet.FrequencyPad = class {
      */
     PadPixToFreq(pointer) {
         let freqRange = this.padSet.parameters.freqRange[this.type],
-            scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value;
+            scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value,
+            scaleMode = this.padSet.parameters.scaleMode[this.type].value;
         if (scaleOrientation === 'vertical') {
             // Reverse the y coordinate (we need from bottom to top)
             let pxPosition = this.cssDimensions.height - pointer.y;
-            return (this.padSet.dpPadComponent.pixToFreq(pxPosition, freqRange, this.cssDimensions.height));
+            return (this.padSet.dpPadComponent.pixToFreq(pxPosition, freqRange, this.cssDimensions.height, scaleMode));
         } else if (scaleOrientation === 'horizontal') {
             // x coordinate is ok (from left to right)
-            return this.padSet.dpPadComponent.pixToFreq(pointer.x, freqRange, this.cssDimensions.width);
+            return this.padSet.dpPadComponent.pixToFreq(pointer.x, freqRange, this.cssDimensions.width, scaleMode);
         } else {
             alert('A "scaleOrientation" parameter is invalid: ' + scaleOrientation);
         }

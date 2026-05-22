@@ -487,6 +487,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
 
         const ctx            = canvas.getContext('2d');
         const scaleOrient    = this.padSet.parameters.scaleOrientation[type].value;
+        const scaleMode      = this.padSet.parameters.scaleMode[type].value;
         const freqRange      = this.padSet.parameters.freqRange[type];
         const dpPad          = this.padSet.dpPadComponent;
         const sampleRate     = this.audioCtx.sampleRate;
@@ -527,7 +528,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
             const pixels  = imgData.data;
             for (let y = 0; y < h; y++) {
                 // Mirror freqToPadPix inverse: pxPosition = height - y
-                const freq     = dpPad.pixToFreq(h - y, freqRange, h);
+                const freq     = dpPad.pixToFreq(h - y, freqRange, h, scaleMode);
                 const binIndex = Math.round(freq / binWidth);
                 const amp      = (binIndex >= 0 && binIndex < dataLen) ? dataArray[binIndex] : 0;
                 const rgba     = this._amplitudeToRGBA(amp, type);
@@ -561,7 +562,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
             const pixels  = imgData.data;
             for (let x = 0; x < w; x++) {
                 // Mirror freqToPadPix: pxPosition = x
-                const freq     = dpPad.pixToFreq(x, freqRange, w);
+                const freq     = dpPad.pixToFreq(x, freqRange, w, scaleMode);
                 const binIndex = Math.round(freq / binWidth);
                 const amp      = (binIndex >= 0 && binIndex < dataLen) ? dataArray[binIndex] : 0;
                 const rgba     = this._amplitudeToRGBA(amp, type);
@@ -1196,6 +1197,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
         if (w <= 0 || h <= 0) return;
 
         const scaleOrient  = this.padSet.parameters.scaleOrientation[type].value;
+        const scaleMode    = this.padSet.parameters.scaleMode[type].value;
         const freqRange    = this.padSet.parameters.freqRange[type];
         const dpPad        = this.padSet.dpPadComponent;
         const sampleRate   = this.audioCtx.sampleRate;
@@ -1228,7 +1230,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
 
             let first = true;
             for (let y = 0; y < h; y += STEP) {
-                const freq     = dpPad.pixToFreq(h - y, freqRange, h);
+                const freq     = dpPad.pixToFreq(h - y, freqRange, h, scaleMode);
                 const binIndex = Math.round(freq / binWidth);
                 const amp      = (binIndex >= 0 && binIndex < dataLen) ? dataArray[binIndex] : 0;
                 const lineX    = baselineX + direction * (amp / 255) * freeWidth;
@@ -1246,7 +1248,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
 
             let first = true;
             for (let x = 0; x < w; x += STEP) {
-                const freq     = dpPad.pixToFreq(x, freqRange, w);
+                const freq     = dpPad.pixToFreq(x, freqRange, w, scaleMode);
                 const binIndex = Math.round(freq / binWidth);
                 const amp      = (binIndex >= 0 && binIndex < dataLen) ? dataArray[binIndex] : 0;
                 const lineY    = baselineY + direction * (amp / 255) * freeHeight;
@@ -1297,6 +1299,7 @@ HUM.DpPad.PadSet.Spectrogram = class {
         if (freqs.every(f => f === null || f === undefined)) return;
 
         const scaleOrient = this.padSet.parameters.scaleOrientation[type].value;
+        const scaleMode   = this.padSet.parameters.scaleMode[type].value;
         const freqRange   = this.padSet.parameters.freqRange[type];
         const dpPad       = this.padSet.dpPadComponent;
         const keyRatios   = this.padSet.parameters.canvasObjectsRatios[type].key;
@@ -1322,14 +1325,14 @@ HUM.DpPad.PadSet.Spectrogram = class {
             if (freq === null || freq === undefined) continue;
             if (scaleOrient === 'vertical') {
                 // Frequency axis = Y (bottom = low freq, top = high freq).
-                const rawPx = dpPad.freqToPix(freq, freqRange, h);
+                const rawPx = dpPad.freqToPix(freq, freqRange, h, scaleMode);
                 const px    = Math.round(h - rawPx);
                 if (px < 0 || px >= h) continue;   // outside pad range — skip silently
                 // Horizontal line spanning the key-free x-range, 4 pixels tall.
                 ctx.fillRect(freeStart, px - 1, freeEnd - freeStart, 4);
             } else {
                 // Frequency axis = X (left = low freq, right = high freq).
-                const px = Math.round(dpPad.freqToPix(freq, freqRange, w));
+                const px = Math.round(dpPad.freqToPix(freq, freqRange, w, scaleMode));
                 if (px < 0 || px >= w) continue;   // outside pad range — skip silently
                 // Vertical line spanning the key-free y-range, 4 pixels wide.
                 ctx.fillRect(px - 1, freeStart, 4, freeEnd - freeStart);

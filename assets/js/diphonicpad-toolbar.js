@@ -356,6 +356,11 @@ HUM.DpPad.PadSet.Toolbar = class {
                     this.padSet.ht.switchScaleOrientation();
                 }
                 break;
+            case 'scaleMode':
+                if (state === 0) {
+                    this.cycleScaleMode();
+                }
+                break;
             case 'invertPads':
                 if (state === 0) {
                     this.padSet.invertPads();
@@ -423,5 +428,32 @@ HUM.DpPad.PadSet.Toolbar = class {
         let dhc = this.padSet.dhc;
         dhc.settings.ht.transpose.h.value *= 0.5;
         dhc.settings.ht.transpose.s.value *= 0.5;
+    }
+    /**
+     * Cycles the FT/HT pad scale modes through the four log/linear combinations.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Order: (log, log) → (lin, lin) → (log, lin) → (lin, log) → back to (log, log).
+     * Each assignment fires the `scaleMode` param's `postSet`, which redraws the
+     * affected pad and clears the spectrogram waterfall.
+     */
+    cycleScaleMode() {
+        const params = this.padSet.parameters.scaleMode;
+        const ft = params.ft.value;
+        const ht = params.ht.value;
+        let nextFt, nextHt;
+        if (ft === 'log' && ht === 'log') {
+            nextFt = 'linear'; nextHt = 'linear';
+        } else if (ft === 'linear' && ht === 'linear') {
+            nextFt = 'log';    nextHt = 'linear';
+        } else if (ft === 'log' && ht === 'linear') {
+            nextFt = 'linear'; nextHt = 'log';
+        } else {
+            nextFt = 'log';    nextHt = 'log';
+        }
+        params.ft.value = nextFt;
+        params.ht.value = nextHt;
     }
 };

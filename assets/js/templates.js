@@ -107,6 +107,10 @@ HUM.tmpl = {
                 d: "M 11.797 14.423 L 10.883 14.423 L 10.883 12.363 L 8.963 12.363 L 8.963 14.423 L 8.039 14.423 L 8.039 9.603 L 8.963 9.603 L 8.963 11.523 L 10.883 11.523 L 10.883 9.603 L 11.797 9.603 L 11.797 14.423 Z M 16.071 10.383 L 14.645 10.383 L 14.645 14.423 L 13.722 14.423 L 13.722 10.383 L 12.304 10.383 L 12.304 9.603 L 16.071 9.603 L 16.071 10.383 Z M 16.48 2.52 C 19.75 4.07 22.09 7.24 22.45 11 L 23.95 11 C 23.44 4.84 18.29 0 12 0 L 11.34 0.03 L 15.15 3.84 L 16.48 2.52 Z M 10.23 1.75 C 9.647 1.16 8.693 1.16 8.11 1.75 L 1.75 8.11 C 1.16 8.693 1.16 9.647 1.75 10.23 L 13.77 22.25 C 14.36 22.84 15.31 22.84 15.89 22.25 L 22.25 15.89 C 22.84 15.3 22.84 14.35 22.25 13.77 L 10.23 1.75 Z M 14.83 21.19 L 2.81 9.17 L 9.17 2.81 L 21.19 14.83 L 14.83 21.19 Z M 7.52 21.48 C 4.174 19.904 1.905 16.682 1.55 13 L 0.05 13 C 0.56 19.16 5.71 24 12 24 L 12.66 23.97 L 8.85 20.16 L 7.52 21.48 Z",
                 viewBox: "0 0 24 24"
             },
+            scaleMode: {
+                d: "M3 3 L4.5 3 L4.5 19.5 L21 19.5 L21 21 L3 21 Z M3.4 19.4 L4.6 20.6 L20.6 4.6 L19.4 3.4 Z M3.5 20.5 C3.5 6.5 7.5 4.5 21 4.5 L21 6 C8 6 5 8 5 20.5 Z",
+                viewBox: "0 0 24 24"
+            },
             htOctaveUp: {
                 d: "M 7.797 14.423 L 6.883 14.423 L 6.883 12.363 L 4.963 12.363 L 4.963 14.423 L 4.039 14.423 L 4.039 9.603 L 4.963 9.603 L 4.963 11.523 L 6.883 11.523 L 6.883 9.603 L 7.797 9.603 L 7.797 14.423 Z M 12.071 10.383 L 10.645 10.383 L 10.645 14.423 L 9.722 14.423 L 9.722 10.383 L 8.304 10.383 L 8.304 9.603 L 12.071 9.603 L 12.071 10.383 Z M 14.5 11.5 L 21.5 11.5 L 21.5 12.5 L 14.5 12.5 Z M 17.5 8.5 L 18.5 8.5 L 18.5 15.5 L 17.5 15.5 Z",
                 viewBox: "0 0 24 24"
@@ -1736,6 +1740,42 @@ HUM.tmpl = {
                             <div class="list-group-item">
                                 <div class="row align-items-center">
                                     <div class="col col-12 col-md">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="currentColor" viewBox="0 0 24 24">
+                                            <use fill-rule="evenodd" href="#dpIcon-scaleMode${humID}"/>
+                                        </svg>
+                                        <strong class="mb-2">FT scale mode</strong>
+                                        <div><small class="text-muted">Logarithmic or linear frequency axis on the FT pad.</small></div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select id="HTMLi_dppad_scale_mode_ft${dhcID}" class="form-select">
+                                            <option value="log">Logarithmic</option>
+                                            <option value="linear">Linear</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="currentColor" viewBox="0 0 24 24">
+                                            <use fill-rule="evenodd" href="#dpIcon-scaleMode${humID}"/>
+                                        </svg>
+                                        <strong class="mb-2">HT scale mode</strong>
+                                        <div><small class="text-muted">Logarithmic or linear frequency axis on the HT pad.</small></div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select id="HTMLi_dppad_scale_mode_ht${dhcID}" class="form-select">
+                                            <option value="log">Logarithmic</option>
+                                            <option value="linear">Linear</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col col-12 col-md">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="1.3em" height="1.3em" fill="currentColor" viewBox="0 0 16 16">
                                             <use fill-rule="evenodd" href="#dpIcon-invertPads${humID}"/>
                                         </svg>
@@ -1865,6 +1905,15 @@ HUM.tmpl = {
                                                 <div class="ms-1 me-auto">Rotate HT pad</div>
                                                 <div class="form-check form-switch ms-3">
                                                     <input id="HTMLi_toolbar_icon_rotateHT_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
+                                                </div>
+                                            </li>
+                                            <li id="HTMLf_toolbar_icon_scaleMode${dhcID}" class="list-group-item d-flex justify-content-between">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" viewBox="0 0 24 24">
+                                                    <use fill-rule="evenodd" href="#dpIcon-scaleMode${humID}"/>
+                                                </svg>
+                                                <div class="ms-1 me-auto">Toggle log/linear scale</div>
+                                                <div class="form-check form-switch ms-3">
+                                                    <input id="HTMLi_toolbar_icon_scaleMode_switch${dhcID}" class="form-check-input" type="checkbox" role="switch"/>
                                                 </div>
                                             </li>
                                             <li id="HTMLf_toolbar_icon_htOctaveUp${dhcID}" class="list-group-item d-flex justify-content-between">

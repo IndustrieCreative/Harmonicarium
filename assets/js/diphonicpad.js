@@ -477,17 +477,24 @@ HUM.DpPad = function() {
             }
         }
         /**
-         * Converts a frequency value to a pixel position using a logarithmic scale.
+         * Converts a frequency value to a pixel position.
          *
          * @param {hertz}  frequency       - The frequency to be converted to a pixel length.
          * @param {Object} rangePreset     - The frequency range represented by the `pxMaxLength` parameter.
          * @param {hertz}  rangePreset.min - Minimum frequency of the range.
          * @param {hertz}  rangePreset.max - Maximum frequency of the range.
          * @param {number} pxMaxLength     - The length of the range in pixels.
+         * @param {('log'|'linear')} [scaleMode='log'] - Scale mapping to use.
          *
          * @returns {number} The pixel position within `[0, pxMaxLength]` for the given frequency.
          */
-        freqToPix(frequency, rangePreset, pxMaxLength) {
+        freqToPix(frequency, rangePreset, pxMaxLength, scaleMode='log') {
+            if (scaleMode === 'linear') {
+                let freqMin = rangePreset.min.value,
+                    freqMax = rangePreset.max.value,
+                    range = freqMax - freqMin;
+                return (frequency - freqMin) / range * pxMaxLength;
+            }
             let freqMin = Math.log(rangePreset.min.value) / Math.log(10),
                 freqMax = Math.log(rangePreset.max.value) / Math.log(10),
                 range = freqMax - freqMin,
@@ -495,17 +502,24 @@ HUM.DpPad = function() {
             return pxPosition;
         }
         /**
-         * Converts a pixel position back to a frequency value using a logarithmic scale.
+         * Converts a pixel position back to a frequency value.
          *
          * @param {number} pxPosition      - The pixel position within the range.
          * @param {Object} rangePreset     - The frequency range represented by the `pxMaxLength` parameter.
          * @param {hertz}  rangePreset.min - Minimum frequency of the range.
          * @param {hertz}  rangePreset.max - Maximum frequency of the range.
          * @param {number} pxMaxLength     - The length of the range in pixels.
+         * @param {('log'|'linear')} [scaleMode='log'] - Scale mapping to use.
          *
          * @returns {hertz} The frequency corresponding to the given pixel position.
          */
-        pixToFreq(pxPosition, rangePreset, pxMaxLength){
+        pixToFreq(pxPosition, rangePreset, pxMaxLength, scaleMode='log'){
+            if (scaleMode === 'linear') {
+                let freqMin = rangePreset.min.value,
+                    freqMax = rangePreset.max.value,
+                    range = freqMax - freqMin;
+                return pxPosition * (range / pxMaxLength) + freqMin;
+            }
             let freqMin = Math.log(rangePreset.min.value) / Math.log(10),
                 freqMax = Math.log(rangePreset.max.value) / Math.log(10),
                 range = freqMax - freqMin,
