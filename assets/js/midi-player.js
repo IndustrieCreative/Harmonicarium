@@ -312,12 +312,18 @@ HUM.midi.MidiPlayer = class {
         const chk = document.getElementById(`${this.virtualPortId}_${this.id}`);
         if (chk && !chk.checked) {
             chk.checked = true;
-            // Dispatch the same event MidiPorts listens for.
+            // Dispatch the click so MidiPorts.portSelect can update its
+            // atLeastOneMidi counter. However, portSelect guards the
+            // setVirtualInputEnabled() call behind `this.midi.player`, which
+            // is not yet assigned when this method is called from the
+            // constructor (the MidiHub assignment completes after `new`
+            // returns). We therefore set the flag directly here so the
+            // virtual port is active from the very first playback.
             chk.dispatchEvent(new Event('click', { bubbles: true }));
-            // dispatchEvent of a synthetic 'click' won't toggle the checkbox
-            // back, but MidiPorts.portSelect reads elem.checked which we set
-            // to true above, so the routing is properly engaged.
         }
+        // Set the routing flag directly — this is the authoritative write.
+        // It is a no-op if the checkbox was already checked (flag already true).
+        this.virtualInputEnabled = true;
     }
 
     /* ===================================================================
