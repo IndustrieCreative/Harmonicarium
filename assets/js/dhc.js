@@ -273,7 +273,9 @@ HUM.DHC = class {
      * Supports three tuning systems controlled by `settings.ft.selected.value`:
      * - `'nEDx'`: n-EDx equal temperament, computing each step via {@link HUM.DHC.compute_nEDx}.
      * - `'h_s'`: Harmonics/Subharmonics, in either `'natural'` or `'sameOctave'` sub-mode.
-     * - `'file'`: Tuning file import (not yet implemented).
+     * - `'file'`: Tuning file import. Currently supports Scala `.scl` files; each step is
+     *   computed via {@link HUM.DHC.compute_scl} using period-based octave extension.
+     *   If no file has been loaded yet, only FT0 = FM is populated.
      *
      * In each case the reverse table (midicent → FT number) is populated only for
      * tones that appear in the current controller keymap. After building both tables,
@@ -389,8 +391,36 @@ HUM.DHC = class {
                     fundamentalsReverseTable[Number(this.settings.fm.mc.value)] = 0;
                 }
                 break;
-            // @todo - TUNING FILES FT
+            // TUNING FILES FT (Scala .scl only, for now)
             case "file":
+                if (this.settings.ft.file.selected === "scl") {
+                    let sclData = this.settings.ft.file.scl.data.value;
+                    if (sclData && Array.isArray(sclData.cents) && sclData.cents.length > 0) {
+                        for (let i = -this.settings.ft.steps; i <= this.settings.ft.steps; i++) {
+                            let freq = this.constructor.compute_scl(i, sclData, this.settings.fm.hz.value);
+                            let midicents = this.constructor.freqToMc(freq);
+                            let ok_rev = false;
+                            fundamentalsTable[i] = new this.Xtone(freq, midicents);
+                            // Insert in the reverse table only if present on the keymap
+                            for (let key of Object.keys(this.tables.ctrl)) {
+                                if (this.tables.ctrl[key].ft === i) {
+                                    ok_rev = true;
+                                }
+                            }
+                            if (ok_rev === true) {
+                                fundamentalsReverseTable[midicents] = i;
+                            }
+                        }
+                    } else {
+                        // No file loaded yet: fill all FT slots with FM (unison)
+                        // so that the table is always complete and curr_ft lookups
+                        // never hit an undefined entry.
+                        for (let i = -this.settings.ft.steps; i <= this.settings.ft.steps; i++) {
+                            fundamentalsTable[i] = new this.Xtone(this.settings.fm.hz.value, this.settings.fm.mc.value);
+                        }
+                        fundamentalsReverseTable[Number(this.settings.fm.mc.value)] = 0;
+                    }
+                }
                 break;
         }
         this.tables.ft = fundamentalsTable;
@@ -618,6 +648,60 @@ HUM.DHC = class {
         this.updateKeymapPreset();
     }
 
+    /**
+     * Initialize the reading process of a Scala (.scl) tuning file for the FT scale.
+     *
+     * @param {File} file - The `File` object representing the `.scl` file to read.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Creates a `FileReader`, attaches an error handler from the backend utilities,
+     * and reads the file as UTF-8 text. Once the read completes, delegates to
+     * {@link HUM.DHC#processSclData} with the raw text content and filename.
+     */
+    readSclFile(file) {
+        let reader = new FileReader();
+        reader.onerror = this.backendUtils.fileErrorHandler;
+        if (file) {
+            reader.readAsText(file);
+            reader.onload = (function(e) {
+                this.processSclData(e.target.result, file.name);
+            }).bind(this);
+        }
+    }
+
+    /**
+     * Parses the raw text of a `.scl` file and applies it as the current FT scale.
+     *
+     * @param {string} text - The UTF-8 text content of the Scala file.
+     * @param {string} name - The filename, used as the display label in the info panel.
+     *
+     * @returns {void}
+     *
+     * @description
+     * Calls {@link HUM.DHC.parseScalaScl} on `text`. On parse failure, the error
+     * is surfaced via `alert` (consistent with the existing file-error handler)
+     * and the previously loaded scale is preserved. On success, the parsed
+     * object is augmented with `sourceName` and `sourceText` and stored in
+     * `parameters.ft.file.scl.data`, which triggers a full FT-table rebuild
+     * via {@link HUM.DHC#initTables} and a `'update/ft'` broadcast. The info
+     * panel in the FT accordion is refreshed with filename, description, note
+     * count, and period.
+     */
+    processSclData(text, name) {
+        let parsed;
+        try {
+            parsed = this.constructor.parseScalaScl(text);
+        } catch (err) {
+            alert('Could not load Scala file "' + name + '": ' + err.message);
+            return;
+        }
+        parsed.sourceName = name;
+        parsed.sourceText = text;
+        // Setting the value triggers postSet → initTables() → createFTtable() + broadcast.
+        this.settings.ft.file.scl.data.value = parsed;
+    }
     /**
      * Renders the current controller keymap as an HTML table and injects it into
      * the keymap modal dialog.
@@ -1611,6 +1695,158 @@ HUM.DHC = class {
         let frequency = Math.pow(unit, relativeTone / division) * masterTuning;
         // Return full accuracy frequency
         return frequency;
+    }
+
+    /**
+     * Computes the frequency of a relative tone step from a parsed Scala (.scl) scale,
+     * with period-based octave extension across the full FT range.
+     *
+     * @param  {number} relativeTone  - The step number relative to FT0 (any integer).
+     *                                  Step 0 returns `masterTuning` exactly.
+     * @param  {Object} sclData       - Parsed Scala scale, as returned by
+     *                                  {@link HUM.DHC.parseScalaScl}.
+     * @param  {Array<number>} sclData.cents - Ordered list of pitch values in cents,
+     *                                  where `cents[length - 1]` is the period (e.g. 1200
+     *                                  for an octave-repeating scale).
+     * @param  {hertz}  masterTuning  - Reference frequency in hertz (Hz) for step 0.
+     *
+     * @returns {hertz} The frequency of the requested step in hertz (Hz).
+     *
+     * @description
+     * Let `N = sclData.cents.length` and `period = sclData.cents[N - 1]`. For step `i`:
+     *  - `octave = floor(i / N)`,
+     *  - `degree = i − octave × N`  (`degree ∈ [0, N−1]`),
+     *  - `cents_i = (degree === 0 ? 0 : sclData.cents[degree − 1]) + octave × period`,
+     *  - `frequency = masterTuning × 2^(cents_i / 1200)`.
+     *
+     * This reproduces the canonical Scala behaviour of repeating the scale across
+     * "octaves" (the period) above and below the reference tone.
+     */
+    static compute_scl(relativeTone, sclData, masterTuning) {
+        const N = sclData.cents.length;
+        const period = sclData.cents[N - 1];
+        const octave = Math.floor(relativeTone / N);
+        const degree = relativeTone - octave * N; // 0..N-1
+        const cents = (degree === 0 ? 0 : sclData.cents[degree - 1]) + octave * period;
+        return masterTuning * Math.pow(2, cents / 1200);
+    }
+
+    /**
+     * Parses the text content of a Scala (.scl) scale file into a structured object.
+     *
+     * @param  {string} text - Raw UTF-8 text content of the .scl file.
+     *
+     * @returns {Object} The parsed scale.
+     * @returns {string}        return.description - First non-comment line (may be empty).
+     * @returns {number}        return.noteCount   - Declared number of pitch entries.
+     * @returns {Array<number>} return.cents       - Pitch values in cents, ordered as in
+     *                                               the file. The implicit `1/1` (0 ¢) is
+     *                                               NOT included; the last entry is the
+     *                                               scale period (octave equivalent).
+     * @returns {number}        return.period      - Convenience alias for the last entry
+     *                                               of `cents` (the period in cents).
+     *
+     * @throws {Error} When the file is malformed (missing count, non-integer count,
+     *                 fewer pitches than declared, invalid ratio/cents token, negative
+     *                 or zero ratio, non-positive period).
+     *
+     * @description
+     * Follows the format published by the Huygens-Fokker foundation
+     * (https://www.huygens-fokker.org/scala/scl_format.html):
+     *   - Lines beginning with `!` are comments and are skipped.
+     *   - The first non-comment line is the description (may be blank).
+     *   - The second non-comment line declares the note count.
+     *   - The following `noteCount` non-comment lines each declare one pitch:
+     *     - Tokens containing `.` are interpreted as **cents** (float).
+     *     - Tokens containing `/` are interpreted as **ratios** `numerator/denominator`
+     *       and converted via `1200 × log2(n / d)`.
+     *     - Bare integer tokens `k` are treated as `k/1`.
+     *     - Anything after the first whitespace following a valid pitch value is ignored.
+     *   - The implicit unison `1/1` is not stored in the file or in the returned `cents`.
+     */
+    static parseScalaScl(text) {
+        const rawLines = text.split(/\r\n|\r|\n/);
+        // Strip only comment lines; keep blank lines so an empty description
+        // line (per spec) is preserved at position 0.
+        const lines = rawLines.filter(ln => !ln.trimStart().startsWith('!'));
+        if (lines.length < 2) {
+            throw new Error('Scala file is too short: missing description or note count.');
+        }
+        const description = lines[0].trim();
+        // The note count is the next non-blank non-comment line after the
+        // description; tolerate stray blank lines between them.
+        let countIdx = 1;
+        while (countIdx < lines.length && lines[countIdx].trim() === '') {
+            countIdx++;
+        }
+        if (countIdx >= lines.length) {
+            throw new Error('Missing note count after the description line.');
+        }
+        const countToken = lines[countIdx].trim();
+        const noteCount = parseInt(countToken, 10);
+        if (!Number.isInteger(noteCount) || noteCount < 0 || String(noteCount) !== countToken.replace(/^\s+|\s+$/g, '')) {
+            throw new Error('Invalid note count "' + countToken + '" on the note-count line.');
+        }
+        // Collect pitch lines, skipping blank lines after the count.
+        const pitchLines = [];
+        for (let i = countIdx + 1; i < lines.length && pitchLines.length < noteCount; i++) {
+            if (lines[i].trim() === '') continue;
+            pitchLines.push(lines[i]);
+        }
+        if (pitchLines.length < noteCount) {
+            throw new Error('Scala file declares ' + noteCount + ' pitches but contains only ' + pitchLines.length + '.');
+        }
+        const cents = [];
+        for (let idx = 0; idx < noteCount; idx++) {
+            const raw = pitchLines[idx].trim();
+            // Take the first whitespace-separated token; anything after is free text.
+            const token = raw.split(/\s+/)[0];
+            if (!token) {
+                throw new Error('Empty pitch value on pitch line ' + (idx + 1) + '.');
+            }
+            let centsValue;
+            if (token.indexOf('.') !== -1) {
+                const c = parseFloat(token);
+                if (!Number.isFinite(c)) {
+                    throw new Error('Invalid cents value "' + token + '" on pitch line ' + (idx + 1) + '.');
+                }
+                centsValue = c;
+            } else if (token.indexOf('/') !== -1) {
+                const parts = token.split('/');
+                if (parts.length !== 2) {
+                    throw new Error('Invalid ratio "' + token + '" on pitch line ' + (idx + 1) + '.');
+                }
+                const num = parseInt(parts[0], 10);
+                const den = parseInt(parts[1], 10);
+                if (!Number.isInteger(num) || !Number.isInteger(den)) {
+                    throw new Error('Invalid ratio "' + token + '" on pitch line ' + (idx + 1) + '.');
+                }
+                if (num <= 0 || den <= 0) {
+                    throw new Error('Negative or zero ratio "' + token + '" on pitch line ' + (idx + 1) + '.');
+                }
+                centsValue = 1200 * Math.log2(num / den);
+            } else {
+                const k = parseInt(token, 10);
+                if (!Number.isInteger(k) || String(k) !== token) {
+                    throw new Error('Invalid pitch "' + token + '" on pitch line ' + (idx + 1) + '.');
+                }
+                if (k <= 0) {
+                    throw new Error('Negative or zero ratio "' + token + '" on pitch line ' + (idx + 1) + '.');
+                }
+                centsValue = 1200 * Math.log2(k);
+            }
+            cents.push(centsValue);
+        }
+        const period = noteCount > 0 ? cents[noteCount - 1] : 1200;
+        if (!(period > 0)) {
+            throw new Error('Scala scale period must be greater than zero.');
+        }
+        return {
+            description: description,
+            noteCount: noteCount,
+            cents: cents,
+            period: period
+        };
     }
 
     /**

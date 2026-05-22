@@ -923,5 +923,62 @@ HUM.CtrlKeymapPresets = class {
                 }
             }
         };
+
+        /**
+         * Controller keymap presets for the Tuning File FT Tuning System.
+         *
+         * @member {Object.<number, CtrlKeymapPreset>}
+         *
+         * @description
+         * For Scala (.scl) and other tuning-file scales, the FT range is mapped
+         * directly onto MIDI notes around middle C. Since the actual pitch
+         * content depends on the loaded file, this default keymap mirrors the
+         * structure of `nEDx[0]`: a one-octave-wide FT band centred on FT0
+         * (MIDI 48 → FT0, ±7 semitones for the FT region) and a 17-note HT band
+         * above. Users are expected to load custom `.hcmap` keymaps tailored to
+         * their scale.
+         */
+        this.file = {
+            0: {
+                name: "ctrl_file(7-7)_bonkaA(16h)_p",
+                notes: "FT: ±7 file steps / HT: 16 bonka A Harmonics / Piper",
+                map: {
+                    41: { ft: -7, ht: 129 },
+                    42: { ft: -6, ht: 129 },
+                    43: { ft: -5, ht: 129 },
+                    44: { ft: -4, ht: 129 },
+                    45: { ft: -3, ht: 129 },
+                    46: { ft: -2, ht: 129 },
+                    47: { ft: -1, ht: 129 },
+                    48: { ft: 0, ht: 129 },
+                    49: { ft: 1, ht: 129 },
+                    50: { ft: 2, ht: 129 },
+                    51: { ft: 3, ht: 129 },
+                    52: { ft: 4, ht: 129 },
+                    53: { ft: 5, ht: 129 },
+                    54: { ft: 6, ht: 129 },
+                    55: { ft: 7, ht: 129 },
+                    56: { ft: 129, ht: 0 },
+                    57: { ft: 129, ht: 1 },
+                    58: { ft: 129, ht: 2 },
+                    59: { ft: 129, ht: 3 },
+                    60: { ft: 129, ht: 4 },
+                    61: { ft: 129, ht: 5 },
+                    62: { ft: 129, ht: 6 },
+                    63: { ft: 129, ht: 7 },
+                    64: { ft: 129, ht: 8 },
+                    65: { ft: 129, ht: 8 },
+                    66: { ft: 129, ht: 9 },
+                    67: { ft: 129, ht: 10 },
+                    68: { ft: 129, ht: 11 },
+                    69: { ft: 129, ht: 12 },
+                    70: { ft: 129, ht: 13 },
+                    71: { ft: 129, ht: 14 },
+                    72: { ft: 129, ht: 16 },
+                    73: { ft: 129, ht: 15 },
+                    74: { ft: 129, ht: 16 }
+                }
+            }
+        };
     } // end class Constructor
 }; // end Class

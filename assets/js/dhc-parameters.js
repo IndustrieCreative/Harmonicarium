@@ -937,37 +937,128 @@ HUM.DHC.prototype.Parameters = class {
             },
  
             /**
-             * FT Tuning files method (currently not used).
-             * @todo Implement the loading of tuning file formats.
-             * 
+             * FT Tuning files method.
+             *
+             * Currently supports Scala `.scl` only; `.tun`, `.mtx`, `.lmso` are reserved
+             * placeholders for future file-format parsers.
+             *
              * @member {Object}
              * @namespace
+             *
+             * @property {string}   selected   - Sub-format identifier (`"scl"` for now).
+             * @property {Object}   scl        - Scala (.scl) sub-container.
+             * @property {HUM.Param} scl.data  - The parsed Scala scale object
+             *                                   (`{description, noteCount, cents,
+             *                                   period, sourceName, sourceText}`), or
+             *                                   `null` when no file has been loaded.
+             *                                   Stored in IndexedDB so the scale
+             *                                   survives a session reload.
+             * @property {HUM.Param} scl.file  - HTML proxy for the `<input type="file">`
+             *                                   widget. Not persisted.
+             * @property {Object}   tun        - Reserved for AnaMark `.tun` files.
+             * @property {Object}   mtx        - Reserved for `.mtx` files.
+             * @property {Object}   lmso       - Reserved for `.lmso` files.
              */
             file: {
-                scl: {},
+                selected: "scl",
+                scl: {
+                    /**
+                     * Parsed Scala scale object, or `null` when no file is loaded.
+                     * Setting this property triggers a full FT-table rebuild via
+                     * {@link HUM.DHC#initTables} and refreshes the info panel.
+                     *
+                     * @instance
+                     * @member {HUM.Param}
+                     */
+                    data: new HUM.Param({
+                        app: dhc,
+                        idbKey: 'dhcFTfileSclData',
+                        uiElements: {
+                            'ftFileSclInfo': new HUM.Param.UIelem({
+                                role: 'out',
+                            })
+                        },
+                        dataType: 'object',
+                        initValue: null,
+                        init: false,
+                        presetStore: true,
+                        presetRestore: true,
+                        postSet: (value, thisParam, init) => {
+                            // Refresh the info panel in the FT accordion.
+                            let infoElem = thisParam.uiElements.out.ftFileSclInfo;
+                            if (infoElem) {
+                                if (value && Array.isArray(value.cents) && value.cents.length > 0) {
+                                    let desc = value.description ? value.description : '(no description)';
+                                    infoElem.innerHTML =
+                                        '<div><strong>File:</strong> ' + (value.sourceName || '—') + '</div>' +
+                                        '<div><strong>Description:</strong> ' + desc + '</div>' +
+                                        '<div><strong>Notes:</strong> ' + value.noteCount +
+                                        ' &nbsp; <strong>Period:</strong> ' + value.period.toFixed(4) + ' ¢</div>';
+                                } else {
+                                    infoElem.innerText = 'No scale loaded.';
+                                }
+                            }
+                            if (!init) {
+                                dhc.initTables();
+                            }
+                        }
+                    }),
+                    /**
+                     * Proxy `HUM.Param` for the Scala-file `<input type="file">` widget.
+                     * Forwards the selected file to {@link HUM.DHC#readSclFile}.
+                     *
+                     * @instance
+                     * @member {HUM.Param}
+                     */
+                    file: new HUM.Param({
+                        app: dhc,
+                        idbKey: 'dhcFTfileSclFile',
+                        uiElements: {
+                            'ftFileSclFile': new HUM.Param.UIelem({
+                                role: 'in',
+                                opType: 'set',
+                                eventType: 'change',
+                                htmlTargetProp: 'files',
+                                widget: 'file',
+                                eventListener: evt => {
+                                    if (window.File && window.FileReader && window.FileList && window.Blob) {
+                                        if (evt.target.files && evt.target.files[0]) {
+                                            dhc.readSclFile(evt.target.files[0]);
+                                        }
+                                    } else {
+                                        alert('The File APIs are not fully supported in this browser.');
+                                    }
+                                }
+                            })
+                        },
+                        dataType: 'file',
+                        presetStore: false,
+                        presetRestore: false,
+                    })
+                },
                 tun: {},
                 mtx: {},
-                lmso: {},
-                selected: "scl"
+                lmso: {}
             },
 
             /**  
              * This property indicates what tuning method is selected for FT.
              * It's stored on the DB.
-             * @todo {('file')}
              * @instance
              * 
              * @member {HUM.Param}
              * 
-             * @property {('nEDx'|'h_s')} value                                - The selected tuning method.
+             * @property {('nEDx'|'h_s'|'file')} value                          - The selected tuning method.
              * @property {Object}         uiElements                           - Namespace for the "in", "out" and "fn" objects.
              * @property {Object}         uiElements.fn                        - Namespace for the "fn" HTML elements.
              * @property {Object}         uiElements.out                       - Namespace for the "out" HTML elements.
              * @property {HTMLElement}    uiElements.fn.ftSys_NEDX             - The HTML radio button for selecting the NEDX tuning method.
              * @property {HTMLElement}    uiElements.fn.ftSys_HSnat            - The HTML radio button for selecting the HSnat tuning method.
              * @property {HTMLElement}    uiElements.fn.ftSys_HStrans          - The HTML radio button for selecting the HStrans tuning method.
+             * @property {HTMLElement}    uiElements.fn.ftSys_File             - The HTML radio button for selecting the Tuning File method.
              * @property {HTMLElement}    uiElements.out.ftNEDX                - The HTML output that shows the controls for NEDX tuning method.
              * @property {HTMLElement}    uiElements.out.ftHS                  - The HTML output that shows the controls for Harmonics/Subharmonics tuning method.
+             * @property {HTMLElement}    uiElements.out.ftFile                - The HTML output that shows the controls for the Tuning File method.
              * @property {HTMLElement}    uiElements.out.ftHStranspose_h_ratio - The HTML output that shows the current transpose ratio for Harmonics.
              * @property {HTMLElement}    uiElements.out.ftHStranspose_s_ratio - The HTML output that shows the current transpose ratio for Subharmonics.
              */
@@ -1032,10 +1123,30 @@ HUM.DHC.prototype.Parameters = class {
                             }
                         }
                     }),
+                    'ftSys_File': new HUM.Param.UIelem({
+                        role: 'fn',
+                        opType: 'set',
+                        eventType: 'click',
+                        htmlTargetProp: 'checked',
+                        widget: 'number',
+                        uiSet: (value, thisParam, init) => {
+                            if (value === 'file') {
+                                thisParam.uiElements.fn.ftSys_File.checked = true;
+                            }
+                        },
+                        eventListener: (evt) => {
+                            if (event.target.checked) {
+                                dhc.settings.ft.selected.valueUI = 'file';
+                            }
+                        }
+                    }),
                     'ftNEDX': new HUM.Param.UIelem({
                         role: 'out',
                     }),
                     'ftHS': new HUM.Param.UIelem({
+                        role: 'out',
+                    }),
+                    'ftFile': new HUM.Param.UIelem({
                         role: 'out',
                     }),
                     'ftHStranspose_h_ratio': new HUM.Param.UIelem({
@@ -1048,16 +1159,18 @@ HUM.DHC.prototype.Parameters = class {
                 dataType: 'string',
                 initValue: 'nEDx',
                 init: false,
-                allowedValues: ['nEDx', 'h_s'],
+                allowedValues: ['nEDx', 'h_s', 'file'],
                 // restoreStage: 'pre',
                 // restoreSequence: 32,
                 postSet: (value, thisParam, init) => {
                     if (value === 'nEDx') {
                         thisParam.uiElements.out.ftNEDX.style.display = "initial";
                         thisParam.uiElements.out.ftHS.style.display = "none";
+                        thisParam.uiElements.out.ftFile.style.display = "none";
                     } else if (value === 'h_s') {
                         thisParam.uiElements.out.ftNEDX.style.display = "none";
                         thisParam.uiElements.out.ftHS.style.display = "initial";
+                        thisParam.uiElements.out.ftFile.style.display = "none";
                         if (dhc.settings.ft.h_s.selected.value === 'natural') {
                             thisParam.uiElements.out.ftHStranspose_h_ratio.innerText = this.ft.h_s.natural.h_tr.value;
                             thisParam.uiElements.out.ftHStranspose_s_ratio.innerText = this.ft.h_s.natural.s_tr.value;
@@ -1066,6 +1179,10 @@ HUM.DHC.prototype.Parameters = class {
                             thisParam.uiElements.out.ftHStranspose_h_ratio.innerText = this.ft.h_s.sameOctave.h_tr.value;
                             thisParam.uiElements.out.ftHStranspose_s_ratio.innerText = this.ft.h_s.sameOctave.s_tr.value;
                         }
+                    } else if (value === 'file') {
+                        thisParam.uiElements.out.ftNEDX.style.display = "none";
+                        thisParam.uiElements.out.ftHS.style.display = "none";
+                        thisParam.uiElements.out.ftFile.style.display = "initial";
                     }
                     // if (!init) {
                         dhc.updateKeymapPreset();
@@ -1382,6 +1499,7 @@ HUM.DHC.prototype.Parameters = class {
                 initValue: {
                     nEDx: 0,
                     h_s: 0,
+                    file: 0,
                     // tsnap: 0
                 },
                 // postSet: (value, param, init) => {
@@ -1526,6 +1644,7 @@ HUM.DHC.prototype.Parameters = class {
      * an Hz or midicent value and recompute all tables accordingly.
      */
     _init() {
+        this.ft.file.scl.data._init();
         this.ft.selected._init();
         this.fm.init._init();
         // this.ft.nEDx.unit._init();

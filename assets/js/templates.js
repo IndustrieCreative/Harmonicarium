@@ -3231,10 +3231,37 @@ HUM.tmpl = {
                   </div>
                 </div>
 
+                <div class="card">
+                  <label class="card-header" for="HTMLf_ftSys_File${dhcID}">
+                    <h6 class="d-flex">
+                        <input class="me-2" type="radio" name="ftTuningSystem" value="file" id="HTMLf_ftSys_File${dhcID}">
+                        <span class="fw-bold">Tuning File (Scala .scl)</span>
+                    </h6>
+                  </label>
+                  <div class="card-body" id="HTMLo_ftFile${dhcID}" style="display:none">
+
+                    <div class="mb-2">
+                        Load a <b>Scala scale file</b> (<code>.scl</code>) to use its pitch list as
+                        the FT tuning. The scale is period-extended above and below FT0 to fill
+                        the full FT range, with FT0 always equal to the Fundamental Mother (FM).
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <input type="file" accept=".scl"
+                               id="HTMLi_ftFileSclFile${dhcID}"
+                               class="form-control">
+                    </div>
+
+                    <div id="HTMLo_ftFileSclInfo${dhcID}" class="alert alert-secondary small mb-0">
+                        No scale loaded.
+                    </div>
+
+                  </div>
+                </div>
+
             </div>`;
         return template.firstElementChild;
     },
-
     /**
      * Creates the Harmonic Tones (HT) transposition settings box for a DHC instance.
      *
