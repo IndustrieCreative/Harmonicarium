@@ -854,6 +854,46 @@ HUM.DpPad.PadSet.FrequencyPad = class {
     }
 
     /**
+     * Returns the 3-element gradient color array for an HT key.
+     * Delegates to {@link #getHTcolor} — the sample registry does not affect
+     * the static key color; sample colours only appear during a beat pulse.
+     *
+     * @param {xtnum} htNumber - The HT tone number.
+     * @returns {string[]} `[lighter, base, darker]` CSS color strings.
+     */
+    _getHtDisplayColor(htNumber) {
+        return this.getHTcolor(htNumber);
+    }
+
+    /**
+     * Returns the 3-element gradient color array for an active FT key at rest.
+     * Sample colours do not affect the static key colour; they only appear
+     * during a beat pulse (see {@link #_getPulseColor}).
+     *
+     * @returns {string[]} `[lighter, base, darker]` CSS color strings.
+     */
+    _getFtActiveColor() {
+        return ['darksalmon', 'darksalmon', '#db9c57'];
+    }
+
+    /**
+     * Returns the 3-element gradient used for the brief beat-pulse flash on a key.
+     * In Polyrhythm Mode, uses the sample colour assigned to the active voice;
+     * otherwise falls back to the standard white flash.
+     *
+     * @param {tonetype} type  - `'ft'` or `'ht'`
+     * @param {xtnum}    xtNum - The tone number whose pulse is firing.
+     * @returns {string[]} `[lighter, base, darker]` CSS color strings.
+     */
+    _getPulseColor(type, xtNum) {
+        if (this.padSet.dhc.polyrhythmMode && this.padSet.dhc.synth) {
+            const hex = this.padSet.dhc.synth.getColorForTone(type, xtNum);
+            if (hex) { return HUM.Synth.hexToGradient(hex); }
+        }
+        return ['#ffffff', '#ffffff', '#ccf0ff'];
+    }
+
+    /**
      * Clears the entire canvas to a transparent state.
      *
      * @returns {void}
@@ -1576,7 +1616,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             if (this.holdKeys.ft !== false && this.holdKeys.ft.toneNumber === ft[0]) {
                 // Held key: draw with cyan glow; flash white on polyrhythm pulse.
                 const pulsing = this._pulseUntil[ft[0]] && this._pulseUntil[ft[0]] > Date.now();
-                const heldColor = pulsing ? ['#ffffff', '#ffffff', '#ccf0ff'] : ['#00e5ff', '#80f0ff', '#00e5ff'];
+                const heldColor = pulsing ? this._getPulseColor('ft', ft[0]) : ['#00e5ff', '#80f0ff', '#00e5ff'];
                 ctx.shadowColor = pulsing ? '#ffffff' : '#00e5ff';
                 if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
                     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
@@ -1587,7 +1627,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 this.drawLinKey(pxPosition, 'ft', ft[0], false, heldColor, zindex);
             } else if (this.padSet.dhc.playQueue.ft.findIndex(findIdxFn, ft[0]) > -1) {
                 // this.drawLinKey(pxPosition, 'ft', ft[0], false, ['#DarkSalmon', 'DarkSalmon', '#110e23']);
-                this.drawLinKey(pxPosition, 'ft', ft[0], false, ['darksalmon', 'darksalmon', '#db9c57'], zindex);
+                this.drawLinKey(pxPosition, 'ft', ft[0], false, this._getFtActiveColor(), zindex);
                 // this.drawLinKey(pxPosition, 'ft', ft[0]);
             } else if (spectroMatchFt !== false && spectroMatchFt === ft[0]) {
                 // Spectrogram pitch-tracking: highlight the nearest FT key in green.
@@ -1618,9 +1658,9 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         if (curr_ft) {
             ctx.save();
             if (this.holdKeys.ft !== false && this.holdKeys.ft.toneNumber === curr_ft[1]) {
-                // curr_ft is held: cyan, or white flash on pulse.
+                // curr_ft is held: cyan, or sample-colour flash on pulse.
                 const pulsing = this._pulseUntil[curr_ft[1]] && this._pulseUntil[curr_ft[1]] > Date.now();
-                const heldColor = pulsing ? ['#ffffff', '#ffffff', '#ccf0ff'] : ['#00e5ff', '#80f0ff', '#00e5ff'];
+                const heldColor = pulsing ? this._getPulseColor('ft', curr_ft[1]) : ['#00e5ff', '#80f0ff', '#00e5ff'];
                 ctx.shadowColor = pulsing ? '#ffffff' : '#00e5ff';
                 if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
                     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
@@ -1630,9 +1670,9 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 ctx.shadowBlur = pulsing ? 30 : 20;
                 this.drawLinKey(curr_ft[0], 'ft', curr_ft[1], false, heldColor, this.freqArrays.ft.length);
             } else {
-                // Active key (pressed but not yet held): flash white on polyrhythm pulse.
+                // Active key (pressed but not yet held): flash on polyrhythm pulse.
                 const pulsing = this._pulseUntil[curr_ft[1]] && this._pulseUntil[curr_ft[1]] > Date.now();
-                const activeColor = pulsing ? ['#ffffff', '#ffffff', '#ccf0ff'] : ['darksalmon', 'darksalmon', '#db9c57'];
+                const activeColor = pulsing ? this._getPulseColor('ft', curr_ft[1]) : this._getFtActiveColor();
                 ctx.shadowColor = pulsing ? '#ffffff' : 'red';
                 if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
                     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
@@ -1671,7 +1711,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         ctx.beginPath();
         for (let ht of this.freqArrays.ht) {
             let pxPosition = this.freqToPadPix(ht[1].hz);
-            let color = this.getHTcolor(ht[0]);
+            let color = this._getHtDisplayColor(ht[0]);
 
             if (this.padSet.dhc.settings.ht.curr_ht === ht[0]) {
                 ctx.save();
@@ -1726,7 +1766,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         zindex = 0;
         for (const [arrIdx, ht] of this.freqArrays.ht.entries()) {
             ctx.save();
-            let color = this.getHTcolor(ht[0]);
+            let color = this._getHtDisplayColor(ht[0]);
             // if (this.padSet.dhc.settings.ht.curr_ht === ht[0]) { // Only the last played HT
             //     ctx.shadowColor = color[2];
             //     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
@@ -1747,9 +1787,9 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 ctx.shadowBlur = 20;
             }
             if (this.holdKeys.ht.has(ht[0])) {
-                // Held key: cyan glow; flash white on polyrhythm pulse.
+                // Held key: cyan glow; flash sample colour on polyrhythm pulse.
                 const pulsing = this._pulseUntil[ht[0]] && this._pulseUntil[ht[0]] > Date.now();
-                const heldColor = pulsing ? ['#ffffff', '#ffffff', '#ccf0ff'] : ['#00e5ff', '#80f0ff', '#00e5ff'];
+                const heldColor = pulsing ? this._getPulseColor('ht', ht[0]) : ['#00e5ff', '#80f0ff', '#00e5ff'];
                 ctx.shadowColor = pulsing ? '#ffffff' : '#00e5ff';
                 if (this.padSet.parameters.scaleOrientation.ht.value === 'vertical') {
                     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
@@ -1759,7 +1799,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 ctx.shadowBlur = pulsing ? 30 : 20;
                 this.drawFreqKeyHT(ht[1].hz, ht[0], arrIdx, heldColor, zindex);
             } else if (this.padSet.dhc.playQueue.ht.findIndex(findIdxFn, ht[0]) > -1) {
-                // Active key (pressed but not yet held): flash white on polyrhythm pulse.
+                // Active key (pressed but not yet held): flash sample colour on polyrhythm pulse.
                 const pulsing = this._pulseUntil[ht[0]] && this._pulseUntil[ht[0]] > Date.now();
                 ctx.shadowColor = pulsing ? '#ffffff' : color[2];
                 if (this.padSet.parameters.scaleOrientation.ht.value === 'vertical') {
@@ -1770,7 +1810,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 ctx.shadowBlur = pulsing ? 30 : 20;
                 // The 2nd color of the passed array is supposed to be the best to contrast with the key label
                 this.drawFreqKeyHT(ht[1].hz, ht[0], arrIdx,
-                    pulsing ? ['#ffffff', '#ffffff', '#ccf0ff'] : [color[2], color[0], color[2]], zindex);
+                    pulsing ? this._getPulseColor('ht', ht[0]) : [color[2], color[0], color[2]], zindex);
             } else if (spectroMatchHt !== false && spectroMatchHt === ht[0]) {
                 // Spectrogram formant-tracking: green glow toward the spectrogram side.
                 ctx.shadowColor = '#4cff50';
@@ -1782,7 +1822,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                 ctx.shadowBlur = 20;
                 this.drawFreqKeyHT(ht[1].hz, ht[0], arrIdx, ['#4cff50', '#a8ffa9', '#2d9e30'], zindex);
             } else {
-                ctx.fillStyle = this.getHTcolor(ht[0]);
+                ctx.fillStyle = this._getHtDisplayColor(ht[0]);
                 this.drawFreqKeyHT(ht[1].hz, ht[0], arrIdx, [color[0], color[0], color[0]], zindex);
             }
             ctx.restore();

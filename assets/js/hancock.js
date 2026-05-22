@@ -488,8 +488,14 @@ HUM.Hancock = class {
             el.classList.remove('pulsedKey');
         }
         el.classList.add('pulsedKey');
+        // In Polyrhythm Mode, tint the key with the sample registry color.
+        if (this.dhc.polyrhythmMode && this.dhc.synth) {
+            const color = this.dhc.synth.getColorForTone(type, xtNum);
+            if (color) { el.style.backgroundColor = color; }
+        }
         this._pulseTimers[name] = setTimeout(() => {
             el.classList.remove('pulsedKey');
+            el.style.backgroundColor = '';
             delete this._pulseTimers[name];
         }, 80);
     }

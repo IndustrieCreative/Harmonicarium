@@ -447,6 +447,10 @@ HUM.DpPad.PadSet = class {
                 }
                 // Disable and hide/show spectrogram settings to match the new mode.
                 this._syncSpectrogramSectionVisibility();
+            } else if (msg.type === 'samples') {
+                // Sample registry changed: recolor keys on both pads.
+                this.ft.drawFreqUI();
+                this.ht.drawFreqUI();
             }
         
         } else if (msg.cmd === 'tone-on') {

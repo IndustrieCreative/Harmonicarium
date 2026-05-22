@@ -124,31 +124,54 @@ HUM.Synth = class {
         };
 
         /**
-         * Decoded `AudioBuffer`s for the FT and HT beat samples used by
-         * Polyrhythm Mode. The FT slot is `null` until the user uploads a
-         * sample. The HT slot is an array of up to 3 buffers (`null` when
-         * empty) that are cycled in round-robin order across successive HT
-         * key presses. Samples are session-only and are not persisted in
-         * IndexedDB.
+         * Unified sample registry for Polyrhythm Mode.
+         * Each entry: `{ id, name, color, buffer, isDefault }`.
+         * The 4 default entries (kick/snare/hat/tom) are pre-loaded from
+         * {@link HUM.Synth.defaultBeats}. User-uploaded samples are appended.
+         * Samples are session-only and are not persisted in IndexedDB.
          *
-         * @member {Object}
-         *
-         * @property {?AudioBuffer}    ft - FT beat sample.
-         * @property {Array<?AudioBuffer>} ht - Up to 3 HT beat samples (slots 0–2).
+         * @member {Array<{id:string, name:string, color:string, buffer:?AudioBuffer, isDefault:boolean}>}
          */
-        this.beatBuffer = {
-            ft: null,
-            ht: [null, null, null],
-        };
+        this.sampleRegistry = [];
 
         /**
-         * Monotonically-increasing counter of HT voices created in the current
-         * session. Used to assign each new HT key press a beat-sample slot in
-         * round-robin order. Resets to 0 on `allNotesOff()`.
+         * Color palette for auto-assigning colors to user-added samples.
+         *
+         * @member {string[]}
+         * @private
+         */
+        this._colorPalette = ['#9b59b6', '#e67e22', '#1abc9c', '#e91e63', '#ff5722', '#00bcd4', '#cddc39'];
+
+        /**
+         * Index into `_colorPalette` for the next user-uploaded sample.
          *
          * @member {number}
+         * @private
          */
-        this.htPressCount = 0;
+        this._nextPaletteIdx = 0;
+
+        /**
+         * Round-robin counter for assigning samples to successive HT key presses
+         * in Polyrhythm Mode. Each press increments this value; the sample index
+         * is `_htPressCount % registry.length`. Resets to 0 on `allNotesOff()`.
+         *
+         * @member {number}
+         * @private
+         */
+        this._htPressCount = 0;
+
+        /**
+         * Maps an active HT tone-ID to its `sampleRegistry` index so
+         * `getColorForTone()` can return the color assigned at press time.
+         * Entries are added in `voiceON` and deleted in `voiceOFF` / `allNotesOff`.
+         *
+         * @member {Object.<number, number>}
+         * @private
+         */
+        this._voiceSlotMap = {};
+
+        // Pre-load the 4 default beat samples from the bundled Base64 data.
+        this._loadDefaultSamples();
 
         /**
          * Namespace for Gain nodes.
@@ -361,16 +384,17 @@ HUM.Synth = class {
                 // If there isn't a voice turned on with the same toneID
                 // (prevent duplication in case of stuck note - not turned off)
                 if (!this.voices.ht[toneID]) {   // && Object.keys(this.voices.ht).length < 2
-                    // Assign a beat-sample slot in round-robin order (Polyrhythm Mode only).
-                    // In Overtones Mode slotIndex is ignored by SynthVoice.
+                    // Assign a sample slot round-robin so successive key presses cycle
+                    // through the registry. The slot is stored in _voiceSlotMap so
+                    // getColorForTone() can return the correct colour while the voice
+                    // is active. In Overtones Mode slotIndex is ignored by SynthVoice.
                     let slotIndex = 0;
-                    if (this.dhc.polyrhythmMode) {
-                        const loadedSlots = this.beatBuffer.ht.filter(b => b !== null).length;
-                        if (loadedSlots > 1) {
-                            slotIndex = this.htPressCount % loadedSlots;
-                        }
-                        this.htPressCount++;
+                    if (this.dhc.polyrhythmMode && this.sampleRegistry.length > 0) {
+                        slotIndex = this._htPressCount % this.sampleRegistry.length;
+                        this._htPressCount++;
                     }
+                    this._voiceSlotMap[toneID] = slotIndex;
+                    if (this.parameters) { this.parameters._renderSampleList(); }
                     // Create a new HT voice (POLYPHONIC)
                     const htVoice = new VoiceClass(this, freq, velocity, type, slotIndex);
                     // Wire pulse callback for visual sync (BeatVoice only; SynthVoice ignores it).
@@ -391,8 +415,16 @@ HUM.Synth = class {
                     // Shutdown the voice
                     this.voices.ft.voiceMute();
                 }
+                // Assign a sample slot round-robin (same logic as HT).
+                let ftSlotIndex = 0;
+                if (this.dhc.polyrhythmMode && this.sampleRegistry.length > 0) {
+                    ftSlotIndex = this._htPressCount % this.sampleRegistry.length;
+                    this._htPressCount++;
+                }
+                this._voiceSlotMap[toneID] = ftSlotIndex;
+                if (this.parameters) { this.parameters._renderSampleList(); }
                 // Create a new FT voice (MONOPHONIC)
-                const ftVoice = new VoiceClass(this, freq, velocity, type);
+                const ftVoice = new VoiceClass(this, freq, velocity, type, ftSlotIndex);
                 // Wire pulse callback for visual sync (BeatVoice only; SynthVoice ignores it).
                 if (this.dhc.polyrhythmMode) {
                     ftVoice.onPulse = () => this._dispatchPulse(type, toneID);
@@ -436,6 +468,7 @@ HUM.Synth = class {
                         this.voices.ht[toneID].voiceMute();
                         this.voices.ht[toneID] = null;
                         delete this.voices.ht[toneID];
+                        delete this._voiceSlotMap[toneID];
                     }
                     // else {
                     //     // if (panic === false) {
@@ -455,6 +488,7 @@ HUM.Synth = class {
                         if (this.dhc.settings.ht.curr_ft === toneID) {
                             this.voices.ft.voiceMute();
                             this.voices.ft = null;
+                            delete this._voiceSlotMap[toneID];
                         }
                     }
                 }
@@ -484,9 +518,9 @@ HUM.Synth = class {
         if (this.voices.ft) {
             this.voices.ft.voiceMute();
         }
-        // Reset the HT sample-slot round-robin counter so the next session
-        // starts from sample 1 again.
-        this.htPressCount = 0;
+        // Reset sample-slot state so the next session starts fresh.
+        this._htPressCount = 0;
+        this._voiceSlotMap = {};
     }
     /**
      * Retunes the currently playing FT oscillator to its updated frequency.
@@ -643,51 +677,169 @@ HUM.Synth = class {
             }
         }).bind(this));
     }
+    /*==============================================================================*
+     * SAMPLE REGISTRY (POLYRHYTHM MODE)
+     *==============================================================================*/
+
     /**
-     * Reads a beat-sample audio file (WAV or MP3) from disk and decodes it into
-     * the `beatBuffer` slot for the given tone type. Used by Polyrhythm Mode.
+     * Fixed default colors for the 4 built-in beat samples.
      *
-     * @param {tonetype} type - `"ft"` or `"ht"`: which beat slot to load into.
-     * @param {File}     file - The `File` object representing the audio file.
+     * @returns {{kick:string, snare:string, hat:string, tom:string}}
+     * @private
+     */
+    static get _DEFAULT_SAMPLE_COLORS() {
+        return { kick: '#e74c3c', snare: '#3498db', hat: '#f1c40f', tom: '#2ecc71' };
+    }
+
+    /**
+     * Returns the sample registry color for a given tone in Polyrhythm Mode,
+     * or `null` when outside Polyrhythm Mode or the registry is empty.
+     *
+     * In Polyrhythm Mode each HT tone number deterministically maps to a
+     * registry entry via `Math.abs(xtNum) % registry.length`, guaranteeing
+     * the DiphonicPad key color always matches the sample that will play.
+     * FT always uses the first sample (index 0).
+     *
+     * @param {tonetype} type  - `'ft'` or `'ht'`
+     * @param {xtnum}    xtNum - The FT or HT tone number.
+     * @returns {string|null} CSS color string, or `null`.
+     */
+    getColorForTone(type, xtNum) {
+        if (!this.dhc.polyrhythmMode || !this.sampleRegistry.length) { return null; }
+        // Both FT and HT: look up the slot assigned at press time.
+        // Returns null if the voice is not currently active.
+        const slotIndex = this._voiceSlotMap[xtNum];
+        if (slotIndex === undefined) { return null; }
+        return this.sampleRegistry[slotIndex] ? this.sampleRegistry[slotIndex].color : null;
+    }
+
+    /**
+     * Converts a CSS hex color (e.g. `'#e74c3c'`) to a 3-element HSL gradient
+     * array `[lighter, base, darker]` compatible with the canvas drawing methods.
+     *
+     * @param {string} hex - A 6-digit hex CSS color string (`#rrggbb`).
+     * @returns {string[]} Three HSL color strings.
+     */
+    static hexToGradient(hex) {
+        const r = parseInt(hex.slice(1, 3), 16) / 255;
+        const g = parseInt(hex.slice(3, 5), 16) / 255;
+        const b = parseInt(hex.slice(5, 7), 16) / 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h = 0, s = 0;
+        const l = (max + min) / 2;
+        if (max !== min) {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                case g: h = ((b - r) / d + 2) / 6; break;
+                case b: h = ((r - g) / d + 4) / 6; break;
+            }
+        }
+        const hD = Math.round(h * 360);
+        const sD = Math.round(s * 100);
+        const lD = Math.round(l * 100);
+        return [
+            `hsl(${hD}, ${sD}%, ${Math.min(95, Math.round(lD * 1.6))}%)`,
+            `hsl(${hD}, ${sD}%, ${lD}%)`,
+            `hsl(${hD}, ${Math.min(100, Math.round(sD * 1.5))}%, ${Math.max(5, Math.round(lD / 1.5))}%)`,
+        ];
+    }
+
+    /**
+     * Pre-loads the 4 default beat samples (kick/snare/hat/tom) from
+     * `HUM.Synth.defaultBeats` into the beginning of `sampleRegistry`.
      *
      * @returns {void}
-     *
-     * @description
-     * Reads the file as `ArrayBuffer`, decodes it with
-     * `AudioContext.decodeAudioData()`, and stores the resulting `AudioBuffer`
-     * in `this.beatBuffer[type]`. Buffers are session-only (not persisted in
-     * IndexedDB). Decode/read errors are logged via the backend event log.
+     * @private
      */
-    readBeatSampleFile(type, file, slot = 0) {
+    _loadDefaultSamples() {
+        if (!HUM.Synth.defaultBeats) { return; }
+        const colors = HUM.Synth._DEFAULT_SAMPLE_COLORS;
+        for (const [id, beat] of Object.entries(HUM.Synth.defaultBeats)) {
+            this.sampleRegistry.push({ id, name: beat.name, color: colors[id] || '#888888', buffer: null, isDefault: true });
+            this._decodeRegistrySample(beat.data, id);
+        }
+    }
+
+    /**
+     * Decodes a Base64 data-URI audio string and stores the resulting
+     * `AudioBuffer` in the matching `sampleRegistry` entry.
+     *
+     * @param {string} base64DataUri - The `data:audio/wav;base64,…` string.
+     * @param {string} id            - The `sampleRegistry` entry id to update.
+     * @returns {void}
+     * @private
+     */
+    _decodeRegistrySample(base64DataUri, id) {
+        const file = HUM.Synth.base64ToFile({ name: id + '.wav', data: base64DataUri });
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            this.audioContext.decodeAudioData(e.target.result, (buffer) => {
+                const entry = this.sampleRegistry.find(s => s.id === id);
+                if (entry) { entry.buffer = buffer; }
+            });
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    /**
+     * Decodes and appends a user-uploaded audio file to `sampleRegistry`,
+     * assigns it the next palette color, then fires `'update/samples'`.
+     *
+     * @param {File} file - The audio file to add.
+     * @returns {void}
+     */
+    addUserSample(file) {
         if (!file) { return; }
-        if (type !== 'ft' && type !== 'ht') { return; }
+        const color = this._colorPalette[this._nextPaletteIdx % this._colorPalette.length];
+        this._nextPaletteIdx++;
+        const id = 'user_' + Date.now();
+        const entry = { id, name: file.name, color, buffer: null, isDefault: false };
+        this.sampleRegistry.push(entry);
+        // Render immediately to show the loading placeholder.
+        if (this.parameters) { this.parameters._renderSampleList(); }
         const reader = new FileReader();
         reader.onerror = this.dhc.harmonicarium.components.backendUtils.fileErrorHandler;
         reader.onload = (e) => {
-            this.audioContext.decodeAudioData(e.target.result,
+            this.audioContext.decodeAudioData(
+                e.target.result,
                 (buffer) => {
-                    if (type === 'ht') {
-                        this.beatBuffer.ht[slot] = buffer;
-                    } else {
-                        this.beatBuffer.ft = buffer;
-                    }
-                    const slotLabel = type === 'ht' ? ' (slot ' + (slot + 1) + ')' : '';
+                    entry.buffer = buffer;
                     this.dhc.harmonicarium.components.backendUtils.eventLog(
-                        "Beat sample loaded (" + type.toUpperCase() + slotLabel + ").\n| filename: " + file.name +
-                        "\n| duration: " + Math.round(buffer.duration * 1000) / 1000 + " sec" +
-                        "\n| channels: " + buffer.numberOfChannels +
-                        "\n| sample rate: " + buffer.sampleRate + " Hz" +
-                        "\n| ---------------------");
+                        'Beat sample added: ' + file.name + '\n| ---------------------');
+                    if (this.parameters) { this.parameters._renderSampleList(); }
+                    this.dhc.sendMessageToApps(HUM.DHCmsg.samplesUpd('synth'));
                 },
-                (err) => {
+                () => {
+                    // Decode failed: remove the pending entry.
+                    const idx = this.sampleRegistry.indexOf(entry);
+                    if (idx !== -1) { this.sampleRegistry.splice(idx, 1); this._nextPaletteIdx--; }
+                    if (this.parameters) { this.parameters._renderSampleList(); }
                     this.dhc.harmonicarium.components.backendUtils.eventLog(
-                        "Beat sample decode failed (" + type.toUpperCase() + "): " + file.name);
-                    console.error("Beat sample decode failed:", err);
+                        'Beat sample decode failed: ' + file.name);
                 }
             );
         };
         reader.readAsArrayBuffer(file);
     }
+
+    /**
+     * Removes a user-added sample from the registry by its `id`.
+     * Built-in default samples cannot be removed.
+     * Fires `'update/samples'` after removal.
+     *
+     * @param {string} id - The sample id to remove.
+     * @returns {void}
+     */
+    removeSample(id) {
+        const idx = this.sampleRegistry.findIndex(s => s.id === id && !s.isDefault);
+        if (idx === -1) { return; }
+        this.sampleRegistry.splice(idx, 1);
+        if (this.parameters) { this.parameters._renderSampleList(); }
+        this.dhc.sendMessageToApps(HUM.DHCmsg.samplesUpd('synth'));
+    }
+
     /**
      * Converts a Base64-encoded data URI into a `File` object.
      *

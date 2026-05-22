@@ -746,31 +746,87 @@ HUM.Synth.prototype.Parameters = class {
         };
         // =======================
 
-        /**
-         * Beat-sample selectors used in Polyrhythm Mode. The chosen audio files
-         * are decoded into `synth.beatBuffer.ft` / `synth.beatBuffer.ht[slot]`
-         * and played by {@link HUM.Synth#BeatVoice}. These Params are
-         * intentionally session-only (`_presetRestore: false`) and not persisted
-         * in IndexedDB.
-         *
-         * `ht`, `ht1`, and `ht2` correspond to HT sample slots 1–3 respectively.
-         * Each new HT key press cycles through the loaded slots in round-robin
-         * order (slot 0 → 1 → 2 → 0 → …).
-         *
-         * @member {{ft:HUM.Param, ht:HUM.Param, ht1:HUM.Param, ht2:HUM.Param}}
-         */
-        this.beatSample = {
-            ft:  HUM.Synth.prototype.Parameters._makeBeatSampleParam(synth, 'ft'),
-            ht:  HUM.Synth.prototype.Parameters._makeBeatSampleParam(synth, 'ht', 0),
-            ht1: HUM.Synth.prototype.Parameters._makeBeatSampleParam(synth, 'ht', 1),
-            ht2: HUM.Synth.prototype.Parameters._makeBeatSampleParam(synth, 'ht', 2),
-        };
-        // =======================
     } // end class Constructor
     // ===========================
     /**
+     * Re-renders the beat-sample list inside the polyrhythm panel.
+     * Reads `synth.sampleRegistry` and builds a `<ul>` of colour swatches,
+     * names, and remove buttons. A hidden `<input type="file">` is wired to
+     * an “+ Add sample” button so the user can append new samples at any time.
+     *
+     * Called when entering Polyrhythm Mode and after every registry mutation.
+     *
+     * @returns {void}
+     */
+    _renderSampleList() {
+        const synth  = this.synthMeter.app;
+        const dhcId  = synth.dhc.id;
+        const listEl = document.getElementById('HTMLf_synth_sampleList' + dhcId);
+        if (!listEl) { return; }
+        // Rebuild list items.
+        listEl.innerHTML = '';
+        const regLen  = synth.sampleRegistry.length;
+        const nextIdx = regLen > 0 ? synth._htPressCount % regLen : -1;
+        const lastIdx = synth._htPressCount > 0 && regLen > 0
+            ? (synth._htPressCount - 1) % regLen : -1;
+        for (const [idx, entry] of synth.sampleRegistry.entries()) {
+            const li = document.createElement('li');
+            li.className = 'd-flex align-items-center gap-2 mb-1';
+
+            const swatch = document.createElement('span');
+            swatch.style.cssText =
+                `width:14px;height:14px;background:${entry.color};` +
+                'border-radius:3px;display:inline-block;flex-shrink:0';
+
+            const nameEl = document.createElement('span');
+            nameEl.className = 'text-truncate flex-grow-1';
+            nameEl.style.fontSize = '0.85em';
+            if (idx === lastIdx) { nameEl.style.fontStyle  = 'italic'; }
+            if (idx === nextIdx) { nameEl.style.fontWeight = 'bold';   }
+            nameEl.textContent = entry.name + (entry.buffer ? '' : ' (loading…)');
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn-close';
+            removeBtn.style.cssText = 'font-size:0.6em;flex-shrink:0';
+            removeBtn.setAttribute('aria-label', 'Remove');
+            if (entry.isDefault) {
+                removeBtn.disabled = true;
+                removeBtn.style.opacity = '0.2';
+            } else {
+                removeBtn.addEventListener('click', () => synth.removeSample(entry.id));
+            }
+
+            li.appendChild(swatch);
+            li.appendChild(nameEl);
+            li.appendChild(removeBtn);
+            listEl.appendChild(li);
+        }
+
+        // Wire the “+ Add sample” button → hidden file input.
+        // Clone nodes to reset any previously attached listeners.
+        const addBtn   = document.getElementById('HTMLi_synth_addSampleBtn'  + dhcId);
+        const fileInput = document.getElementById('HTMLi_synth_addSampleFile' + dhcId);
+        if (addBtn && fileInput) {
+            const newBtn   = addBtn.cloneNode(true);
+            const newInput = fileInput.cloneNode(true);
+            addBtn.replaceWith(newBtn);
+            fileInput.replaceWith(newInput);
+            newBtn.addEventListener('click', () => newInput.click());
+            newInput.addEventListener('change', evt => {
+                if (window.File && window.FileReader && window.FileList && window.Blob) {
+                    if (evt.target.files[0]) { synth.addUserSample(evt.target.files[0]); }
+                    evt.target.value = ''; // reset so the same file can be re-selected
+                } else {
+                    alert('The File APIs are not fully supported in this browser.');
+                }
+            });
+        }
+    }
+    /**
      * Builds a `HUM.Param` for a beat-sample file input (Polyrhythm Mode).
      *
+     * @deprecated Use {@link HUM.Synth#addUserSample} and `_renderSampleList` instead.
      * @param {HUM.Synth}    synth - Owning Synth instance.
      * @param {('ft'|'ht')}  type  - Tone type the sample belongs to.
      * @param {number}       [slot=0] - For HT: which of the 3 sample slots (0–2)
@@ -831,16 +887,15 @@ HUM.Synth.prototype.Parameters = class {
      * @returns {void}
      */
     _applyPolyrhythmMode(active) {
-        const id = this.synthMeter && this.synthMeter.uiElements && this.synthMeter.uiElements.out
-            ? Object.keys(this.synthMeter.uiElements.out)[0] : null;
-        // Resolve DHC id from any known element (fallback to scanning all roots).
-        const dhcId = this.beatSample.ft && this.beatSample.ft.app && this.beatSample.ft.app.dhc
-            ? this.beatSample.ft.app.dhc.id : null;
+        const synth  = this.synthMeter.app;
+        const dhcId  = synth ? synth.dhc.id : null;
         if (!dhcId) { return; }
         const shaping = document.getElementById('HTMLf_synth_toneShaping' + dhcId);
         const beat    = document.getElementById('HTMLf_synth_beatSamples' + dhcId);
         if (shaping) { shaping.style.display = active ? 'none' : ''; }
         if (beat)    { beat.style.display    = active ? '' : 'none'; }
+        // Re-render the sample list whenever the panel becomes visible.
+        if (active) { this._renderSampleList(); }
     }
     /**
      * Initializes the `synthTab` parameter.

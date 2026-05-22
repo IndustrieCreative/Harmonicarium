@@ -151,6 +151,17 @@ HUM.DHCmsg = class {
         return new HUM.DHCmsg(source, 'update', 'mode');
     }
     /**
+     * Creates an `'update/samples'` DHCmsg signalling that the beat sample
+     * registry has changed (entry added or removed).
+     *
+     * @param {string} source - Identifier of the component generating the message.
+     *
+     * @returns {HUM.DHCmsg} A new `'update'` DHCmsg with type `'samples'`.
+     */
+    static samplesUpd(source) {
+        return new HUM.DHCmsg(source, 'update', 'samples');
+    }
+    /**
      * Creates a `'tone-on'` DHCmsg for a Fundamental Tone.
      *
      * @param {string}   source   - Identifier of the component generating the message.

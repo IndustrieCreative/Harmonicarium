@@ -349,9 +349,8 @@ HUM.Synth.prototype.BeatVoice = class {
             const t = setTimeout(() => { if (!this._stopped) this.onPulse(); }, delayMs);
             this._pulseTimers.push(t);
         }
-        const buffer = this.type === 'ht'
-            ? (this.synth.beatBuffer.ht && this.synth.beatBuffer.ht[this.slotIndex])
-            : (this.synth.beatBuffer && this.synth.beatBuffer.ft);
+        const reg = this.synth.sampleRegistry;
+        const buffer = reg[this.slotIndex] && reg[this.slotIndex].buffer;
         if (!buffer) { return; }
         const src = this.synth.audioContext.createBufferSource();
         src.buffer = buffer;
