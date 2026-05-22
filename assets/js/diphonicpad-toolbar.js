@@ -435,25 +435,13 @@ HUM.DpPad.PadSet.Toolbar = class {
      * @returns {void}
      *
      * @description
-     * Order: (log, log) → (lin, lin) → (log, lin) → (lin, log) → back to (log, log).
+     * Toggles the HT pad between logarithmic and linear scale. The FT pad
+     * scale is never changed by this action.
      * Each assignment fires the `scaleMode` param's `postSet`, which redraws the
-     * affected pad and clears the spectrogram waterfall.
+     * HT pad and clears the spectrogram waterfall.
      */
     cycleScaleMode() {
         const params = this.padSet.parameters.scaleMode;
-        const ft = params.ft.value;
-        const ht = params.ht.value;
-        let nextFt, nextHt;
-        if (ft === 'log' && ht === 'log') {
-            nextFt = 'linear'; nextHt = 'linear';
-        } else if (ft === 'linear' && ht === 'linear') {
-            nextFt = 'log';    nextHt = 'linear';
-        } else if (ft === 'log' && ht === 'linear') {
-            nextFt = 'linear'; nextHt = 'log';
-        } else {
-            nextFt = 'log';    nextHt = 'log';
-        }
-        params.ft.value = nextFt;
-        params.ht.value = nextHt;
+        params.ht.value = params.ht.value === 'log' ? 'linear' : 'log';
     }
 };
