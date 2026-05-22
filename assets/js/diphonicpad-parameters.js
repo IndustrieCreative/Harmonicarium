@@ -361,7 +361,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                         })
                     },
                     dataType:'object',
-                    initValue: new HUM.DpPad.CssFont('italic', 'bold', 20, 'px', false, false),
+                    initValue: new HUM.DpPad.CssFont('italic', 'bold', 14, 'px', false, false),
                     init:false,
                     postInit: (thisParam) => {
                         thisParam.size = thisParam.value.size;
@@ -455,7 +455,7 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                         })
                     },
                     dataType:'object',
-                    initValue: new HUM.DpPad.CssFont('italic', 'bold', 20, 'px', false, false),
+                    initValue: new HUM.DpPad.CssFont('italic', 'bold', 14, 'px', false, false),
                     init:false,
                     postInit: (thisParam) => {
                         thisParam.size = thisParam.value.size;
@@ -1096,9 +1096,9 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
      */
     _init() {
         if (window.matchMedia('(max-width: 767px)').matches) {
-            this.fonts.ft.hzMonitor.initValue.size = 13;
+            this.fonts.ft.hzMonitor.initValue.size = 9;
             this.fonts.ft.keyLabel.initValue.size   = 66;
-            this.fonts.ht.hzMonitor.initValue.size  = 13;
+            this.fonts.ht.hzMonitor.initValue.size  = 9;
             this.fonts.ht.keyLabel.initValue.size   = 66;
             this.fonts.ht.lineLabel.initValue.size  = 59;
         }
