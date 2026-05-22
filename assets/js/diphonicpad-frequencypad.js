@@ -1182,7 +1182,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             middleOffsetFreq = 0;
 
             if (arrIdx === 0) {
-                follFreq = this.freqArrays.ht[arrIdx+1][1].hz;
+                follFreq = this.freqArrays.ht.length > 1 ? this.freqArrays.ht[arrIdx+1][1].hz : freqRange.max.value;
                 prevFreq = freqRange.min.value;
             } else if (arrIdx === this.freqArrays.ht.length-1){
                 follFreq = freqRange.max.value;
