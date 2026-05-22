@@ -1885,6 +1885,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         ctx.restore();
 
         this.drawFreqMonitor();
+        this.drawHTTransposeIndicator();
 
     }
     // drawVolumeLines: function(dist, width) {
@@ -2016,6 +2017,84 @@ HUM.DpPad.PadSet.FrequencyPad = class {
 
         for (let i = 0; i < lines.length; i++) {
             const lineMidY = boxY + pad + i * lineH + lineH / 2;
+            ctx.strokeText(lines[i], xText, lineMidY);
+            ctx.fillText(lines[i], xText, lineMidY);
+        }
+
+        ctx.restore();
+    }
+
+    /**
+     * Draws a small OSD box on the HT pad showing the current harmonic and
+     * subharmonic octave transposition state.
+     *
+     * Only renders when `this.type === 'ht'` and at least one transposition
+     * ratio differs from 1. Lines follow the format "H+2" / "S-1"; only the
+     * transposed voice(s) are shown.
+     *
+     * @returns {void}
+     */
+    drawHTTransposeIndicator() {
+        if (this.type !== 'ht') return;
+
+        const dhc  = this.padSet.dhc;
+        const hOct = Math.round(Math.log2(dhc.settings.ht.transpose.h.value));
+        const sOct = Math.round(Math.log2(dhc.settings.ht.transpose.s.value));
+
+        const lines = [];
+        if (hOct !== 0) lines.push('H' + (hOct > 0 ? '+' : '') + hOct);
+        if (sOct !== 0) lines.push('S' + (sOct > 0 ? '+' : '') + sOct);
+        if (lines.length === 0) return;
+
+        const ctx              = this.ctx;
+        const fontSize         = this.padSet.parameters.fonts[this.type].hzMonitor.value.size;
+        const ratios           = this.padSet.parameters.canvasObjectsRatios[this.type];
+        const scaleOrientation = this.padSet.parameters.scaleOrientation[this.type].value;
+
+        ctx.save();
+        ctx.font = fontSize + 'px monospace';
+
+        const lineH    = Math.ceil(fontSize);
+        const innerPad = 4;
+        const outerPad = 4;
+        const maxW     = Math.max(...lines.map(l => ctx.measureText(l).width));
+        const boxW     = maxW + 2 * innerPad;
+        const boxH     = lines.length * lineH + 2 * innerPad;
+
+        // Horizontal anchor: same side as the Hz monitor
+        let x, textAlign;
+        if (scaleOrientation === 'vertical') {
+            if (ratios.key.position > 0.5) {
+                x         = this.cssDimensions.width * (1 - ratios.hzMonitor.width);
+                textAlign = 'left';
+            } else {
+                x         = this.cssDimensions.width * ratios.hzMonitor.width;
+                textAlign = 'right';
+            }
+        } else {
+            x         = this.cssDimensions.width * ratios.hzMonitor.height;
+            textAlign = 'right';
+        }
+
+        const boxX = textAlign === 'right' ? x - boxW : x;
+        const boxY = outerPad;
+
+        // Background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.beginPath();
+        ctx.roundRect(boxX, boxY, boxW, boxH, 3);
+        ctx.fill();
+
+        // Text
+        const xText = textAlign === 'right' ? x - innerPad : x + innerPad;
+        ctx.textBaseline = 'middle';
+        ctx.textAlign    = textAlign;
+        ctx.strokeStyle  = 'rgba(0, 0, 0, 0.8)';
+        ctx.lineWidth    = 2;
+        ctx.fillStyle    = 'rgba(255, 255, 255, 0.95)';
+
+        for (let i = 0; i < lines.length; i++) {
+            const lineMidY = boxY + innerPad + i * lineH + lineH / 2;
             ctx.strokeText(lines[i], xText, lineMidY);
             ctx.fillText(lines[i], xText, lineMidY);
         }
