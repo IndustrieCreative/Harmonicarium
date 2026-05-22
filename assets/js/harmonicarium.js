@@ -289,6 +289,7 @@ class HUM {
             dhcTabs: {},
             synthTabs: {},
             midiTabs: {},
+            midiPlayerTabs: {},
             fmTabs: {},
             ftTabs: {},
             htTabs: {},
@@ -512,6 +513,7 @@ class HUM {
 
             this.html.synthTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'synth', 'Built-in Synth', 'audio', hrmID);
             this.html.midiTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'midi', 'MIDI I/O', 'midi', hrmID);
+            this.html.midiPlayerTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'midiPlayer', 'MIDI Player', 'midi', hrmID);
             this.html.pianoTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'piano', 'Piano Keymap', 'piano', hrmID);
             this.html.dhcTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'dhcSettings', 'DHC Settings', 'dhcSettings', hrmID);
             this.html.fmTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'fm', 'Fundamental Mother', 'fm', hrmID);
@@ -524,6 +526,7 @@ class HUM {
             this.html.dhcTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.dhcBox(dhcID, hrmID));
             this.html.synthTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.synthBox(dhcID, hrmID));
             this.html.midiTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.midiBox(dhcID, hrmID));
+            this.html.midiPlayerTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.midiPlayerBox(dhcID, hrmID));
 
             this.html.appContainer.appendChild(HUM.tmpl.midiModal(dhcID));
             this.html.appContainer.appendChild(HUM.tmpl.keymapModal(dhcID));
@@ -535,6 +538,7 @@ class HUM {
 
             dhcAccordions.children[0].appendChild(this.html.synthTabs[dhcID]);
             dhcAccordions.children[0].appendChild(this.html.midiTabs[dhcID]);
+            dhcAccordions.children[0].appendChild(this.html.midiPlayerTabs[dhcID]);
             dhcAccordions.children[0].appendChild(this.html.pianoTabs[dhcID]);
             dhcAccordions.children[0].appendChild(this.html.dhcTabs[dhcID]);
             dhcAccordions.children[0].appendChild(this.html.fmTabs[dhcID]);

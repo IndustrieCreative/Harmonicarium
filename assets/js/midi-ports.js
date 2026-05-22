@@ -235,10 +235,13 @@ HUM.midi.MidiPorts = class {
         });
 
         // Remove hardware port checkboxes from the input ports container
+        // (WebMidiLink and the MIDI Player virtual input port are preserved).
         let inputContainer = this.parameters.inputPorts.uiElements.out.inputPorts;
         Array.from(inputContainer.children).forEach((div) => {
             let checkbox = div.querySelector('input');
-            if (checkbox && checkbox.value.indexOf('webmidilink') === -1) {
+            if (checkbox
+                && checkbox.value.indexOf('webmidilink') === -1
+                && checkbox.value !== 'midiplayer_in_virtual') {
                 inputContainer.removeChild(div);
             }
         });
@@ -275,8 +278,38 @@ HUM.midi.MidiPorts = class {
      */
     _postRequestMIDI() {
         this._initWebMidiLinkOut();
+        this._initMidiPlayerVirtualInput();
         // Button to open the MIDI settings (deplrecated since using Bootstrap)
         // this.uiElements.fn.motPanelModalShow.addEventListener("click", () => this.openMidiPanel() );
+    }
+
+    /**
+     * Creates the synthetic MIDI-In checkbox for the internal MIDI Player port.
+     *
+     * @private
+     *
+     * @returns {void}
+     *
+     * @description
+     * The MIDI Player streams its SMF events into the regular MIDI-In
+     * pipeline through this virtual port. The checkbox is rendered in the
+     * MIDI-IN port list so the user can enable/disable that routing the
+     * same way they do for hardware ports. The id `midiplayer_in_virtual`
+     * is used as the stable identifier (and recognised by `portSelect()`
+     * and `disableMidi()` as a non-hardware port).
+     */
+    _initMidiPlayerVirtualInput() {
+        const virtualPort = {
+            id:           'midiplayer_in_virtual',
+            name:         'MIDI Player (internal)',
+            manufacturer: 'Industrie Creative',
+            type:         'input',
+            state:        'connected',
+            connection:   'open',
+            version:      '1.0'
+        };
+        this.createPortCheckbox(virtualPort, this.parameters.inputPorts.uiElements.out.inputPorts);
+        this.portLogger(virtualPort);
     }
 
     /**
@@ -361,6 +394,9 @@ HUM.midi.MidiPorts = class {
         this.midiAccess.onstatechange = (e) => this.midiStateRefresh(e);
         // Check the MIDI-IN ports available
         this.checkAtLeastOneMidi("io", false);
+        // Update the MIDI Player destination dropdown with the now-available
+        // hardware output ports.
+        if (this.midi.player) { this.midi.player.refreshDestinations(); }
     }
 
     /**
@@ -467,6 +503,18 @@ HUM.midi.MidiPorts = class {
     portSelect(event) {
         let elem = event.target;
         let portID = elem.value;
+        // Synthetic MIDI Player virtual input port: short-circuit the normal
+        // hardware path and just flip the player's routing flag.
+        if (portID === 'midiplayer_in_virtual') {
+            if (elem.checked) {
+                if (this.midi.player) { this.midi.player.setVirtualInputEnabled(true); }
+                this.atLeastOneMidi.openPort.input++;
+            } else {
+                if (this.midi.player) { this.midi.player.setVirtualInputEnabled(false); }
+                this.atLeastOneMidi.openPort.input--;
+            }
+            return;
+        }
         // let alterPortType = elem.className === "input" ? "outputs" : "inputs";
         // If the port is selected
         if (elem.checked) {
@@ -609,6 +657,11 @@ HUM.midi.MidiPorts = class {
             default:
                 console.log("The '.state' of the port has an unexpected value: " + midiPort.state);
                 break;
+        }
+        // Refresh the MIDI Player destination dropdown if a hardware output
+        // port has been (dis)connected.
+        if (midiPort.type === 'output' && this.midi.player) {
+            this.midi.player.refreshDestinations();
         }
     }
     /**

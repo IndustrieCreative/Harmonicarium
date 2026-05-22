@@ -91,5 +91,13 @@ HUM.midi.MidiHub = class {
          * @member {HUM.midi.MidiIn}
          */
 		this.in = new HUM.midi.MidiIn(dhc, this);
+        /**
+         * The MidiPlayer instance responsible for loading and playing SMF files,
+         * routing events either to the internal MIDI pipeline (via a virtual
+         * input port) or to a selected hardware MIDI-Out port.
+         *
+         * @member {HUM.midi.MidiPlayer}
+         */
+		this.player = new HUM.midi.MidiPlayer(dhc, this);
 	}
 };

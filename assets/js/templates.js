@@ -2511,6 +2511,69 @@ HUM.tmpl = {
     },
 
     /**
+     * Creates the MIDI Player side-panel UI (file picker, transport controls,
+     * destination dropdown, seek slider, speed and loop controls).
+     *
+     * @memberof HUM.tmpl
+     * @param {string} dhcID - The DHC instance ID.
+     * @param {number} humID - The HUM instance ID (for icon refs).
+     *
+     * @returns {HTMLDivElement} The MIDI Player controls container.
+     */
+    midiPlayerBox(dhcID, humID) {
+        let template = document.createElement('div');
+        template.innerHTML = `
+            <div class="midiPlayer" id="HTML_midiPlayer${dhcID}">
+
+                <div class="mb-3">
+                    <label for="HTMLi_midiPlayer_file${dhcID}" class="form-label">MIDI file</label>
+                    <input type="file" class="form-control form-control-sm" id="HTMLi_midiPlayer_file${dhcID}" accept=".mid,.midi,audio/midi,audio/x-midi">
+                    <div class="form-text text-truncate" id="HTMLo_midiPlayer_fileName${dhcID}">No file loaded</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="HTMLi_midiPlayer_dest${dhcID}" class="form-label">Output destination</label>
+                    <select id="HTMLi_midiPlayer_dest${dhcID}" class="form-select form-select-sm" aria-label="MIDI Player output destination">
+                        <option value="internal">Harmonicarium (internal)</option>
+                    </select>
+                    <div class="form-text">
+                        When "internal" is selected, MIDI events are routed to the Harmonicarium MIDI-In through a virtual port.
+                    </div>
+                </div>
+
+                <div class="btn-group btn-group-sm mb-3" role="group" aria-label="Transport">
+                    <button type="button" id="HTMLi_midiPlayer_play${dhcID}" class="btn btn-success" disabled>Play</button>
+                    <button type="button" id="HTMLi_midiPlayer_pause${dhcID}" class="btn btn-warning" disabled>Pause</button>
+                    <button type="button" id="HTMLi_midiPlayer_stop${dhcID}" class="btn btn-danger" disabled>Stop</button>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between monospaced small">
+                        <span id="HTMLo_midiPlayer_curTime${dhcID}">00:00</span>
+                        <span id="HTMLo_midiPlayer_status${dhcID}" class="text-muted">No file loaded</span>
+                        <span id="HTMLo_midiPlayer_totTime${dhcID}">00:00</span>
+                    </div>
+                    <input type="range" id="HTMLi_midiPlayer_seek${dhcID}" class="form-range" min="0" max="0" step="1" value="0" disabled>
+                </div>
+
+                <div class="row g-2 align-items-center">
+                    <div class="col-7">
+                        <label for="HTMLi_midiPlayer_speed${dhcID}" class="form-label mb-0">Speed</label>
+                        <input type="number" id="HTMLi_midiPlayer_speed${dhcID}" class="form-control form-control-sm" min="0.25" max="4" step="0.05" value="1">
+                    </div>
+                    <div class="col-5 d-flex align-items-end">
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" id="HTMLi_midiPlayer_loop${dhcID}">
+                            <label class="form-check-label" for="HTMLi_midiPlayer_loop${dhcID}">Loop</label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>`;
+        return template.firstElementChild;
+    },
+
+    /**
      * Creates the splash screen loading modal for a Harmonicarium instance.
      *
      * @memberof HUM.tmpl

@@ -30,7 +30,7 @@ var keepOldCache = false;
  * 
  * @member {string}
  */
-const appCacheName = 'kepler-cache-beta-v29';
+const appCacheName = 'kepler-cache-beta-v30';
 
 /**
  * The current Cache's name.
@@ -81,6 +81,7 @@ const deprecatedCaches = [
     'kepler-cache-beta-v26',
     'kepler-cache-beta-v27',
     'kepler-cache-beta-v28',
+    'kepler-cache-beta-v29',
 ];
 
 /**
@@ -138,6 +139,7 @@ const staticAssets = [
     './assets/js/midi-ports.js',
     './assets/js/midi-wml-synthlist.js',
     './assets/js/midi-wml.js',
+    './assets/js/midi-player.js',
     './assets/js/param-uielem.js',
     './assets/js/param.js',
     './assets/js/pwa-manager-parameters.js',
@@ -158,6 +160,8 @@ const staticAssets = [
     './assets/js/lib/bootstrap.bundle.min_new.js.map',
     './assets/js/lib/bootstrap.bundle.min_new.js',
     './assets/js/lib/qwerty-hancock-dist.js',
+    './assets/js/lib/JZZ.js',
+    './assets/js/lib/JZZ.midi.SMF.js',
     './assets/js/lib/synthlist.js',
     './assets/js/lib/synthlist_2020.js',
     './assets/js/lib/web-audio-peak-meter_v2.js',
