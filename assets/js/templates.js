@@ -2602,6 +2602,38 @@ HUM.tmpl = {
      * Creates a Bootstrap modal dialog that displays the current controller keymap as a table,
      * showing the mapping between MIDI note numbers and FT/HT assignments.
      */
+    /**
+     * Creates the Scala scale file viewer modal for a DHC instance.
+     *
+     * @memberof HUM.tmpl
+     * @param {string} dhcID - The DHC instance ID.
+     *
+     * @returns {HTMLDivElement} The modal div element containing a scrollable pre-formatted view of the loaded .scl file.
+     */
+    sclFileModal(dhcID) {
+        let template = document.createElement('div');
+        template.innerHTML = `
+            <!-- SCL file viewer modal -->
+            <div id="HTMLo_ftFileSclModal${dhcID}" class="modal fade" tabindex="-1"
+                 aria-labelledby="Scala scale file" aria-hidden="true">
+                <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Scala scale file (.scl)</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <pre id="HTMLo_ftFileSclModalPre${dhcID}" class="mb-0"></pre>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        return template.firstElementChild;
+    },
+
     keymapModal(dhcID) {
         let template = document.createElement('div');
         template.innerHTML = `

@@ -64,6 +64,39 @@ HUM.DHC.prototype.Parameters = class {
      * bindings, initial values, pre/post hooks, and IndexedDB keys.
      */
     constructor(dhc) {
+        // Helper: re-renders the SCL info panel (file name, description, note
+        // count, period) and populates the SCL viewer modal. Called both when a
+        // new file is loaded and when cent_accuracy changes so the period is
+        // always formatted with the current decimal precision.
+        const _refreshSclInfoPanel = () => {
+            const sclParam = dhc.settings.ft.file.scl.data;
+            if (!sclParam) return;
+            const value = sclParam.value;
+            const infoElem = sclParam.uiElements && sclParam.uiElements.out
+                ? sclParam.uiElements.out.ftFileSclInfo
+                : null;
+            if (!infoElem) return;
+            if (value && Array.isArray(value.cents) && value.cents.length > 0) {
+                const desc = value.description ? value.description : '(no description)';
+                const centAcc = dhc.settings.global.cent_accuracy.value;
+                infoElem.innerHTML =
+                    '<div><strong>File:</strong> ' + (value.sourceName || '\u2014') + '</div>' +
+                    '<div><strong>Description:</strong> ' + desc + '</div>' +
+                    '<div><strong>Notes:</strong> ' + value.noteCount +
+                    ' &nbsp; <strong>Period:</strong> ' + value.period.toFixed(centAcc) + ' \u00a2</div>' +
+                    '<button type="button" class="btn btn-secondary btn-sm mt-2"' +
+                    ' data-bs-toggle="modal"' +
+                    ' data-bs-target="#HTMLo_ftFileSclModal' + dhc.id + '">' +
+                    'Show .scl file</button>';
+                const preElem = document.getElementById('HTMLo_ftFileSclModalPre' + dhc.id);
+                if (preElem) {
+                    preElem.textContent = value.sourceText || '';
+                }
+            } else {
+                infoElem.innerText = 'No scale loaded.';
+            }
+        };
+
         /**
          * Global settings
          *
@@ -137,6 +170,8 @@ HUM.DHC.prototype.Parameters = class {
                     if (!init) {
                         // Reinitialize the DHC to apply also to the Monitors on the FM MIDI/Hz UI Input
                         dhc.initUImonitors();
+                        // Re-render the SCL info panel so Period respects the new accuracy.
+                        _refreshSclInfoPanel();
                     }
                 }
             }),
@@ -984,20 +1019,8 @@ HUM.DHC.prototype.Parameters = class {
                         presetStore: true,
                         presetRestore: true,
                         postSet: (value, thisParam, init) => {
-                            // Refresh the info panel in the FT accordion.
-                            let infoElem = thisParam.uiElements.out.ftFileSclInfo;
-                            if (infoElem) {
-                                if (value && Array.isArray(value.cents) && value.cents.length > 0) {
-                                    let desc = value.description ? value.description : '(no description)';
-                                    infoElem.innerHTML =
-                                        '<div><strong>File:</strong> ' + (value.sourceName || '—') + '</div>' +
-                                        '<div><strong>Description:</strong> ' + desc + '</div>' +
-                                        '<div><strong>Notes:</strong> ' + value.noteCount +
-                                        ' &nbsp; <strong>Period:</strong> ' + value.period.toFixed(4) + ' ¢</div>';
-                                } else {
-                                    infoElem.innerText = 'No scale loaded.';
-                                }
-                            }
+                            // Refresh the info panel and SCL viewer modal.
+                            _refreshSclInfoPanel();
                             if (!init) {
                                 dhc.initTables();
                             }

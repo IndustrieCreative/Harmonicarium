@@ -527,6 +527,7 @@ class HUM {
 
             this.html.appContainer.appendChild(HUM.tmpl.midiModal(dhcID));
             this.html.appContainer.appendChild(HUM.tmpl.keymapModal(dhcID));
+            this.html.appContainer.appendChild(HUM.tmpl.sclFileModal(dhcID));
             
             this.html.fmTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.fmBox(dhcID));
             this.html.ftTabs[dhcID].children[1].children[0].appendChild(HUM.tmpl.ftBox(dhcID));
