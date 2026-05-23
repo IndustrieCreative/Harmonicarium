@@ -1701,8 +1701,8 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             if (this.holdKeys.ft !== false && this.holdKeys.ft.toneNumber === ft[0]) {
                 // Held key: draw with cyan glow; flash white on polyrhythm pulse.
                 const pulsing = this._pulseUntil[ft[0]] && this._pulseUntil[ft[0]] > Date.now();
-                const heldColor = pulsing ? this._getPulseColor('ft', ft[0]) : ['#00e5ff', '#80f0ff', '#00e5ff'];
-                ctx.shadowColor = pulsing ? '#ffffff' : '#00e5ff';
+                const heldColor = pulsing ? this._getPulseColor('ft', ft[0]) : ['hsl(186,100%,38%)', 'hsl(186,90%,58%)', 'hsl(186,100%,38%)'];
+                ctx.shadowColor = pulsing ? '#ffffff' : 'hsl(186,100%,38%)';
                 if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
                     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
                 } else if (this.padSet.parameters.scaleOrientation.ft.value === 'horizontal') {
@@ -1748,8 +1748,8 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             if (this.holdKeys.ft !== false && this.holdKeys.ft.toneNumber === curr_ft[1]) {
                 // curr_ft is held: cyan, or sample-colour flash on pulse.
                 const pulsing = this._pulseUntil[curr_ft[1]] && this._pulseUntil[curr_ft[1]] > Date.now();
-                const heldColor = pulsing ? this._getPulseColor('ft', curr_ft[1]) : ['#00e5ff', '#80f0ff', '#00e5ff'];
-                ctx.shadowColor = pulsing ? '#ffffff' : '#00e5ff';
+                const heldColor = pulsing ? this._getPulseColor('ft', curr_ft[1]) : ['hsl(186,100%,38%)', 'hsl(186,90%,58%)', 'hsl(186,100%,38%)'];
+                ctx.shadowColor = pulsing ? '#ffffff' : 'hsl(186,100%,38%)';
                 if (this.padSet.parameters.scaleOrientation.ft.value === 'vertical') {
                     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ft.key.position > 0.5 ? -20 : 20;
                 } else if (this.padSet.parameters.scaleOrientation.ft.value === 'horizontal') {
@@ -1891,8 +1891,8 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             if (this.holdKeys.ht.has(ht[0])) {
                 // Held key: cyan glow; flash sample colour on polyrhythm pulse.
                 const pulsing = this._pulseUntil[ht[0]] && this._pulseUntil[ht[0]] > Date.now();
-                const heldColor = pulsing ? this._getPulseColor('ht', ht[0]) : ['#00e5ff', '#80f0ff', '#00e5ff'];
-                ctx.shadowColor = pulsing ? '#ffffff' : '#00e5ff';
+                const heldColor = pulsing ? this._getPulseColor('ht', ht[0]) : ['hsl(186,100%,38%)', 'hsl(186,90%,58%)', 'hsl(186,100%,38%)'];
+                ctx.shadowColor = pulsing ? '#ffffff' : 'hsl(186,100%,38%)';
                 if (this.padSet.parameters.scaleOrientation.ht.value === 'vertical') {
                     ctx.shadowOffsetX = this.padSet.parameters.canvasObjectsRatios.ht.key.position > 0.5 ? -20 : 20;
                 } else if (this.padSet.parameters.scaleOrientation.ht.value === 'horizontal') {
