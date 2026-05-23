@@ -849,10 +849,11 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         // In dark mode, only lightness is scaled — hue and saturation are
         // preserved bit-for-bit, per the design contract.
         if (this._isDarkTheme()) {
+            const colorSd = colorS * 0.6;
             return [
-                `hsl(${colorH}, ${colorS}%, ${colorL * 0.95}%)`, // lighter
-                `hsl(${colorH}, ${colorS}%, ${colorL * 0.55}%)`, // color
-                `hsl(${colorH}, ${colorS * 1.5}%, ${colorL * 0.35}%)`, // darker
+                `hsl(${colorH}, ${colorSd}%, ${colorL * 1.1}%)`, // lighter
+                `hsl(${colorH}, ${colorSd}%, ${colorL * 0.70}%)`, // color
+                `hsl(${colorH}, ${colorSd * 1.5}%, ${colorL * 0.50}%)`, // darker
             ];
         }
         return [
