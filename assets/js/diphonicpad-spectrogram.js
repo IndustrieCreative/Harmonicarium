@@ -313,22 +313,18 @@ HUM.DpPad.PadSet.Spectrogram = class {
             htDiv.style.background = '';
             return;
         }
-        // In dark mode use the solid base pad colour (no gradient) so the
-        // spectrogram background blends with the surrounding dark pad.
+        // Use the solid base pad colour (no gradient) so the spectrogram
+        // background blends with the surrounding pad in both themes.
         const tm = this.padSet && this.padSet.dpPadComponent
                    && this.padSet.dpPadComponent.harmonicarium
                    && this.padSet.dpPadComponent.harmonicarium.themeManager;
         if (tm && tm.isDark()) {
             ftDiv.style.background = 'hsl(347, 18%, 43%)';
             htDiv.style.background = 'hsl(210, 18%, 43%)';
-            return;
+        } else {
+            ftDiv.style.background = 'rgb(255, 225, 233)';
+            htDiv.style.background = '#d7ebff';
         }
-        // Use only the RGB components (ignore alpha) so the background is fully
-        // opaque and matches the colour the spectrogram would show at silence.
-        const [fR, fG, fB] = this._amplitudeToRGBA(0, 'ft');
-        const [hR, hG, hB] = this._amplitudeToRGBA(0, 'ht');
-        ftDiv.style.background = `rgb(${fR}, ${fG}, ${fB})`;
-        htDiv.style.background = `rgb(${hR}, ${hG}, ${hB})`;
     }
 
     /**
