@@ -829,19 +829,19 @@ html[data-bs-theme="dark"] .panelOverlay.rightPanel {
    lightness drops. Hue/sat match the light versions. */
 html[data-bs-theme="dark"] .padFT {
     /* Light hue: rgb(255 212 224) ≈ hsl(347, 100%, 92%) */
-    background: hsl(347, 55%, 18%);
+    background: hsl(347, 18%, 43%);
     background: linear-gradient(90deg,
-        hsl(347, 55%, 14%) 0%,
-        hsl(347, 35%, 22%) 50%,
-        hsl(347, 55%, 14%) 100%);
+        hsl(347, 18%, 38%) 0%,
+        hsl(347, 10%, 49%) 50%,
+        hsl(347, 18%, 38%) 100%);
 }
 html[data-bs-theme="dark"] .padHT {
     /* Light hue: #c8e3ff ≈ hsl(210, 100%, 89%) */
-    background: hsl(210, 55%, 18%);
+    background: hsl(210, 18%, 43%);
     background: linear-gradient(90deg,
-        hsl(210, 55%, 14%) 0%,
-        hsl(210, 35%, 22%) 50%,
-        hsl(210, 55%, 14%) 100%);
+        hsl(210, 18%, 38%) 0%,
+        hsl(210, 10%, 49%) 50%,
+        hsl(210, 18%, 38%) 100%);
 }
 
 /* H Stack animations — re-define keyframes for dark theme. */
