@@ -1030,6 +1030,22 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                 }
             }
         });
+        this.spectrogramPitchTrack = new HUM.Param({
+            app: padSet,
+            idbKey: 'padsetSpectrogramPitchTrack',
+            uiElements: {
+                'dppad_spectrogram_pitchtrack': new HUM.Param.UIelem({
+                    role: 'in',
+                    opType: 'set',
+                    eventType: 'change',
+                    htmlTargetProp: 'checked',
+                    widget: 'checkbox',
+                })
+            },
+            dataType: 'boolean',
+            initValue: true,
+            restoreStage: 'post',
+        });
         this.spectrogramInverted = new HUM.Param({
             app: padSet,
             idbKey: 'padsetSpectrogramInverted',
@@ -1115,23 +1131,6 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                 //     thisParam.app.spectrogram._updatePadBackgrounds(true);
                 // }
             },
-        });
-
-        this.spectrogramPitchTrack = new HUM.Param({
-            app: padSet,
-            idbKey: 'padsetSpectrogramPitchTrack',
-            uiElements: {
-                'dppad_spectrogram_pitchtrack': new HUM.Param.UIelem({
-                    role: 'in',
-                    opType: 'set',
-                    eventType: 'change',
-                    htmlTargetProp: 'checked',
-                    widget: 'checkbox',
-                })
-            },
-            dataType: 'boolean',
-            initValue: true,
-            restoreStage: 'post',
         });
     }
     /**
