@@ -1859,7 +1859,12 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         }
         ctx.save();
         ctx.beginPath();
-        ctx.strokeStyle = 'grey';
+        if (this._isDarkTheme()) {
+            ctx.strokeStyle = 'rgba(200, 200, 200, 0.55)';
+            ctx.lineWidth = 1.5;
+        } else {
+            ctx.strokeStyle = 'grey';
+        }
         zindex = 0;
         for (const [arrIdx, ht] of this.freqArrays.ht.entries()) {
             ctx.save();
