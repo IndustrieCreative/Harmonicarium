@@ -1728,8 +1728,11 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                     this.drawLinKey(pxPosition, 'ft', ft[0], false, ['#28272d', '#514e5f', '#110e23'], zindex);
                     // this.drawFreqKeyFT(pxPosition, ft[0]);
                 } else {
-                    ctx.fillStyle = 'white';
-                    this.drawLinKey(pxPosition, 'ft', ft[0], false, ['white', 'white', '#cdcade'], zindex);
+                    const _ftInactiveColor = this._isDarkTheme()
+                        ? ['hsl(0, 0%, 90%)', 'hsl(0, 0%, 86%)', 'hsl(240, 13%, 75%)']
+                        : ['white', 'white', '#e6e4ef'];
+                    ctx.fillStyle = _ftInactiveColor[1];
+                    this.drawLinKey(pxPosition, 'ft', ft[0], false, _ftInactiveColor, zindex);
                     // this.drawFreqKeyFT(pxPosition, ft[0]);
                 }
             }
