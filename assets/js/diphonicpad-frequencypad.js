@@ -846,6 +846,15 @@ HUM.DpPad.PadSet.FrequencyPad = class {
             colorH = 360 * colRatio,
             colorS = this.padSet.parameters.canvasObjectsRatios.ht.key.saturation,
             colorL = this.padSet.parameters.canvasObjectsRatios.ht.key.lightness;
+        // In dark mode, only lightness is scaled — hue and saturation are
+        // preserved bit-for-bit, per the design contract.
+        if (this._isDarkTheme()) {
+            return [
+                `hsl(${colorH}, ${colorS}%, ${colorL * 0.95}%)`, // lighter
+                `hsl(${colorH}, ${colorS}%, ${colorL * 0.55}%)`, // color
+                `hsl(${colorH}, ${colorS * 1.5}%, ${colorL * 0.35}%)`, // darker
+            ];
+        }
         return [
             `hsl(${colorH}, ${colorS}%, ${colorL*1.6}%)`, // lighter
             `hsl(${colorH}, ${colorS}%, ${colorL}%)`, // color
@@ -873,6 +882,17 @@ HUM.DpPad.PadSet.FrequencyPad = class {
      * @returns {string[]} `[lighter, base, darker]` CSS color strings.
      */
     _getFtActiveColor() {
+        // FT key colors — hue and saturation preserved across themes;
+        // only HSL lightness shifts in dark mode.
+        // Light: darksalmon  ≈ hsl(15, 71%, 70%)
+        //        #db9c57     ≈ hsl(29, 65%, 60%)
+        if (this._isDarkTheme()) {
+            return [
+                'hsl(15, 71%, 40%)',
+                'hsl(15, 71%, 40%)',
+                'hsl(29, 65%, 32%)',
+            ];
+        }
         return ['darksalmon', 'darksalmon', '#db9c57'];
     }
 
@@ -888,9 +908,31 @@ HUM.DpPad.PadSet.FrequencyPad = class {
     _getPulseColor(type, xtNum) {
         if (this.padSet.dhc.polyrhythmMode && this.padSet.dhc.synth) {
             const hex = this.padSet.dhc.synth.getColorForTone(type, xtNum);
+            // Sample colors carry the user-assigned hue/saturation, which
+            // must NOT be altered in dark mode. `hexToGradient()` already
+            // works in HSL and only scales lightness.
             if (hex) { return HUM.Synth.hexToGradient(hex); }
         }
+        // Non-polyrhythm fallback: a brief flash on the held key.
+        // Light:  #ffffff / #ffffff / #ccf0ff  (hsl(200, 100%, 90%))
+        if (this._isDarkTheme()) {
+            return ['hsl(0, 0%, 78%)', 'hsl(0, 0%, 78%)', 'hsl(200, 100%, 60%)'];
+        }
         return ['#ffffff', '#ffffff', '#ccf0ff'];
+    }
+
+    /**
+     * Returns `true` if the active UI theme is dark.
+     * Reads from `HUM.ThemeManager`; falls back to `false` if it is not yet
+     * wired (e.g. during very early bootstrap).
+     *
+     * @returns {boolean}
+     * @private
+     */
+    _isDarkTheme() {
+        const tm = this.padSet && this.padSet.dpPadComponent && this.padSet.dpPadComponent.harmonicarium
+                   && this.padSet.dpPadComponent.harmonicarium.themeManager;
+        return tm ? tm.isDark() : false;
     }
 
     /**

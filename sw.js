@@ -30,7 +30,7 @@ var keepOldCache = false;
  * 
  * @member {string}
  */
-const appCacheName = 'kepler-cache-beta-v31';
+const appCacheName = 'kepler-cache-beta-v32';
 
 /**
  * The current Cache's name.
@@ -83,6 +83,7 @@ const deprecatedCaches = [
     'kepler-cache-beta-v28',
     'kepler-cache-beta-v29',
     'kepler-cache-beta-v30',
+    'kepler-cache-beta-v31',
 ];
 
 /**
@@ -143,6 +144,7 @@ const staticAssets = [
     './assets/js/midi-player.js',
     './assets/js/midi-player-parameters.js',
     './assets/js/param-uielem.js',
+    './assets/js/theme-manager.js',
     './assets/js/param.js',
     './assets/js/pwa-manager-parameters.js',
     './assets/js/pwa-manager.js',

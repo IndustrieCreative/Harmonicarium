@@ -784,3 +784,194 @@ div.hum-range-param {
 .hum-help .monospace {
     font-family: 'Source Code Pro', monospace;
 }
+
+
+/***********************************************
+ * DARK THEME OVERRIDES
+ * Activated by `data-bs-theme="dark"` on <html>.
+ * IMPORTANT — color contract for FT / HT keys (Hancock + DpPad):
+ *   only HSL lightness is allowed to change; HUE and SATURATION
+ *   are preserved bit-for-bit between light and dark mode.
+ ***********************************************/
+
+/* App-wide body background */
+html[data-bs-theme="dark"] body {
+    background-color: #1a1820;
+}
+
+/* Section title / card header — same hue as the light "#ffeddf" (~25°, 100%, 94%)
+   but darker lightness. */
+html[data-bs-theme="dark"] .hum-section-title,
+html[data-bs-theme="dark"] .card-header {
+    background-color: hsl(25, 35%, 18%);
+    color: #DDD;
+}
+
+/* Popover / toast tokens */
+html[data-bs-theme="dark"] .hum-custom-popover {
+    --bs-popover-border-color: #c5b500;
+    --bs-popover-header-bg: #4a4310;
+    --bs-popover-header-color: #fff9b4;
+    --bs-popover-body-bg: #2a2838;
+    --bs-popover-body-color: #DDD;
+}
+html[data-bs-theme="dark"] .hum-toast {
+    --bs-toast-bg: rgba(42, 40, 56, 0.95);
+    --bs-toast-color: #DDD;
+}
+
+/* Side panel (already dark in light mode — keep) */
+html[data-bs-theme="dark"] .panelOverlay.rightPanel {
+    background-color: rgb(20 18 30);
+}
+
+/* Pads — preserve the FT (pink ~350°) and HT (blue ~210°) hues; only
+   lightness drops. Hue/sat match the light versions. */
+html[data-bs-theme="dark"] .padFT {
+    /* Light hue: rgb(255 212 224) ≈ hsl(347, 100%, 92%) */
+    background: hsl(347, 55%, 18%);
+    background: linear-gradient(90deg,
+        hsl(347, 55%, 14%) 0%,
+        hsl(347, 35%, 22%) 50%,
+        hsl(347, 55%, 14%) 100%);
+}
+html[data-bs-theme="dark"] .padHT {
+    /* Light hue: #c8e3ff ≈ hsl(210, 100%, 89%) */
+    background: hsl(210, 55%, 18%);
+    background: linear-gradient(90deg,
+        hsl(210, 55%, 14%) 0%,
+        hsl(210, 35%, 22%) 50%,
+        hsl(210, 55%, 14%) 100%);
+}
+
+/* H Stack animations — re-define keyframes for dark theme. */
+@keyframes FTpressedKeyDark {
+    0%   { --bs-table-bg: #2A2838; color: #FFFFBB; }
+    100% { --bs-table-bg: hsl(25, 60%, 25%); color: #FFE0BC; }
+}
+@keyframes FTreleasedKeyDark {
+    0%   { --bs-table-bg: hsl(25, 60%, 25%); color: #FFE0BC; }
+    100% { --bs-table-bg: transparent;       color: #DDD; }
+}
+html[data-bs-theme="dark"] .hum-hstack-ft-on {
+    animation: FTpressedKeyDark 200ms forwards;
+}
+html[data-bs-theme="dark"] .hum-hstack-ft-off {
+    animation: FTreleasedKeyDark 200ms linear;
+}
+html[data-bs-theme="dark"] .hum-hstack-ht-on {
+    background-color: hsl(210, 55%, 25%);
+    --bs-table-bg: hsl(210, 55%, 25%);
+    color: #E8F2FF;
+}
+html[data-bs-theme="dark"] .hum-hstack-ht-off {
+    --bs-table-bg: rgba(40, 40, 55, 0.5);
+    color: #DDD;
+}
+
+/* ===========================================================
+   HANCOCK VIRTUAL PIANO KEYS — dark mode.
+   Hue and saturation match the light values; only L differs.
+   Light values (for reference):
+     FTwKey released #ECA589 ≈ hsl(15,  72%, 73%)
+     FTwKey pressed  #793B3B ≈ hsl(0,   34%, 35%)
+     FTbKey released #B96363 ≈ hsl(0,   37%, 56%)
+     FTbKey pressed  #793B3B ≈ hsl(0,   34%, 35%)
+     HTwKey released #B0C4DE ≈ hsl(210, 39%, 78%)
+     HTwKey pressed  #2B506E ≈ hsl(207, 43%, 30%)
+     HTbKey released #4682B4 ≈ hsl(207, 44%, 49%)
+     HTbKey pressed  #2B506E ≈ hsl(207, 43%, 30%)
+   =========================================================== */
+
+/* FT keys */
+html[data-bs-theme="dark"] .FTwKey.releasedKey {
+    background-color: hsl(15, 72%, 32%)!important;
+}
+html[data-bs-theme="dark"] .FTwKey.pressedKey {
+    background-color: hsl(0, 34%, 62%)!important;
+}
+html[data-bs-theme="dark"] .FTbKey.releasedKey {
+    background-color: hsl(0, 37%, 25%)!important;
+}
+html[data-bs-theme="dark"] .FTbKey.pressedKey {
+    background-color: hsl(0, 34%, 62%)!important;
+}
+/* HT keys */
+html[data-bs-theme="dark"] .HTwKey.releasedKey {
+    background-color: hsl(210, 39%, 35%)!important;
+}
+html[data-bs-theme="dark"] .HTwKey.pressedKey {
+    background-color: hsl(207, 43%, 65%)!important;
+}
+html[data-bs-theme="dark"] .HTbKey.releasedKey {
+    background-color: hsl(207, 44%, 22%)!important;
+}
+html[data-bs-theme="dark"] .HTbKey.pressedKey {
+    background-color: hsl(207, 43%, 65%)!important;
+}
+/* HT0 keys (olive family) — same hue/sat, just adjust L */
+html[data-bs-theme="dark"] .HT0wKey.releasedKey,
+html[data-bs-theme="dark"] .HT0bKey.releasedKey {
+    /* olivedrab #6B8E23 ≈ hsl(80, 60%, 35%) — keep as-is, already dark */
+    background-color: hsl(80, 60%, 28%)!important;
+}
+html[data-bs-theme="dark"] .HT0wKey.pressedKey,
+html[data-bs-theme="dark"] .HT0bKey.pressedKey {
+    /* darkolivegreen #556B2F ≈ hsl(82, 39%, 30%) — brighter in dark mode */
+    background-color: hsl(82, 39%, 55%)!important;
+}
+/* Normal keys */
+html[data-bs-theme="dark"] .wKey.releasedKey {
+    background-color: #DDD!important;
+}
+html[data-bs-theme="dark"] .wKey.pressedKey {
+    background-color: #FFD700!important;
+}
+html[data-bs-theme="dark"] .bKey.releasedKey {
+    background-color: #111!important;
+}
+html[data-bs-theme="dark"] .bKey.pressedKey {
+    background-color: #FFC107!important;
+}
+/* Polyrhythm pulse — preserve hue, brighten in dark mode for visibility */
+html[data-bs-theme="dark"] .FTwKey.pulsedKey,
+html[data-bs-theme="dark"] .FTbKey.pulsedKey {
+    /* light salmon #FFA07A ≈ hsl(17, 100%, 74%) */
+    background-color: hsl(17, 100%, 60%)!important;
+}
+html[data-bs-theme="dark"] .HTwKey.pulsedKey,
+html[data-bs-theme="dark"] .HTbKey.pulsedKey {
+    /* sky blue #87CEEB ≈ hsl(197, 71%, 73%) */
+    background-color: hsl(197, 71%, 60%)!important;
+}
+html[data-bs-theme="dark"] .HT0wKey.pulsedKey,
+html[data-bs-theme="dark"] .HT0bKey.pulsedKey {
+    /* greenyellow #ADFF2F ≈ hsl(84, 100%, 59%) */
+    background-color: hsl(84, 100%, 50%)!important;
+}
+
+/* Key-number labels — invert legibility on dark released keys */
+html[data-bs-theme="dark"] .FTbKeyFn,
+html[data-bs-theme="dark"] .FTwKeyFn,
+html[data-bs-theme="dark"] .HTbKeyFn,
+html[data-bs-theme="dark"] .HTwKeyFn {
+    color: #EEE;
+}
+html[data-bs-theme="dark"] .pressedKey .FTbKeyFn,
+html[data-bs-theme="dark"] .pressedKey .FTwKeyFn,
+html[data-bs-theme="dark"] .pressedKey .HTbKeyFn,
+html[data-bs-theme="dark"] .pressedKey .HTwKeyFn {
+    color: #222;
+}
+
+/* Theme switch radios — outline-secondary needs a dark-mode tweak. */
+html[data-bs-theme="dark"] .btn-check + .btn-outline-secondary {
+    --bs-btn-color: #DDD;
+    --bs-btn-border-color: #5a5868;
+    --bs-btn-hover-bg: #3a3848;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-border-color: #6a6878;
+    --bs-btn-active-bg: #503535;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-border-color: #8e4a4a;
+}

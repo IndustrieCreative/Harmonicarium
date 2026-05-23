@@ -825,6 +825,27 @@ HUM.tmpl = {
                     <div class="list-group-item">
                         <div class="row align-items-center">
                             <div class="col col-12 col-xl">
+                                <strong class="mb-2">Theme</strong>
+                                <div><small class="text-muted">Choose Light, Dark or follow the system.</small></div>
+                            </div>
+                            <div class="col-auto">
+                                <div id="HTMLi_theme_switch${humID}" class="btn-group" role="group" aria-label="Theme selector">
+                                    <input type="radio" class="btn-check" name="HTMLi_theme_mode${humID}" id="HTMLi_theme_mode_auto${humID}" value="auto" autocomplete="off">
+                                    <label class="btn btn-outline-secondary" for="HTMLi_theme_mode_auto${humID}" title="Follow the operating system preference">Auto</label>
+
+                                    <input type="radio" class="btn-check" name="HTMLi_theme_mode${humID}" id="HTMLi_theme_mode_light${humID}" value="light" autocomplete="off">
+                                    <label class="btn btn-outline-secondary" for="HTMLi_theme_mode_light${humID}" title="Light theme">Light</label>
+
+                                    <input type="radio" class="btn-check" name="HTMLi_theme_mode${humID}" id="HTMLi_theme_mode_dark${humID}" value="dark" autocomplete="off">
+                                    <label class="btn btn-outline-secondary" for="HTMLi_theme_mode_dark${humID}" title="Dark theme">Dark</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item">
+                        <div class="row align-items-center">
+                            <div class="col col-12 col-xl">
                                 <strong class="mb-2">Load</strong>
                                 <div><small class="text-muted">Select a preset and click "Load".</small></div>
                             </div>

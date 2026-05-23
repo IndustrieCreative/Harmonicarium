@@ -239,6 +239,15 @@ HUM.DpPad = function() {
                 // Provides the "dhc" parameter only if the dpPad parent component (this) has one
                 this.padSets[n] = new DpPad.PadSet(padSetID, n, this, (!this.dhc ? false : this.dhc));
             }
+            // Redraw all pads when the active UI theme changes.
+            if (this.harmonicarium.themeManager) {
+                this.harmonicarium.themeManager.subscribe(() => {
+                    for (let padSet of this.padSets) {
+                        if (padSet.ft) { padSet.ft.drawFreqUI(); }
+                        if (padSet.ht) { padSet.ht.drawFreqUI(); }
+                    }
+                });
+            }
         }
         /**
          * Handles the global `mouseup` event and delegates note-off to all pads.

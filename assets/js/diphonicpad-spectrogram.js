@@ -136,6 +136,17 @@ HUM.DpPad.PadSet.Spectrogram = class {
         this._displayPitchHz      = null; // inertia-smoothed FT pitch
         this._displayFormantHz    = null; // inertia-smoothed HT formant
         this._fftAccumulator      = null; // Float32Array sum of FFT frames in the current stride window
+
+        // Re-apply pad backgrounds when the UI theme switches, so the silence
+        // colour stays in sync with the (now inverted) palette.
+        const tm = this.padSet && this.padSet.dpPadComponent
+                   && this.padSet.dpPadComponent.harmonicarium
+                   && this.padSet.dpPadComponent.harmonicarium.themeManager;
+        if (tm) {
+            tm.subscribe(() => {
+                if (this.enabled) { this._updatePadBackgrounds(true); }
+            });
+        }
     }
 
     /**
@@ -1365,7 +1376,21 @@ HUM.DpPad.PadSet.Spectrogram = class {
         if (a < 0)   { a = 0; }
         if (a > 255) { a = 255; }
         const alpha = Math.round(a * 0.85);
+        // In dark mode the palette ramps *up* from black toward a saturated
+        // pink (FT) or blue (HT). Hue stays in the same family as light mode.
+        const dark = !!(this.padSet && this.padSet.dpPadComponent
+                        && this.padSet.dpPadComponent.harmonicarium
+                        && this.padSet.dpPadComponent.harmonicarium.themeManager
+                        && this.padSet.dpPadComponent.harmonicarium.themeManager.isDark());
         if (type === 'ft') {
+            if (dark) {
+                return [
+                    Math.round(a),           // R rises with amp
+                    Math.round(a * 0.28),    // G stays low for pink hue
+                    Math.round(a * 0.55),    // B mid for magenta tint
+                    alpha
+                ];
+            }
             return [
                 255,
                 Math.round(255 - a * 0.72),
@@ -1373,6 +1398,14 @@ HUM.DpPad.PadSet.Spectrogram = class {
                 alpha
             ];
         } else {
+            if (dark) {
+                return [
+                    Math.round(a * 0.28),    // R low for blue hue
+                    Math.round(a * 0.55),    // G mid for cyan tint
+                    Math.round(a),           // B rises with amp
+                    alpha
+                ];
+            }
             return [
                 Math.round(255 - a * 0.72),
                 Math.round(255 - a * 0.45),

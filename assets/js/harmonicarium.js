@@ -353,6 +353,11 @@ class HUM {
 
         this._initTemplates();
         console.log('HARMONICARIUM: Document and Templates initialized.');
+        // Theme manager (light / dark / auto). Must be ready before any
+        // component reads colors from CSS or installs canvas redraw hooks.
+        this.themeManager = new HUM.ThemeManager(this);
+        // Bind the radio switch rendered by `_initTemplates()`.
+        this.themeManager.attachUI(this.id);
         // Create the "Preset/Patch" service
         this.components.user = new HUM.User(this);
         this.broadcastChannel = new HUM.BroadcastChannel(this);
