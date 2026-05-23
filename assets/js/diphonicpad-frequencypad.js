@@ -1013,7 +1013,7 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         // frequencies (mirrors `drawFreqKeyHT`). Only applied when this is a
         // real key (not a thin line) and we have a tone number to look up.
         let linDims = null;
-        if (scaleMode === 'linear' && !thickness && xtNum !== false && type === 'ft') {
+        if (!thickness && xtNum !== false && type === 'ft') {
             const arr = this.freqArrays.ft;
             const arrIdx = arr.findIndex(e => e[0] === xtNum);
             if (arrIdx > -1) {
@@ -1033,10 +1033,10 @@ HUM.DpPad.PadSet.FrequencyPad = class {
                     follFreq = arr[arrIdx+1][1].hz;
                     prevFreq = arr[arrIdx-1][1].hz;
                 }
-                const follHalfFreq = (follFreq - thisFreq) / 3;
-                const prevHalfFreq = (thisFreq - prevFreq) / 3;
-                const beginFreq = thisFreq - prevHalfFreq;
-                const endFreq = thisFreq + follHalfFreq;
+                const follHalfFreq = (follFreq - thisFreq) / 2;
+                const prevHalfFreq = (thisFreq - prevFreq) / 2;
+                const beginFreq = arrIdx === 0 ? freqRange.min.value : thisFreq - prevHalfFreq;
+                const endFreq = arrIdx === arr.length-1 ? freqRange.max.value : thisFreq + follHalfFreq;
                 if (scaleOrientation === 'vertical') {
                     const yA = this.freqToPadPix(endFreq);
                     const yB = this.freqToPadPix(beginFreq);
@@ -1731,15 +1731,24 @@ HUM.DpPad.PadSet.FrequencyPad = class {
         // FT KEY LABELS
         ctx.save();
         ctx.beginPath();
+        const _ftLabelOrientation = this.padSet.parameters.scaleOrientation[this.type].value;
         for (let ft of this.freqArrays.ft) {
-            let pxPosition2 = this.freqToPadPix(ft[1].hz);
+            const keyBox = this.canvasObjPos.keys.find(k => k.type === 'ft' && k.toneNumber === ft[0]);
+            let labelPos;
+            if (keyBox) {
+                labelPos = _ftLabelOrientation === 'vertical'
+                    ? (keyBox.begin[1] + keyBox.end[1]) / 2
+                    : (keyBox.begin[0] + keyBox.end[0]) / 2;
+            } else {
+                labelPos = this.freqToPadPix(ft[1].hz);
+            }
             let note = this.padSet.dhc.mcToName(ft[1].mc);
             if (note[3]) {
                 ctx.fillStyle = 'white';
-                this.drawKeyLabelFT(pxPosition2, note, ft[1].hz);
+                this.drawKeyLabelFT(labelPos, note, ft[1].hz);
             } else {
                 ctx.fillStyle = 'black';
-                this.drawKeyLabelFT(pxPosition2, note, ft[1].hz);
+                this.drawKeyLabelFT(labelPos, note, ft[1].hz);
             }
         }
         ctx.restore();
