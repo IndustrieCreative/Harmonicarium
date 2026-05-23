@@ -2532,8 +2532,8 @@ HUM.tmpl = {
                 </div>
 
                 <div class="mb-3">
-                    <label for="HTMLi_midiPlayer_dest${dhcID}" class="form-label">Output destination</label>
-                    <select id="HTMLi_midiPlayer_dest${dhcID}" class="form-select form-select-sm" aria-label="MIDI Player output destination">
+                    <label for="HTMLi_midiPlayer_dest${dhcID}" class="form-label">Destination port</label>
+                    <select id="HTMLi_midiPlayer_dest${dhcID}" class="form-select form-select-sm" aria-label="MIDI Player output destination port">
                         <option value="internal">Harmonicarium (internal)</option>
                     </select>
                     <div class="form-text">

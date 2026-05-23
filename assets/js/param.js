@@ -539,7 +539,7 @@ HUM.Param = class {
             } else {
                 store.dhc[idx][name][idbKey] = value;
             }
-        } else if (['midiPorts', 'midiIn', 'midiOut'].includes(name)) {
+        } else if (['midiPorts', 'midiIn', 'midiOut', 'midiPlayer'].includes(name)) {
             if (!store.dhc) {
                 store.dhc = {};
             }

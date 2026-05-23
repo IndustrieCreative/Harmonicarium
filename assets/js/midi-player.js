@@ -36,7 +36,7 @@ HUM.midi.MidiPlayer = class {
     constructor(dhc, midi) {
         this.id = dhc.id;
         this._id = dhc._id;
-        this.name = 'midi_player';
+        this.name = 'midiPlayer';
         this.dhc = dhc;
         this.midi = midi;
 
@@ -58,18 +58,20 @@ HUM.midi.MidiPlayer = class {
 
         this._uiRafId = null;
         this._userSeeking = false;
-        this._prefsKey = `hum.midiPlayer.prefs.${this.id}`;
-        this.prefs = this._loadPrefs();
 
         // Register with the DHC pub/sub bus (mainly to react to panic).
         this.dhc.registerApp(this, 'updatesFromDHC', 5);
 
-        // Bind UI: the side-panel template has already been injected by
-        // HUM._initDHCs() before the DHC (and therefore this MidiPlayer)
-        // is constructed.
+        // Bind transport/file/seek UI controls. Speed, loop and destination
+        // controls are bound by the Parameters class below.
         this._bindUI();
+
+        // Instantiate persistent parameters (speed, loop, destination).
+        // HUM.Param binds their DOM elements and restores saved values from IndexedDB.
+        this.parameters = new this.Parameters(this);
+
+        // Rebuild the destination dropdown with currently available MIDI-Out ports.
         this.refreshDestinations();
-        this._applyPrefsToUI();
         this._updateTransportUI();
         this._updatePositionUI();
     }
@@ -96,33 +98,6 @@ HUM.midi.MidiPlayer = class {
     }
 
     /* ===================================================================
-     * Preferences (simple localStorage; not part of the HUM preset system)
-     * ================================================================ */
-
-    _defaultPrefs() {
-        return { speed: 1.0, loop: false, destination: 'internal' };
-    }
-
-    _loadPrefs() {
-        try {
-            const raw = (typeof localStorage !== 'undefined')
-                ? localStorage.getItem(this._prefsKey) : null;
-            if (!raw) { return this._defaultPrefs(); }
-            return Object.assign(this._defaultPrefs(), JSON.parse(raw));
-        } catch (e) {
-            return this._defaultPrefs();
-        }
-    }
-
-    _savePrefs() {
-        try {
-            if (typeof localStorage !== 'undefined') {
-                localStorage.setItem(this._prefsKey, JSON.stringify(this.prefs));
-            }
-        } catch (e) { /* noop */ }
-    }
-
-    /* ===================================================================
      * UI binding
      * ================================================================ */
 
@@ -131,25 +106,12 @@ HUM.midi.MidiPlayer = class {
         const playBtn   = document.getElementById(`HTMLi_midiPlayer_play${this.id}`);
         const pauseBtn  = document.getElementById(`HTMLi_midiPlayer_pause${this.id}`);
         const stopBtn   = document.getElementById(`HTMLi_midiPlayer_stop${this.id}`);
-        const destSel   = document.getElementById(`HTMLi_midiPlayer_dest${this.id}`);
-        const speedIn   = document.getElementById(`HTMLi_midiPlayer_speed${this.id}`);
-        const loopChk   = document.getElementById(`HTMLi_midiPlayer_loop${this.id}`);
         const seekIn    = document.getElementById(`HTMLi_midiPlayer_seek${this.id}`);
 
         if (fileInput) { fileInput.addEventListener('change', (e) => this._onFileChosen(e)); }
         if (playBtn)   { playBtn.addEventListener('click', () => this.play()); }
         if (pauseBtn)  { pauseBtn.addEventListener('click', () => this.togglePause()); }
         if (stopBtn)   { stopBtn.addEventListener('click', () => this.stop()); }
-        if (destSel)   { destSel.addEventListener('change', (e) => this.setDestination(e.target.value)); }
-        if (speedIn) {
-            speedIn.addEventListener('change', (e) => {
-                const v = parseFloat(e.target.value);
-                this.setSpeed(isFinite(v) && v > 0 ? v : 1.0);
-            });
-        }
-        if (loopChk) {
-            loopChk.addEventListener('change', (e) => this.setLoop(e.target.checked));
-        }
         if (seekIn) {
             seekIn.addEventListener('input', () => { this._userSeeking = true; });
             seekIn.addEventListener('change', (e) => {
@@ -157,20 +119,6 @@ HUM.midi.MidiPlayer = class {
                 if (isFinite(ms)) { this.seek(ms); }
                 this._userSeeking = false;
             });
-        }
-    }
-
-    _applyPrefsToUI() {
-        const destSel = document.getElementById(`HTMLi_midiPlayer_dest${this.id}`);
-        const speedIn = document.getElementById(`HTMLi_midiPlayer_speed${this.id}`);
-        const loopChk = document.getElementById(`HTMLi_midiPlayer_loop${this.id}`);
-        if (destSel) { destSel.value = this.prefs.destination; }
-        if (speedIn) { speedIn.value = String(this.prefs.speed); }
-        if (loopChk) { loopChk.checked = !!this.prefs.loop; }
-        // If default destination is internal, make sure the virtual input port
-        // checkbox starts checked too.
-        if (this.prefs.destination === 'internal') {
-            this._autoCheckVirtualInputPort();
         }
     }
 
@@ -254,7 +202,9 @@ HUM.midi.MidiPlayer = class {
     refreshDestinations() {
         const sel = document.getElementById(`HTMLi_midiPlayer_dest${this.id}`);
         if (!sel) { return; }
-        const prevValue = sel.value || this.prefs.destination || 'internal';
+        const prevValue = sel.value
+            || (this.parameters ? this.parameters.destination.value : 'internal')
+            || 'internal';
         sel.innerHTML = '';
 
         const internalOpt = document.createElement('option');
@@ -281,26 +231,11 @@ HUM.midi.MidiPlayer = class {
             sel.value = prevValue;
         } else {
             sel.value = 'internal';
-            if (this.prefs.destination !== 'internal') {
-                this.prefs.destination = 'internal';
-                this._savePrefs();
-                if (this.player) { this._rewirePlayerConnections(); }
+            if (this.parameters && this.parameters.destination.value !== 'internal') {
+                // Port no longer available: silently reset (skip preSet stop guard).
+                this.parameters.destination._setValue('internal', { preSet: false, postSet: false });
+                this._autoCheckVirtualInputPort();
             }
-        }
-    }
-
-    /**
-     * Selects the destination for the player output.
-     * @param {string} value 'internal' or a MIDIOutput.id
-     */
-    setDestination(value) {
-        const wasPlaying = this.isPlaying;
-        if (wasPlaying) { this.stop(); }
-        this.prefs.destination = value || 'internal';
-        this._savePrefs();
-        if (this.player) { this._rewirePlayerConnections(); }
-        if (this.prefs.destination === 'internal') {
-            this._autoCheckVirtualInputPort();
         }
     }
 
@@ -373,8 +308,8 @@ HUM.midi.MidiPlayer = class {
         this.player = this.smf.player();
         if (this.player) {
             this.player.onEnd = () => this._onEnd();
-            try { this.player.speed(this.prefs.speed); } catch (e) { /* noop */ }
-            try { this.player.loop(!!this.prefs.loop); } catch (e) { /* noop */ }
+            try { this.player.speed(this.parameters.speed.value); } catch (e) { /* noop */ }
+            try { this.player.loop(!!this.parameters.loop.value); } catch (e) { /* noop */ }
         }
         this._rewirePlayerConnections();
 
@@ -404,18 +339,21 @@ HUM.midi.MidiPlayer = class {
     _rewirePlayerConnections() {
         if (!this.player) { return; }
         try { this.player.disconnect(); } catch (e) { /* noop */ }
-        if (this.prefs.destination === 'internal') {
+        const dest = this.parameters ? this.parameters.destination.value : 'internal';
+        if (dest === 'internal') {
             this.player.connect((msg) => this._sendToInternal(msg));
             return;
         }
         const access = this.midi.port.midiAccess;
-        const port = access ? access.outputs.get(this.prefs.destination) : null;
+        const port = access ? access.outputs.get(dest) : null;
         if (!port) {
-            this._logError(`MIDI-Out port "${this.prefs.destination}" not found; falling back to internal.`);
-            this.prefs.destination = 'internal';
-            this._savePrefs();
-            const destSel = document.getElementById(`HTMLi_midiPlayer_dest${this.id}`);
-            if (destSel) { destSel.value = 'internal'; }
+            this._logError(`MIDI-Out port "${dest}" not found; falling back to internal.`);
+            // Silently reset: skip preSet (avoids stop-if-playing during an active
+            // play() call) and postSet (we connect directly below to avoid recursion).
+            if (this.parameters) {
+                this.parameters.destination._setValue('internal', { preSet: false, postSet: false });
+            }
+            this._autoCheckVirtualInputPort();
             this.player.connect((msg) => this._sendToInternal(msg));
             return;
         }
@@ -528,12 +466,13 @@ HUM.midi.MidiPlayer = class {
     }
 
     _allNotesOff() {
-        if (this.prefs.destination === 'internal') {
+        const dest = this.parameters ? this.parameters.destination.value : 'internal';
+        if (dest === 'internal') {
             // Use the DHC panic to silence anything that came through.
             try { this.dhc.panic('soft'); } catch (e) { /* noop */ }
         } else {
             const access = this.midi.port.midiAccess;
-            const port = access ? access.outputs.get(this.prefs.destination) : null;
+            const port = access ? access.outputs.get(dest) : null;
             if (port) {
                 for (let ch = 0; ch < 16; ch++) {
                     try { port.send([0xB0 | ch, 123, 0]); } catch (e) { /* noop */ }
@@ -554,25 +493,8 @@ HUM.midi.MidiPlayer = class {
         this._updatePositionUI();
     }
 
-    setSpeed(x) {
-        if (!isFinite(x) || x <= 0) { x = 1.0; }
-        this.prefs.speed = x;
-        this._savePrefs();
-        if (this.player) {
-            try { this.player.speed(x); } catch (e) { /* noop */ }
-        }
-    }
-
-    setLoop(on) {
-        this.prefs.loop = !!on;
-        this._savePrefs();
-        if (this.player) {
-            try { this.player.loop(!!on); } catch (e) { /* noop */ }
-        }
-    }
-
     _onEnd() {
-        if (this.prefs.loop) {
+        if (this.parameters && this.parameters.loop.value) {
             // JZZ will re-trigger; nothing to do here.
             return;
         }
