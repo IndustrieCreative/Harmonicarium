@@ -3240,7 +3240,8 @@ HUM.tmpl = {
                     <div class="row align-items-center">
 
                         <div class="col-md-4 mb-3 text-center">
-                            <img src="assets/img/n-edx_light.png" alt="nth root of x" style="width:70px;">
+                            <img src="assets/img/n-edx_light.png" alt="nth root of x" style="width:70px;" class="hum-img-theme-light">
+                            <img src="assets/img/n-edx.png" alt="nth root of x" style="width:70px; display:none;" class="hum-img-theme-dark">
                         </div>
                         <div class="col-md-8">
 

@@ -975,3 +975,7 @@ html[data-bs-theme="dark"] .btn-check + .btn-outline-secondary {
     --bs-btn-active-color: #fff;
     --bs-btn-active-border-color: #8e4a4a;
 }
+
+/* Theme-variant images */
+html[data-bs-theme="dark"] .hum-img-theme-light { display: none; }
+html[data-bs-theme="dark"] .hum-img-theme-dark  { display: inline !important; }
