@@ -518,7 +518,7 @@ class HUM {
 
             this.html.synthTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'synth', 'Built-in Synth', 'audio', hrmID);
             this.html.midiTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'midi', 'MIDI I/O', 'midi', hrmID);
-            this.html.midiPlayerTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'midiPlayer', 'MIDI Player', 'midi', hrmID);
+            this.html.midiPlayerTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'midiPlayer', 'MIDI Player', 'midiFile', hrmID);
             this.html.pianoTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'piano', 'Piano Keymap', 'piano', hrmID);
             this.html.dhcTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'dhcSettings', 'DHC Settings', 'dhcSettings', hrmID);
             this.html.fmTabs[dhcID] = HUM.tmpl.accordionTab(dhcID, 'fm', 'Fundamental Mother', 'fm', hrmID);
