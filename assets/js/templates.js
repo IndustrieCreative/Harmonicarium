@@ -111,6 +111,24 @@ HUM.tmpl = {
                 d: "M3 3 L4.5 3 L4.5 19.5 L21 19.5 L21 21 L3 21 Z M3.4 19.4 L4.6 20.6 L20.6 4.6 L19.4 3.4 Z M3.5 20.5 C3.5 6.5 7.5 4.5 21 4.5 L21 6 C8 6 5 8 5 20.5 Z",
                 viewBox: "0 0 24 24"
             },
+            scaleModeLinear: {
+                viewBox: "5 15 115 78",
+                elements: [
+                    { tag: 'text', attrs: { x: '24', y: '82', 'font-family': 'Arial, Helvetica, sans-serif', 'font-size': '42', 'font-weight': '700', fill: '#c5c5c5' }, text: 'LIN' },
+                    { tag: 'text', attrs: { x: '70', y: '44', 'font-family': 'Arial, Helvetica, sans-serif', 'font-size': '20', 'font-weight': '700', fill: '#c5c5c5' }, text: 'LOG' },
+                    { tag: 'path', attrs: { d: 'M46 48 V34 H68', fill: 'none', stroke: '#c5c5c5', 'stroke-width': '3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' } },
+                    { tag: 'path', attrs: { d: 'M68 34 L61 29 M68 34 L61 39', fill: 'none', stroke: '#c5c5c5', 'stroke-width': '3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' } },
+                ]
+            },
+            scaleModeLog: {
+                viewBox: "5 15 115 78",
+                elements: [
+                    { tag: 'text', attrs: { x: '20', y: '82', 'font-family': 'Arial, Helvetica, sans-serif', 'font-size': '42', 'font-weight': '700', fill: '#c5c5c5' }, text: 'LOG' },
+                    { tag: 'text', attrs: { x: '74', y: '44', 'font-family': 'Arial, Helvetica, sans-serif', 'font-size': '20', 'font-weight': '700', fill: '#c5c5c5' }, text: 'LIN' },
+                    { tag: 'path', attrs: { d: 'M52 48 V34 H72', fill: 'none', stroke: '#c5c5c5', 'stroke-width': '3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' } },
+                    { tag: 'path', attrs: { d: 'M72 34 L65 29 M72 34 L65 39', fill: 'none', stroke: '#c5c5c5', 'stroke-width': '3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' } },
+                ]
+            },
             htOctaveUp: {
                 d: "M 7.797 14.423 L 6.883 14.423 L 6.883 12.363 L 4.963 12.363 L 4.963 14.423 L 4.039 14.423 L 4.039 9.603 L 4.963 9.603 L 4.963 11.523 L 6.883 11.523 L 6.883 9.603 L 7.797 9.603 L 7.797 14.423 Z M 12.071 10.383 L 10.645 10.383 L 10.645 14.423 L 9.722 14.423 L 9.722 10.383 L 8.304 10.383 L 8.304 9.603 L 12.071 9.603 L 12.071 10.383 Z M 14.5 11.5 L 21.5 11.5 L 21.5 12.5 L 14.5 12.5 Z M 17.5 8.5 L 18.5 8.5 L 18.5 15.5 L 17.5 15.5 Z",
                 viewBox: "0 0 24 24"
@@ -228,16 +246,30 @@ HUM.tmpl = {
 
         for (const name of Object.keys(icons)) {
             let symbol = document.createElementNS('http://www.w3.org/2000/svg', 'symbol'),
-                path = document.createElementNS('http://www.w3.org/2000/svg', 'path'),
                 boundingRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             symbol.setAttributeNS(null, 'id', `dpIcon-${name}${humID}`);
             symbol.setAttributeNS(null, 'viewBox', icons[name].viewBox);
             boundingRect.setAttributeNS(null, 'width', '100%');
             boundingRect.setAttributeNS(null, 'height', '100%');
             boundingRect.setAttributeNS(null, 'fill', 'transparent');
-            path.setAttributeNS(null, 'd', icons[name].d);
-            
-            symbol.appendChild(path);
+
+            if (icons[name].elements) {
+                for (const elemDef of icons[name].elements) {
+                    let elem = document.createElementNS('http://www.w3.org/2000/svg', elemDef.tag);
+                    for (const [attr, val] of Object.entries(elemDef.attrs)) {
+                        elem.setAttributeNS(null, attr, val);
+                    }
+                    if (elemDef.text !== undefined) {
+                        elem.textContent = elemDef.text;
+                    }
+                    symbol.appendChild(elem);
+                }
+            } else {
+                let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttributeNS(null, 'd', icons[name].d);
+                symbol.appendChild(path);
+            }
+
             symbol.appendChild(boundingRect);
             svg.appendChild(symbol);
         }

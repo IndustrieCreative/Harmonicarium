@@ -618,6 +618,10 @@ HUM.DpPad.PadSet.prototype.Parameters = class {
                 initValue: 'log',
                 allowedValues: ['log', 'linear'],
                 postSet: (value, thisParam, init) => {
+                    if (padSet.toolbar && padSet.toolbar.icons['scaleMode']) {
+                        const hrmID = padSet.dpPadComponent.harmonicarium.id;
+                        padSet.toolbar.icons['scaleMode'].setAttributeNS(null, 'href', `#dpIcon-${value === 'log' ? 'scaleModeLog' : 'scaleModeLinear'}${hrmID}`);
+                    }
                     if (!init) {
                         if (padSet.spectrogram && typeof padSet.spectrogram._clearCanvases === 'function') {
                             padSet.spectrogram._clearCanvases();

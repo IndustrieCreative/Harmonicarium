@@ -184,6 +184,11 @@ HUM.DpPad.PadSet.Toolbar = class {
 
                 this.icons[iconName] = useSvg;
 
+                if (iconName === 'scaleMode') {
+                    const currentMode = this.padSet.parameters.scaleMode.ht.value;
+                    useSvg.setAttributeNS(null, 'href', `#dpIcon-${currentMode === 'log' ? 'scaleModeLog' : 'scaleModeLinear'}${hrmID}`);
+                }
+
                 currentSpaceX += spaceBetweenX;
                 currentSpaceY += spaceBetweenY;
             }
@@ -443,5 +448,7 @@ HUM.DpPad.PadSet.Toolbar = class {
     cycleScaleMode() {
         const params = this.padSet.parameters.scaleMode;
         params.ht.value = params.ht.value === 'log' ? 'linear' : 'log';
+        const hrmID = this.padSet.dpPadComponent.harmonicarium.id;
+        this.icons['scaleMode'].setAttributeNS(null, 'href', `#dpIcon-${params.ht.value === 'log' ? 'scaleModeLog' : 'scaleModeLinear'}${hrmID}`);
     }
 };
