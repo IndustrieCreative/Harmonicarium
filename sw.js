@@ -30,7 +30,7 @@ var keepOldCache = false;
  * 
  * @member {string}
  */
-const appCacheName = 'kepler-cache-beta-v32';
+const appCacheName = 'kepler-cache-beta-v33';
 
 /**
  * The current Cache's name.
@@ -84,6 +84,7 @@ const deprecatedCaches = [
     'kepler-cache-beta-v29',
     'kepler-cache-beta-v30',
     'kepler-cache-beta-v31',
+    'kepler-cache-beta-v32',
 ];
 
 /**
@@ -149,6 +150,7 @@ const staticAssets = [
     './assets/js/pwa-manager-parameters.js',
     './assets/js/pwa-manager.js',
     './assets/js/synth-ir-default.js',
+    './assets/js/synth-beats-default.js',
     './assets/js/synth-parameters.js',
     './assets/js/synth-voice.js',
     './assets/js/synth.js',
